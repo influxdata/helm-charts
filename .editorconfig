@@ -1,0 +1,20 @@
+
+# EditorConfig helps us maintain consistent formatting on non-source files.
+# Visit https://editorconfig.org/ for details on how to configure your editor to respect these settings.
+
+# This is the terminal .editorconfig in this repository.
+root = true
+
+
+[*]
+indent_style = space
+trim_trailing_whitespace = true
+insert_final_newline = true
+end_of_line = lf
+
+[*.{yaml,yml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+indent_size = 4
