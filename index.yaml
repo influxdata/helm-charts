@@ -1,0 +1,30 @@
+apiVersion: v1
+entries:
+  kapacitor:
+  - apiVersion: v1
+    appVersion: 1.5.3
+    created: "2020-02-20T06:45:17.67040242Z"
+    description: InfluxDB's native data processing engine. It can process both stream
+      and batch data from InfluxDB.
+    digest: dd69c7e0948d784373308ddcf73e4bc6d2533a491e43a8cb95f200a82f2bf67d
+    engine: gotpl
+    home: https://www.influxdata.com/time-series-platform/kapacitor/
+    keywords:
+    - kapacitor
+    - stream
+    - etl
+    - timeseries
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: David McKay
+    - email: giacomo@influxdata.com
+      name: Giacomo Tirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    name: kapacitor
+    sources:
+    - https://github.com/influxdata/kapacitor
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/kapacitor-1.2.2/kapacitor-1.2.2.tgz
+    version: 1.2.2
+generated: "2020-02-20T06:45:17.549186881Z"
