@@ -3,6 +3,7 @@ name: Terraform
 on:
   push:
     paths:
+      - ".github/workflows/terraform.yaml"
       - "terraform/**"
 
 jobs:
@@ -49,4 +50,4 @@ jobs:
           tf_actions_working_dir: "terraform"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
