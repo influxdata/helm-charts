@@ -1,6 +1,9 @@
+name: Terraform
+
 on:
   push:
     paths:
+      - ".github/workflows/terraform.yaml"
       - "terraform/**"
 
 jobs:
