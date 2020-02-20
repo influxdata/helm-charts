@@ -34,3 +34,4 @@ resource "github_issue_label" "types" {
   repository  = github_repository.helm_charts.name
   color       = var.colour_dark_blue
 }
+
