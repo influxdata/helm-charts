@@ -1,6 +1,82 @@
 apiVersion: v1
 entries:
+  chronograf:
+  - apiVersion: v1
+    appVersion: 1.7.12
+    created: "2020-02-20T22:43:08.810173979Z"
+    description: Open-source web application written in Go and React.js that provides
+      the tools to visualize your monitoring data and easily create alerting and automation
+      rules.
+    digest: c82ae610650e08aa74eb8b85f436d892006f68f629005f66ccf6de8bbd4484a5
+    engine: gotpl
+    home: https://www.influxdata.com/time-series-platform/chronograf/
+    keywords:
+    - chronograf
+    - visualizaion
+    - timeseries
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: David McKay
+    - email: giacomo@influxdata.com
+      name: Giacomo Tirabassi
+    name: chronograf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/chronograf-1.1.3/chronograf-1.1.3.tgz
+    version: 1.1.3
+  influxdb:
+  - apiVersion: v1
+    appVersion: 1.7.9
+    created: "2020-02-20T22:43:08.901067269Z"
+    description: Scalable datastore for metrics, events, and real-time analytics.
+    digest: be132bad04e0275cb98309163157163c52d70b4a6c52cec965bb0a4147a0166b
+    engine: gotpl
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: David McKay
+    - email: giacomo@influxdata.com
+      name: Giacomo Tirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: influxdb
+    sources:
+    - https://github.com/influxdata/influxdb
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.2.5/influxdb-4.2.5.tgz
+    version: 4.2.5
   kapacitor:
+  - apiVersion: v1
+    appVersion: 1.5.3
+    created: "2020-02-20T22:43:08.995110814Z"
+    description: InfluxDB's native data processing engine. It can process both stream
+      and batch data from InfluxDB.
+    digest: a447390a53262d04e30f79fd9d7a16de19e5bb2d3d0848305bb63dd499afa930
+    engine: gotpl
+    home: https://www.influxdata.com/time-series-platform/kapacitor/
+    keywords:
+    - kapacitor
+    - stream
+    - etl
+    - timeseries
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: David McKay
+    - email: giacomo@influxdata.com
+      name: Giacomo Tirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    name: kapacitor
+    sources:
+    - https://github.com/influxdata/kapacitor
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/kapacitor-1.2.3/kapacitor-1.2.3.tgz
+    version: 1.2.3
   - apiVersion: v1
     appVersion: 1.5.3
     created: "2020-02-20T06:45:17.67040242Z"
@@ -27,4 +103,29 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/kapacitor-1.2.2/kapacitor-1.2.2.tgz
     version: 1.2.2
+  telegraf:
+  - apiVersion: v1
+    appVersion: "1.13"
+    created: "2020-02-20T22:43:09.10476808Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: af05c6ec7cdecf10a8f62dec4dca36cb23db42af9ea537a38ced709fa59ba910
+    engine: gotpl
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: David McKay
+    - email: giacomo@influxdata.com
+      name: Giacomo Tirabassi
+    - email: naseemkullah@gmail.com
+      name: naseemkullah
+    name: telegraf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.1/telegraf-1.7.1.tgz
+    version: 1.7.1
 generated: "2020-02-20T06:45:17.549186881Z"
