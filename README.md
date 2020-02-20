@@ -13,14 +13,14 @@ Please refer to Helm's [documentation](https://helm.sh/docs/) to get started.
 Once Helm is set up properly, add the repo as follows:
 
 ```console
-helm repo add influxdata https://influxdata.github.io/helm-charts
+helm repo add influxdata https://helm.influxdata.com
 ```
 
 You can then run `helm search repo influxdata` to see the charts.
 
 ## Contributing
 
-We'd love to have you contribute! Please refer to our [contribution guidelines](CONTRIBUTING.md) for details.
+We'd love to have you contribute! Please refer to our [contribution guidelines](CONTRIBUTING) for details.
 
 ## License
 
