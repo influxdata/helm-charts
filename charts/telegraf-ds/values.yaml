@@ -1,0 +1,145 @@
+## Default values.yaml for Telegraf
+## This is a YAML-formatted file.
+## ref: https://hub.docker.com/r/library/telegraf/tags/
+
+image:
+  repo: "telegraf"
+  tag: "1.13-alpine"
+  pullPolicy: IfNotPresent
+
+## Configure resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 0.1
+  limits:
+    memory: 2Gi
+    cpu: 1
+
+env:
+  # This pulls HOSTNAME from the node, not the pod.
+  - name: HOSTNAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  # In test clusters where hostnames are resolved in /etc/hosts on each node,
+  # the HOSTNAME is not resolvable from inside containers
+  # So inject the host IP as well
+  - name: HOSTIP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.hostIP
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: "HOST_PROC"
+    value: "/rootfs/proc"
+  - name: "HOST_SYS"
+    value: "/rootfs/sys"
+
+## Tolerations for pod assignment
+## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  # Rules for the created rule
+  rules: []
+# When using the prometheus input to scrape all pods you need extra rules set to the ClusterRole to be
+# able to scan the pods for scraping labels. The following rules have been taken from:
+# https://github.com/helm/charts/blob/master/stable/prometheus/templates/server-clusterrole.yaml#L8-L46
+#    - apiGroups:
+#        - ""
+#      resources:
+#        - nodes
+#        - nodes/proxy
+#        - nodes/metrics
+#        - services
+#        - endpoints
+#        - pods
+#        - ingresses
+#        - configmaps
+#      verbs:
+#        - get
+#        - list
+#        - watch
+#    - apiGroups:
+#        - "extensions"
+#      resources:
+#        - ingresses/status
+#        - ingresses
+#      verbs:
+#        - get
+#        - list
+#        - watch
+#    - nonResourceURLs:
+#        - "/metrics"
+#      verbs:
+#        - get
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+## Exposed telegraf configuration
+## ref: https://docs.influxdata.com/telegraf/v1.8/administration/configuration/
+config:
+  # global_tags:
+  #   cluster: "mycluster"
+  agent:
+    interval: "10s"
+    round_interval: true
+    metric_batch_size: 1000
+    metric_buffer_limit: 10000
+    collection_jitter: "0s"
+    flush_interval: "10s"
+    flush_jitter: "0s"
+    precision: ""
+    debug: false
+    quiet: false
+    logfile: ""
+    hostname: "$HOSTNAME"
+    omit_hostname: false
+  outputs:
+    - influxdb:
+        urls:
+          - "http://data-influxdb.tick:8086"
+        database: "telegraf"
+        retention_policy: ""
+        timeout: "5s"
+        username: ""
+        password: ""
+        user_agent: "telegraf"
+        insecure_skip_verify: false
+  inputs:
+    - cpu:
+        percpu: true
+        totalcpu: true
+        collect_cpu_time: false
+        report_active: false
+    - disk:
+        ignore_fs: ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+    - diskio:
+    - docker:
+        endpoint: "unix:///var/run/docker.sock"
+        timeout: "5s"
+        perdevice: true
+        total: false
+        docker_label_exclude:
+          - "annotation.kubernetes.io/*"
+    - kernel:
+    - kubernetes:
+        url: "https://kubernetes.default.svc.cluster.local/api/v1/nodes/$NODE_NAME/proxy"
+        bearer_token: "/run/secrets/kubernetes.io/serviceaccount/token"
+        insecure_skip_verify: true
+    - mem:
+    - processes:
+    - swap:
+    - system:

@@ -1,0 +1,38 @@
+{{- if .Values.rbac.create }}
+# Allow to define extra custom rules
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: influx:telegraf:custom
+  labels:
+    rbac.authorization.k8s.io/aggregate-view-telegraf-custom: "true"
+rules:
+{{ toYaml .Values.rbac.rules | indent 2 }}
+---
+# kubernetes_plugin: Give access to stats endpoints
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: influx:stats:viewer
+  labels:
+    rbac.authorization.k8s.io/aggregate-view-telegraf-stats: "true"
+rules:
+  - apiGroups: [""]
+    resources: ["nodes/proxy"]
+    verbs: ["get", "watch", "list"]
+---
+# Define global role with the default system:aggregate-to-view cluster role and the two rules we just created
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: influx:telegraf
+aggregationRule:
+  clusterRoleSelectors:
+    - matchLabels:
+        rbac.authorization.k8s.io/aggregate-view-telegraf-custom: "true"
+    - matchLabels:
+        rbac.authorization.k8s.io/aggregate-view-telegraf-stats: "true"
+    - matchLabels:
+        rbac.authorization.k8s.io/aggregate-to-view: "true"
+rules: [] # Rules are automatically filled in by the controller manager.
+{{- end }}
