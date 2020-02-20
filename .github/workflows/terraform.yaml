@@ -28,6 +28,7 @@ jobs:
           tf_actions_working_dir: "terraform"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - name: "Terraform Validate"
         uses: hashicorp/terraform-github-actions@master
@@ -46,3 +47,4 @@ jobs:
           tf_actions_working_dir: "terraform"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS
