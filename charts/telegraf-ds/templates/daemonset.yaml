@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "telegraf.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "telegraf.name" . }}
+    helm.sh/chart: {{ include "telegraf.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "telegraf.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "telegraf.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        # Include a hash of the configmap in the pod template
+        # This means that if the configmap changes, the deployment will be rolled
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repo }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+        env:
+{{ toYaml .Values.env | indent 8 }}
+        volumeMounts:
+        - name: varrunutmpro
+          mountPath: /var/run/utmp
+          readOnly: true
+        - name: sysro
+          mountPath: /rootfs/sys
+          readOnly: true
+        - name: procro
+          mountPath: /rootfs/proc
+          readOnly: true
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+        - name: config
+          mountPath: /etc/telegraf
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      volumes:
+      - name: sysro
+        hostPath:
+          path: /sys
+      - name: docker-socket
+        hostPath:
+          path: /var/run/docker.sock
+      - name: procro
+        hostPath:
+          path: /proc
+      - name: varrunutmpro
+        hostPath:
+          path: /var/run/utmp
+      - name: config
+        configMap:
+          name:  {{ include "telegraf.fullname" . }}
