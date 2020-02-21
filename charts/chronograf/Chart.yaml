@@ -11,8 +11,8 @@ keywords:
 - timeseries
 home: https://www.influxdata.com/time-series-platform/chronograf/
 maintainers:
-- name: David McKay
+- name: rawkode
   email: rawkode@influxdata.com
-- name: Giacomo Tirabassi
+- name: gitirabassi
   email: giacomo@influxdata.com
 engine: gotpl

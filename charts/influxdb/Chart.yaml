@@ -11,9 +11,9 @@ home: https://www.influxdata.com/time-series-platform/influxdb/
 sources:
 - https://github.com/influxdata/influxdb
 maintainers:
-- name: David McKay
+- name: rawkode
   email: rawkode@influxdata.com
-- name: Giacomo Tirabassi
+- name: gitirabassi
   email: giacomo@influxdata.com
 - name: aisuko
   email: urakiny@gmail.com
