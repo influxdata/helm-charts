@@ -16,5 +16,5 @@ maintainers:
 - name: gitirabassi
   email: giacomo@influxdata.com
 - name: naseemkullah
-  email: naseemkullah@gmail.com
+  email: naseem@transit.app
 engine: gotpl
