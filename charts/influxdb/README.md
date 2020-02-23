@@ -116,6 +116,83 @@ Make sure to uncomment or configure the job settings after enabling it. If a pas
 
 Alternatively, if `.Values.setDefaultUser.user.existingSecret` is set the user and password are obtained from an existing Secret, the expected keys are `influxdb-user` and `influxdb-password`. Use this variable  if you need to check in the `values.yaml` in a repository to avoid exposing your secrets.
 
+## Backing up and restoring
+
+Before proceeding, please read [Backing up and restoring in InfluxDB OSS](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/). While the chart offers backups by means of the [`backup-cronjob`](./templates/backup-cronjob.yaml), restores do not fall under the chart's scope today but can be achieved by one-off kubernetes jobs.
+
+### Backups
+
+When enabled, the[`backup-cronjob`](./templates/backup-cronjob.yaml) runs on the configured schedule. One can create a job from the backup cronjob on demand as follows:
+
+```sh
+kubectl create job --from=cronjobs/influxdb-backup influx-backup-$(date +%Y%m%d%H%M%S)
+```
+
+### Restores
+
+It is up to the end user to configure their own one-off restore jobs. Below is just an example, which assumes that the backups are stored in GCS and that all dbs in the backup already exist and should be restored. It is to be used as a reference only; configure the init-container and the command and of the `influxdb-restore` container as well as both containers' resources to suit your needs.
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: influxdb-restore-
+  namespace: monitoring
+spec:
+  template:
+    spec:
+      volumes:
+        - name: backup
+          emptyDir: {}
+      serviceAccountName: influxdb
+      initContainers:
+        - name: init-gsutil-cp
+          image: google/cloud-sdk:alpine
+          command:
+            - /bin/sh
+          args:
+            - "-c"
+            - |
+              gsutil -m cp -r gs://<PATH TO BACKUP FOLDER>/* /backup
+          volumeMounts:
+            - name: backup
+              mountPath: /backup
+          resources:
+            requests:
+              cpu: 1
+              memory: 4Gi
+            limits:
+              cpu: 2
+              memory: 8Gi
+      containers:
+        - name: influxdb-restore
+          image: influxdb:1.7-alpine
+          volumeMounts:
+            - name: backup
+              mountPath: /backup
+          command:
+            - /bin/sh
+          args:
+            - "-c"
+            - |
+              #!/bin/sh
+              INFLUXDB_HOST=influxdb.monitoring.svc
+              for db in $(influx -host $INFLUXDB_HOST -execute 'SHOW DATABASES' | tail -n +5); do
+                influxd restore -host $INFLUXDB_HOST:8088 -portable -db "$db" -newdb "$db"_bak /backup
+              done
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      restartPolicy: OnFailure
+```
+
+At which point the data from the new `<db name>_bak` dbs would have to be side loaded into the original dbs.
+Please see [InfluxDB documentation for more restore examples](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/#restore-examples).
+
 ## Upgrading
 
 ### From < 1.0.0 To >= 1.0.0

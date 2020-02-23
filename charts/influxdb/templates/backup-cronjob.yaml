@@ -9,7 +9,7 @@ metadata:
   annotations:
     {{- toYaml .Values.backup.annotations | nindent 4 }}
 spec:
-  schedule: {{.Values.backup.schedule | quote }}
+  schedule: {{ .Values.backup.schedule | quote }}
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -20,7 +20,7 @@ spec:
         spec:
           restartPolicy: OnFailure
           volumes:
-          - name: backups
+          - name: backup
             emptyDir: {}
           {{- if .Values.backup.gcs }}
           {{- if .Values.backup.gcs.serviceAccountSecret }}
@@ -34,14 +34,14 @@ spec:
           - name: influxdb-backup
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             volumeMounts:
-            - name: backups
-              mountPath: /backups
+            - name: backup
+              mountPath: /backup
             command:
             - /bin/sh
             args:
             - '-c'
             - |
-              influxd backup -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.rpc.bind_address | default 8088 }} -portable /backups/backup_$(date +%Y%m%d_%H%M%S)
+              influxd backup -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.rpc.bind_address | default 8088 }} -portable /backup/$(date +%Y%m%d%H%M%S)
           containers:
           {{- if .Values.backup.gcs }}
           - name: gsutil-cp
@@ -56,15 +56,15 @@ spec:
               fi
               gsutil -m cp -r "$SRC_URL" "$DST_URL"
             volumeMounts:
-            - name: backups
-              mountPath: /backups
+            - name: backup
+              mountPath: /backup
             {{- if .Values.backup.gcs.serviceAccountSecretKey}}
             - name: google-cloud-key
               mountPath: /var/secrets/google/
             {{- end }}
             env:
               - name: SRC_URL
-                value: /backups
+                value: /backup
               - name: DST_URL
                 value: {{ .Values.backup.gcs.destination}}
               {{- if .Values.backup.gcs.serviceAccountSecretKey}}
@@ -83,11 +83,11 @@ spec:
               az storage container create --name "$DST_CONTAINER"
               az storage blob upload-batch --destination "$DST_CONTAINER" --destination-path "$DST_PATH" --source "$SRC_URL"
             volumeMounts:
-            - name: backups
-              mountPath: /backups
+            - name: backup
+              mountPath: /backup
             env:
               - name: SRC_URL
-                value: /backups
+                value: /backup
               - name: DST_CONTAINER
                 value: {{ .Values.backup.azure.destination_container }}
               - name: DST_PATH
