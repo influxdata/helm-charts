@@ -19,25 +19,6 @@ resource "github_repository" "helm_charts" {
   private = false
 }
 
-resource "github_branch_protection" "helm_charts_master" {
-  repository     = "${github_repository.helm_charts.name}"
-  branch         = "master"
-  enforce_admins = true
-
-  required_status_checks {
-    strict = true
-  }
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = true
-    require_code_owner_reviews      = true
-    required_approving_review_count = 2
-  }
-
-  restrictions {
-  }
-}
-
 variable "colour_dark_blue" {
   type    = string
   default = "779ecb"
