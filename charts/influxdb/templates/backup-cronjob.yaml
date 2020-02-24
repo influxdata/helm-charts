@@ -54,7 +54,7 @@ spec:
               if [ -n "$KEY_FILE" ]; then
                 gcloud auth activate-service-account --key-file $KEY_FILE
               fi
-              gsutil -m cp -r "$SRC_URL" "$DST_URL"
+              gsutil -m cp -r /backup/* "$DST_URL"
             volumeMounts:
             - name: backup
               mountPath: /backup
@@ -63,8 +63,6 @@ spec:
               mountPath: /var/secrets/google/
             {{- end }}
             env:
-              - name: SRC_URL
-                value: /backup
               - name: DST_URL
                 value: {{ .Values.backup.gcs.destination}}
               {{- if .Values.backup.gcs.serviceAccountSecretKey}}
