@@ -3,7 +3,8 @@ resource "github_repository" "helm_charts" {
   description = "Official Helm Chart Repository for InfluxData Applications"
 
   allow_merge_commit = false
-  allow_rebase_merge = false
+  allow_squash_merge = false
+  allow_rebase_merge = true
 
   has_downloads = true
   has_issues    = true
@@ -34,4 +35,3 @@ resource "github_issue_label" "types" {
   repository  = github_repository.helm_charts.name
   color       = var.colour_dark_blue
 }
-

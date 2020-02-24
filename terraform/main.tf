@@ -8,8 +8,8 @@ provider "google" {
 }
 
 provider "github" {
-  token        = var.github_token
   organization = "influxdata"
+  anonymous    = false
 }
 
 terraform {
@@ -17,8 +17,4 @@ terraform {
     bucket = "influxdata-devrel-operations"
     prefix = "github.com/helm-charts"
   }
-}
-
-variable "github_token" {
-  type = string
 }
