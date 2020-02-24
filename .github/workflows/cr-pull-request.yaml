@@ -1,4 +1,4 @@
-name: Pull Request Checks
+name: Test Helm Charts
 
 on: pull_request
 
