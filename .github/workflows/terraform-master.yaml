@@ -1,14 +1,16 @@
-name: Repository Configuration with Terraform
+name: Terraform Apply
 
 on:
   push:
     paths:
       - ".github/workflows/terraform.yaml"
       - "terraform/**"
+    branches:
+      - master
 
 jobs:
   terraform:
-    name: "Terraform"
+    name: "Terraform Apply"
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
@@ -42,11 +44,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Terraform Plan"
+      - name: "Terraform Apply"
         uses: hashicorp/terraform-github-actions@master
         with:
           tf_actions_version: 0.12.20
-          tf_actions_subcommand: "plan"
+          tf_actions_subcommand: "apply"
           tf_actions_working_dir: "terraform"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
