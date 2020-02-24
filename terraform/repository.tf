@@ -3,7 +3,8 @@ resource "github_repository" "helm_charts" {
   description = "Official Helm Chart Repository for InfluxData Applications"
 
   allow_merge_commit = false
-  allow_rebase_merge = false
+  allow_squash_merge = false
+  allow_rebase_merge = true
 
   has_downloads = true
   has_issues    = true
@@ -16,6 +17,25 @@ resource "github_repository" "helm_charts" {
   ]
 
   private = false
+}
+
+resource "github_branch_protection" "helm_charts_master" {
+  repository     = "${github_repository.helm_charts.name}"
+  branch         = "master"
+  enforce_admins = true
+
+  required_status_checks {
+    strict = true
+  }
+
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = true
+    require_code_owner_reviews      = true
+    required_approving_review_count = 2
+  }
+
+  restrictions {
+  }
 }
 
 variable "colour_dark_blue" {
@@ -34,4 +54,3 @@ resource "github_issue_label" "types" {
   repository  = github_repository.helm_charts.name
   color       = var.colour_dark_blue
 }
-

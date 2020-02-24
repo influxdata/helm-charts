@@ -1,4 +1,4 @@
-name: Terraform
+name: Repository Configuration with Terraform
 
 on:
   push:
