@@ -7,7 +7,7 @@
 ## QuickStart
 
 ```bash
-$ helm repo add influxdata https://influxdata.github.io/helm-charts
+$ helm repo add influxdata https://helm.influxdata.com/
 $ helm install influxdata/chronograf --name foo --namespace bar
 ```
 
