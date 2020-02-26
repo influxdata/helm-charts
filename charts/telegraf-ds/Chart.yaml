@@ -11,10 +11,12 @@ keywords:
 - influxdata
 home: https://www.influxdata.com/time-series-platform/telegraf/
 maintainers:
-- name: David McKay
+- name: rawkode
   email: rawkode@influxdata.com
-- name: Giacomo Tirabassi
+- name: gitirabassi
   email: giacomo@influxdata.com
 - name: naseemkullah
   email: naseemkullah@gmail.com
+- name: nsteinmetz
+  email: contact@cerenit.fr
 engine: gotpl
