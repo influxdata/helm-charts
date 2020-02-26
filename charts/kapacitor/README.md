@@ -7,7 +7,8 @@
 ## QuickStart
 
 ```bash
-$ helm install stable/kapacitor --name foo --namespace bar
+$ helm repo add influxdata https://influxdata.github.io/helm-charts
+$ helm install influxdata/kapacitor --name foo --namespace bar
 ```
 
 ## Introduction
@@ -24,7 +25,7 @@ This chart bootstraps A Kapacitor deployment and service on a Kubernetes cluster
 To install the chart with the release name `my-release`:
 
 ```bash
-$ helm install --name my-release stable/kapacitor
+$ helm install --name my-release influxdata/kapacitor
 ```
 
 The command deploys Kapacitor on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -73,7 +74,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```bash
 $ helm install --name my-release \
   --set influxURL=http://myinflux.mytld:8086,persistence.enabled=true \
-    stable/kapacitor
+    influxdata/kapacitor
 ```
 
 The above command enables persistence and changes the size of the requested data volume to 200GB.
@@ -81,7 +82,7 @@ The above command enables persistence and changes the size of the requested data
 Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
 
 ```bash
-$ helm install --name my-release -f values.yaml stable/kapacitor
+$ helm install --name my-release -f values.yaml influxdata/kapacitor
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)

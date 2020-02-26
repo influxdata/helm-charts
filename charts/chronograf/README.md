@@ -7,7 +7,8 @@
 ## QuickStart
 
 ```bash
-$ helm install stable/chronograf --name foo --namespace bar
+$ helm repo add influxdata https://influxdata.github.io/helm-charts
+$ helm install influxdata/chronograf --name foo --namespace bar
 ```
 
 ## Introduction
@@ -24,7 +25,7 @@ This chart bootstraps a Chronograf deployment and service on a Kubernetes cluste
 To install the chart with the release name `my-release`:
 
 ```bash
-$ helm install --name my-release stable/chronograf
+$ helm install --name my-release influxdata/chronograf
 ```
 
 The command deploys Chronograf on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -88,7 +89,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```bash
 $ helm install --name my-release \
   --set ingress.enabled=true,ingress.hostname=chronograf.foobar.com \
-    stable/chronograf
+    influxdata/chronograf
 ```
 
 The above command enables persistence and changes the size of the requested data volume to 200GB.
@@ -96,7 +97,7 @@ The above command enables persistence and changes the size of the requested data
 Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
 
 ```bash
-$ helm install --name my-release -f values.yaml stable/chronograf
+$ helm install --name my-release -f values.yaml influxdata/chronograf
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
