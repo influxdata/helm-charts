@@ -5,7 +5,7 @@
 ## TL;DR
 
 ```console
-$ helm repo add influxdata https://influxdata.github.io/helm-charts
+$ helm repo add influxdata https://helm.influxdata.com/
 $ helm install influxdata/telegraf
 ```
 
