@@ -89,7 +89,7 @@ serviceAccount:
   name:
 
 ## Exposed telegraf configuration
-## ref: https://docs.influxdata.com/telegraf/v1.8/administration/configuration/
+## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
 config:
   # global_tags:
   #   cluster: "mycluster"
@@ -110,7 +110,7 @@ config:
   outputs:
     - influxdb:
         urls:
-          - "http://data-influxdb.tick:8086"
+          - "http://influxdb.monitoring:8086"
         database: "telegraf"
         retention_policy: ""
         timeout: "5s"
