@@ -70,9 +70,9 @@ spec:
         - name: opentsdb
           containerPort: {{ .Values.config.opentsdb.bind_address |  default 4242 }}
         {{- end }}
-        {{- if .Values.enterprise.enabled }}
         - name: rpc
           containerPort: {{ .Values.config.rpc.bind_address | default 8088 }}
+        {{- if .Values.enterprise.enabled }}
         - name: meta
           containerPort: {{ .Values.config.meta.bind_address | default 8091 }}
         {{- end }}
