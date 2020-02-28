@@ -8,7 +8,7 @@
 
 ```bash
 helm repo add influxdata https://helm.influxdata.com/
-helm install my-release influxdata/influxdb --namespace monitoring
+helm install influxdb influxdata/influxdb --namespace monitoring
 ```
 
 ## Introduction

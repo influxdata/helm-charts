@@ -8,7 +8,7 @@
 
 ```bash
 helm repo add influxdata https://helm.influxdata.com/
-helm install my-release influxdata/kapacitor --namespace monitoring
+helm install kapacitor influxdata/kapacitor --namespace monitoring
 ```
 
 ## Introduction
