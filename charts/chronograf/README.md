@@ -8,7 +8,7 @@
 
 ```bash
 helm repo add influxdata https://helm.influxdata.com/
-helm install my-release influxdata/chronograf --namespace monitoring
+helm install chronograf influxdata/chronograf --namespace monitoring
 ```
 
 ## Introduction
