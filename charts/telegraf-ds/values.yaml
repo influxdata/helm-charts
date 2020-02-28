@@ -71,16 +71,16 @@ config:
     hostname: "$HOSTNAME"
     omit_hostname: false
   outputs:
-    - influxdb:
-        urls:
-          - "http://influxdb:8086"
-        database: "telegraf"
-        retention_policy: ""
-        timeout: "5s"
-        username: ""
-        password: ""
-        user_agent: "telegraf"
-        insecure_skip_verify: false
+    # - influxdb:
+    #     urls:
+    #       - "http://influxdb:8086"
+    #     database: "telegraf"
+    #     retention_policy: ""
+    #     timeout: "5s"
+    #     username: ""
+    #     password: ""
+    #     user_agent: "telegraf"
+    #     insecure_skip_verify: false
     - file:
         files:
           - stdout
