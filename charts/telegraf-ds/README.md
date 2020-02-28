@@ -17,7 +17,7 @@ This chart bootstraps a `telegraf-ds` daemonset on a [Kubernetes](http://kuberne
 
 ## Prerequisites
 
-- Kubernetes 1.4+ with Beta APIs enabled
+- Kubernetes 1.11+ with Beta APIs enabled
 
 ## Installing the Chart
 
