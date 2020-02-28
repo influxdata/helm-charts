@@ -20,7 +20,7 @@ You can then run `helm search repo influxdata` to see the charts.
 
 ## Contributing
 
-We'd love to have you contribute! Please refer to our [contribution guidelines](CONTRIBUTING) for details.
+We'd love to have you contribute! Please refer to our [contribution guidelines](CONTRIBUTING.md) for details.
 
 ## License
 

@@ -6,7 +6,7 @@
 
 ```console
 helm repo add influxdata https://helm.influxdata.com/
-helm install influxdata/telegraf
+helm install telegraf influxdata/telegraf --namespace monitoring
 ```
 
 ## Introduction
@@ -22,7 +22,7 @@ This chart bootstraps a `telegraf` deployment on a [Kubernetes](http://kubernete
 To install the chart with the release name `telegraf`:
 
 `console
-helm install --name telegraf --namespace monitoring influxdata/telegraf
+helm install telegraf influxdata/telegraf --namespace monitoring
 ```
 
 The command deploys Telegraf on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -44,7 +44,7 @@ The command removes all the Kubernetes components associated with the chart and 
 The default configuration parameters are listed in `values.yaml`.
 
 `console
-helm install --name telegraf influxdata/telegraf
+helm install telegraf influxdata/telegraf
 ```
 
 Outputs and inputs are configured as arrays of key/value dictionaries. Additional examples and defaults can be found in [values.yaml](values.yaml)

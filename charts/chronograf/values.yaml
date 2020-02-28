@@ -2,7 +2,7 @@
 ##
 image:
   repository: "chronograf"
-  tag: 1.7.12
+  tag: 1.8.0
   pullPolicy: IfNotPresent
 
 ## Specify a service type
@@ -97,7 +97,8 @@ oauth:
     he_orgs: ""
 
 ## Extra environment variables that will be passed onto deployment pods
-env: {}
+env:
+  HOST_PAGE_DISABLED: true
 
 ## The name of a secret in the same kubernetes namespace which contain values to be added to the environment
 ## This can be useful for auth tokens, etc
