@@ -29,6 +29,10 @@ spec:
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         env:
+        - name: HOSTIP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
 {{ toYaml .Values.env | indent 8 }}
         volumeMounts:
         - name: varrunutmpro
