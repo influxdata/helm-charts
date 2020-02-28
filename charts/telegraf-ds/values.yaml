@@ -30,10 +30,6 @@ env:
     valueFrom:
       fieldRef:
         fieldPath: status.hostIP
-  - name: NODE_NAME
-    valueFrom:
-      fieldRef:
-        fieldPath: spec.nodeName
   - name: "HOST_PROC"
     value: "/rootfs/proc"
   - name: "HOST_SYS"
@@ -47,46 +43,13 @@ tolerations: []
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
-  # Rules for the created rule
-  rules: []
-# When using the prometheus input to scrape all pods you need extra rules set to the ClusterRole to be
-# able to scan the pods for scraping labels. The following rules have been taken from:
-# https://github.com/helm/charts/blob/master/stable/prometheus/templates/server-clusterrole.yaml#L8-L46
-#    - apiGroups:
-#        - ""
-#      resources:
-#        - nodes
-#        - nodes/proxy
-#        - nodes/metrics
-#        - services
-#        - endpoints
-#        - pods
-#        - ingresses
-#        - configmaps
-#      verbs:
-#        - get
-#        - list
-#        - watch
-#    - apiGroups:
-#        - "extensions"
-#      resources:
-#        - ingresses/status
-#        - ingresses
-#      verbs:
-#        - get
-#        - list
-#        - watch
-#    - nonResourceURLs:
-#        - "/metrics"
-#      verbs:
-#        - get
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
-  name:
+  #name:
 
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
@@ -102,7 +65,7 @@ config:
     flush_interval: "10s"
     flush_jitter: "0s"
     precision: ""
-    debug: false
+    debug: true
     quiet: false
     logfile: ""
     hostname: "$HOSTNAME"
@@ -110,7 +73,7 @@ config:
   outputs:
     - influxdb:
         urls:
-          - "http://influxdb.monitoring:8086"
+          - "http://influxdb:8086"
         database: "telegraf"
         retention_policy: ""
         timeout: "5s"
@@ -118,28 +81,6 @@ config:
         password: ""
         user_agent: "telegraf"
         insecure_skip_verify: false
-  inputs:
-    - cpu:
-        percpu: true
-        totalcpu: true
-        collect_cpu_time: false
-        report_active: false
-    - disk:
-        ignore_fs: ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
-    - diskio:
-    - docker:
-        endpoint: "unix:///var/run/docker.sock"
-        timeout: "5s"
-        perdevice: true
-        total: false
-        docker_label_exclude:
-          - "annotation.kubernetes.io/*"
-    - kernel:
-    - kubernetes:
-        url: "https://kubernetes.default.svc.cluster.local/api/v1/nodes/$NODE_NAME/proxy"
-        bearer_token: "/run/secrets/kubernetes.io/serviceaccount/token"
-        insecure_skip_verify: true
-    - mem:
-    - processes:
-    - swap:
-    - system:
+    - file:
+        files:
+          - stdout
