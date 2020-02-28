@@ -49,7 +49,7 @@ serviceAccount:
   create: true
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
-  #name:
+  # name:
 
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
@@ -65,22 +65,19 @@ config:
     flush_interval: "10s"
     flush_jitter: "0s"
     precision: ""
-    debug: true
+    debug: false
     quiet: false
     logfile: ""
     hostname: "$HOSTNAME"
     omit_hostname: false
   outputs:
-    # - influxdb:
-    #     urls:
-    #       - "http://influxdb:8086"
-    #     database: "telegraf"
-    #     retention_policy: ""
-    #     timeout: "5s"
-    #     username: ""
-    #     password: ""
-    #     user_agent: "telegraf"
-    #     insecure_skip_verify: false
-    - file:
-        files:
-          - stdout
+    - influxdb:
+        urls:
+          - - "http://influxdb.monitoring.svc:8086"
+        database: "telegraf"
+        retention_policy: ""
+        timeout: "5s"
+        username: ""
+        password: ""
+        user_agent: "telegraf"
+        insecure_skip_verify: false

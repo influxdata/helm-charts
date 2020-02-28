@@ -2,6 +2,8 @@
 
 [Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent written by the folks over at [InfluxData](https://influxdata.com) for collecting & reporting metrics. This chart runs a DaemonSet of Telegraf instances to collect host level metrics for your cluster. If you need to poll individual instances of infrastructure or APIs there is a `telegraf` chart that is more suited to that usecase.
 
+Telegraf input cannot be customised as it aims to provide an opinionated configuration to monitor kubernetes nodes and global kubernetes monitoring.
+
 ## TL;DR
 
 ```console
