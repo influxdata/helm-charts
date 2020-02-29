@@ -44,14 +44,10 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ## Configuration
 
-The default configuration values for this chart are listed in `values.yaml`.
-
-#### General 
-
 | Parameter | Description | Default |
 |---|---|---|
 | image.repository | Image repository url | influxdb |
-| image.tag | Image tag | 1.7.6-alpine |
+| image.tag | Image tag | 1.7.10-alpine |
 | image.pullPolicy | Image pull policy | IfNotPresent |
 | image.pullSecrets | It will store the repository's credentials to pull image | nil |
 | serviceAccount.create | It will create service account | true |
@@ -99,7 +95,6 @@ The default configuration values for this chart are listed in `values.yaml`.
 | backup.enabled | Boolean flag to enable and disable backups. Currently, it backups the data on `azure` and `gcs`. | false |
 | backup.schedule | Cron time | `0 0 * * *`. It means create a backup everyday at `00:00`. |
 | backup.annotations | Annotations for backup | {} |
-
 
 The [full image documentation](https://hub.docker.com/_/influxdb/) contains more information about running InfluxDB in docker.
 
