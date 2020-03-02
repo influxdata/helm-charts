@@ -8,8 +8,10 @@ For this chart, Telegraf inputs cannot be customised as it aims to provide an op
 
 ```console
 helm repo add influxdata https://helm.influxdata.com/
-helm install influxdata/telegraf-ds
+helm upgrade --install telegraf-ds influxdata/telegraf-ds
 ```
+
+> **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` is idempotent and can be run multiple times. If chart was not previously installed, helm will install it. If present, it will redeploy the same version or upgrade it if a new version is available.
 
 ## Introduction
 
@@ -24,7 +26,7 @@ This chart bootstraps a `telegraf-ds` DaemonSet on a [Kubernetes](http://kuberne
 To install the chart with the release name `my-release`:
 
 ```console
-helm install my-release influxdata/telegraf-ds
+helm upgrade --install my-release influxdata/telegraf-ds
 ```
 
 The command deploys a Telegraf DaemonSet on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section as well as the [values.yaml](/values.yaml) file lists the parameters that can be configured during installation.
@@ -46,7 +48,7 @@ The command removes all the Kubernetes components associated with the chart and 
 The default configuration parameters are listed in `values.yaml`. To change the defaults, specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```console
-helm install my-release \
+helm upgrade --install my-release \
   --set config.outputs.influxdb.url=http://foo.bar:8086 \
     influxdata/telegraf-ds
 ```
@@ -56,8 +58,10 @@ The above command allows the chart to deploy by setting the InfluxDB URL for tel
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-helm install my-release -f values.yaml influxdata/telegraf-ds
+helm upgrade --install my-release -f values.yaml influxdata/telegraf-ds
 ```
+
+> **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` can be shortened : `helm upgrade -i [RELEASE] [CHART] [FLAGS]`
 
 ## Telegraf Configuration
 
