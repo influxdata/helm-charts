@@ -38,7 +38,7 @@ The command deploys a Telegraf DaemonSet on the Kubernetes cluster in the defaul
 To uninstall/delete the `my-release` deployment:
 
 ```console
-helm delete my-release
+helm uninstall my-release
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
