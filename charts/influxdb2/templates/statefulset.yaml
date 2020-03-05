@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "influxdb.fullname" . }}
+  labels:
+    {{ include "influxdb.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "influxdb.selectorLabels" . | nindent 6 }}
+  serviceName: "{{ include "influxdb.fullname" . }}"
+  template:
+    metadata:
+      labels:
+      {{- include "influxdb.selectorLabels" . | nindent 8 }}
+    spec:
+      volumes:
+        - name: data
+        {{- if .Values.persistence.enabled }}
+          {{- if not (empty .Values.persistence.name) }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.name }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ template "influxdb.fullname" . }}
+          {{- end }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 9999
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          volumeMounts:
+          - name: data
+            mountPath: /root/.influxdbv2
+          resources:
+            {{ toYaml .Values.resources | indent 12 }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | indent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | indent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | indent 8 }}
+      {{- end }}
