@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "influxdb.fullname" . }}
+  labels:
+    {{- include "influxdb.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 9999
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "influxdb.selectorLabels" . | nindent 4 }}

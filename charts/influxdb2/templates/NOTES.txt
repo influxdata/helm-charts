@@ -1,0 +1,5 @@
+InfluxDB 2 is deployed as a StatefulSet on your cluster.
+
+You can access it by using the service name: {{ template "influxdb.fullname" . }}
+
+Admin password and token are available in the secret: {{ template "influxdb.fullname" . }}-auth
