@@ -12,7 +12,7 @@ data:
     [meta]
       dir = "/var/lib/influxdb/meta"
       {{- range $key, $value := index .Values.config.meta }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
       {{- if .Values.enterprise.enabled }}
@@ -24,44 +24,44 @@ data:
       dir = "/var/lib/influxdb/data"
       wal-dir = "/var/lib/influxdb/wal"
       {{- range $key, $value := index .Values.config.data }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     [coordinator]
       {{- range $key, $value := index .Values.config.coordinator }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     [retention]
       {{- range $key, $value := index .Values.config.retention }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     [shard-precreation]
       {{- range $key, $value := index .Values.config.shard_precreation }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     [monitor]
       {{- range $key, $value := index .Values.config.monitor }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     [subscriber]
       {{- range $key, $value := index .Values.config.subscriber }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     [http]
       {{- range $key, $value := index .Values.config.http }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     # TODO: allow multiple graphite listeners
 
     [[graphite]]
       {{- range $key, $value := index .Values.config.graphite }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
       {{- if .Values.config.graphite.templates }}
       templates = [
@@ -75,31 +75,31 @@ data:
 
     [[collectd]]
       {{- range $key, $value := index .Values.config.collectd }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     # TODO: allow multiple opentsdb listeners with templates
 
     [[opentsdb]]
       {{- range $key, $value := index .Values.config.opentsdb }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     # TODO: allow multiple udp listeners with templates
 
     [[udp]]
       {{- range $key, $value := index .Values.config.udp }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     [continuous_queries]
       {{- range $key, $value := index .Values.config.continuous_queries }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     [logging]
       {{- range $key, $value := index .Values.config.logging }}
-      {{ $key }} = {{ $value }}
+      {{ $key }} = {{ $value | quote }}
       {{- end }}
 
     {{ if .Values.enterprise.enabled -}}
