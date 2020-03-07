@@ -126,7 +126,12 @@ spec:
       - name: {{ include "influxdb.fullname" . }}-data
         emptyDir: {}
       {{- end }}
-{{- if .Values.persistence.enabled }}
+      {{- if and .Values.persistence.enabled .Values.persistence.existingClaim }}
+      - name: {{ include "influxdb.fullname" . }}-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim }}
+      {{- end }}
+  {{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
   volumeClaimTemplates:
     - metadata:
         name: {{ include "influxdb.fullname" . }}-data
@@ -147,4 +152,4 @@ spec:
         storageClassName: "{{ .Values.persistence.storageClass }}"
       {{- end }}
       {{- end }}
-{{- end }}
+  {{- end }}
