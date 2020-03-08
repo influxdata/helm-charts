@@ -215,7 +215,7 @@ Create chart name and version as used by the chart label.
             {{- range $k, $v := $value }}
               {{- $tps := typeOf $v }}
               {{- if eq $tps "string" }}
-        {{ $k }} = {{ $v }}
+        {{ $k }} = {{ $v | quote }}
               {{- end }}
               {{- if eq $tps "[]interface {}"}}
         {{ $k }} = [
