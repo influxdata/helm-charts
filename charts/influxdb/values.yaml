@@ -238,6 +238,6 @@ backup:
 
   ## Amazon S3 Bucket
   # awsS3:
-  #   s3userKey: 
+  #   s3userKey:
   #   s3userKeySecret:
   #   s3bucketName: influxdb-backup
