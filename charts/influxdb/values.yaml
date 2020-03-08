@@ -235,3 +235,9 @@ backup:
   #   storageAccountSecret: influxdb-backup-azure-key
   #   destination_container: influxdb-container
   #   destination_path: ""
+
+  ## Amazon S3 Bucket
+  # awsS3:
+  #   s3userKey: 
+  #   s3userKeySecret:
+  #   s3bucketName: influxdb-backup
