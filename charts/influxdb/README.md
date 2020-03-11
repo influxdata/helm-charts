@@ -60,7 +60,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | startupProbe | Health check for pod | {} |
 | service.type | Kubernetes service type | ClusterIP |
 | persistence.enabled | Boolean to enable and disable persistance | true |
-| persistence.existingClaim | An existing PersistentVolumeClaim | nil |
+| persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil |
 | persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
 | persistence.annotations | Annotations for volumeClaimTemplates | nil |
 | persistence.accessMode | Access mode for the volume | ReadWriteOnce |
