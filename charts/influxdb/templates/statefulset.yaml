@@ -126,12 +126,14 @@ spec:
       - name: {{ include "influxdb.fullname" . }}-data
         emptyDir: {}
       {{- end }}
-      {{- if and .Values.persistence.enabled .Values.persistence.existingClaim }}
+      # Cannot use existing claim in enterprise mode
+      {{- if and .Values.persistence.enabled .Values.persistence.existingClaim (not .Values.enterprise.enabled) }}
       - name: {{ include "influxdb.fullname" . }}-data
         persistentVolumeClaim:
           claimName: {{ .Values.persistence.existingClaim }}
       {{- end }}
-  {{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
+  # Must use volume claim template in enterprise mode
+  {{- if and .Values.persistence.enabled (or (not .Values.persistence.existingClaim) .Values.enterprise.enabled) }}
   volumeClaimTemplates:
     - metadata:
         name: {{ include "influxdb.fullname" . }}-data
