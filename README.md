@@ -1,7 +1,7 @@
 # InfluxData Helm Charts
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![](https://github.com/influxdata/helm-charts/workflows/Release%20Master/badge.svg?branch=master)](https://github.com/influxdata/helm-charts/actions)
+[![](https://github.com/influxdata/helm-charts/workflows/helm-charts%2Frelease/badge.svg?branch=master)](https://github.com/influxdata/helm-charts/actions)
 
 This functionality is in beta and is subject to change. The code is provided as-is with no warranties. Beta features are not subject to the support SLA of official GA features.
 
