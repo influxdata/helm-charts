@@ -1,4 +1,4 @@
-name: Release Helm Charts
+name: "helm-charts/release"
 
 on:
   push:
