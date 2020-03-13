@@ -3,6 +3,30 @@ entries:
   chronograf:
   - apiVersion: v1
     appVersion: 1.8.0
+    created: "2020-03-13T19:32:07.283796816Z"
+    description: Open-source web application written in Go and React.js that provides
+      the tools to visualize your monitoring data and easily create alerting and automation
+      rules.
+    digest: 4fb240433c027de40e1791fcabb8516a1912abe3caac3ca35db4010ab58980ab
+    engine: gotpl
+    home: https://www.influxdata.com/time-series-platform/chronograf/
+    keywords:
+    - chronograf
+    - visualizaion
+    - timeseries
+    - influxdata
+    - influxdb
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: chronograf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/chronograf-1.1.8/chronograf-1.1.8.tgz
+    version: 1.1.8
+  - apiVersion: v1
+    appVersion: 1.8.0
     created: "2020-02-28T21:58:41.19982489Z"
     description: Open-source web application written in Go and React.js that provides
       the tools to visualize your monitoring data and easily create alerting and automation
@@ -94,9 +118,9 @@ entries:
   influxdb:
   - apiVersion: v1
     appVersion: 1.7.10
-    created: "2020-03-12T12:46:48.66528789Z"
+    created: "2020-03-13T19:32:07.396373972Z"
     description: Scalable datastore for metrics, events, and real-time analytics.
-    digest: 6223c3ecf602348eb0f9b1c9cbccc6558e4f0370bbcdff54dedbc8280ce5be20
+    digest: 69db91c0d48ca76f177f1da0eaba6ddab623fd329a0da5c1d90e08f06093ec3d
     engine: gotpl
     home: https://www.influxdata.com/time-series-platform/influxdb/
     keywords:
@@ -117,8 +141,8 @@ entries:
     sources:
     - https://github.com/influxdata/influxdb
     urls:
-    - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.4.0/influxdb-4.4.0.tgz
-    version: 4.4.0
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.4.1/influxdb-4.4.1.tgz
+    version: 4.4.1
   - apiVersion: v1
     appVersion: 1.7.10
     created: "2020-03-09T22:42:05.854181447Z"
