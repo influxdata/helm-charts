@@ -21,15 +21,18 @@ serviceAccount:
 livenessProbe: {}
   # initialDelaySeconds: 30
   # timeoutSeconds: 5
+  # scheme: HTTP
 
 readinessProbe: {}
   # initialDelaySeconds: 5
   # timeoutSeconds: 1
+  # scheme: HTTP
 
 startupProbe:
   enabled: false
   # failureThreshold: 6
   # periodSeconds: 5
+  # scheme: HTTP
 
 ## Specify a service type
 ## NodePort is default
