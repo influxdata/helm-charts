@@ -88,12 +88,14 @@ spec:
           httpGet:
             path: /ping
             port: api
+            scheme: {{ .Values.livenessProbe.scheme | default "HTTP" }}
           initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 30 }}
           timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds | default 5 }}
         readinessProbe:
           httpGet:
             path: /ping
             port: api
+            scheme: {{ .Values.readinessProbe.scheme | default "HTTP" }}
           initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default 5 }}
           timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds | default 1 }}
         {{- if .Values.startupProbe.enabled }}
@@ -101,6 +103,7 @@ spec:
           httpGet:
             path: /ping
             port: api
+            scheme: {{ .Values.startupProbe.scheme | default "HTTP" }}
           failureThreshold: {{ .Values.startupProbe.failureThreshold | default 6 }}
           periodSeconds: {{ .Values.startupProbe.periodSeconds | default 5 }}
         {{- end }}
