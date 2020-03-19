@@ -1,7 +1,7 @@
 apiVersion: v2
 appVersion: 2.0.0-beta
 
-name: influxdb
+name: influxdb2
 description: A Helm chart for InfluxDB v2
 type: application
 version: 1.0.0
