@@ -15,6 +15,10 @@ spec:
     spec:
       template:
         metadata:
+          {{- if .Values.backup.podAnnotations }}
+          annotations:
+            {{ toYaml .Values.backup.podAnnotations | nindent 12 }}
+          {{- end }}
           labels:
             {{- include "influxdb.selectorLabels" . | nindent 12 }}
         spec:

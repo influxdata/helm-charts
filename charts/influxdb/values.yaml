@@ -228,6 +228,7 @@ backup:
   enabled: false
   schedule: "0 0 * * *"
   annotations: {}
+  podAnnotation: {}
 
   ## Google Cloud Storage
   # gcs:
