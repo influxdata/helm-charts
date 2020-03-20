@@ -95,9 +95,12 @@ The command removes all the Kubernetes components associated with the chart and 
 | config.tls | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#tls) | {} |
 | initScripts.enabled | Boolean flag to enable and disable initscripts. If the container finds any files with the extensions .sh or .iql inside of the /docker-entrypoint-initdb.d folder, it will execute them. The order they are executed in is determined by the shell. This is usually alphabetical order. | false |
 | initScripts.scripts | Init scripts | {} |
-| backup.enabled | Boolean flag to enable and disable backups. Currently, it backups the data on `azure` and `gcs`. | false |
-| backup.schedule | Cron time | `0 0 * * *`. It means create a backup everyday at `00:00`. |
-| backup.annotations | Annotations for backup | {} |
+| backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false` |
+| backup.gcs | Google Cloud Storage config | `nil`
+| backup.azure | Azure Blob Storage config | `nil`
+| backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
+| backup.annotations | Annotations for backup cronjob | {} |
+| backup.podAnnotations | Annotations for backup cronjob pods | {} |
 
 The [full image documentation](https://hub.docker.com/_/influxdb/) contains more information about running InfluxDB in docker.
 
