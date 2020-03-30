@@ -28,6 +28,11 @@ spec:
   {{- range $objectKey, $objectValue := .Values.config.inputs }}
   {{- range $key, $value := . -}}
     {{- $tp := typeOf $value -}}
+    {{- if eq $key "http_listener" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    name: "http-listener"
+    {{- end }}
     {{- if eq $key "http_listener_v2" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
