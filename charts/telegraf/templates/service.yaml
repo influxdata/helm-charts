@@ -36,7 +36,7 @@ spec:
     {{- if eq $key "http_listener_v2" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    name: "http-listener"
+    name: "http-listener-v2"
     {{- end }}
     {{- if eq $key "statsd" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
