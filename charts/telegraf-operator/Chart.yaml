@@ -1,7 +1,17 @@
 apiVersion: v2
 name: telegraf-operator
 description: A Helm chart for Kubernetes to deploy telegraf-operator
-
+keywords:
+  - telegraf
+  - telegraf-operator
+  - sidecar
+  - operator
+  - injector
+  - mutatingwebhook
+  - influxdata
+  - influxdb
+kubeVersion: >= 1.13.0
+home: https://github.com/influxdata/telegraf-operator
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives
