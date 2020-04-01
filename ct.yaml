@@ -1,0 +1,7 @@
+remote: origin
+target-branch: master
+chart-dirs:
+  - charts
+chart-repos:
+  - "jetstack=https://charts.jetstack.io"
+debug: true
