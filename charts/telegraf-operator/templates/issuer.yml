@@ -1,0 +1,10 @@
+{{- if .Values.certManager.enable -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+  labels:
+    {{- include "telegraf-operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+{{- end -}}

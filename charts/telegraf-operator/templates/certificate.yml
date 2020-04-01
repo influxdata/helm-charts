@@ -1,0 +1,17 @@
+{{- if .Values.certManager.enable -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ include "telegraf-operator.fullname" . }}
+  labels:
+    {{- include "telegraf-operator.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
+spec:
+  dnsNames:
+  - "{{ include "telegraf-operator.fullname" . }}.{{ .Values.namespace }}.svc"
+  isCA: true
+  issuerRef:
+    kind: Issuer
+    name: selfsigned
+  secretName: webhook-server-cert
+{{- end -}}
