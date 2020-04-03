@@ -21,7 +21,7 @@ This chart bootstraps a `telegraf` deployment on a [Kubernetes](http://kubernete
 
 To install the chart with the release name `telegraf`:
 
-`console
+```console
 helm upgrade --install telegraf influxdata/telegraf --namespace monitoring
 ```
 
@@ -33,7 +33,7 @@ The command deploys Telegraf on the Kubernetes cluster in the default configurat
 
 To uninstall/delete the `telegraf` deployment:
 
-`console
+```console
 helm uninstall telegraf
 ```
 
@@ -43,7 +43,7 @@ The command removes all the Kubernetes components associated with the chart and 
 
 The default configuration parameters are listed in `values.yaml`.
 
-`console
+```console
 helm upgrade --install telegraf influxdata/telegraf
 ```
 
