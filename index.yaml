@@ -584,6 +584,31 @@ entries:
     version: 1.2.2
   telegraf:
   - apiVersion: v1
+    appVersion: "1.14"
+    created: "2020-04-06T13:54:22.11147775Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 2c3c1eb55cdc56f67e8177026002cc97c83216f43ccb1d27f0fba17abdb689dd
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    - influxdb
+    - agent
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: telegraf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.8/telegraf-1.7.8.tgz
+    version: 1.7.8
+  - apiVersion: v1
     appVersion: "1.13"
     created: "2020-03-09T22:40:57.985273036Z"
     description: Telegraf is an agent written in Go for collecting, processing, aggregating,
@@ -703,6 +728,31 @@ entries:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.1/telegraf-1.7.1.tgz
     version: 1.7.1
   telegraf-ds:
+  - apiVersion: v1
+    appVersion: "1.14"
+    created: "2020-04-06T13:54:22.226704848Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 966cdd8fab2562dbd7b5cd78ad70ffd2f1301d375750fc903366f77be753db7c
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: naseemkullah@gmail.com
+      name: naseemkullah
+    - email: contact@cerenit.fr
+      name: nsteinmetz
+    name: telegraf-ds
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-ds-1.0.4/telegraf-ds-1.0.4.tgz
+    version: 1.0.4
   - apiVersion: v1
     appVersion: "1.13"
     created: "2020-03-05T10:26:55.656144259Z"
