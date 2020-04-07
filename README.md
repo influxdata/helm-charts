@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![](https://github.com/influxdata/helm-charts/workflows/helm-charts%2Frelease/badge.svg?branch=master)](https://github.com/influxdata/helm-charts/actions)
 
+
 This functionality is in beta and is subject to change. The code is provided as-is with no warranties. Beta features are not subject to the support SLA of official GA features.
 
 ## Usage
@@ -24,4 +25,4 @@ We'd love to have you contribute! Please refer to our [contribution guidelines](
 
 ## License
 
-[MIT License](./LICENSE).
+[MIT License](./LICENSE)
