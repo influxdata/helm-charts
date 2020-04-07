@@ -1,6 +1,121 @@
 apiVersion: v1
 entries:
+  chronograf:
+  - apiVersion: v1
+    appVersion: 1.8.0
+    created: "2020-04-07T15:52:17.82549366Z"
+    description: Open-source web application written in Go and React.js that provides
+      the tools to visualize your monitoring data and easily create alerting and automation
+      rules.
+    digest: 89c426ec5c71022f5c4f4acae9039522d9a59065b3f5fc10a4a30454635b1dc2
+    home: https://www.influxdata.com/time-series-platform/chronograf/
+    keywords:
+    - chronograf
+    - visualizaion
+    - timeseries
+    - influxdata
+    - influxdb
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: chronograf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/chronograf-1.1.9/chronograf-1.1.9.tgz
+    version: 1.1.9
+  influxdb:
+  - apiVersion: v1
+    appVersion: 1.7.10
+    created: "2020-04-07T15:52:17.913830366Z"
+    description: Scalable datastore for metrics, events, and real-time analytics.
+    digest: 42214b238d8e944c73bf0ae2bbdb807eea02364ff805ff310fc77f9f5a12582a
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: influxdb
+    sources:
+    - https://github.com/influxdata/influxdb
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.4.4/influxdb-4.4.4.tgz
+    version: 4.4.4
+  influxdb2:
+  - apiVersion: v2
+    appVersion: 2.0.0-beta
+    created: "2020-04-07T15:52:18.016102295Z"
+    description: A Helm chart for InfluxDB v2
+    digest: dddc4dc43118aa164d3688b34038eef08a01bc9ea9612dda4ced3f7fe30bc9b9
+    name: influxdb2
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb2-1.0.2/influxdb2-1.0.2.tgz
+    version: 1.0.2
+  kapacitor:
+  - apiVersion: v1
+    appVersion: 1.5.4
+    created: "2020-04-07T15:52:18.108771773Z"
+    description: InfluxDB's native data processing engine. It can process both stream
+      and batch data from InfluxDB.
+    digest: 51bbeba5f8b472f3a026b6eb568f0fff0d70b51e1331893a9f9ae5e07e72b17a
+    home: https://www.influxdata.com/time-series-platform/kapacitor/
+    keywords:
+    - kapacitor
+    - stream
+    - etl
+    - timeseries
+    - influxdb
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    name: kapacitor
+    sources:
+    - https://github.com/influxdata/kapacitor
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/kapacitor-1.2.9/kapacitor-1.2.9.tgz
+    version: 1.2.9
   telegraf:
+  - apiVersion: v1
+    appVersion: "1.14"
+    created: "2020-04-07T15:52:18.200492869Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 1841d1fcfa4b1c1cd2423a6a578ee8525d1ba35e1a4c8ea76d9d02bf9f03f0ef
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    - influxdb
+    - agent
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: telegraf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.10/telegraf-1.7.10.tgz
+    version: 1.7.10
   - apiVersion: v1
     appVersion: "1.14"
     created: "2020-04-07T13:26:34.489079572Z"
@@ -26,4 +141,30 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.9/telegraf-1.7.9.tgz
     version: 1.7.9
+  telegraf-ds:
+  - apiVersion: v1
+    appVersion: "1.14"
+    created: "2020-04-07T15:52:18.288782733Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 88a4170f234e9c3b802db6c9a5f17d4f86e447352016ab5dddef7948b43063ce
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: naseemkullah@gmail.com
+      name: naseemkullah
+    - email: contact@cerenit.fr
+      name: nsteinmetz
+    name: telegraf-ds
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-ds-1.0.5/telegraf-ds-1.0.5.tgz
+    version: 1.0.5
 generated: "2020-04-07T13:26:34.386463383Z"
