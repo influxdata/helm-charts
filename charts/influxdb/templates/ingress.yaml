@@ -22,4 +22,11 @@ spec:
         backend:
           serviceName: {{ include "influxdb.fullname" . }}
           servicePort: 8086
+      {{- if .Values.config.udp.enabled }}
+      - path: /
+        backend:
+          protocol: UDP
+          serviceName: {{ include "influxdb.fullname" . }}
+          servicePort: 8089
+      {{- end }}
 {{- end -}}

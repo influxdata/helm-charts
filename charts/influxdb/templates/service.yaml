@@ -24,17 +24,18 @@ spec:
   {{- end }}
   {{- if .Values.config.collectd.enabled }}
   - name: collectd
-    port: {{ .Values.config.collectd.bind_address |  default 25826 }}
+    port: {{ .Values.config.collectd.bind_address | default 25826 }}
     targetPort: collectd
   {{- end }}
   {{- if .Values.config.udp.enabled }}
   - name: udp
-    port: {{ .Values.config.udp.bind_address |  default 8089 }}
+    port: {{ .Values.config.udp.bind_address | default 8089 }}
+    protocol: UDP
     targetPort: udp
   {{- end }}
   {{- if .Values.config.opentsdb.enabled }}
   - name: opentsdb
-    port: {{ .Values.config.opentsdb.bind_address |  default 4242 }}
+    port: {{ .Values.config.opentsdb.bind_address | default 4242 }}
     targetPort: opentsdb
   {{- end }}
   selector:
