@@ -28,6 +28,10 @@ readinessProbe: {}
   # timeoutSeconds: 1
   # scheme: HTTP
 
+securityContext: {}
+  # runAsUser: 999
+  # runAsGroup: 999
+
 startupProbe:
   enabled: false
   # failureThreshold: 6
