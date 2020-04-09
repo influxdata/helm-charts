@@ -75,6 +75,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | nodeSelector | Node labels for pod assignment | {} |
 | affinity | [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for pod assignment |  {|
 | tolerations | [Tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) for pod assignment | [] |
+| securityContext | [securityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for pod | {} |
 | env | environment variables for influxdb container | {} |
 | config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#reporting-disabled-false) | false |
 | config.rpc | RPC address for backup and storage | {} |
