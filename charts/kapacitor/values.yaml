@@ -67,7 +67,7 @@ resources:
 ##
 # existingSecret: influxdb-auth
 
-## Role based access role
+## Role based access control
 rbac:
   create: true
   namespaced: false
@@ -78,7 +78,7 @@ serviceAccount:
   create: true
   name:
 
-## Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders
+## Sidecars that collect the configmaps with specified label and stores the included files into the respective folders
 sidecar:
   image: kiwigrid/k8s-sidecar:0.1.116
   imagePullPolicy: IfNotPresent
