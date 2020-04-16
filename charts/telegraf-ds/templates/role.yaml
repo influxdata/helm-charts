@@ -11,7 +11,7 @@ rules:
     resources: ["pods"]
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
-    resources: ["nodes/proxy"]
+    resources: ["nodes/proxy", "nodes/stats"]
     verbs: ["get", "list", "watch"]
 ---
 # Define global role with the default system:aggregate-to-view cluster role and the two rules we just created
