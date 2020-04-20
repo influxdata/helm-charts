@@ -124,3 +124,8 @@ config:
         metric_separator: "_"
         allowed_pending_messages: 10000
         percentile_limit: 1000
+
+# Lifecycle hooks
+# hooks:
+#   postStart: ["/bin/sh", "-c", "echo Telegraf started"]
+#   preStop: ["/bin/sh", "-c", "sleep 60"]
