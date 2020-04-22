@@ -10,10 +10,7 @@ classes:
   data: {}
 
 certManager:
-  chart:
-    enable: false
-  certificate:
-    enable: true
+  enable: false
 
 imagePullSecrets: []
 nameOverride: ""
