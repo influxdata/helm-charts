@@ -10,8 +10,6 @@ defaultClassName: "infra"
 telegrafSidecarImage: "docker.io/library/telegraf:1.14.1"
 
 certManager: 
-  chart: 
-    enable: false
   certificate:
     enable: true
 
