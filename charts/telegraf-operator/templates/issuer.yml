@@ -1,8 +1,9 @@
-{{- if .Values.certManager.enable -}}
+{{- if .Values.certManager.certificate.enable -}}
 apiVersion: cert-manager.io/v1alpha2
-kind: ClusterIssuer
+kind: Issuer
 metadata:
   name: selfsigned
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "telegraf-operator.labels" . | nindent 4 }}
 spec:

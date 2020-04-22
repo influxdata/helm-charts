@@ -1,5 +1,7 @@
 # Telegraf-operator
 
+> Default installation expects cert-manager to be running in the cluster
+
 ## Usage
 
 ```console
@@ -16,4 +18,9 @@ helm dependency update
 helm template telegraf-operator .
 ```
 
+## Developing
 
+```
+helm template telegraf-operator . > test.yml
+code --diff test.yml stub.yml
+```

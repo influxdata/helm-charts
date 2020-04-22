@@ -10,7 +10,8 @@ keywords:
   - mutatingwebhook
   - influxdata
   - influxdb
-kubeVersion: >= 1.13.0
+
+kubeVersion: ">= 1.13.0"
 home: https://github.com/influxdata/telegraf-operator
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -34,4 +35,4 @@ dependencies:
 - name: cert-manager
   version: v0.14.1
   repository: https://charts.jetstack.io
-  condition: certManager.enabled
+  condition: certManager.chart.enable

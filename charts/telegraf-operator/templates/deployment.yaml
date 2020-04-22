@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "telegraf-operator.fullname" . }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "telegraf-operator.labels" . | nindent 4 }}
-  namespace: {{ .Values.namespace }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -15,20 +15,6 @@ spec:
       labels:
         {{- include "telegraf-operator.selectorLabels" . | nindent 8 }}
     spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-      serviceAccountName: {{ include "telegraf-operator.fullname" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      volumes:
-        - name: certs
-          secret:
-            secretName: webhook-server-cert
-        - name: classes
-          secret:
-            secretName: {{ .Values.classesSecretName }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -38,6 +24,8 @@ spec:
           args:
             - "--telegraf-default-class={{ .Values.defaultClassName }}"
             - --telegraf-classes-directory=/etc/telegraf-operator
+            - --enable-default-internal-plugin
+            - "--telegraf-image={{ .Values.telegrafSidecarImage }}"
           env:
           - name: POD_NAMESPACE
             valueFrom:
@@ -54,16 +42,22 @@ spec:
             - mountPath: /etc/telegraf-operator
               name: classes
               readOnly: true
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "telegraf-operator.fullname" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: certs
+        secret:
+          secretName: webhook-server-cert
+      - name: classes
+        secret:
+          secretName: {{ .Values.classesSecretName }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

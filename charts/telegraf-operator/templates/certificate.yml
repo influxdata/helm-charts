@@ -1,4 +1,4 @@
-{{- if .Values.certManager.enable -}}
+{{- if .Values.certManager.certificate.enable -}}
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
@@ -13,5 +13,6 @@ spec:
   issuerRef:
     kind: Issuer
     name: selfsigned
+    namespace: {{ .Values.namespace }}
   secretName: webhook-server-cert
 {{- end -}}

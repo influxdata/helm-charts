@@ -1,15 +1,19 @@
 
 namespace: telegraf-operator
-replicaCount: 1
+replicaCount: 3
 image:
-  repository: quay.io/influxdb/telegraf-operator:v0.1.0
+  repository: quay.io/influxdb/telegraf-operator
   pullPolicy: IfNotPresent
 
 classesSecretName: telegraf-operator-classes
-defaultClassName: "infra.conf"
+defaultClassName: "infra"
+telegrafSidecarImage: "docker.io/library/telegraf:1.14.1"
 
 certManager: 
-  enabled: true
+  chart: 
+    enable: false
+  certificate:
+    enable: true
 
 imagePullSecrets: []
 nameOverride: ""
@@ -30,17 +34,13 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources: 
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
 
 nodeSelector: {}
 

@@ -2,14 +2,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "telegraf-operator.fullname" . }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "telegraf-operator.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
-    - port: 443
-      targetPort: 9443
-      protocol: TCP
-      name: https
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 9443
   selector:
     {{- include "telegraf-operator.selectorLabels" . | nindent 4 }}
