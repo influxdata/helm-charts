@@ -1,29 +1,22 @@
-
 namespace: telegraf-operator
 replicaCount: 3
 image:
   repository: quay.io/influxdb/telegraf-operator
   pullPolicy: IfNotPresent
-
 classesSecretName: telegraf-operator-classes
 defaultClassName: "infra"
 telegrafSidecarImage: "docker.io/library/telegraf:1.14.1"
-
-certManager: 
+certManager:
   certificate:
     enable: true
-
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
-
 serviceAccount:
   # Annotations to add to the service account
   annotations: {}
-
 podSecurityContext: {}
   # fsGroup: 2000
-
 securityContext: {}
   # capabilities:
   #   drop:
@@ -31,17 +24,13 @@ securityContext: {}
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
-
-resources: 
+resources:
   limits:
     cpu: 100m
     memory: 128Mi
   requests:
     cpu: 50m
     memory: 64Mi
-
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
