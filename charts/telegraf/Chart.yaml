@@ -17,6 +17,4 @@ maintainers:
   email: rawkode@influxdata.com
 - name: gitirabassi
   email: giacomo@influxdata.com
-- name: naseemkullah
-  email: naseem@transit.app
 engine: gotpl
