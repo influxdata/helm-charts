@@ -39,6 +39,30 @@ helm uninstall telegraf
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
+## livenessProve, readinessProbe and health service
+
+Be sure to have at least these inputs and outputs enabled so that readinessProbe and livenessProbe can work as expected and that the health service endpoint is correctly set up:
+
+```yaml
+[...]
+
+config:
+  [...]
+  outputs:
+    - health:
+        service_address: "http://:8888"
+        compares:
+          field: buffer_size
+          lt: 5000.0
+        contains:
+          field: buffer_size
+  [...]
+  inputs:
+    - internal:
+        collect_memstats: false
+  [...]
+```
+
 ## Configuration
 
 The default configuration parameters are listed in `values.yaml`.
@@ -50,8 +74,10 @@ helm upgrade --install telegraf influxdata/telegraf
 > **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` can be shortened : `helm upgrade -i [RELEASE] [CHART] [FLAGS]`
 
 Outputs and inputs are configured as arrays of key/value dictionaries. Additional examples and defaults can be found in [values.yaml](values.yaml)
+
 Example:
-```
+
+```yaml
 outputs:
   - influxdb:
       urls: []

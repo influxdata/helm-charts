@@ -122,6 +122,8 @@ config:
           - "http://influxdb.monitoring.svc:8086"
         database: "telegraf"
   inputs:
+    - internal:
+        collect_memstats: false
     - statsd:
         service_address: ":8125"
         percentiles:
