@@ -15,16 +15,9 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-  {{- range $objectKey, $objectValue := .Values.config.outputs }}
-  {{- range $key, $value := . -}}
-  {{- $tp := typeOf $value -}}
-  {{- if eq $key "health" }}
-  - port: {{ trimPrefix "http://:" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix "http://:" $value.service_address | int64 }}
+  - port: 8888
+    targetPort: 8888
     name: "health"
-    {{- end }}
-  {{- end }}
-  {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.inputs }}
   {{- range $key, $value := . -}}
     {{- $tp := typeOf $value -}}
