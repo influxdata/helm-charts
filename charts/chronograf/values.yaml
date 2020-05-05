@@ -74,34 +74,34 @@ oauth:
   # Need to set to true to use any of the oauth options
   enabled: false
   # Used for JWT to support running multiple copies of Chronograf
-  token_secret: CHANGE_ME
+  # token_secret: CHANGE_ME
   # Set if the OAuth provider implements oidc with RS256 signature
   # use_id_token: true
   # jwks_url: ""
   github:
     enabled: false
-    client_id: CHANGE_ME
-    client_secret: CHANGE_ME
+    # client_id: CHANGE_ME
+    # client_secret: CHANGE_ME
     # This is a comma separated list of GH organizations (OPTIONAL)
     gh_orgs: ""
   google:
     enabled: false
-    client_id: CHANGE_ME
-    client_secret: CHANGE_ME
+    # client_id: CHANGE_ME
+    # client_secret: CHANGE_ME
     # eg. http://chronograf.foobar.com
     public_url: ""
     # This is a comma separated list of Google Apps domains (OPTIONAL)
     domains: ""
   heroku:
     enabled: false
-    client_id: CHANGE_ME
-    client_secret: CHANGE_ME
+    # client_id: CHANGE_ME
+    # client_secret: CHANGE_ME
     # This is a comma separated list of Heroku organizations (OPTIONAL)
     he_orgs: ""
   generic:
     enabled: false
-    client_id: CHANGE_ME
-    client_secret: CHANGE_ME
+    # client_id: CHANGE_ME
+    # client_secret: CHANGE_ME
     api_key: ""
     scopes: ""
     # eg. http://chronograf.foobar.com
