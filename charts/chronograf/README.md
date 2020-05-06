@@ -9,31 +9,30 @@ The Chronograf Helm chart bootstraps a Chronograf deployment and service on a [K
 - Kubernetes 1.4+
 - (Optional) PV provisioner support in the underlying infrastructure
 
-## QuickStart
-
-```bash
-helm repo add influxdata https://helm.influxdata.com/
-helm upgrade --install chronograf influxdata/chronograf --namespace monitoring
-```
-
 ## Install the chart
 
-To install the chart with the release name `my-release`, use the following command:
+1. Add the InfluxData Helm repository:
 
-```bash
-helm upgrade --install my-release influxdata/chronograf
-```
+   ```bash
+   helm repo add influxdata https://helm.influxdata.com/
+   ``` 
 
-This command deploys Chronograf on the Kubernetes cluster in the default configuration. To find the parameters you can configure during installation, see [Configuring the chart](#configure-the-chart).
+2. Run the following command, providing a name for your Chronograf Helm chart:
 
-> **Tip**: To view all releases, run `helm list`.
+   ```bash
+   helm upgrade --install my-chart-name influxdata/chronograf --namespace monitoring
+   ```
+
+   This command deploys Chronograf on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
+
+  > **Tip**: To view all releases, run `helm list`.
 
 ## Uninstall the chart
 
-To uninstall the `my-release` deployment, use the following command:
+To uninstall the `my-chart-name` deployment, use the following command:
 
 ```bash
-helm uninstall my-release
+helm uninstall my-chart-name
 ```
 
 This command removes all Kubernetes components associated with the chart and deletes the release.
@@ -82,17 +81,17 @@ The following table lists the configurable parameters and default values for the
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example, use the following command:
 
 ```bash
-helm upgrade --install my-release \
+helm upgrade --install my-chart-name \
   --set ingress.enabled=true,ingress.hostname=chronograf.foobar.com \
     influxdata/chronograf
 ```
 
 This command enables persistence and changes the size of the requested data volume to 200GB.
 
-Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example:
+Alternatively, provide a YAML file that specifies the parameter values while installing the chart. For example:
 
 ```bash
-helm upgrade --install my-release -f values.yaml influxdata/chronograf
+helm upgrade --install my-chart-name -f values.yaml influxdata/chronograf
 ```
 
 > **Tip**: Use the default [values.yaml](values.yaml).
