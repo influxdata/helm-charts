@@ -1,8 +1,13 @@
-# Chronograf
+# Chronograf Helm chart
 
-##  An Open-Source Time Series Visualization Tool
+[Chronograf](https://github.com/influxdata/chronograf) is an open-source web application used to visualize your monitoring data and easily create alerting and automation rules.
 
-[Chronograf](https://github.com/influxdata/chronograf) is an open-source web application built by the folks over at [InfluxData](https://influxdata.com) and written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
+The Chronograf Helm chart bootstraps a Chronograf deployment and service on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+
+## Prerequisites
+
+- Kubernetes 1.4+
+- (Optional) PV provisioner support in the underlying infrastructure
 
 ## QuickStart
 
@@ -11,48 +16,38 @@ helm repo add influxdata https://helm.influxdata.com/
 helm upgrade --install chronograf influxdata/chronograf --namespace monitoring
 ```
 
-## Introduction
+## Install the chart
 
-This chart bootstraps a Chronograf deployment and service on a Kubernetes cluster using the Helm Package manager.
-
-## Prerequisites
-
-- Kubernetes 1.4+
-- PV provisioner support in the underlying infrastructure (optional)
-
-## Installing the Chart
-
-To install the chart with the release name `my-release`:
+To install the chart with the release name `my-release`, use the following command:
 
 ```bash
 helm upgrade --install my-release influxdata/chronograf
 ```
 
-The command deploys Chronograf on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+This command deploys Chronograf on the Kubernetes cluster in the default configuration. To find the parameters you can configure during installation, see [Configuring the chart](#configure-the-chart).
 
-> **Tip**: List all releases using `helm list`
+> **Tip**: To view all releases, run `helm list`.
 
-## Uninstalling the Chart
+## Uninstall the chart
 
-To uninstall/delete the `my-release` deployment:
+To uninstall the `my-release` deployment, use the following command:
 
 ```bash
 helm uninstall my-release
 ```
 
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+This command removes all Kubernetes components associated with the chart and deletes the release.
 
-## Configuration
+## Configure the chart
 
-The configurable parameters of the Chronograf chart and
-their descriptions can be seen in `values.yaml`. The [full image documentation](https://quay.io/influxdb/chronograf) contains more information about running Chronograf in docker.
+Find configurable parameters and descriptions for the Chronograf Helm chart in `values.yaml`. For more information about running Chronograf in Docker, see the [full image documentation](https://quay.io/influxdb/chronograf).
 
-The following table lists the configurable parameters of the chronograf chart and their default values.
+The following table lists the configurable parameters and default values for the Chronograf Helm chart.
 
 | Parameter                    | Description                                                                                               | Default                                     |
 |:-----------------------------|:----------------------------------------------------------------------------------------------------------|:--------------------------------------------|
 | `image.repository`           | controller container image repository                                                                     | quay.io/influxdb/chronograf                 |
-| `image.tag`                  | controller container image tag                                                                            | 1.8.0                                      |
+| `image.tag`                  | controller container image tag                                                                            | 1.8.0                                       |
 | `image.pullPolicy`           | controller container image pull policy                                                                    | IfNotPresent                                |
 | `service.type`               | ClusterIP, NodePort, or LoadBalancer                                                                      | ClusterIP                                   |
 | `persistence.enabled`        | Use a PVC to persist data                                                                                 | `true`                                      |
@@ -84,7 +79,7 @@ The following table lists the configurable parameters of the chronograf chart an
 | `tolerations`                | Toleration labels for pod assignment                                                                      | []                                          |
 | `affinity`                   | Affinity settings for pod assignment                                                                      | {}                                          |
 
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example, use the following command:
 
 ```bash
 helm upgrade --install my-release \
@@ -92,15 +87,15 @@ helm upgrade --install my-release \
     influxdata/chronograf
 ```
 
-The above command enables persistence and changes the size of the requested data volume to 200GB.
+This command enables persistence and changes the size of the requested data volume to 200GB.
 
-Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
+Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example:
 
 ```bash
 helm upgrade --install my-release -f values.yaml influxdata/chronograf
 ```
 
-> **Tip**: You can use the default [values.yaml](values.yaml)
+> **Tip**: Use the default [values.yaml](values.yaml).
 
 ## Persistence
 
@@ -108,11 +103,11 @@ The [Chronograf](https://quay.io/influxdb/chronograf) image stores data in the `
 
 The chart optionally mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) at this location. The volume is created using dynamic volume provisioning.
 
-## OAuth Using Kubernetes Secret
+## OAuth using Kubernetes Secret
 
-OAuth, among other things, can be configured in Chronograf using environment variables. For more information please see https://docs.influxdata.com/chronograf/latest/administration/managing-security
+Use environment variables to configure OAuth in Chronograf. For more information, see https://docs.influxdata.com/chronograf/latest/administration/managing-security.
 
-Taking Google as an example, to use an existing Kubernetes Secret that contains sensitive information (`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`), e.g.:
+The following example snippet shows a Kubernetes Secret that contains sensitive information (`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`):
 
 ```
 apiVersion: v1
@@ -126,7 +121,7 @@ data:
     GOOGLE_CLIENT_SECRET: <BASE64_ENCODED_GOOGLE_CLIENT_SECRET>
 ```
 
-in conjunction with less sensitive information such as `GOOGLE_DOMAINS` and `PUBLIC_URL`, one can make use of the chart's `envFromSecret` and `env` values, e.g. a values file can have the following:
+In conjunction with less sensitive information, such as `GOOGLE_DOMAINS` and `PUBLIC_URL`, use the chart's `envFromSecret` and `env` values. For example, include the following in a values file:
 
 ```
 [...]

@@ -1,8 +1,6 @@
 # Kapacitor
 
-##  An Open-Source Time Series ETL and Alerting Engine
-
-[Kapacitor](https://github.com/influxdata/kapacitor) is an open-source framework built by the folks over at [InfluxData](https://influxdata.com) and written in Go for processing, monitoring, and alerting on time series data
+[Kapacitor](https://github.com/influxdata/kapacitor) is an open-source framework used for processing, monitoring, and alerting on time series data.
 
 ## QuickStart
 
@@ -15,7 +13,7 @@ helm upgrade --install kapacitor influxdata/kapacitor --namespace monitoring
 
 ## Introduction
 
-This chart bootstraps A Kapacitor deployment and service on a Kubernetes cluster using the Helm Package manager.
+This chart bootstraps a Kapacitor deployment and service on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
@@ -87,7 +85,7 @@ Alternatively, a YAML file that specifies the values for the parameters can be p
 helm upgrade --install my-release -f values.yaml influxdata/kapacitor
 ```
 
-> **Tip**: You can use the default [values.yaml](values.yaml)
+> **Tip**: Use the default [values.yaml](values.yaml)
 
 ## Persistence
 

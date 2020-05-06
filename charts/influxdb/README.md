@@ -1,8 +1,13 @@
-# InfluxDB
+# InfluxDB Helm chart
 
-##  An Open-Source Time Series Database
+[InfluxDB](https://github.com/influxdata/influxdb) is an open source time series database with no external dependencies. It's useful for recording metrics, events, and performing analytics.
 
-[InfluxDB](https://github.com/influxdata/influxdb) is an open source time series database built by the folks over at [InfluxData](https://influxdata.com) with no external dependencies. It's useful for recording metrics, events, and performing analytics.
+The InfluxDB Helm chart bootstraps an InfluxDB StatefulSet and service on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+
+## Prerequisites
+
+- Kubernetes 1.4+
+- (Optional) PV provisioner support in the underlying infrastructure
 
 ## QuickStart
 
@@ -11,40 +16,36 @@ helm repo add influxdata https://helm.influxdata.com/
 helm upgrade --install influxdb influxdata/influxdb --namespace monitoring
 ```
 
-> **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` can be shortened : `helm upgrade -i [RELEASE] [CHART] [FLAGS]`
+> **Tip**: `--install` can be shortened to `-i`.
 
-## Introduction
+## Install the chart
 
-This chart bootstraps an InfluxDB statefulset and service on a Kubernetes cluster using the Helm Package manager.
-
-## Prerequisites
-
-- Kubernetes 1.4+
-- PV provisioner support in the underlying infrastructure (optional)
-
-## Installing the Chart
-
-To install the chart with the release name `my-release`:
+To install the chart with the release name `my-release`, use the following command::
 
 ```bash
 helm upgrade --install my-release influxdata/influxdb
 ```
 
-The command deploys InfluxDB on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+This command deploys InfluxDB on the Kubernetes cluster using the default configuration.
 
-> **Tip**: List all releases using `helm list`
+To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
 
-## Uninstalling the Chart
+> **Tip**: To view all releases, run `helm list`.
 
-To uninstall/delete the `my-release` deployment:
+## Uninstall the chart
+
+To uninstall the `my-release` deployment:
 
 ```bash
 helm uninstall my-release
 ```
 
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+This command removes all the Kubernetes components associated with the chart and deletes the release.
 
-## Configuration
+## Configure the chart
+
+Find configurable parameters and descriptions for the InfluxDB Helm chart in `values.yaml`.
+The following table lists configurable parameters and default values for the InfluxDB Helm chart.
 
 | Parameter | Description | Default |
 |---|---|---|
@@ -103,9 +104,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | backup.annotations | Annotations for backup cronjob | {} |
 | backup.podAnnotations | Annotations for backup cronjob pods | {} |
 
-The [full image documentation](https://hub.docker.com/_/influxdb/) contains more information about running InfluxDB in docker.
+For more information about running InfluxDB in Docker, see the [full image documentation](https://hub.docker.com/_/influxdb/).
 
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
 
 ```bash
 helm upgrade --install my-release \
@@ -113,20 +114,22 @@ helm upgrade --install my-release \
     influxdata/influxdb
 ```
 
-The above command enables persistence and changes the size of the requested data volume to 200GB.
+This command enables persistence and changes the size of the requested data volume to 200GB.
 
-Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
+Alternatively, provide a YAML file that specifies the parameter values while installing the chart. For example, use the following command:
 
 ```bash
 helm upgrade --install my-release -f values.yaml influxdata/influxdb
 ```
 
-> **Tip**: You can use the default [values.yaml](values.yaml)
+> **Tip**: Use the default [values.yaml](values.yaml).
 
 ### Enterprise
-[InfluxDB Enterprise](https://www.influxdata.com/products/influxdb-enterprise/) is a hardened version of the open source core InfluxDB that includes additional closed source features designed for production workloads, featuring high availability and horizontal scaling. InfluxDB Enterprise features require a InfluxDB Enterprise license.
 
-#### Configuration
+[InfluxDB Enterprise](https://www.influxdata.com/products/influxdb-enterprise/) includes features designed for production workloads, including high availability and horizontal scaling. InfluxDB Enterprise requires an InfluxDB Enterprise license.
+
+#### Configure the InfluxDB Enterprise chart
+
 To enable InfluxDB Enterprise, set the following keys and values in a values file provided to Helm.
 
 | Key | Description | Recommended value |
@@ -143,38 +146,45 @@ To enable InfluxDB Enterprise, set the following keys and values in a values fil
 | `enterprise.meta.resources` | Resources requests and limits for meta `influxdb-meta` pods | See `values.yaml` |
 
 #### Join pods to InfluxDB Enterprise cluster
-Meta and data pods need to be joined together using the command `influxd-ctl` found on meta pods.
-It is recommended you run `influxd-ctl` on one and only one meta pod, and to join meta pods together before data pods.
-For each meta pod, run `influxd-ctl`. With default settings it should look something like this:
+
+Meta and data pods must be joined using the command `influxd-ctl` found on meta pods.
+We recommend running `influxd-ctl` on one and only one meta pod and joining meta pods together before data pods. For each meta pod, run `influxd-ctl`.
+
+In the following examples, we use the pod names `influxdb-meta-0` and `influxdb-0` and the service name `influxdb`.
+
+For example, using the default settings, it should look something like this:
+
 ```shell script
 kubectl exec influxdb-meta-0 influxd-ctl add-meta influxdb-meta-0.influxdb-meta:8091
 ```
-From the same meta pod, for each data pod, run `influxd-ctl`. With default settings it should look something like this:
+
+From the same meta pod, for each data pod, run `influxd-ctl`. With default settings, it should look something like this:
+
 ```shell script
 kubectl exec influxdb-meta-0 influxd-ctl add-data influxdb-0.influxdb:8088
 ```
-When using `influxd-ctl` be sure to use the appropriate DNS name for your pods, following the naming scheme of `pod.service`.
-In the above examples, the pod names were `influxdb-meta-0` and `influxdb-0` respectively, and the service name was `influxdb`
+
+When using `influxd-ctl`, use the appropriate DNS name for your pods, following the naming scheme of `pod.service`.
 
 ## Persistence
 
 The [InfluxDB](https://hub.docker.com/_/influxdb/) image stores data in the `/var/lib/influxdb` directory in the container.
 
-If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) associated with Statefulset will be provisioned. The volume is created using dynamic volume provisioning. In case of a disruption e.g. a node drain, kubernetes ensures that the same volume will be reatached to the Pod, preventing any data loss. Althought, when persistence is not enabled, InfluxDB data will be stored in an empty directory thus, in a Pod restart, data will be lost.
+If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) associated with StatefulSet is provisioned. The volume is created using dynamic volume provisioning. In case of a disruption, for example, a node drain, Kubernetes ensures that the same volume is reattached to the Pod, preventing any data loss. Although, when persistence is not enabled, InfluxDB data is stored in an empty directory, so if a Pod restarts, data will be lost.
 
-## Starting with authentication
+## Start with authentication
 
-In `values.yaml` change `.Values.config.http.auth_enabled` to `true`.
+In `values.yaml`, change `.Values.config.http.auth_enabled` to `true`.
 
-Influxdb requires also a user to be set in order for authentication to be enforced. See more details [here](https://docs.influxdata.com/influxdb/v1.2/query_language/authentication_and_authorization/#set-up-authentication).
+> **Note:** To enforce authentication, InfluxDB requires an admin user to be set up. For details, see [Set up authentication](https://docs.influxdata.com/influxdb/v1.2/query_language/authentication_and_authorization/#set-up-authentication).
 
-To handle this setup on startup, a job can be enabled in `values.yaml` by setting `.Values.setDefaultUser.enabled` to `true`.
+To handle this set up during startup, enable a job in `values.yaml` by setting `.Values.setDefaultUser.enabled` to `true`.
 
 Make sure to uncomment or configure the job settings after enabling it. If a password is not set, a random password will be generated.
 
 Alternatively, if `.Values.setDefaultUser.user.existingSecret` is set the user and password are obtained from an existing Secret, the expected keys are `influxdb-user` and `influxdb-password`. Use this variable  if you need to check in the `values.yaml` in a repository to avoid exposing your secrets.
 
-## Backing up and restoring
+## Back up and restore
 
 Before proceeding, please read [Backing up and restoring in InfluxDB OSS](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/). While the chart offers backups by means of the [`backup-cronjob`](./templates/backup-cronjob.yaml), restores do not fall under the chart's scope today but can be achieved by one-off kubernetes jobs.
 
@@ -251,7 +261,7 @@ spec:
 At which point the data from the new `<db name>_bak` dbs would have to be side loaded into the original dbs.
 Please see [InfluxDB documentation for more restore examples](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/#restore-examples).
 
-## Upgrading
+## Upgrade
 
 ### From < 1.0.0 To >= 1.0.0
 
@@ -267,6 +277,6 @@ Since version 3.0.0 this chart uses a StatefulSet instead of a Deployment. As pa
 
 ### From < 4.0.0 to >= 4.0.0
 
-Labels are changed to those in accordance with [kubernetes recommended labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/\#labels). This change also removes the ability to configure clusterIP value as to avoid `Error: UPGRADE FAILED: failed to replace object: Service "my-influxdb" is invalid: spec.clusterIP: Invalid value: "": field is immutable` type errors. For more info on this error and why it should be avoided at all costs, please see [this github issue](https://github.com/helm/helm/issues/6378#issuecomment-582764215).
+Labels are changed in accordance with [Kubernetes recommended labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/\#labels). This change also removes the ability to configure clusterIP value to avoid `Error: UPGRADE FAILED: failed to replace object: Service "my-influxdb" is invalid: spec.clusterIP: Invalid value: "": field is immutable` type errors. For more information on this error and why it's important to avoid this error, please see [this Github issue](https://github.com/helm/helm/issues/6378#issuecomment-582764215).
 
-Due to the significance of the changes. The recommended approach is to uninstall and reinstall the chart (the PVC *should* not be deleted during this process, but it is highly recommended to backup your data before).
+Due to the significance of the changes, we recommend uninstalling and reinstalling the chart (although the PVC shouldn't be deleted during this process, we highly recommended backing up your data beforehand).

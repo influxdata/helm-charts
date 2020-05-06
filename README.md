@@ -11,15 +11,15 @@ InfluxData Helm charts are in beta and subject to change. The code is provided a
 
 2. Add the InfluxData Helm repository:
 
-    ```console
-        helm repo add influxdata https://helm.influxdata.com/
+   ```console
+       helm repo add influxdata https://helm.influxdata.com/
     ```
 
 3. View InfluxData Helm charts:
 
-    ```console
+   ```console
         helm search repo influxdata
-    ```
+   ```
 
 ## Contributing
 

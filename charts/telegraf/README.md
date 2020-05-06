@@ -1,23 +1,21 @@
-# Telegraf
+# Telegraf Helm chart
 
 [Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent written by the folks over at [InfluxData](https://influxdata.com) for collecting & reporting metrics.
 
-## TL;DR
+The Telegraf Helm chart bootstraps a Telegraf (`telegraf`) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+
+## Prerequisites
+
+- Kubernetes 1.4+ with Beta APIs enabled
+
+## QuickStart
 
 ```console
 helm repo add influxdata https://helm.influxdata.com/
 helm upgrade --install telegraf influxdata/telegraf --namespace monitoring
 ```
 
-## Introduction
-
-This chart bootstraps a `telegraf` deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
-
-## Prerequisites
-
-- Kubernetes 1.4+ with Beta APIs enabled
-
-## Installing the Chart
+## Install the chart
 
 To install the chart with the release name `telegraf`:
 
@@ -29,7 +27,7 @@ The command deploys Telegraf on the Kubernetes cluster in the default configurat
 
 > **Tip**: List all releases using `helm list`
 
-## Uninstalling the Chart
+## Uninstall the chart
 
 To uninstall/delete the `telegraf` deployment:
 
@@ -39,7 +37,7 @@ helm uninstall telegraf
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-## Configuration
+## Configure the chart
 
 The default configuration parameters are listed in `values.yaml`.
 
@@ -66,6 +64,6 @@ inputs:
   - system:
 ```
 
-> **Tip**: You can use the default [values.yaml](values.yaml)
+> **Tip**: Use the default [values.yaml](values.yaml)
 
 Please see https://github.com/influxdata/telegraf/tree/master/plugins/ and checkout the contents of the `inputs` and `outputs` folders.

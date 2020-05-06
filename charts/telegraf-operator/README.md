@@ -2,7 +2,7 @@
 
 > Default installation expects cert-manager to be running in the cluster
 
-## Usage
+## QuickStart
 
 ```console
 helm repo add influxdata https://helm.influxdata.com
@@ -11,7 +11,7 @@ helm install telegraf-operator influxdata/telegraf-operator
 
 ```
 
-## Contributing & Developing
+## Contributing and developing
 
 ```shell
 helm template --namespace=telegraf-operator telegraf-operator .
