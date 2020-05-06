@@ -4,8 +4,6 @@
 
 [InfluxDB](https://github.com/influxdata/influxdb) is an open source time series database with no external dependencies. It's useful for recording metrics, events, and performing analytics.
 
-Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.
-
 ## QuickStart
 
 ```bash
@@ -53,3 +51,5 @@ This command removes all Kubernetes components associated with the chart and del
 The [InfluxDB](https://quay.io/influxdb/influxdb:2.0.0-beta) image stores data in the `/root/.influxdbv2` directory in the container.
 
 If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) associated with StatefulSet is provisioned. The volume is created using dynamic volume provisioning. In case of a disruption, for example, a node drain, Kubernetes ensures that the same volume is reattached to the Pod, preventing any data loss. Although, when persistence is not enabled, InfluxDB data is stored in an empty directory thus, in a Pod restart, data is lost.
+
+Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.

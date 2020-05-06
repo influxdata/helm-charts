@@ -91,7 +91,7 @@ To configure the chart, do either of the following:
 - Provide a YAML file that specifies parameter values while installing the chart. For example, use the following command:
 
   ```bash
-  helm upgrade --install my-chart-name -f values.yaml influxdata/chronograf
+  helm upgrade --install my-release -f values.yaml influxdata/chronograf
   ```
 
   > **Tip**: Use the default [values.yaml](values.yaml).
@@ -132,3 +132,5 @@ env:
 envFromSecret: chronograf-google-env-secrets
 [...]
 ```
+
+Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.

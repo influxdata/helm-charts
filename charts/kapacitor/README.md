@@ -92,3 +92,5 @@ helm upgrade --install my-release -f values.yaml influxdata/kapacitor
 The [Kapacitor](https://hub.docker.com/_/kapacitor/) image stores data in the `/var/lib/kapacitor` directory in the container.
 
 The chart optionally mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) at this location. The volume is created using dynamic volume provisioning.
+
+Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.

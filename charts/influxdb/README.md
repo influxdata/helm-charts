@@ -278,3 +278,5 @@ Since version 3.0.0 this chart uses a StatefulSet instead of a Deployment. As pa
 Labels are changed in accordance with [Kubernetes recommended labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/\#labels). This change also removes the ability to configure clusterIP value to avoid `Error: UPGRADE FAILED: failed to replace object: Service "my-influxdb" is invalid: spec.clusterIP: Invalid value: "": field is immutable` type errors. For more information on this error and why it's important to avoid this error, please see [this Github issue](https://github.com/helm/helm/issues/6378#issuecomment-582764215).
 
 Due to the significance of the changes, we recommend uninstalling and reinstalling the chart (although the PVC shouldn't be deleted during this process, we highly recommended backing up your data beforehand).
+
+Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.

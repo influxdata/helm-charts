@@ -28,3 +28,5 @@ We'd love to have you contribute! Please refer to our [contribution guidelines](
 ## License
 
 [MIT License](./LICENSE)
+
+Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.
