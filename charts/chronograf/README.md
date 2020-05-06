@@ -86,8 +86,6 @@ To configure the chart, do either of the following:
       influxdata/chronograf
   ```
 
-  This command enables persistence and changes the size of the requested data volume to 200GB.
-
 - Provide a YAML file that specifies parameter values while installing the chart. For example, use the following command:
 
   ```bash
@@ -96,7 +94,7 @@ To configure the chart, do either of the following:
 
   > **Tip**: Use the default [values.yaml](values.yaml).
 
-For more information about running Chronograf in Docker, see the [full image documentation](https://quay.io/influxdb/chronograf).
+For information about running Chronograf in Docker, see the [full image documentation](https://quay.io/influxdb/chronograf).
 
 ## Persistence
 

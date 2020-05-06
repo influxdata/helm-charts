@@ -120,7 +120,7 @@ To configure the chart, do either of the following:
 
   > **Tip**: Use the default [values.yaml](values.yaml).
 
-For more information about running InfluxDB in Docker, see the [full image documentation](https://hub.docker.com/_/influxdb/).
+For information about running InfluxDB in Docker, see the [full image documentation](https://hub.docker.com/_/influxdb/).
 
 ### Enterprise
 
