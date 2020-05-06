@@ -9,32 +9,29 @@ The InfluxDB Helm chart bootstraps an InfluxDB StatefulSet and service on a [Kub
 - Kubernetes 1.4+
 - (Optional) PV provisioner support in the underlying infrastructure
 
-## QuickStart
-
-```bash
-helm repo add influxdata https://helm.influxdata.com/
-helm upgrade --install influxdb influxdata/influxdb --namespace monitoring
-```
-
-> **Tip**: `--install` can be shortened to `-i`.
-
 ## Install the chart
 
-To install the chart with the release name `my-release`, use the following command::
+1. Add the InfluxData Helm repository:
 
-```bash
-helm upgrade --install my-release influxdata/influxdb
-```
+   ```bash
+   helm repo add influxdata https://helm.influxdata.com/
+   ``` 
 
-This command deploys InfluxDB on the Kubernetes cluster using the default configuration.
+2. Run the following command, providing a name for your release:
 
-To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
+   ```bash
+   helm upgrade --install my-release influxdata/influxdb
+   ```
 
-> **Tip**: To view all releases, run `helm list`.
+   > **Tip**: `--install` can be shortened to `-i`.
+
+   This command deploys InfluxDB on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
+
+   > **Tip**: To view all releases, run `helm list`.
 
 ## Uninstall the chart
 
-To uninstall the `my-release` deployment:
+To uninstall the `my-release` deployment, use the following command:
 
 ```bash
 helm uninstall my-release
@@ -44,8 +41,7 @@ This command removes all the Kubernetes components associated with the chart and
 
 ## Configure the chart
 
-Find configurable parameters and descriptions for the InfluxDB Helm chart in `values.yaml`.
-The following table lists configurable parameters and default values for the InfluxDB Helm chart.
+Configurable parameters and descriptions for the InfluxDB Helm chart are stored in `values.yaml` and listed in the table below.
 
 | Parameter | Description | Default |
 |---|---|---|
@@ -104,25 +100,27 @@ The following table lists configurable parameters and default values for the Inf
 | backup.annotations | Annotations for backup cronjob | {} |
 | backup.podAnnotations | Annotations for backup cronjob pods | {} |
 
+To configure the chart, do either of the following:
+
+- Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
+
+  ```bash
+  helm upgrade --install my-release \
+    --set persistence.enabled=true,persistence.size=200Gi \
+      influxdata/influxdb
+  ```
+
+  This command enables persistence and changes the size of the requested data volume to 200GB.
+
+- Provide a YAML file that specifies the parameter values while installing the chart. For example, use the following command:
+
+  ```bash
+  helm upgrade --install my-release -f values.yaml influxdata/influxdb
+  ```
+
+  > **Tip**: Use the default [values.yaml](values.yaml).
+
 For more information about running InfluxDB in Docker, see the [full image documentation](https://hub.docker.com/_/influxdb/).
-
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
-
-```bash
-helm upgrade --install my-release \
-  --set persistence.enabled=true,persistence.size=200Gi \
-    influxdata/influxdb
-```
-
-This command enables persistence and changes the size of the requested data volume to 200GB.
-
-Alternatively, provide a YAML file that specifies the parameter values while installing the chart. For example, use the following command:
-
-```bash
-helm upgrade --install my-release -f values.yaml influxdata/influxdb
-```
-
-> **Tip**: Use the default [values.yaml](values.yaml).
 
 ### Enterprise
 
@@ -152,13 +150,13 @@ We recommend running `influxd-ctl` on one and only one meta pod and joining meta
 
 In the following examples, we use the pod names `influxdb-meta-0` and `influxdb-0` and the service name `influxdb`.
 
-For example, using the default settings, it should look something like this:
+For example, using the default settings, your script should look something like this:
 
 ```shell script
 kubectl exec influxdb-meta-0 influxd-ctl add-meta influxdb-meta-0.influxdb-meta:8091
 ```
 
-From the same meta pod, for each data pod, run `influxd-ctl`. With default settings, it should look something like this:
+From the same meta pod, for each data pod, run `influxd-ctl`. With default settings, your script should look something like this:
 
 ```shell script
 kubectl exec influxdb-meta-0 influxd-ctl add-data influxdb-0.influxdb:8088
@@ -182,7 +180,7 @@ To handle this set up during startup, enable a job in `values.yaml` by setting `
 
 Make sure to uncomment or configure the job settings after enabling it. If a password is not set, a random password will be generated.
 
-Alternatively, if `.Values.setDefaultUser.user.existingSecret` is set the user and password are obtained from an existing Secret, the expected keys are `influxdb-user` and `influxdb-password`. Use this variable  if you need to check in the `values.yaml` in a repository to avoid exposing your secrets.
+Alternatively, if `.Values.setDefaultUser.user.existingSecret` is set the user and password are obtained from an existing Secret, the expected keys are `influxdb-user` and `influxdb-password`. Use this variable if you need to check in the `values.yaml` in a repository to avoid exposing your secrets.
 
 ## Back up and restore
 

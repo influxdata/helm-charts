@@ -17,10 +17,10 @@ The Chronograf Helm chart bootstraps a Chronograf deployment and service on a [K
    helm repo add influxdata https://helm.influxdata.com/
    ``` 
 
-2. Run the following command, providing a name for your Chronograf Helm chart:
+2. Run the following command, providing a name for your Chronograf release:
 
    ```bash
-   helm upgrade --install my-chart-name influxdata/chronograf --namespace monitoring
+   helm upgrade --install my-release influxdata/chronograf --namespace monitoring
    ```
 
    This command deploys Chronograf on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
@@ -29,19 +29,17 @@ The Chronograf Helm chart bootstraps a Chronograf deployment and service on a [K
 
 ## Uninstall the chart
 
-To uninstall the `my-chart-name` deployment, use the following command:
+To uninstall the `my-release` deployment, use the following command:
 
 ```bash
-helm uninstall my-chart-name
+helm uninstall my-release
 ```
 
 This command removes all Kubernetes components associated with the chart and deletes the release.
 
 ## Configure the chart
 
-Find configurable parameters and descriptions for the Chronograf Helm chart in `values.yaml`. For more information about running Chronograf in Docker, see the [full image documentation](https://quay.io/influxdb/chronograf).
-
-The following table lists the configurable parameters and default values for the Chronograf Helm chart.
+Configurable parameters and descriptions for the Chronograf Helm chart are stored in `values.yaml` and listed in the table below.
 
 | Parameter                    | Description                                                                                               | Default                                     |
 |:-----------------------------|:----------------------------------------------------------------------------------------------------------|:--------------------------------------------|
@@ -78,23 +76,27 @@ The following table lists the configurable parameters and default values for the
 | `tolerations`                | Toleration labels for pod assignment                                                                      | []                                          |
 | `affinity`                   | Affinity settings for pod assignment                                                                      | {}                                          |
 
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example, use the following command:
+To configure the chart, do either of the following:
 
-```bash
-helm upgrade --install my-chart-name \
-  --set ingress.enabled=true,ingress.hostname=chronograf.foobar.com \
-    influxdata/chronograf
-```
+- Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example, use the following command:
 
-This command enables persistence and changes the size of the requested data volume to 200GB.
+  ```bash
+  helm upgrade --install my-release \
+    --set ingress.enabled=true,ingress.hostname=chronograf.foobar.com \
+      influxdata/chronograf
+  ```
 
-Alternatively, provide a YAML file that specifies the parameter values while installing the chart. For example:
+  This command enables persistence and changes the size of the requested data volume to 200GB.
 
-```bash
-helm upgrade --install my-chart-name -f values.yaml influxdata/chronograf
-```
+- Provide a YAML file that specifies parameter values while installing the chart. For example, use the following command:
 
-> **Tip**: Use the default [values.yaml](values.yaml).
+  ```bash
+  helm upgrade --install my-chart-name -f values.yaml influxdata/chronograf
+  ```
+
+  > **Tip**: Use the default [values.yaml](values.yaml).
+
+For more information about running Chronograf in Docker, see the [full image documentation](https://quay.io/influxdb/chronograf).
 
 ## Persistence
 
