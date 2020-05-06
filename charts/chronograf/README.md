@@ -25,7 +25,7 @@ The Chronograf Helm chart bootstraps a Chronograf deployment and service on a [K
 
    This command deploys Chronograf on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
 
-  > **Tip**: To view all releases, run `helm list`.
+  > **Tip**: To view all Helm chart releases, run `helm list`.
 
 ## Uninstall the chart
 

@@ -27,7 +27,7 @@ helm upgrade --install my-release influxdata/telegraf-ds
 
 The command deploys a Telegraf DaemonSet on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section as well as the [values.yaml](/values.yaml) file lists the parameters that can be configured during installation.
 
-> **Tip**: List all releases using `helm list`
+> **Tip**: To view all Helm chart releases, run `helm list`.
 
 ## Uninstall the chart
 

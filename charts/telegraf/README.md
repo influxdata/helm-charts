@@ -25,7 +25,7 @@ helm upgrade --install telegraf influxdata/telegraf --namespace monitoring
 
 The command deploys Telegraf on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
-> **Tip**: List all releases using `helm list`
+> **Tip**: To view all Helm chart releases, run `helm list`.
 
 ## Uninstall the chart
 

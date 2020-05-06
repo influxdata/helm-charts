@@ -30,7 +30,7 @@ helm upgrade --install my-release influxdata/kapacitor
 
 The command deploys Kapacitor on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
-> **Tip**: List all releases using `helm list`
+> **Tip**: To view all Helm chart releases, run `helm list`.
 
 ## Uninstalling the Chart
 

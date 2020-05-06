@@ -4,17 +4,6 @@
 
 [InfluxDB](https://github.com/influxdata/influxdb) is an open source time series database with no external dependencies. It's useful for recording metrics, events, and performing analytics.
 
-## QuickStart
-
-```bash
-helm repo add influxdata https://helm.influxdata.com/
-helm upgrade --install influxdb influxdata/influxdb2 --namespace monitoring
-```
-
-> **Tip**: `--install` can be shortened to `-i`.
-
-## Introduction
-
 This chart bootstraps an InfluxDB v2 StatefulSet and service on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
@@ -22,21 +11,26 @@ This chart bootstraps an InfluxDB v2 StatefulSet and service on a [Kubernetes](h
 - Kubernetes 1.4+
 - (Optional) PV provisioner support in the underlying infrastructure
 
-## Installing the chart
+## Install the chart
 
-To install the chart with the release name `my-release`, use the following command:
+1. Add the InfluxData Helm repository:
 
-```bash
-helm upgrade --install my-release influxdata/influxdb2
-```
+   ```bash
+   helm repo add influxdata https://helm.influxdata.com/
+   ``` 
 
-This command deploys InfluxDB on the Kubernetes cluster using the default configuration.
+2. Run the following command, providing a name for your InfluxDB release:
 
-To find parameters you can configure during installation, see [Configuration](#configuration).
+   ```bash
+   helm upgrade --install my-release influxdata/influxdb2 --namespace monitoring
+   ```
 
-> **Tip**: To view all releases, run `helm list`.
+   > **Tip**: `--install` can be shortened to `-i`.
+   This command deploys InfluxDB v2 on the Kubernetes cluster using the default configuration.
 
-## Uninstalling the chart
+  > **Tip**: To view all Helm chart releases, run `helm list`.
+
+## Uninstall the chart
 
 To uninstall the `my-release` deployment, use the following command:
 
