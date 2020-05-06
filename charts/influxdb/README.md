@@ -102,7 +102,7 @@ Configurable parameters and descriptions for the InfluxDB Helm chart are stored 
 
 To configure the chart, do either of the following:
 
-- Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
+- Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade --install`. For example:
 
   ```bash
   helm upgrade --install my-release \

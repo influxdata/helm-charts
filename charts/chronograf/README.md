@@ -78,7 +78,7 @@ Configurable parameters and descriptions for the Chronograf Helm chart are store
 
 To configure the chart, do either of the following:
 
-- Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example, use the following command:
+- Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade --install`. For example, use the following command:
 
   ```bash
   helm upgrade --install my-release \

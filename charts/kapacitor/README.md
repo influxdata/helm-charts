@@ -69,7 +69,7 @@ The configurable parameters of the Kapacitor chart and the default values are li
 
 The [full image documentation](https://hub.docker.com/_/kapacitor/) contains more information about running Kapacitor in docker.
 
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade --install`. For example,
 
 ```bash
 helm upgrade --install my-release \

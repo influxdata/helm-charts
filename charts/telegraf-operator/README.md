@@ -7,7 +7,7 @@
 ```console
 helm repo add influxdata https://helm.influxdata.com
 
-helm install telegraf-operator influxdata/telegraf-operator
+helm upgrade --install telegraf-operator influxdata/telegraf-operator
 
 ```
 
@@ -21,5 +21,3 @@ Testing CI template
 ```shell
 helm template --namespace=telegraf-operator --values=./ci/values.yaml telegraf-operator .
 ```
-
-
