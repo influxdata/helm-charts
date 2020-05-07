@@ -39,7 +39,7 @@ spec:
         - name: {{ .name }}
           mountPath: {{ .mountPath }}
         {{- end }}
-        {{- if .Values.hooks }}
+        {{- if or (.Values.hooks.postStart) (.Values.hooks.preStop) }}
         lifecycle:
         {{- if .Values.hooks.postStart }}
           postStart:
