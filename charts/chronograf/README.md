@@ -20,7 +20,7 @@ The Chronograf Helm chart bootstraps a Chronograf deployment and service on a [K
 2. Run the following command, providing a name for your Chronograf release:
 
    ```bash
-   helm upgrade --install my-release influxdata/chronograf --namespace monitoring
+   helm upgrade --install my-release influxdata/chronograf
    ```
 
    This command deploys Chronograf on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).

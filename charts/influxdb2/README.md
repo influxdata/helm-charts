@@ -22,7 +22,7 @@ This chart bootstraps an InfluxDB v2 StatefulSet and service on a [Kubernetes](h
 2. Run the following command, providing a name for your InfluxDB release:
 
    ```bash
-   helm upgrade --install my-release influxdata/influxdb2 --namespace monitoring
+   helm upgrade --install my-release influxdata/influxdb2
    ```
 
    > **Tip**: `--install` can be shortened to `-i`.

@@ -6,7 +6,7 @@
 
 ```bash
 helm repo add influxdata https://helm.influxdata.com/
-helm upgrade --install kapacitor influxdata/kapacitor --namespace monitoring
+helm upgrade --install kapacitor influxdata/kapacitor
 ```
 
 > **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` can be shortened : `helm upgrade -i [RELEASE] [CHART] [FLAGS]`

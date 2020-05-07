@@ -12,7 +12,7 @@ The Telegraf Helm chart bootstraps a Telegraf (`telegraf`) deployment on a [Kube
 
 ```console
 helm repo add influxdata https://helm.influxdata.com/
-helm upgrade --install telegraf influxdata/telegraf --namespace monitoring
+helm upgrade --install telegraf influxdata/telegraf
 ```
 
 ## Install the chart
@@ -20,7 +20,7 @@ helm upgrade --install telegraf influxdata/telegraf --namespace monitoring
 To install the chart with the release name `telegraf`:
 
 ```console
-helm upgrade --install telegraf influxdata/telegraf --namespace monitoring
+helm upgrade --install telegraf influxdata/telegraf
 ```
 
 The command deploys Telegraf on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
