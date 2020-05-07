@@ -78,3 +78,7 @@ This chart deploys the following by default:
   * [`processes`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/processes)
   * [`swap`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/swap)
   * [`system`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system)
+
+The following plugin can be enable through the configuration:
+
+- [`internal`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/internal)
