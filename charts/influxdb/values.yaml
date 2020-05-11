@@ -235,7 +235,7 @@ backup:
   ## Directory where backups are stored
   ##
   directory: "/backups"
-  ## Retention time in days for backups 
+  ## Retention time in days for backups
   ##
   retentionDays: 10
   ## Cronjob configuration
@@ -256,9 +256,9 @@ backup:
   ## Storage providers where to upload backups
   ##
   uploadProviders:
-    ## Google Storage Bucket configuration 
+    ## Google Storage Bucket configuration
     ##
-    google: 
+    google:
       enabled: false
       secret: ""
       secretKey: "key.json"
@@ -268,7 +268,7 @@ backup:
         registry: docker.io
         repository: google/cloud-sdk
         tag: 291.0.0-alpine
-    ## Azure Storage Container configuration 
+    ## Azure Storage Container configuration
     ##
     azure:
       enabled: false
