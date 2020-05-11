@@ -96,12 +96,34 @@ The command removes all the Kubernetes components associated with the chart and 
 | config.tls | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#tls) | {} |
 | initScripts.enabled | Boolean flag to enable and disable initscripts. If the container finds any files with the extensions .sh or .iql inside of the /docker-entrypoint-initdb.d folder, it will execute them. The order they are executed in is determined by the shell. This is usually alphabetical order. | false |
 | initScripts.scripts | Init scripts | {} |
-| backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false` |
-| backup.gcs | Google Cloud Storage config | `nil`
-| backup.azure | Azure Blob Storage config | `nil`
-| backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
-| backup.annotations | Annotations for backup cronjob | {} |
-| backup.podAnnotations | Annotations for backup cronjob pods | {} |
+| `backup.enabled`                                  | enable InfluxDB backup                                                                                                                                                                    | `false`                                                 |
+| `backup.directory`                                | directory where backups are stored in                                                                                                                                                     | `"/backups"`                                            |
+| `backup.retentionDays`                            | retention time in days for backups (older backups are deleted)                                                                                                                            | `10`                                                    |
+| `backup.cronjob.schedule`                         | crontab style time schedule for backup execution                                                                                                                                          | `"0 2 * * *"`                                           |
+| `backup.cronjob.historyLimit`                     | cronjob historylimit                                                                                                                                                                      | `1`                                                     |
+| `backup.cronjob.annotations`                      | backup pod annotations                                                                                                                                                                    | `{}`                                                    |
+| `backup.uploadProviders.google.enabled`           | enable upload to google storage bucket                                                                                                                                                    | `false`                                                 |
+| `backup.uploadProviders.google.secret`            | json secret whith serviceaccount data to access Google storage bucket                                                                                                                     | `""`                                                    |
+| `backup.uploadProviders.google.secretKey`         | service account secret key name                                                                                                                                                           | `"key.json"`                                            |
+| `backup.uploadProviders.google.existingSecret`    | Name of existing secret object with Google serviceaccount json credentials                                                                                                                | `""`                                                    |
+| `backup.uploadProviders.google.bucketName`        | google storage bucket name name                                                                                                                                                           | `"gs://bucket/influxdb"`                                |
+| `backup.uploadProviders.google.image.registry`    | Google Cloud SDK image registry                                                                                                                                                           | `docker.io`                                             |
+| `backup.uploadProviders.google.image.repository`  | Google Cloud SDK image name                                                                                                                                                               | `google/cloud-sdk`                              |
+| `backup.uploadProviders.google.image.tag`         | Google Cloud SDK image tag                                                                                                                                                                | `291.0.0-alpine`                                            |
+| `backup.uploadProviders.google.image.pullPolicy`  | Google Cloud SDK image pull policy                                                                                                                                                        | `IfNotPresent`                                          |
+| `backup.uploadProviders.google.image.pullSecrets` | Specify docker-registry secret names as an array                                                                                                                                          | `[]` (does not add image pull secrets to deployed pods) |
+| `backup.uploadProviders.azure.enabled`            | enable upload to azure storage container                                                                                                                                                  | `false`                                                 |
+| `backup.uploadProviders.azure.secret`             | secret whith credentials to access Azure storage                                                                                                                                          | `""`                                                    |
+| `backup.uploadProviders.azure.secretKey`          | service account secret key name                                                                                                                                                           | `"connection-string"`                                   |
+| `backup.uploadProviders.azure.existingSecret`     | Name of existing secret object                                                                                                                                                            | `""`                                                    |
+| `backup.uploadProviders.azure.containerName`      | destination container                                                                                                                                                                     | `"influxdb-container"`                                  |
+| `backup.uploadProviders.azure.image.registry`     | Azure CLI image registry                                                                                                                                                                  | `docker.io`                                             |
+| `backup.uploadProviders.azure.image.repository`   | Azure CLI image name                                                                                                                                                                      | `microsoft/azure-cli`                                     |
+| `backup.uploadProviders.azure.image.tag`          | Azure CLI image tag                                                                                                                                                                       | `2.0.24`                                            |
+| `backup.uploadProviders.azure.image.pullPolicy`   | Azure CLI image pull policy                                                                                                                                                               | `IfNotPresent`                                          |
+| `backup.uploadProviders.azure.image.pullSecrets`  | Specify docker-registry secret names as an array                                                                                                                                          | `[]` (does not add image pull secrets to deployed pods) |
+
+
 
 The [full image documentation](https://hub.docker.com/_/influxdb/) contains more information about running InfluxDB in docker.
 
@@ -180,7 +202,7 @@ Before proceeding, please read [Backing up and restoring in InfluxDB OSS](https:
 
 ### Backups
 
-When enabled, the[`backup-cronjob`](./templates/backup-cronjob.yaml) runs on the configured schedule. One can create a job from the backup cronjob on demand as follows:
+When enabled, the[`backup-cronjob`](./templates/cronjob-backup.yaml) runs on the configured schedule. One can create a job from the backup cronjob on demand as follows:
 
 ```sh
 kubectl create job --from=cronjobs/influxdb-backup influx-backup-$(date +%Y%m%d%H%M%S)
@@ -194,7 +216,7 @@ It is up to the end user to configure their own one-off restore jobs. Below is j
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: influxdb-restore-
+  generateName: influxdb-restore
   namespace: monitoring
 spec:
   template:
@@ -213,8 +235,8 @@ spec:
             - |
               gsutil -m cp -r gs://<PATH TO BACKUP FOLDER>/* /backup
           volumeMounts:
-            - name: backup
-              mountPath: /backup
+            - name: {{ include "influxdb.fullname" . }}-backups
+              mountPath: {{ .Values.backup.directory | quote }}
           resources:
             requests:
               cpu: 1
@@ -226,8 +248,8 @@ spec:
         - name: influxdb-restore
           image: influxdb:1.7-alpine
           volumeMounts:
-            - name: backup
-              mountPath: /backup
+            - name: {{ include "influxdb.fullname" . }}-backups
+              mountPath: {{ .Values.backup.directory | quote }}
           command:
             - /bin/sh
           args:
@@ -270,3 +292,9 @@ Since version 3.0.0 this chart uses a StatefulSet instead of a Deployment. As pa
 Labels are changed to those in accordance with [kubernetes recommended labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/\#labels). This change also removes the ability to configure clusterIP value as to avoid `Error: UPGRADE FAILED: failed to replace object: Service "my-influxdb" is invalid: spec.clusterIP: Invalid value: "": field is immutable` type errors. For more info on this error and why it should be avoided at all costs, please see [this github issue](https://github.com/helm/helm/issues/6378#issuecomment-582764215).
 
 Due to the significance of the changes. The recommended approach is to uninstall and reinstall the chart (the PVC *should* not be deleted during this process, but it is highly recommended to backup your data before).
+
+### From <= 4.4.7 to >= 5.0.0
+
+Backup function was refactored to not use empty dir anymore which could fill nodes filesystem. Also adds backup retention.
+To achieve this some of backup values ahve changed. Please see values.yaml and README.md for changes.
+If you did not used backup function before nothing is to do.

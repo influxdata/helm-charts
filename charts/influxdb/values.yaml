@@ -8,7 +8,7 @@ image:
   # pullSecrets:
   #   - registry-secret
 
-
+## Create ServiceAccount
 serviceAccount:
   create: true
   name:
@@ -39,7 +39,7 @@ startupProbe:
   # scheme: HTTP
 
 ## Specify a service type
-## NodePort is default
+## ClusterIP is default
 ## ref: http://kubernetes.io/docs/user-guide/services/
 ##
 service:
@@ -124,7 +124,6 @@ setDefaultUser:
   restartPolicy: OnFailure
 
   user:
-
     ## The user name
     ## Default: "admin"
     username: "admin"
@@ -228,22 +227,57 @@ initScripts:
     init.iql: |+
       CREATE DATABASE "telegraf" WITH DURATION 30d REPLICATION 1 NAME "rp_30d"
 
+
+## InfluxDB backup parameters
+##
 backup:
   enabled: false
-  schedule: "0 0 * * *"
-  annotations: {}
-  podAnnotations: {}
+  ## Directory where backups are stored
+  ##
+  directory: "/backups"
+  ## Retention time in days for backups 
+  ##
+  retentionDays: 10
+  ## Cronjob configuration
+  ## This cronjob is used to create InfluxDB backups
+  ##
+  cronjob:
+    ## Schedule in Cron format to save snapshots
+    ## See https://en.wikipedia.org/wiki/Cron
+    ##
+    schedule: "0 2 * * *"
+    ## Number of successful finished jobs to retain
+    ##
+    historyLimit: 3
+    ## Pod annotations
+    ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+    ##
+    podAnnotations: {}
+  ## Storage providers where to upload backups
+  ##
+  uploadProviders:
+    ## Google Storage Bucket configuration 
+    ##
+    google: 
+      enabled: false
+      secret: ""
+      secretKey: "key.json"
+      existingSecret: ""
+      bucketName: "gs://bucket/influxdb"
+      image:
+        registry: docker.io
+        repository: google/cloud-sdk
+        tag: 291.0.0-alpine
+    ## Azure Storage Container configuration 
+    ##
+    azure:
+      enabled: false
+      secret: ""
+      secretKey: "connection-string"
+      existingSecret: ""
+      containerName: "influxdb-container"
+      image:
+        registry: docker.io
+        repository: microsoft/azure-cli
+        tag: 2.0.24
 
-  ## Google Cloud Storage
-  # gcs:
-  #    serviceAccountSecret: influxdb-backup-key
-  #    serviceAccountSecretKey: key.json
-  #    destination: gs://bucket/influxdb
-
-  ## Azure
-  ## Secret is expected to have connection string stored in `connection-string` field
-  ## Existing container will be used or private one withing storage account will be created.
-  # azure:
-  #   storageAccountSecret: influxdb-backup-azure-key
-  #   destination_container: influxdb-container
-  #   destination_path: ""
