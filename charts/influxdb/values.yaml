@@ -280,4 +280,4 @@ backup:
         registry: docker.io
         repository: microsoft/azure-cli
         tag: 2.0.24
-
+        
