@@ -2,7 +2,7 @@
 
 [Chronograf](https://github.com/influxdata/chronograf) is an open-source web application used to visualize your monitoring data and easily create alerting and automation rules.
 
-The Chronograf Helm chart bootstraps a Chronograf deployment and service on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+The Chronograf Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap a Chronograf deployment and service on a [Kubernetes](http://kubernetes.io) cluster.
 
 ## Prerequisites
 

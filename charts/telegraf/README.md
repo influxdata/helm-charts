@@ -2,7 +2,7 @@
 
 [Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent written by the folks over at [InfluxData](https://influxdata.com) for collecting & reporting metrics.
 
-The Telegraf Helm chart bootstraps a Telegraf (`telegraf`) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+The Telegraf Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap a Telegraf (`telegraf`) deployment on a [Kubernetes](http://kubernetes.io) cluster.
 
 ## Prerequisites
 

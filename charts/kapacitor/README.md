@@ -13,7 +13,7 @@ helm upgrade --install kapacitor influxdata/kapacitor
 
 ## Introduction
 
-This chart bootstraps a Kapacitor deployment and service on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+The Kapacitor Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap a Kapacitor deployment and service on a [Kubernetes](http://kubernetes.io) cluster.
 
 ## Prerequisites
 

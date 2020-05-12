@@ -2,7 +2,7 @@
 
 [Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent used for collecting and reporting metrics. This chart runs a DaemonSet of Telegraf instances to collect host-level metrics for your cluster. To poll individual instances of infrastructure or APIs, use the [Telegraf chart](https://github.com/influxdata/helm-charts/tree/master/charts/telegraf).
 
-The Telegraf-DS Helm chart bootstraps a `telegraf-ds` DaemonSet on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager. For this chart, you cannot customize Telegraf inputs being the goal is to provide an opinionated configuration for monitoring Kubernetes nodes and global Kubernetes monitoring.
+The Telegraf-DS Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap a Telegraf-DS (DaemonSet) on a [Kubernetes](http://kubernetes.io) cluster. You cannot customize Telegraf inputs for this chart being the goal is to provide an opinionated configuration for monitoring Kubernetes nodes and global Kubernetes monitoring.
 
 ## Prerequisites
 
