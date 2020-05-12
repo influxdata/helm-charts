@@ -168,7 +168,7 @@ When using `influxd-ctl`, use the appropriate DNS name for your pods, following 
 
 The [InfluxDB](https://hub.docker.com/_/influxdb/) image stores data in the `/var/lib/influxdb` directory in the container.
 
-If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) associated with StatefulSet is provisioned. The volume is created using dynamic volume provisioning. In case of a disruption, for example, a node drain, Kubernetes ensures that the same volume is reattached to the Pod, preventing any data loss. Although, when persistence is not enabled, InfluxDB data is stored in an empty directory, so if a Pod restarts, data will be lost.
+If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) associated with StatefulSet is provisioned. The volume is created using dynamic volume provisioning. In case of a disruption (for example, a node drain), Kubernetes ensures that the same volume is reattached to the Pod, preventing any data loss. However, when persistence is **not enabled**, InfluxDB data is stored in an empty directory, so if a Pod restarts, data is lost.
 
 ## Start with authentication
 
