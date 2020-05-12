@@ -1,69 +1,66 @@
 # Telegraf Helm chart
 
-[Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent written by the folks over at [InfluxData](https://influxdata.com) for collecting & reporting metrics.
+[Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent used for collecting and reporting metrics.
 
 The Telegraf Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap a Telegraf (`telegraf`) deployment on a [Kubernetes](http://kubernetes.io) cluster.
 
+To see a list of available Telegraf plugins, see https://github.com/influxdata/telegraf/tree/master/plugins/.
+
 ## Prerequisites
 
-- Kubernetes 1.4+ with Beta APIs enabled
-
-## QuickStart
-
-```console
-helm repo add influxdata https://helm.influxdata.com/
-helm upgrade --install telegraf influxdata/telegraf
-```
+- Kubernetes 1.4+ with beta APIs enabled
 
 ## Install the chart
 
-To install the chart with the release name `telegraf`:
+1. Add the InfluxData Helm repository:
 
-```console
-helm upgrade --install telegraf influxdata/telegraf
-```
+   ```bash
+   helm repo add influxdata https://helm.influxdata.com/
+   ```
 
-The command deploys Telegraf on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+2. Run the following command, providing a name for your Telegraf release:
 
-> **Tip**: To view all Helm chart releases, run `helm list`.
+   ```bash
+   helm upgrade --install my-release influxdata/telegraf
+   ```
+
+   > **Tip**: `--install` can be shortened to `-i`.
+
+   This command deploys Telegraf on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
+
+  > **Tip**: To view all Helm chart releases, run `helm list`.
 
 ## Uninstall the chart
 
-To uninstall/delete the `telegraf` deployment:
+To uninstall the `my-release` deployment, use the following command:
 
-```console
-helm uninstall telegraf
+```bash
+helm uninstall my-release
 ```
 
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+This command removes all Kubernetes components associated with the chart and deletes the release.
 
 ## Configure the chart
 
-The default configuration parameters are listed in `values.yaml`.
+Plugins are configured as arrays of key/value dictionaries. Find configurable parameters, their descriptions, and their default values stored in `values.yaml`.
 
-```console
-helm upgrade --install telegraf influxdata/telegraf
-```
+To configure the chart, do either of the following:
 
-> **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` can be shortened : `helm upgrade -i [RELEASE] [CHART] [FLAGS]`
+- Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade --install`. For example:
 
-Outputs and inputs are configured as arrays of key/value dictionaries. Additional examples and defaults can be found in [values.yaml](values.yaml)
+  ```bash
+  helm upgrade --install my-release \
+    --set persistence.enabled=true \
+      influxdata/telegraf
+  ```
 
-Example:
+  This command enables persistence.
 
-```yaml
-outputs:
-  - influxdb:
-      urls: []
-        # - "http://influxdb.monitoring:8086"
-      database: "telegraf"
-inputs:
-  - cpu:
-      percpu: false
-      totalcpu: true
-  - system:
-```
+- Provide a YAML file that specifies the parameter values while installing the chart. For example, use the following command:
 
-> **Tip**: Use the default [values.yaml](values.yaml)
+  ```bash
+  helm upgrade --install my-release -f values.yaml influxdata/telegraf
+  ```
 
-Please see https://github.com/influxdata/telegraf/tree/master/plugins/ and checkout the contents of the `inputs` and `outputs` folders.
+  > **Tip**: Use the default [values.yaml](values.yaml).
+
