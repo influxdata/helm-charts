@@ -15,7 +15,7 @@ The InfluxDB Helm chart uses the [Helm](https://helm.sh) package manager to boot
 
    ```bash
    helm repo add influxdata https://helm.influxdata.com/
-   ``` 
+   ```
 
 2. Run the following command, providing a name for your release:
 
@@ -41,7 +41,7 @@ This command removes all the Kubernetes components associated with the chart and
 
 ## Configure the chart
 
-Configurable parameters and descriptions for the InfluxDB Helm chart are stored in `values.yaml` and listed in the table below.
+The following table lists configurable parameters, their descriptions, and their default values stored in `values.yaml`.
 
 | Parameter | Description | Default |
 |---|---|---|

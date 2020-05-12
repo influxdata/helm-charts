@@ -17,7 +17,7 @@ The InfluxDB v2 Helm chart uses the [Helm](https://helm.sh) package manager to b
 
    ```bash
    helm repo add influxdata https://helm.influxdata.com/
-   ``` 
+   ```
 
 2. Run the following command, providing a name for your InfluxDB release:
 
@@ -26,6 +26,7 @@ The InfluxDB v2 Helm chart uses the [Helm](https://helm.sh) package manager to b
    ```
 
    > **Tip**: `--install` can be shortened to `-i`.
+
    This command deploys InfluxDB v2 on the Kubernetes cluster using the default configuration.
 
   > **Tip**: To view all Helm chart releases, run `helm list`.

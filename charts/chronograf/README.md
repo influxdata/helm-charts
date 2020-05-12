@@ -15,13 +15,15 @@ The Chronograf Helm chart uses the [Helm](https://helm.sh) package manager to bo
 
    ```bash
    helm repo add influxdata https://helm.influxdata.com/
-   ``` 
+   ```
 
 2. Run the following command, providing a name for your Chronograf release:
 
    ```bash
    helm upgrade --install my-release influxdata/chronograf
    ```
+    
+   > **Tip**: `--install` can be shortened to `-i`.
 
    This command deploys Chronograf on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
 
@@ -39,7 +41,7 @@ This command removes all Kubernetes components associated with the chart and del
 
 ## Configure the chart
 
-Configurable parameters and descriptions for the Chronograf Helm chart are stored in `values.yaml` and listed in the table below.
+The following table lists configurable parameters, their descriptions, and their default values stored in `values.yaml`.
 
 | Parameter                    | Description                                                                                               | Default                                     |
 |:-----------------------------|:----------------------------------------------------------------------------------------------------------|:--------------------------------------------|
@@ -120,7 +122,7 @@ data:
     GOOGLE_CLIENT_SECRET: <BASE64_ENCODED_GOOGLE_CLIENT_SECRET>
 ```
 
-In conjunction with less sensitive information, such as `GOOGLE_DOMAINS` and `PUBLIC_URL`, use the chart's `envFromSecret` and `env` values. For example, include the following in a values file:
+With less sensitive information, such as `GOOGLE_DOMAINS` and `PUBLIC_URL`, use the chart's `envFromSecret` and `env` values. For example, include the following in a values file:
 
 ```
 [...]
