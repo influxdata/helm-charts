@@ -18,7 +18,7 @@ This chart bootstraps a Kapacitor deployment and service on a [Kubernetes](http:
 ## Prerequisites
 
 - Kubernetes 1.4+
-- PV provisioner support in the underlying infrastructure (optional)
+- PersistentVolume (PV) provisioner support in the underlying infrastructure (optional)
 
 ## Installing the Chart
 

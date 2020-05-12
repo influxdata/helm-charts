@@ -7,7 +7,7 @@ The InfluxDB Helm chart bootstraps an InfluxDB StatefulSet and service on a [Kub
 ## Prerequisites
 
 - Kubernetes 1.4+
-- (Optional) PV provisioner support in the underlying infrastructure
+- (Optional) PersistentVolume (PV) provisioner support in the underlying infrastructure
 
 ## Install the chart
 

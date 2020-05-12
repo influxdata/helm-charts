@@ -9,7 +9,7 @@ This chart bootstraps an InfluxDB v2 StatefulSet and service on a [Kubernetes](h
 ## Prerequisites
 
 - Kubernetes 1.4+
-- (Optional) PV provisioner support in the underlying infrastructure
+- (Optional) PersistentVolume (PV) provisioner support in the underlying infrastructure
 
 ## Install the chart
 

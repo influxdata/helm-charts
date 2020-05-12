@@ -7,7 +7,7 @@ The Chronograf Helm chart bootstraps a Chronograf deployment and service on a [K
 ## Prerequisites
 
 - Kubernetes 1.4+
-- (Optional) PV provisioner support in the underlying infrastructure
+- (Optional) PersistentVolume (PV) provisioner support in the underlying infrastructure
 
 ## Install the chart
 
