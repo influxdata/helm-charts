@@ -100,7 +100,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `backup.directory`                                | directory where backups are stored in                                                                                                                                                     | `"/backups"`                                            |
 | `backup.retentionDays`                            | retention time in days for backups (older backups are deleted)                                                                                                                            | `10`                                                    |
 | `backup.cronjob.schedule`                         | crontab style time schedule for backup execution                                                                                                                                          | `"0 2 * * *"`                                           |
-| `backup.cronjob.historyLimit`                     | cronjob historylimit                                                                                                                                                                      | `1`                                                     |
+| `backup.cronjob.historyLimit`                     | cronjob historylimit                                                                                                                                                                      | `3`                                                     |
 | `backup.cronjob.annotations`                      | backup pod annotations                                                                                                                                                                    | `{}`                                                    |
 | `backup.uploadProviders.google.enabled`           | enable upload to google storage bucket                                                                                                                                                    | `false`                                                 |
 | `backup.uploadProviders.google.secret`            | json secret whith serviceaccount data to access Google storage bucket                                                                                                                     | `""`                                                    |
@@ -110,8 +110,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | `backup.uploadProviders.google.image.registry`    | Google Cloud SDK image registry                                                                                                                                                           | `docker.io`                                             |
 | `backup.uploadProviders.google.image.repository`  | Google Cloud SDK image name                                                                                                                                                               | `google/cloud-sdk`                              |
 | `backup.uploadProviders.google.image.tag`         | Google Cloud SDK image tag                                                                                                                                                                | `291.0.0-alpine`                                            |
-| `backup.uploadProviders.google.image.pullPolicy`  | Google Cloud SDK image pull policy                                                                                                                                                        | `IfNotPresent`                                          |
-| `backup.uploadProviders.google.image.pullSecrets` | Specify docker-registry secret names as an array                                                                                                                                          | `[]` (does not add image pull secrets to deployed pods) |
 | `backup.uploadProviders.azure.enabled`            | enable upload to azure storage container                                                                                                                                                  | `false`                                                 |
 | `backup.uploadProviders.azure.secret`             | secret whith credentials to access Azure storage                                                                                                                                          | `""`                                                    |
 | `backup.uploadProviders.azure.secretKey`          | service account secret key name                                                                                                                                                           | `"connection-string"`                                   |
@@ -120,10 +118,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | `backup.uploadProviders.azure.image.registry`     | Azure CLI image registry                                                                                                                                                                  | `docker.io`                                             |
 | `backup.uploadProviders.azure.image.repository`   | Azure CLI image name                                                                                                                                                                      | `microsoft/azure-cli`                                     |
 | `backup.uploadProviders.azure.image.tag`          | Azure CLI image tag                                                                                                                                                                       | `2.0.24`                                            |
-| `backup.uploadProviders.azure.image.pullPolicy`   | Azure CLI image pull policy                                                                                                                                                               | `IfNotPresent`                                          |
-| `backup.uploadProviders.azure.image.pullSecrets`  | Specify docker-registry secret names as an array                                                                                                                                          | `[]` (does not add image pull secrets to deployed pods) |
-
-
 
 The [full image documentation](https://hub.docker.com/_/influxdb/) contains more information about running InfluxDB in docker.
 
@@ -216,7 +210,7 @@ It is up to the end user to configure their own one-off restore jobs. Below is j
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: influxdb-restore
+  generateName: influxdb-restore-
   namespace: monitoring
 spec:
   template:
