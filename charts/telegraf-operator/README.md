@@ -46,7 +46,7 @@ To configure the chart, do either of the following:
     influxdata/telegraf-operator
   ```
   
-  This command enables persistence.
+This command enables persistence.
 
 - Provide a YAML file that specifies parameter values while installing the chart. For example, use the following command:
 
