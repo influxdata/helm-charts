@@ -1,4 +1,4 @@
-# Telegraf-operator
+# Telegraf-operator Helm chart
 
 > Default installation expects cert-manager to be running in the cluster
 
