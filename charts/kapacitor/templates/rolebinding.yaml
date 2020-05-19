@@ -1,0 +1,24 @@
+{{- if and .Values.rbac.create .Values.rbac.namespaced -}}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: {{ template "kapacitor.fullname" . }}
+  namespace: {{ template "kapacitor.namespace" . }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    app: {{ template "kapacitor.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "kapacitor.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ template "kapacitor.serviceAccountName" . }}
+  namespace: {{ template "kapacitor.namespace" . }}
+roleRef:
+  kind: Role
+  name: {{ template "kapacitor.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end -}}

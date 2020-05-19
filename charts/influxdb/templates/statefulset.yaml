@@ -68,7 +68,8 @@ spec:
         {{- end }}
         {{- if .Values.config.udp.enabled }}
         - name: udp
-          containerPort: {{ .Values.config.udp.bind_address |  default 8089 }}
+          containerPort: {{ .Values.config.udp.bind_address | default 8089 }}
+          protocol: UDP
         {{- end }}
         {{- if .Values.config.opentsdb.enabled }}
         - name: opentsdb

@@ -101,12 +101,14 @@ data:
 
     [[graphite]]
       {{- range $key, $value := index .Values.config.graphite }}
+      {{- if ne $key "templates"}}
       {{- $tp := typeOf $value }}
       {{- if eq $tp "string" }}
       {{ $key }} = {{ $value | quote }}
       {{- else }}
       {{ $key }} = {{ $value }}
       {{- end  }}
+      {{- end }}
       {{- end }}
       {{- if .Values.config.graphite.templates }}
       templates = [

@@ -50,8 +50,10 @@ helm upgrade --install telegraf influxdata/telegraf
 > **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` can be shortened : `helm upgrade -i [RELEASE] [CHART] [FLAGS]`
 
 Outputs and inputs are configured as arrays of key/value dictionaries. Additional examples and defaults can be found in [values.yaml](values.yaml)
+
 Example:
-```
+
+```yaml
 outputs:
   - influxdb:
       urls: []

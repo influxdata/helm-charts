@@ -66,3 +66,36 @@ resources:
 ## `influxdb-user` and `influxdb-password`.
 ##
 # existingSecret: influxdb-auth
+
+## Role based access control
+rbac:
+  create: true
+  namespaced: false
+
+## Service account
+serviceAccount:
+  annotations: {}
+  create: true
+  name:
+
+## Sidecars that collect the configmaps with specified label and stores the included files into the respective folders
+sidecar:
+  image: kiwigrid/k8s-sidecar:0.1.116
+  imagePullPolicy: IfNotPresent
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 100Mi
+    # requests:
+    #   cpu: 50m
+    #   memory: 50Mi
+  ## skipTlsVerify Set to true to skip tls verification for kube api calls
+  # skipTlsVerify: true
+  sideload:
+    enabled: false
+    label: kapacitor_sideload
+    searchNamespace: null
+    folder: /var/lib/kapacitor/sideload
+
+## Override the deployment namespace
+namespaceOverride: ""
