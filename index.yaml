@@ -96,6 +96,32 @@ entries:
   influxdb:
   - apiVersion: v1
     appVersion: 1.7.10
+    created: "2020-05-19T18:10:25.662297763Z"
+    description: Scalable datastore for metrics, events, and real-time analytics.
+    digest: b66fd3f14d8bd0d725898dc50a4fd0aeda2dd280f906bca85dc0ac52cecd34b4
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: influxdb
+    sources:
+    - https://github.com/influxdata/influxdb
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.4.10/influxdb-4.4.10.tgz
+    version: 4.4.10
+  - apiVersion: v1
+    appVersion: 1.7.10
     created: "2020-05-19T17:27:23.736956245Z"
     description: Scalable datastore for metrics, events, and real-time analytics.
     digest: f39c186295d4d2d3a3bb9b6901b8291b9bcb1af132b15683c981c77bb584834b
