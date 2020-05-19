@@ -121,6 +121,9 @@ spec:
         - name: init
           mountPath: /docker-entrypoint-initdb.d
         {{- end }}
+        {{- if .Values.mountPoints }}
+{{ toYaml .Values.mountPoints | indent 8 }}
+        {{- end }}
       volumes:
       - name: config
         configMap:
@@ -139,6 +142,9 @@ spec:
       - name: {{ include "influxdb.fullname" . }}-data
         persistentVolumeClaim:
           claimName: {{ .Values.persistence.existingClaim }}
+      {{- end }}
+      {{- if .Values.volumes }}
+{{ toYaml .Values.volumes | indent 6 }}
       {{- end }}
   # Must use volume claim template in enterprise mode
   {{- if and .Values.persistence.enabled (or (not .Values.persistence.existingClaim) .Values.enterprise.enabled) }}
