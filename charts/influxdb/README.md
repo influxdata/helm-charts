@@ -260,13 +260,13 @@ with the behavior of other charts provided by Influxdata.
 
 ```yaml
 volumes:
-  - name: ssl-cert-volume
-    secret:
-      secretName: secret-name
+- name: ssl-cert-volume
+  secret:
+    secretName: secret-name
 mountPoints:
-  - name: ssl-cert-volume
-    mountPath: /etc/ssl/certs/selfsigned/
-    readOnly: true
+- name: ssl-cert-volume
+  mountPath: /etc/ssl/certs/selfsigned/
+  readOnly: true
 ```
 
 ## Upgrading
