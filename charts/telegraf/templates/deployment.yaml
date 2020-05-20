@@ -39,6 +39,27 @@ spec:
         - name: {{ .name }}
           mountPath: {{ .mountPath }}
         {{- end }}
+        {{- if .Values.hooks }}
+        {{- if or (.Values.hooks.postStart) (.Values.hooks.preStop) }}
+        lifecycle:
+        {{- if .Values.hooks.postStart }}
+          postStart:
+            exec:
+              command:
+        {{- range .Values.hooks.postStart }}
+                - {{ . | quote }}
+        {{- end }}
+        {{ end }}
+        {{- if .Values.hooks.preStop }}
+          preStop:
+            exec:
+              command:
+        {{- range .Values.hooks.preStop }}
+                - {{ . | quote }}
+        {{- end }}
+        {{ end }}
+        {{ end }}
+        {{ end }}
         {{- range $objectKey, $objectValue := .Values.config.outputs }}
         {{- range $key, $value := . -}}
         {{- $tp := typeOf $value -}}
