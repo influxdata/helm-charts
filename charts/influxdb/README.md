@@ -4,8 +4,11 @@
 
 The InfluxDB Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap an InfluxDB StatefulSet and service on a [Kubernetes](http://kubernetes.io) cluster.
 
+> **Note:** ### If you're using the InfluxDB Enterprise Helm chart, check out [InfluxDB Enterprise Helm chart](#influxdb-enterprise-helm-chart).
+
 ## Prerequisites
 
+- Helm v2 or later
 - Kubernetes 1.4+
 - (Optional) PersistentVolume (PV) provisioner support in the underlying infrastructure
 
@@ -122,7 +125,7 @@ To configure the chart, do either of the following:
 
 For information about running InfluxDB in Docker, see the [full image documentation](https://hub.docker.com/_/influxdb/).
 
-### Enterprise
+### InfluxDB Enterprise Helm chart
 
 [InfluxDB Enterprise](https://www.influxdata.com/products/influxdb-enterprise/) includes features designed for production workloads, including high availability and horizontal scaling. InfluxDB Enterprise requires an InfluxDB Enterprise license.
 

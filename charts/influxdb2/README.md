@@ -8,6 +8,7 @@ The InfluxDB v2 Helm chart uses the [Helm](https://helm.sh) package manager to b
 
 ## Prerequisites
 
+- Helm v3 or later
 - Kubernetes 1.4+
 - (Optional) PersistentVolume (PV) provisioner support in the underlying infrastructure
 

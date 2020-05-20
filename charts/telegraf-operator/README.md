@@ -2,6 +2,11 @@
 
 > Default installation expects `cert-manager` to be running in the cluster.
 
+## Prerequisites
+
+- Helm v2 or later
+- Kubernetes 1.11+ with Beta APIs enabled
+
 ## Install the chart
 
 1. Add the InfluxData Helm repository:

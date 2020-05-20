@@ -6,6 +6,7 @@ The Telegraf-DS Helm chart uses the [Helm](https://helm.sh) package manager to b
 
 ## Prerequisites
 
+- Helm v2 or later
 - Kubernetes 1.11+ with Beta APIs enabled
 
 ## QuickStart

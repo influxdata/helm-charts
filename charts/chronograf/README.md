@@ -6,6 +6,7 @@ The Chronograf Helm chart uses the [Helm](https://helm.sh) package manager to bo
 
 ## Prerequisites
 
+- Helm v2 or later
 - Kubernetes 1.4+
 - (Optional) PersistentVolume (PV) provisioner support in the underlying infrastructure
 
@@ -45,7 +46,7 @@ The following table lists configurable parameters, their descriptions, and their
 
 | Parameter                    | Description                                                                                               | Default                                     |
 |:-----------------------------|:----------------------------------------------------------------------------------------------------------|:--------------------------------------------|
-| `image.repository`           | controller container image repository                                                                     | quay.io/influxdb/chronograf                 |
+| `image.repository`           | image repository url                                                                                      | quay.io/influxdb/chronograf                 |
 | `image.tag`                  | controller container image tag                                                                            | 1.8.0                                       |
 | `image.pullPolicy`           | controller container image pull policy                                                                    | IfNotPresent                                |
 | `service.type`               | ClusterIP, NodePort, or LoadBalancer                                                                      | ClusterIP                                   |

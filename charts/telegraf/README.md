@@ -8,6 +8,7 @@ To see a list of available Telegraf plugins, see https://github.com/influxdata/t
 
 ## Prerequisites
 
+- Helm v2 or later
 - Kubernetes 1.4+ with beta APIs enabled
 
 ## Install the chart

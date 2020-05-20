@@ -6,6 +6,7 @@ The Kapacitor Helm chart uses the [Helm](https://helm.sh) package manager to boo
 
 ## Prerequisites
 
+- Helm v2 or later
 - Kubernetes 1.4+
 - PersistentVolume (PV) provisioner support in the underlying infrastructure (optional)
 
@@ -45,7 +46,7 @@ The following table lists configurable parameters, their descriptions, and their
 
 | Parameter               | Description                           | Default                                                    |
 | ----------------------- | ----------------------------------    | ---------------------------------------------------------- |
-| `image.repository` | Kapacitor image | `kapacitor` |
+| `image.repository` | image repository url | Kapacitor image | `kapacitor` |
 | `image.tag` | Kapacitor image version | `1.5.2-alpine` |
 | `image.pullPolicy` | Kapacitor image pull policy |  `IfNotPresent` |
 | `service.type` | Kapacitor web service type  | `ClusterIP` |
