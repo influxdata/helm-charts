@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![](https://github.com/influxdata/helm-charts/workflows/helm-charts%2Frelease/badge.svg?branch=master)](https://github.com/influxdata/helm-charts/actions)
+[![Slack Status](https://img.shields.io/badge/slack-join_chat-white.svg?logo=slack&style=social)](https://www.influxdata.com/slack)
 
 ## Usage
 
