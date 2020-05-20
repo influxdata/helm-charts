@@ -64,4 +64,3 @@ To configure the chart, do either of the following:
   ```
 
   > **Tip**: Use the default [values.yaml](values.yaml).
-

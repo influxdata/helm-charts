@@ -49,11 +49,16 @@ The following table lists configurable parameters, their descriptions, and their
 | `image.repository`           | image repository url                                                                                      | quay.io/influxdb/chronograf                 |
 | `image.tag`                  | controller container image tag                                                                            | 1.8.0                                       |
 | `image.pullPolicy`           | controller container image pull policy                                                                    | IfNotPresent                                |
+| `service.replicas`           | number of replicas for the specified service.type                                                         | 1                                           |
 | `service.type`               | ClusterIP, NodePort, or LoadBalancer                                                                      | ClusterIP                                   |
-| `persistence.enabled`        | Use a PVC to persist data                                                                                 | `true`                                      |
+| `persistence.enabled`        | Use a PVC to persist data                                                                                 | `false`                                     |
 | `persistence.storageClass`   | Storage class of backing PVC                                                                              | `nil` (uses alpha storage class annotation) |
 | `persistence.accessModes`    | Use volume as ReadOnly or ReadWrite                                                                       | `[ReadWriteOnce]`                           |
 | `persistence.size`           | Size of data volume                                                                                       | `8Gi`                                       |
+| `resources.requests.memory`  | Memory used for resource requests                                                                         | `256Mi`                                     |
+| `resources.requests.cpu`     | CPU used for resource requests                                                                            | `0.1`                                       |
+| `resources.limits.memory`    | Maximum memory that can be used for resource requests                                                     | `2Gi`                                       |
+| `resources.limits.cpu`       | Maximum CPU that can be used for resource requests                                                        | `2`                                         |
 | `ingress.enabled`            | Enable ingress controller resource                                                                        | false                                       |
 | `ingress.hostname`           | Ingress resource hostnames                                                                                | chronograf.foobar.com                       |
 | `ingress.tls`                | Ingress TLS configuration                                                                                 | false                                       |
