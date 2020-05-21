@@ -1,0 +1,20 @@
+{{- if and .Values.rbac.create .Values.rbac.namespaced -}}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: {{ template "kapacitor.fullname" . }}
+  namespace: {{ template "kapacitor.namespace" . }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    app: {{ template "kapacitor.fullname" . }}
+{{- if .Values.sidecar.sideload.enabled }}
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "watch", "list"]
+{{- else }}
+rules: []
+{{- end }}
+{{- end }}

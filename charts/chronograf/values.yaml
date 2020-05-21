@@ -66,6 +66,7 @@ ingress:
     # kubernetes.io/ingress.class: "nginx"
     # secretName: my-tls-cert
     # kubernetes.io/tls-acme: "true"
+  path: /
 
 ## OAuth Settings for OAuth Providers
 ## More information -> https://github.com/influxdata/chronograf/blob/master/docs/auth.md

@@ -14,10 +14,12 @@ data:
     {{ template "processors" .Values.config.processors }}
     {{ template "aggregators" .Values.config.aggregators }}
     {{ template "outputs" .Values.config.outputs }}
+    {{ template "monitor_self" .Values.config.monitor_self }}
 
     [[inputs.diskio]]
     [[inputs.kernel]]
     [[inputs.mem]]
+    [[inputs.net]]
     [[inputs.processes]]
     [[inputs.swap]]
     [[inputs.system]]
