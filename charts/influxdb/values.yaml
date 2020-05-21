@@ -244,7 +244,7 @@ initScripts:
 ##
 backup:
   enabled: false
-  ## Directory where backups are stored
+  ## Directory where backups are stored in a PVC in the container
   ##
   directory: "/backups"
   ## Retention time in days for backups
