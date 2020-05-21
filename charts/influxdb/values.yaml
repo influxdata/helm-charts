@@ -250,21 +250,17 @@ backup:
   ## Retention time in days for backups
   ##
   retentionDays: 10
-  ## Cronjob configuration
-  ## This cronjob is used to create InfluxDB backups
+  ## Schedule in Cron format to save snapshots
+  ## See https://en.wikipedia.org/wiki/Cron
   ##
-  cronjob:
-    ## Schedule in Cron format to save snapshots
-    ## See https://en.wikipedia.org/wiki/Cron
-    ##
-    schedule: "0 2 * * *"
-    ## Number of successful finished jobs to retain
-    ##
-    historyLimit: 3
-    ## Pod annotations
-    ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-    ##
-    podAnnotations: {}
+  schedule: "0 2 * * *"
+  ## Number of successful finished jobs to retain
+  ##
+  historyLimit: 3
+  ## Pod annotations
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
   ## Storage providers where to upload backups
   ##
   uploadProviders:
