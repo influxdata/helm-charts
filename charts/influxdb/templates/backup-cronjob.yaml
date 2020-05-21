@@ -6,10 +6,10 @@ metadata:
   labels:
     {{- include "influxdb.labels" . | nindent 4 }}
 spec:
-  schedule: {{.Values.backupschedule | quote }}
+  schedule: {{.Values.backup.schedule | quote }}
   concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: {{ .Values.backuphistoryLimit }}
-  failedJobsHistoryLimit: {{ .Values.backuphistoryLimit }}
+  successfulJobsHistoryLimit: {{ .Values.backup.historyLimit }}
+  failedJobsHistoryLimit: {{ .Values.backup.historyLimit }}
   jobTemplate:
     spec:
       template:
@@ -17,7 +17,7 @@ spec:
           labels:
             {{- include "influxdb.selectorLabels" . | nindent 12 }}
           annotations:
-            {{- toYaml .Values.backupPodannotations | nindent 12 }}
+            {{- toYaml .Values.backup.Podannotations | nindent 12 }}
         spec:
           restartPolicy: OnFailure
           volumes:

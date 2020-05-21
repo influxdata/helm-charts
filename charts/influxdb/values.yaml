@@ -243,6 +243,8 @@ initScripts:
 ## InfluxDB backup parameters
 ##
 backup:
+  ## Enable backups (you also need to set the "setDefaultUser.enabled" to true)
+  ##
   enabled: false
   ## Directory where backups are stored in a PVC in the container
   ##
