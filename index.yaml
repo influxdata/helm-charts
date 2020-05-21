@@ -3,6 +3,29 @@ entries:
   chronograf:
   - apiVersion: v1
     appVersion: 1.8.0
+    created: "2020-05-21T14:14:59.748433269Z"
+    description: Open-source web application written in Go and React.js that provides
+      the tools to visualize your monitoring data and easily create alerting and automation
+      rules.
+    digest: 1eeab3e9208d28ffab8abefc4f5ac7427d3d82e9c8bc0f45a061874bee4c7e92
+    home: https://www.influxdata.com/time-series-platform/chronograf/
+    keywords:
+    - chronograf
+    - visualizaion
+    - timeseries
+    - influxdata
+    - influxdb
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: chronograf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/chronograf-1.1.13/chronograf-1.1.13.tgz
+    version: 1.1.13
+  - apiVersion: v1
+    appVersion: 1.8.0
     created: "2020-05-12T20:00:35.967694108Z"
     description: Open-source web application written in Go and React.js that provides
       the tools to visualize your monitoring data and easily create alerting and automation
