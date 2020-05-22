@@ -5,7 +5,7 @@
 ```console
 helm repo add influxdata https://helm.influxdata.com
 
-helm install telegraf-operator 
+helm install telegraf-operator influxdata/telegraf-operator
 
 ```
 
