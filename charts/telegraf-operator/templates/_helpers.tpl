@@ -65,10 +65,49 @@ Create the name of the service account to use
 {{/*
 Generate certificates for telegraf-operator mutating webhook 
 */}}
-{{- define "telegraf-operator.gen-certs" -}}
+{{- define "telegraf-operator.non_certmanager" -}}
 {{- $altNames := list ( printf "%s.%s" (include "telegraf-operator.name" .) .Release.Namespace ) ( printf "%s.%s.svc" (include "telegraf-operator.name" .) .Release.Namespace ) -}}
 {{- $ca := genCA "telegraf-operator-ca" 365 -}}
 {{- $cert := genSignedCert ( include "telegraf-operator.name" . ) nil $altNames 365 $ca -}}
-tls.crt: {{ $cert.Cert | b64enc }}
-tls.key: {{ $cert.Key | b64enc }}
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: "{{ .Values.namespace }}/{{ include "telegraf-operator.fullname" . }}"
+  labels:
+    {{- include "telegraf-operator.labels" . | nindent 4 }}
+  name: {{ include "telegraf-operator.fullname" . }}
+webhooks:
+- clientConfig:
+    service:
+      name: {{ include "telegraf-operator.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-v1-pod
+    caBundle: {{ $ca.Cert | b64enc }}
+  failurePolicy: Ignore
+  name: telegraf.influxdata.com
+  rules:
+  - apiGroups:
+    - '*'
+    apiVersions:
+    - '*'
+    operations:
+    - CREATE
+    - DELETE
+    resources:
+    - pods
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: telegraf-operator-tls
+  labels:
+    {{- include "telegraf-operator.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+data:
+  tls.crt: {{ $cert.Cert | b64enc }}
+  tls.key: {{ $cert.Key | b64enc }}
 {{- end -}}
