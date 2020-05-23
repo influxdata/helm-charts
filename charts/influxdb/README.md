@@ -104,6 +104,11 @@ The command removes all the Kubernetes components associated with the chart and 
 | backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
 | backup.annotations | Annotations for backup cronjob | {} |
 | backup.podAnnotations | Annotations for backup cronjob pods | {} |
+| backup.persistence.enabled | Boolean to enable and disable persistance | false |
+| backup.persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
+| backup.persistence.annotations | Annotations for volumeClaimTemplates | nil |
+| backup.persistence.accessMode | Access mode for the volume | ReadWriteOnce |
+| backup.persistence.size | Storage size | 8Gi |
 
 The [full image documentation](https://hub.docker.com/_/influxdb/) contains more information about running InfluxDB in docker.
 

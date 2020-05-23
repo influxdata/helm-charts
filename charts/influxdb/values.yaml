@@ -242,6 +242,19 @@ initScripts:
 
 backup:
   enabled: false
+  ## If backup destination is PVC, or want to use intermediate PVC before uploading to object store.
+  persistence:
+    enabled: false
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    annotations:
+    accessMode: ReadWriteOnce
+    size: 8Gi
   schedule: "0 0 * * *"
   annotations: {}
   podAnnotations: {}

@@ -25,7 +25,12 @@ spec:
           restartPolicy: OnFailure
           volumes:
           - name: backup
+          {{- if .Values.backup.persistence.enabled }}
+            persistentVolumeClaim:
+              claimName: {{ include "influxdb.fullname" . }}-backup
+          {{- else }}
             emptyDir: {}
+          {{- end }}
           {{- if .Values.backup.gcs }}
           {{- if .Values.backup.gcs.serviceAccountSecret }}
           - name: google-cloud-key
