@@ -242,6 +242,17 @@ initScripts:
 
 backup:
   enabled: false
+  ## By default emptyDir is used as a transitory volume before uploading to object store.
+  ## As such, ensure that a sufficient ephemeral storage request is set to prevent node disk filling completely.
+  resources:
+    requests:
+      # memory: 512Mi
+      # cpu: 2
+      ephemeral-storage: "8Gi"
+    # limits:
+      # memory: 1Gi
+      # cpu: 4
+      # ephemeral-storage: "16Gi"
   ## If backup destination is PVC, or want to use intermediate PVC before uploading to object store.
   persistence:
     enabled: false

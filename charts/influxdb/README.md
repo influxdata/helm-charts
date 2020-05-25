@@ -109,6 +109,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | backup.persistence.annotations | Annotations for volumeClaimTemplates | nil |
 | backup.persistence.accessMode | Access mode for the volume | ReadWriteOnce |
 | backup.persistence.size | Storage size | 8Gi |
+| backup.resources | Resources requests and limits for `backup` pods | `ephemeral-storage: 8Gi` |
 
 The [full image documentation](https://hub.docker.com/_/influxdb/) contains more information about running InfluxDB in docker.
 
@@ -192,6 +193,18 @@ When enabled, the[`backup-cronjob`](./templates/backup-cronjob.yaml) runs on the
 ```sh
 kubectl create job --from=cronjobs/influxdb-backup influx-backup-$(date +%Y%m%d%H%M%S)
 ```
+
+#### Backup Storage
+
+The backup process consists of an init-container that writes the backup to a
+local volume, which is by default an `emptyDir`, shared to the runtime container
+which uploads the backup to the configured object store.
+
+In order to avoid filling the node's disk space, it is recommended to set a sufficient
+`ephemeral-storage` request or enable persistence, which allocates a PVC.
+
+Furthermore, if no object store provider is available, one can simply use the
+PVC as the final storage destination when `persistence` is enabled.
 
 ### Restores
 
