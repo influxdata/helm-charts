@@ -50,7 +50,9 @@ spec:
             args:
             - '-c'
             - |
-              influxd backup -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.rpc.bind_address | default 8088 }} -portable /backup/$(date +%Y%m%d%H%M%S)
+              influxd backup \
+                -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.rpc.bind_address | default 8088 }} \
+                -portable /backup/"$(date +%Y%m%d%H%M%S)"
           containers:
           {{- if .Values.backup.gcs }}
           - name: gsutil-cp
