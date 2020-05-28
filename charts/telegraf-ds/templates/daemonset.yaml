@@ -68,3 +68,7 @@ spec:
       - name: config
         configMap:
           name:  {{ include "telegraf.fullname" . }}
+      hostNetwork: {{ default .Values.hostNetwork  false }}
+      {{- if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy }}
+      {{- end }}
