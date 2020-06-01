@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}-data
+  labels:
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.data.replicas | default 3 }}
+  podManagementPolicy: Parallel
+  serviceName: {{ include "influxdb-enterprise.fullname" . }}-data
+  selector:
+    matchLabels:
+      influxdb.influxdata.com/component: data
+      {{- include "influxdb-enterprise.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.data.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        influxdb.influxdata.com/component: data
+        {{- include "influxdb-enterprise.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.data.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "influxdb-enterprise.fullname" . }}-data
+      containers:
+        - name: {{ .Chart.Name }}
+          command:
+          - "/bin/sh"
+          args:
+          - "/etc/influxdb/entrypoint.sh"
+          securityContext:
+            {{- toYaml .Values.data.securityContext | nindent 12 }}
+          image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+          imagePullPolicy: {{ .Values.data.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8088
+              protocol: TCP
+            - name: raft
+              containerPort: 8089
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+          readinessProbe:
+            initialDelaySeconds: 30
+            httpGet:
+              path: /status
+              port: http
+          volumeMounts:
+          - name: config
+            mountPath: /etc/influxdb
+          - name: {{ include "influxdb-enterprise.fullname" . }}-data-data
+            mountPath: /var/lib/influxdb
+          resources:
+            {{- toYaml .Values.data.resources | nindent 12 }}
+      {{- with .Values.data.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.data.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.data.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if and .Values.data.persistence.enabled (not .Values.data.persistence.existingClaim) }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ include "influxdb-enterprise.fullname" . }}-data-data
+        annotations:
+        {{- range $key, $value := .Values.data.persistence.annotations }}
+          {{ $key }}: "{{ $value }}"
+        {{- end }}
+      spec:
+        accessModes:
+          - {{ .Values.data.persistence.accessMode | quote}}
+        resources:
+          requests:
+            storage: {{ .Values.data.persistence.size | quote }}
+      {{- if .Values.data.persistence.storageClass }}
+      {{- if (eq "-" .Values.data.persistence.storageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.data.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+  {{- end }}
