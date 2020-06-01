@@ -1,0 +1,97 @@
+# Default values for influxdb-enterprise.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: "idb"
+fullnameOverride: "idb"
+imagePullSecrets: []
+
+license:
+  # You can put your license key here for testing this chart out,
+  # but we STRONGLY recommend using a license file stored in a secret
+  # when you ship to production.
+  key: "31176f98-26ef-4066-9eab-3e05596056d1"
+  #secret:
+    #name: secretName
+    #key: fieldKey
+
+meta:
+  replicas: 3
+  image: {}
+    #override: true
+    #pullPolicy: IfNotPresent
+    #repository: influxdb
+    #tag: "meta"
+  #nodeSelector: {}
+  #tolerations: []
+  #affinity: {}
+  #podAnnotations: {}
+  #podSecurityContext: {}
+  #  fsGroup: 2000
+  #securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+  ## Persist data to a persistent volume
+  ##
+  persistence:
+    enabled: true
+    ## A manually managed Persistent Volume and Claim
+    ## Requires persistence.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    # existingClaim:
+    ## influxdb data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    # annotations:
+    accessMode: ReadWriteOnce
+    size: 8Gi
+
+
+data:
+  replicas: 3
+  image: {}
+    #override: true
+    #pullPolicy: IfNotPresent
+    #repository: influxdb
+    #tag: "data"
+  #nodeSelector: {}
+  #tolerations: []
+  #affinity: {}
+  #podAnnotations: {}
+  #podSecurityContext: {}
+  #  fsGroup: 2000
+  #securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+  ## Persist data to a persistent volume
+  ##
+  persistence:
+    enabled: true
+    ## A manually managed Persistent Volume and Claim
+    ## Requires persistence.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    # existingClaim:
+    ## influxdb data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    # annotations:
+    accessMode: ReadWriteOnce
+    size: 8Gi

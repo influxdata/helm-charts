@@ -1,0 +1,19 @@
+apiVersion: v2
+version: 0.1.0
+appVersion: 1.8.0
+engine: gotpl
+
+name: influxdb-enterprise
+type: application
+description: Run InfluxDB Enterprise on Kubernetes
+keywords:
+- influxdb
+- database
+- timeseries
+- influxdata
+home: https://www.influxdata.com/time-series-platform/influxdb/
+sources:
+- https://github.com/influxdata/influxdb
+maintainers:
+- name: rawkode
+  email: rawkode@influxdata.com

@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}-data
+  labels:
+    app.kubernetes.io/component: data
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+data:
+  influxdb.conf: |+
+    bind-address = ":8088"
+    reporting-disabled = false
+
+    [enterprise]
+      {{ if .Values.license.key }}
+      # license-key and license-path are mutually exclusive, use only one and leave the other blank
+      license-key = "{{ .Values.license.key }}" #✨ mutually exclusive with license-path
+      {{ else }}
+      # license-key and license-path are mutually exclusive, use only one and leave the other blank
+      license-path = "/etc/influxdb/license.json"
+      {{ end }}
+
+    [meta]
+      dir = "/var/lib/influxdb/meta"
+
+    [hinted-handoff]
+      dir = "/var/lib/influxdb/hh"
+
+    [data]
+      dir = "/var/lib/influxdb/data"
+      wal-dir = "/var/lib/influxdb/wal"
+
+  entrypoint.sh: |+
+    #!/usr/bin/env sh
+
+    META_LEADER=$(hostname -f | sed -r 's/-[0-9]+./-0./' | sed -r 's/data/meta/g')
+
+    n=0
+    until [ "$n" -ge 1000 ]
+    do
+      curl -XPOST -Faddr=$(hostname -f):8088 http://${META_LEADER}:8091/add-data && break
+      sleep 2
+      n=$((n+1))
+    done
+
+    export INFLUXDB_HOSTNAME=$(hostname -f)
+    exec influxd
+
