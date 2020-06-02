@@ -29,19 +29,47 @@ data:
       dir = "/var/lib/influxdb/data"
       wal-dir = "/var/lib/influxdb/wal"
 
-  entrypoint.sh: |+
-    #!/usr/bin/env sh
+  entrypoint.pl: |+
 
-    META_LEADER=$(hostname -f | sed -r 's/-[0-9]+./-0./' | sed -r 's/data/meta/g')
+    #!/usr/bin/env perl
+    $ENV{INFLUXDB_HOSTNAME} = `hostname -f`;
+    $ENV{INFLUXDB_HOSTNAME} =~ s/\n$//;
 
-    n=0
-    until [ "$n" -ge 1000 ]
-    do
-      curl -XPOST -Faddr=$(hostname -f):8088 http://${META_LEADER}:8091/add-data && break
-      sleep 2
-      n=$((n+1))
-    done
+    $pid = fork();
 
-    export INFLUXDB_HOSTNAME=$(hostname -f)
-    exec influxd
+    # Inside this conditional is our child process, which
+    # will return `influxd-meta`
+    if($pid == 0) {
+      exec('influxd') or die("Failed to execute influxd: $!\n");
+    }
 
+    $SIG{HUP} = sub { kill 'HUP', $pid };
+    $SIG{TERM} = sub { kill 'TERM', $pid };
+    $SIG{KILL} = sub { kill 'KILL', $pid };
+
+    # Register data node with meta leader
+    my $meta_leader = $ENV{INFLUXDB_HOSTNAME};
+    $meta_leader =~ s/-[0-9]+./-0./;
+    $meta_leader =~ s/data/meta/g;
+
+    # We're not going to define an exit strategy for failure here.
+    # This should be handled by the probes on the pods
+    while (true) {
+      # There's no LWP/Simple available in our images, so forking out to curl 😥
+      print "Attempting to register with meta service ...\n";
+      system('echo', 'curl', '-XPOST', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "http://idb-meta:8091/add-data");
+      system('curl', '-XPOST', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "http://idb-meta:8091/add-data");
+
+      if ($? == 0) {
+        print "Success\n";
+        last;
+      }
+      print "Failed: $!\n";
+
+      # Wait a few seconds and try again
+      # Maybe we should implement some rudamentary backoff
+      sleep(2);
+    }
+
+    waitpid($pid, 0);
+    exit $?
