@@ -10,7 +10,7 @@ license:
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
-  key: "31176f98-26ef-4066-9eab-3e05596056d1"
+  key: ""
   #secret:
     #name: secretName
     #key: fieldKey
