@@ -37,18 +37,13 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           command:
-          - "/bin/sh"
+          - "/usr/bin/perl"
           args:
-          - "-c"
-          - "INFLUXDB_HOSTNAME=$(hostname -f) influxd-meta"
+          - "/etc/influxdb/entrypoint.pl"
           securityContext:
             {{- toYaml .Values.meta.securityContext | nindent 12 }}
           image: "{{ .Values.meta.image.repository | default "influxdb" }}:{{ .Values.meta.image.tag | default (printf "%s-%s" .Chart.AppVersion "meta") }}"
           imagePullPolicy: {{ .Values.meta.image.pullPolicy }}
-          lifecycle:
-            postStart:
-              exec:
-                command: ["/bin/sh", "/etc/influxdb/entrypoint.sh"]
           ports:
             - name: http
               containerPort: 8091

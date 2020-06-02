@@ -22,12 +22,44 @@ data:
     [meta]
       dir = "/var/lib/influxdb/meta"
 
-  entrypoint.sh: |+
-    #!/usr/bin/env sh
-    set -e
-    META_LEADER=$(hostname -f | sed -r 's/-[0-9]+./-0./')
-    if [ $META_LEADER != $(hostname -f) ]; then
-      influxd-ctl join ${META_LEADER}:8091
-    else
-      influxd-ctl add-meta $(hostname -f):8091
-    fi
+  entrypoint.pl: |+
+    #!/usr/bin/env perl
+    $ENV{INFLUXDB_HOSTNAME} = `hostname -f`;
+    $ENV{INFLUXDB_HOSTNAME} =~ s/\n$//;
+
+    $pid = fork();
+
+    # Inside this conditional is our child process, which
+    # will return `influxd-meta`
+    if($pid == 0) {
+      exec('influxd-meta') or die("Failed to execute influxd-meta: $!\n");
+    }
+
+    $SIG{HUP} = sub { kill 'HUP', $pid };
+    $SIG{TERM} = sub { kill 'TERM', $pid };
+    $SIG{KILL} = sub { kill 'KILL', $pid };
+
+    # Register meta node
+    my $meta_leader = $ENV{INFLUXDB_HOSTNAME};
+    $meta_leader =~ s/-[0-9]+./-0./;
+
+    # We're not going to define an exit strategy for failure here.
+    # This should be handled by the probes on the pods
+    while (true) {
+      if($meta_leader eq $ENV{INFLUXDB_HOSTNAME}) {
+        system('influxd-ctl', 'add-meta', "$ENV{INFLUXDB_HOSTNAME}:8091");
+      } else {
+        system('influxd-ctl', 'join', "$meta_leader:8091");
+      }
+
+      if ($? == 0) {
+          last;
+      }
+
+      # Wait a few seconds and try again
+      # Maybe we should implement some rudamentary backoff
+      sleep(2);
+    }
+
+    waitpid($pid, 0);
+    exit $?

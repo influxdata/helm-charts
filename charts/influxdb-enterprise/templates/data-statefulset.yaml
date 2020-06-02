@@ -35,9 +35,9 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           command:
-          - "/bin/sh"
+          - "/usr/bin/perl"
           args:
-          - "/etc/influxdb/entrypoint.sh"
+          - "/etc/influxdb/entrypoint.pl"
           securityContext:
             {{- toYaml .Values.data.securityContext | nindent 12 }}
           image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
