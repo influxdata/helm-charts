@@ -40,6 +40,13 @@ env:
 ##
 tolerations: []
 
+## If the DaemonSet should run on the host's network namespace
+## hostNetwork: true
+
+## If using hostNetwork=true, set dnsPolicy to ClusterFirstWithHostNet
+## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#
+## dnsPolicy: ClusterFirstWithHostNet
+
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
