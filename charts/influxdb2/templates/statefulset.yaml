@@ -48,7 +48,7 @@ spec:
           - name: data
             mountPath: /root/.influxdbv2
           resources:
-            {{ toYaml .Values.resources | indent 12 }}
+            {{ .Values.resources | toYaml | nindent 12 | trim }}
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
