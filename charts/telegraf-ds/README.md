@@ -1,27 +1,24 @@
-# Telegraf-DS (DaemonSet)
+# Telegraf-DS (DaemonSet) Helm chart
 
-[Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent written by the folks over at [InfluxData](https://influxdata.com) for collecting & reporting metrics. This chart runs a DaemonSet of Telegraf instances to collect host level metrics for your cluster. If you need to poll individual instances of infrastructure or APIs there is a `telegraf` chart that is more suited to that usecase.
+[Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent used for collecting and reporting metrics. This chart runs a DaemonSet of Telegraf instances to collect host-level metrics for your cluster. To poll individual instances of infrastructure or APIs, use the [Telegraf chart](https://github.com/influxdata/helm-charts/tree/master/charts/telegraf).
 
-For this chart, Telegraf inputs cannot be customised as it aims to provide an opinionated configuration to monitor kubernetes nodes and global kubernetes monitoring.
+The Telegraf-DS Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap a Telegraf-DS (DaemonSet) on a [Kubernetes](http://kubernetes.io) cluster. You cannot customize Telegraf inputs for this chart being the goal is to provide an opinionated configuration for monitoring Kubernetes nodes and global Kubernetes monitoring.
 
-## TL;DR
+## Prerequisites
+
+- Helm v2 or later
+- Kubernetes 1.11+ with Beta APIs enabled
+
+## QuickStart
 
 ```console
 helm repo add influxdata https://helm.influxdata.com/
 helm upgrade --install telegraf-ds influxdata/telegraf-ds
 ```
 
-> **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` is idempotent and can be run multiple times. If chart was not previously installed, helm will install it. If present, it will redeploy the same version or upgrade it if a new version is available.
+> **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` is idempotent and can be run multiple times. If chart hasn't been installed, Helm installs it. If chart is installed, Helm redeploys the same version or upgrades the chart if a new version is available.
 
-## Introduction
-
-This chart bootstraps a `telegraf-ds` DaemonSet on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
-
-## Prerequisites
-
-- Kubernetes 1.11+ with Beta APIs enabled
-
-## Installing the Chart
+## Install the chart
 
 To install the chart with the release name `my-release`:
 
@@ -31,9 +28,9 @@ helm upgrade --install my-release influxdata/telegraf-ds
 
 The command deploys a Telegraf DaemonSet on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section as well as the [values.yaml](/values.yaml) file lists the parameters that can be configured during installation.
 
-> **Tip**: List all releases using `helm list`
+> **Tip**: To view all Helm chart releases, run `helm list`.
 
-## Uninstalling the Chart
+## Uninstall the chart
 
 To uninstall/delete the `my-release` deployment:
 
@@ -43,9 +40,9 @@ helm uninstall my-release
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-## Configuration
+## Configure the chart
 
-The default configuration parameters are listed in `values.yaml`. To change the defaults, specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+The default configuration parameters are listed in `values.yaml`. To change the defaults, specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
 
 ```console
 helm upgrade --install my-release \
@@ -53,7 +50,7 @@ helm upgrade --install my-release \
     influxdata/telegraf-ds
 ```
 
-The above command allows the chart to deploy by setting the InfluxDB URL for telegraf to write to.
+This command lets the chart deploy by setting the InfluxDB URL for Telegraf to write to.
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
@@ -63,7 +60,7 @@ helm upgrade --install my-release -f values.yaml influxdata/telegraf-ds
 
 > **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` can be shortened : `helm upgrade -i [RELEASE] [CHART] [FLAGS]`
 
-## Telegraf Configuration
+## Telegraf configuration
 
 This chart deploys the following by default:
 

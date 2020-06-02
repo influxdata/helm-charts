@@ -1,56 +1,52 @@
-# Kapacitor
+# Kapacitor Helm chart
 
-##  An Open-Source Time Series ETL and Alerting Engine
+[Kapacitor](https://github.com/influxdata/kapacitor) is an open-source framework used for processing, monitoring, and alerting on time series data.
 
-[Kapacitor](https://github.com/influxdata/kapacitor) is an open-source framework built by the folks over at [InfluxData](https://influxdata.com) and written in Go for processing, monitoring, and alerting on time series data
-
-## QuickStart
-
-```bash
-helm repo add influxdata https://helm.influxdata.com/
-helm upgrade --install kapacitor influxdata/kapacitor --namespace monitoring
-```
-
-> **Tip**: `helm upgrade --install [RELEASE] [CHART] [FLAGS]` can be shortened : `helm upgrade -i [RELEASE] [CHART] [FLAGS]`
-
-## Introduction
-
-This chart bootstraps A Kapacitor deployment and service on a Kubernetes cluster using the Helm Package manager.
+The Kapacitor Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap a Kapacitor deployment and service on a [Kubernetes](http://kubernetes.io) cluster.
 
 ## Prerequisites
 
+- Helm v2 or later
 - Kubernetes 1.4+
-- PV provisioner support in the underlying infrastructure (optional)
+- PersistentVolume (PV) provisioner support in the underlying infrastructure (optional)
 
-## Installing the Chart
+## Install the chart
 
-To install the chart with the release name `my-release`:
+1. Add the InfluxData Helm repository:
 
-```bash
-helm upgrade --install my-release influxdata/kapacitor
-```
+   ```bash
+   helm repo add influxdata https://helm.influxdata.com/
+   ```
 
-The command deploys Kapacitor on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+2. Run the following command, providing a name for your release:
 
-> **Tip**: List all releases using `helm list`
+   ```bash
+   helm upgrade --install my-release influxdata/kapacitor
+   ```
 
-## Uninstalling the Chart
+   > **Tip**: `--install` can be shortened to `-i`.
 
-To uninstall/delete the `my-release` deployment:
+   This command deploys Kapacitor on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
+
+   > **Tip**: To view all Helm chart releases, run `helm list`.
+
+## Uninstall the chart
+
+To uninstall the `my-release` deployment, use the following command:
 
 ```bash
 helm uninstall my-release
 ```
 
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+This command removes all the Kubernetes components associated with the chart and deletes the release.
 
-## Configuration
+## Configure the chart
 
-The following table lists the configurable parameters of the Kapacitor chart and their default values.
+The following table lists configurable parameters, their descriptions, and their default values stored in `values.yaml`.
 
 | Parameter               | Description                           | Default                                                    |
 | ----------------------- | ----------------------------------    | ---------------------------------------------------------- |
-| `image.repository` | Kapacitor image | `kapacitor` |
+| `image.repository` | image repository url | Kapacitor image | `kapacitor` |
 | `image.tag` | Kapacitor image version | `1.5.2-alpine` |
 | `image.pullPolicy` | Kapacitor image pull policy |  `IfNotPresent` |
 | `service.type` | Kapacitor web service type  | `ClusterIP` |
@@ -81,27 +77,27 @@ The following table lists the configurable parameters of the Kapacitor chart and
 | `sidecar.sideload.folder` | Folder in the pod that should hold the collected sideloads. This path will be mounted. | `/var/lib/kapacitor/sideload` |
 | `namespaceOverride` | Override the deployment namespace | `""` (`Release.Namespace`) |
 
-The configurable parameters of the Kapacitor chart and the default values are listed in `values.yaml`.
+To configure the chart, do either of the following:
 
-The [full image documentation](https://hub.docker.com/_/kapacitor/) contains more information about running Kapacitor in docker.
+- Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade --install`. For example, use the following command:
 
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
-
-```bash
-helm upgrade --install my-release \
+  ```bash
+  helm upgrade --install my-release \
   --set influxURL=http://myinflux.mytld:8086,persistence.enabled=true \
     influxdata/kapacitor
-```
+  ```
+  
+  This command enables persistence.
 
-The above command enables persistence and changes the size of the requested data volume to 200GB.
+- Provide a YAML file that specifies parameter values while installing the chart. For example, use the following command:
 
-Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
+  ```bash
+  helm upgrade --install my-release -f values.yaml influxdata/kapacitor
+  ```
 
-```bash
-helm upgrade --install my-release -f values.yaml influxdata/kapacitor
-```
+  > **Tip**: Use the default [values.yaml](values.yaml).
 
-> **Tip**: You can use the default [values.yaml](values.yaml)
+For information about running Kapacitor in Docker, see the [full image documentation](https://hub.docker.com/_/kapacitor/).
 
 ## Persistence
 
@@ -129,3 +125,7 @@ data:
   influxdb-httpd-clienterror.yml: |
     [...]
 ```
+
+---
+
+Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.
