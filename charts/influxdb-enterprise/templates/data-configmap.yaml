@@ -48,23 +48,30 @@ data:
     $SIG{KILL} = sub { kill 'KILL', $pid };
 
     # Register data node with meta leader
-    my $meta_leader = $ENV{INFLUXDB_HOSTNAME};
-    $meta_leader =~ s/-[0-9]+./-0./;
-    $meta_leader =~ s/data/meta/g;
+    my $protocol = $ENV{HTTP_PROTOCOL};
+    my $meta_service = $ENV{RELEASE_NAME} . "-meta";
+
+    # First time preparing to register with a meta node.
+    # There's a delay waiting on this pods DNS to be resolvable, and
+    # it looks like the /add-data endpoint returns a 200 even when that
+    # lookup fails.
+    # So slipping in this sleep for the time being
+    # sleep(15);
 
     # We're not going to define an exit strategy for failure here.
     # This should be handled by the probes on the pods
     while (true) {
       # There's no LWP/Simple available in our images, so forking out to curl 😥
-      print "Attempting to register with meta service ...\n";
-      system('echo', 'curl', '-XPOST', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "http://idb-meta:8091/add-data");
-      system('curl', '-XPOST', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "http://idb-meta:8091/add-data");
+      print "\n\n\nREGISTER WITH META SERVICE\n\n\n";
+      $exit_code = system('curl', '-H', 'Expect:', '-XPOST', '-v', '--silent', '--fail', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
 
-      if ($? == 0) {
-        print "Success\n";
+
+      if ($exit_code == 0) {
+        $| = 1;
         last;
       }
-      print "Failed: $!\n";
+      print "\n\n\nFailed: $!\n\n\n";
+      $| = 1;
 
       # Wait a few seconds and try again
       # Maybe we should implement some rudamentary backoff

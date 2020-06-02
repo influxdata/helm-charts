@@ -42,6 +42,11 @@ spec:
             {{- toYaml .Values.data.securityContext | nindent 12 }}
           image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
           imagePullPolicy: {{ .Values.data.image.pullPolicy }}
+          env:
+          - name: HTTP_PROTOCOL
+            value: http
+          - name: RELEASE_NAME
+            value: {{ include "influxdb-enterprise.fullname" . }}
           ports:
             - name: http
               containerPort: 8088
