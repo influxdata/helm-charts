@@ -164,6 +164,18 @@ ingress:
   annotations: {}
     # kubernetes.io/ingress.class: "nginx"
     # kubernetes.io/tls-acme: "true"
+  path: /
+
+
+## Add custom volume and volumeMounts
+# volumes:
+#   - name: ssl-cert-volume
+#     secret:
+#       secretName: secret-name
+# mountPoints:
+#   - name: ssl-cert-volume
+#     mountPath: /etc/ssl/certs/selfsigned/
+#     readOnly: true
 
 ## Use an alternate scheduler, e.g. "stork".
 ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/

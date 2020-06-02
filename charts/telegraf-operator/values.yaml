@@ -7,7 +7,15 @@ image:
 classes:
   secretName: "telegraf-operator-classes"
   default: "infra"
-  data: {}
+  data:
+    infra: |
+      [[outputs.influxdb]]
+        urls = ["http://influxdb.influxdb:8086"]
+      [global_tags]
+        env = "ci"
+        hostname = "$HOSTNAME"
+        nodename = "$NODENAME"
+        type = "infra"
 
 certManager:
   enable: false

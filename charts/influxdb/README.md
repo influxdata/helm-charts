@@ -77,6 +77,8 @@ The following table lists configurable parameters, their descriptions, and their
 | tolerations | [Tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) for pod assignment | [] |
 | securityContext | [securityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for pod | {} |
 | env | environment variables for influxdb container | {} |
+| volumes | `volumes` stanza(s) to be used in the main container | nil |
+| mountPoints | `volumeMount` stanza(s) to be used in the main container | nil |
 | config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#reporting-disabled-false) | false |
 | config.rpc | RPC address for backup and storage | {} |
 | config.meta | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#meta) | {} |
@@ -262,7 +264,23 @@ spec:
 At which point the data from the new `<db name>_bak` dbs would have to be side loaded into the original dbs.
 Please see [InfluxDB documentation for more restore examples](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/#restore-examples).
 
-## Upgrade
+## Mounting Extra Volumes
+
+Extra volumes can be mounted by providing the `volumes` and `mountPoints` keys, consistent
+with the behavior of other charts provided by Influxdata.
+
+```yaml
+volumes:
+- name: ssl-cert-volume
+  secret:
+    secretName: secret-name
+mountPoints:
+- name: ssl-cert-volume
+  mountPath: /etc/ssl/certs/selfsigned/
+  readOnly: true
+```
+
+## Upgrading
 
 ### From < 1.0.0 To >= 1.0.0
 

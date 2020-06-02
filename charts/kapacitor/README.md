@@ -62,6 +62,20 @@ The following table lists configurable parameters, their descriptions, and their
 | `envVars` | Environment variables to set initial Kapacitor configuration (https://hub.docker.com/_/kapacitor/) | `{}` |
 | `influxURL` | InfluxDB url used to interact with Kapacitor (also can be set with ```envVars.KAPACITOR_INFLUXDB_0_URLS_0```) | `http://influxdb-influxdb.tick:8086` |
 | `existingSecret` | Name of an existing Secrect used to set the environment variables for the InfluxDB user and password. The expected keys in the secret are `influxdb-user` and `influxdb-password`. |
+| `rbac.create` | Create and use RBAC resources | `true` |
+| `rbac.namespaced` | Creates Role and Rolebinding instead of the default ClusterRole and ClusteRoleBindings for the Kapacitor instance  | `false` |
+| `serviceAccount.annotations` | ServiceAccount annotations | `{}` |
+| `serviceAccount.create` | Create service account | `true` |
+| `serviceAccount.name` | Service account name to use, when empty will be set to created account if `serviceAccount.create` is set else to `default` | `` |
+| `sidecar.image` | Sidecar image | `kiwigrid/k8s-sidecar:0.1.116` |
+| `sidecar.imagePullPolicy` | Sidecar image pull policy | `IfNotPresent` |
+| `sidecar.resources` | Sidecar resources | `{}` |
+| `sidecar.skipTlsVerify` | Set to true to skip tls verification for kube api calls | `nil` |
+| `sidecar.sideload.enabled` | Enables the search for sideloads and adds/updates/deletes them in Kapacitor | `false` |
+| `sidecar.sideload.label` | Label that configmaps with sideloads should have to be added | `kapacitor_sideload` |
+| `sidecar.sideload.searchNamespace` | If specified, the sidecar will search for sideload configmaps inside this namespace. Otherwise the namespace in which the sidecar is running will be used. It's also possible to specify ALL to search in all namespaces | `nil` |
+| `sidecar.sideload.folder` | Folder in the pod that should hold the collected sideloads. This path will be mounted. | `/var/lib/kapacitor/sideload` |
+| `namespaceOverride` | Override the deployment namespace | `""` (`Release.Namespace`) |
 
 To configure the chart, do either of the following:
 
@@ -90,5 +104,28 @@ For information about running Kapacitor in Docker, see the [full image documenta
 The [Kapacitor](https://hub.docker.com/_/kapacitor/) image stores data in the `/var/lib/kapacitor` directory in the container.
 
 The chart optionally mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) at this location. The volume is created using dynamic volume provisioning.
+
+## Sidecar for sideloads
+
+If the parameter `sidecar.sideload.enabled` is set, a sidecar container is deployed in the Kapacitor
+pod. This container watches all configmaps in the cluster and filters out the ones with
+a label as defined in `sidecar.sideload.label`. The files defined in those configmaps are written
+to a folder and can be accessed by TICKscripts. Changes to the configmaps are monitored and the files
+are deleted/updated.
+
+Example sideload config:
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kapacitor-sideload-influxdb-httpd-clienterror
+  labels:
+    kapacitor_sideload: "1"
+data:
+  influxdb-httpd-clienterror.yml: |
+    [...]
+```
+
+---
 
 Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.

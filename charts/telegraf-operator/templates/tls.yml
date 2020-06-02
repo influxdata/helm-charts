@@ -1,0 +1,3 @@
+{{- if eq .Values.certManager.enable false -}}
+{{ ( include "telegraf-operator.non_certmanager" . ) }}
+{{- end }}

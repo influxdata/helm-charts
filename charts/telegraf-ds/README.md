@@ -72,6 +72,11 @@ This chart deploys the following by default:
   * [`kernel`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/kernel)
   * [`kubernetes`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/kubernetes)
   * [`mem`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/mem)
+  * [`net`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/net)
   * [`processes`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/processes)
   * [`swap`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/swap)
   * [`system`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system)
+
+The following plugin can be enable through the configuration:
+
+- [`internal`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/internal)

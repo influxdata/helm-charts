@@ -35,10 +35,34 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /etc/telegraf
-        {{- range .Values.volumeMounts}}
+        {{- range .Values.volumeMounts }}
         - name: {{ .name }}
           mountPath: {{ .mountPath }}
         {{- end }}
+        {{- if .Values.mountPoints }}
+{{ toYaml .Values.mountPoints | indent 8 }}
+        {{- end }}
+        {{- if .Values.hooks }}
+        {{- if or (.Values.hooks.postStart) (.Values.hooks.preStop) }}
+        lifecycle:
+        {{- if .Values.hooks.postStart }}
+          postStart:
+            exec:
+              command:
+        {{- range .Values.hooks.postStart }}
+                - {{ . | quote }}
+        {{- end }}
+        {{ end }}
+        {{- if .Values.hooks.preStop }}
+          preStop:
+            exec:
+              command:
+        {{- range .Values.hooks.preStop }}
+                - {{ . | quote }}
+        {{- end }}
+        {{ end }}
+        {{ end }}
+        {{ end }}
         {{- range $objectKey, $objectValue := .Values.config.outputs }}
         {{- range $key, $value := . -}}
         {{- $tp := typeOf $value -}}
@@ -66,6 +90,6 @@ spec:
       - name: config
         configMap:
           name: {{ include "telegraf.fullname" . }}
-      {{- if .Values.volumeMounts }}
-{{ toYaml .Values.volumeMounts | indent 6 }}
-      {{- end}}
+      {{- if .Values.volumes }}
+{{ toYaml .Values.volumes | indent 6 }}
+      {{- end }}

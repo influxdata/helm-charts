@@ -4,6 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "kapacitor.fullname" . }}
+  namespace: {{ template "kapacitor.namespace" . }}
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
@@ -19,6 +20,7 @@ spec:
       labels:
         app: {{ template "kapacitor.fullname" . }}
     spec:
+      serviceAccountName: {{ template "kapacitor.serviceAccountName" . }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -49,8 +51,43 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/kapacitor
+{{- if .Values.sidecar.sideload.enabled }}
+        - name: sc-sideload-volume
+          mountPath: {{ .Values.sidecar.sideload.folder | quote }}
+{{- end}}
         resources:
 {{ toYaml .Values.resources | indent 12 }}
+{{- if .Values.sidecar.sideload.enabled }}
+      - name: {{ .Chart.Name }}-sc-sideload
+        image: "{{ .Values.sidecar.image }}"
+        imagePullPolicy: {{ .Values.sidecar.imagePullPolicy }}
+        env:
+        - name: METHOD
+          value: WATCH
+        - name: LABEL
+          value: "{{ .Values.sidecar.sideload.label }}"
+        - name: FOLDER
+          value: "/var/lib/kapacitor/sideload"
+        - name: RESOURCE
+          value: "configmap"
+        {{- if .Values.sidecar.sideload.searchNamespace }}
+        - name: NAMESPACE
+          value: "{{ .Values.sidecar.sideload.searchNamespace }}"
+        {{- end }}
+        {{- if .Values.sidecar.skipTlsVerify }}
+        - name: SKIP_TLS_VERIFY
+          value: "{{ .Values.sidecar.skipTlsVerify }}"
+        {{- end }}
+        - name: REQ_METHOD
+          value: POST
+        - name: REQ_URL
+          value: "http://localhost:9092/kapacitor/v1/sideload/reload"
+        resources:
+{{ toYaml .Values.sidecar.resources | indent 12 }}
+        volumeMounts:
+          - name: sc-sideload-volume
+            mountPath: "/var/lib/kapacitor/sideload"
+{{- end }}
       volumes:
         - name: data
         {{- if .Values.persistence.enabled }}
@@ -59,4 +96,8 @@ spec:
         {{- else }}
           emptyDir: {}
         {{- end }}
+      {{- if .Values.sidecar.sideload.enabled }}
+        - name: sc-sideload-volume
+          emptyDir: {}
+      {{- end -}}
 {{- end }}

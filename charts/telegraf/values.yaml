@@ -17,6 +17,19 @@ env:
   - name: HOSTNAME
     value: "telegraf-polling-service"
 
+# An older "volumeMounts" key was previously added which will likely
+# NOT WORK as you expect. Please use this newer configuration.
+
+# volumes:
+# - name: telegraf-output-influxdb2
+#   configMap:
+#     name: "telegraf-output-influxdb2"
+# mountPoints:
+# - name: telegraf-output-influxdb2
+#   mountPath: /etc/telegraf/conf.d
+#   subPath: influxdb2.conf
+
+
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources: {}
@@ -124,3 +137,8 @@ config:
         metric_separator: "_"
         allowed_pending_messages: 10000
         percentile_limit: 1000
+
+# Lifecycle hooks
+# hooks:
+#   postStart: ["/bin/sh", "-c", "echo Telegraf started"]
+#   preStop: ["/bin/sh", "-c", "sleep 60"]
