@@ -4,10 +4,7 @@ kind: Service
 metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "telegraf.name" . }}
-    helm.sh/chart: {{ include "telegraf.chart" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- include "telegraf.labels" . | nindent 4 }}
   {{- if .Values.service.annotations }}
   annotations:
 {{ toYaml .Values.service.annotations | indent 4 }}
@@ -66,6 +63,5 @@ spec:
   {{- end -}}
   {{- end }}
   selector:
-    app.kubernetes.io/name: {{ include "telegraf.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "telegraf.selectorLabels" . | nindent 4 }}
 {{- end -}}
