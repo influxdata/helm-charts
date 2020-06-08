@@ -50,7 +50,7 @@ spec:
         app: istio-ingressgateway
         istio: ingressgatway-public
       k8s:
-        replicaCount: 1
+        replicaCount: 3
         service:
           type: ClusterIP
           ports:
@@ -58,9 +58,6 @@ spec:
               port: 80
             - name: https
               port: 443
-        podAnnotations:
-          telegraf.influxdata.com/port: "14010"
-          telegraf.influxdata.com/class: "istio"
     - enabled: true
       name: private
       namespace: ingress
@@ -68,7 +65,7 @@ spec:
         app: istio-ingressgateway
         istio: ingressgatway-private
       k8s:
-        replicaCount: 1
+        replicaCount: 3
         service:
           type: ClusterIP
           ports:
@@ -76,9 +73,6 @@ spec:
               port: 80
             - name: https
               port: 443
-        podAnnotations:
-          telegraf.influxdata.com/port: "14010"
-          telegraf.influxdata.com/class: "istio"
     egressGateways:
     - enabled: true
       name: public
@@ -87,10 +81,7 @@ spec:
         app: istio-egressgateway
         istio: egressgatway-public
       k8s:
-        replicaCount: 1
-        podAnnotations:
-          telegraf.influxdata.com/port: "14010"
-          telegraf.influxdata.com/class: "istio"
+        replicaCount: 3
     - enabled: true
       name: private
       namespace: egress
@@ -98,10 +89,7 @@ spec:
         app: istio-egressgateway
         istio: egressgatway-private
       k8s:
-        replicaCount: 1
-        podAnnotations:
-          telegraf.influxdata.com/port: "15010"
-          telegraf.influxdata.com/class: "istio"
+        replicaCount: 3
     pilot:
       enabled: true
       k8s:
