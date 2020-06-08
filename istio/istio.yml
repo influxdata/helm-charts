@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-system
+  labels:
+    istio-injection: disaabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: egress
+---
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: complete
+spec:
+  profile: default
+  meshConfig:
+    trustDomain: cluster.local
+    enableTracing: true
+    accessLogFile: "/dev/stdout"
+    accessLogEncoding: JSON
+    defaultConfig:
+      tracing:
+        zipkin:
+          address: "zipkin.tracing.svc:9411"
+      sds:
+        enabled: true
+  addonComponents:
+    grafana:
+      enabled: false
+    kiali:
+      enabled: false
+    prometheus:
+      enabled: false
+  components:
+    ingressGateways: #https://istio.io/docs/reference/config/istio.operator.v1alpha1/#GatewaySpec
+    - enabled: true
+      name: public
+      namespace: ingress
+      label:
+        app: istio-ingressgateway
+        istio: ingressgatway-public
+      k8s:
+        replicaCount: 1
+        service:
+          type: ClusterIP
+          ports:
+            - name: http
+              port: 80
+            - name: https
+              port: 443
+        podAnnotations:
+          telegraf.influxdata.com/port: "14010"
+          telegraf.influxdata.com/class: "istio"
+    - enabled: true
+      name: private
+      namespace: ingress
+      label:
+        app: istio-ingressgateway
+        istio: ingressgatway-private
+      k8s:
+        replicaCount: 1
+        service:
+          type: ClusterIP
+          ports:
+            - name: http
+              port: 80
+            - name: https
+              port: 443
+        podAnnotations:
+          telegraf.influxdata.com/port: "14010"
+          telegraf.influxdata.com/class: "istio"
+    egressGateways:
+    - enabled: true
+      name: public
+      namespace: egress
+      label:
+        app: istio-egressgateway
+        istio: egressgatway-public
+      k8s:
+        replicaCount: 1
+        podAnnotations:
+          telegraf.influxdata.com/port: "14010"
+          telegraf.influxdata.com/class: "istio"
+    - enabled: true
+      name: private
+      namespace: egress
+      label:
+        app: istio-egressgateway
+        istio: egressgatway-private
+      k8s:
+        replicaCount: 1
+        podAnnotations:
+          telegraf.influxdata.com/port: "14010"
+          telegraf.influxdata.com/class: "istio"
+    pilot:
+      enabled: true
+      k8s:
+        podAnnotations:
+          telegraf.influxdata.com/port: "14010"
+          telegraf.influxdata.com/class: "istio"
