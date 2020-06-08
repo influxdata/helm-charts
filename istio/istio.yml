@@ -25,6 +25,7 @@ spec:
   meshConfig:
     trustDomain: cluster.local
     enableTracing: true
+    statsdUdpAddress: "statsd.istio-system.svc:9125"
     accessLogFile: "/dev/stdout"
     accessLogEncoding: JSON
     defaultConfig:
@@ -99,11 +100,11 @@ spec:
       k8s:
         replicaCount: 1
         podAnnotations:
-          telegraf.influxdata.com/port: "14010"
+          telegraf.influxdata.com/port: "15010"
           telegraf.influxdata.com/class: "istio"
     pilot:
       enabled: true
       k8s:
         podAnnotations:
-          telegraf.influxdata.com/port: "14010"
+          telegraf.influxdata.com/port: "15010"
           telegraf.influxdata.com/class: "istio"

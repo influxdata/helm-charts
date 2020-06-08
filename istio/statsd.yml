@@ -1,0 +1,85 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: statsd
+  name: statsd
+  namespace: istio-system
+spec:
+  ports:
+  - name: statsd
+    port: 9125
+    protocol: UDP
+  selector:
+    app: statsd
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: statsd
+  name: statsd
+  namespace: istio-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: statsd
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: statsd
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: monitor
+        image: telegraf:1.14
+        name: telegraf
+        ports:
+        - containerPort: 9125
+          name: stastd
+          protocol: UDP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+        - mountPath: /etc/telegraf
+          name: telegraf-config
+      volumes:
+      - configMap:
+          name: telegraf-config-envoy-statsd
+        name: telegraf-statsd
+---
+apiVersion: v1
+data:
+  telegraf.conf: |+
+  [[outputs.influxdb_v2]]	
+    urls = ["$MONITOR_HOST_V2"]	
+    token = "$MONITOR_TOKEN"	
+    organization = "$MONITOR_ORG"	
+    bucket = "$MONITOR_BUCKET"	
+    timeout = "60s"	
+  [global_tags]	
+    env = "$ENV"	
+  [[inputs.statsd]]	
+    protocol = "udp"	
+    service_address = ":9125"	
+  [agent]	
+    metric_batch_size = 1000	
+    metric_buffer_limit = 10000	
+    debug = false	
+  [[inputs.internal]]
+kind: ConfigMap
+metadata:
+  labels:
+    app: statsd
+  name: telegraf-config-envoy-statsd
+  namespace: istio-system
