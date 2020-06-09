@@ -211,7 +211,7 @@ Create chart name and version as used by the chart label.
           {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "map[string]interface {}" }}
-      [[inputs.{{ $input }}.{{ $key }}]]
+      [inputs.{{ $input }}.{{ $key }}]
             {{- range $k, $v := $value }}
               {{- $tps := typeOf $v }}
               {{- if eq $tps "string" }}
