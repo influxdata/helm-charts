@@ -17,6 +17,9 @@ resources:
     memory: 2Gi
     cpu: 1
 
+## Configure args passed to Telegraf containers
+args: []
+
 env:
   # This pulls HOSTNAME from the node, not the pod.
   - name: HOSTNAME
