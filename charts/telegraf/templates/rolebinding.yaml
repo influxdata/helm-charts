@@ -7,6 +7,8 @@ kind: RoleBinding
 {{- end }}
 metadata:
   name: {{ template "telegraf.fullname" . }}
+  labels:
+    {{- include "telegraf.labels" . | nindent 4 }}
 subjects:
   - kind: ServiceAccount
     name: {{ template "telegraf.fullname" . }}

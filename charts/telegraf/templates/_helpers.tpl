@@ -32,6 +32,24 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Common labels
+*/}}
+{{- define "telegraf.labels" -}}
+helm.sh/chart: {{ include "telegraf.chart" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{ include "telegraf.selectorLabels" . }}
+{{- end -}}
+
+{{/*
+Selector labels
+*/}}
+{{- define "telegraf.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "telegraf.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+
+
+{{/*
   CUSTOM TEMPLATES: This section contains templates that make up the different parts of the telegraf configuration file.
   - global_tags section
   - agent section

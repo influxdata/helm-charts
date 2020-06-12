@@ -3,9 +3,7 @@ kind: DaemonSet
 metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "telegraf.name" . }}
-    helm.sh/chart: {{ include "telegraf.chart" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "telegraf.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
