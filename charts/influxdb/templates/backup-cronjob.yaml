@@ -25,7 +25,12 @@ spec:
           restartPolicy: OnFailure
           volumes:
           - name: backup
+          {{- if .Values.backup.persistence.enabled }}
+            persistentVolumeClaim:
+              claimName: {{ include "influxdb.fullname" . }}-backup
+          {{- else }}
             emptyDir: {}
+          {{- end }}
           {{- if .Values.backup.gcs }}
           {{- if .Values.backup.gcs.serviceAccountSecret }}
           - name: google-cloud-key
@@ -45,7 +50,11 @@ spec:
             args:
             - '-c'
             - |
-              influxd backup -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.rpc.bind_address | default 8088 }} -portable /backup/$(date +%Y%m%d%H%M%S)
+              influxd backup \
+                -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.rpc.bind_address | default 8088 }} \
+                -portable /backup/"$(date +%Y%m%d%H%M%S)"
+            resources:
+              {{- toYaml .Values.backup.resources | nindent 14 }}
           containers:
           {{- if .Values.backup.gcs }}
           - name: gsutil-cp
@@ -73,6 +82,8 @@ spec:
               - name: KEY_FILE
                 value: /var/secrets/google/{{ .Values.backup.gcs.serviceAccountSecretKey }}
               {{- end }}
+            resources:
+              {{- toYaml .Values.backup.resources | nindent 14 }}
           {{- end }}
           {{- if .Values.backup.azure }}
           - name: azure-cli
@@ -99,5 +110,7 @@ spec:
                   secretKeyRef:
                     name: {{ .Values.backup.azure.storageAccountSecret }}
                     key: connection-string
+            resources:
+              {{- toYaml .Values.backup.resources | nindent 14 }}
           {{- end }}
 {{- end }}

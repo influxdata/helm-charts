@@ -104,6 +104,12 @@ The following table lists configurable parameters, their descriptions, and their
 | backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
 | backup.annotations | Annotations for backup cronjob | {} |
 | backup.podAnnotations | Annotations for backup cronjob pods | {} |
+| backup.persistence.enabled | Boolean to enable and disable persistance | false |
+| backup.persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
+| backup.persistence.annotations | Annotations for volumeClaimTemplates | nil |
+| backup.persistence.accessMode | Access mode for the volume | ReadWriteOnce |
+| backup.persistence.size | Storage size | 8Gi |
+| backup.resources | Resources requests and limits for `backup` pods | `ephemeral-storage: 8Gi` |
 
 To configure the chart, do either of the following:
 
@@ -198,6 +204,18 @@ When enabled, the[`backup-cronjob`](./templates/backup-cronjob.yaml) runs on the
 ```sh
 kubectl create job --from=cronjobs/influxdb-backup influx-backup-$(date +%Y%m%d%H%M%S)
 ```
+
+#### Backup Storage
+
+The backup process consists of an init-container that writes the backup to a
+local volume, which is by default an `emptyDir`, shared to the runtime container
+which uploads the backup to the configured object store.
+
+In order to avoid filling the node's disk space, it is recommended to set a sufficient
+`ephemeral-storage` request or enable persistence, which allocates a PVC.
+
+Furthermore, if no object store provider is available, one can simply use the
+PVC as the final storage destination when `persistence` is enabled.
 
 ### Restores
 
