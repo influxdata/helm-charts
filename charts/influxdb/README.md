@@ -49,7 +49,7 @@ The following table lists configurable parameters, their descriptions, and their
 | Parameter | Description | Default |
 |---|---|---|
 | image.repository | Image repository url | influxdb |
-| image.tag | Image tag | 1.7.10-alpine |
+| image.tag | Image tag | 1.8.0-alpine |
 | image.pullPolicy | Image pull policy | IfNotPresent |
 | image.pullSecrets | It will store the repository's credentials to pull image | nil |
 | serviceAccount.create | It will create service account | true |
