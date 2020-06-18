@@ -237,7 +237,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
               {{- end }}
               {{- if eq $tps "[]interface {}"}}
         {{ $k }} = [
-                {{- $numOut := len $value }}
+                {{- $numOut := len $v }}
                 {{- $numOut := sub $numOut 1 }}
                 {{- range $b, $val := $v }}
                   {{- $i := int64 $b }}
