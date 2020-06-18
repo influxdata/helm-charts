@@ -32,6 +32,11 @@ spec:
       - name: config
         configMap:
           name: {{ include "influxdb-enterprise.fullname" . }}-data
+      {{- if .Values.license.secret }}
+      - name: license
+        secret:
+          secretName: {{ .Values.license.secret.name }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           command:
@@ -68,6 +73,11 @@ spec:
             mountPath: /etc/influxdb
           - name: {{ include "influxdb-enterprise.fullname" . }}-data-data
             mountPath: /var/lib/influxdb
+          {{- if .Values.license.secret }}
+          - name: license
+            mountPath: /var/run/secrets/influxdb/license.json
+            subPath: json
+          {{- end }}
           resources:
             {{- toYaml .Values.data.resources | nindent 12 }}
       {{- with .Values.data.nodeSelector }}

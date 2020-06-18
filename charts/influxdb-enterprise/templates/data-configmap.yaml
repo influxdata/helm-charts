@@ -16,7 +16,7 @@ data:
       license-key = "{{ .Values.license.key }}" #✨ mutually exclusive with license-path
       {{ else }}
       # license-key and license-path are mutually exclusive, use only one and leave the other blank
-      license-path = "/etc/influxdb/license.json"
+      license-path = "/var/run/secrets/influxdb/license.json"
       {{ end }}
 
     [meta]
@@ -51,19 +51,12 @@ data:
     my $protocol = $ENV{HTTP_PROTOCOL};
     my $meta_service = $ENV{RELEASE_NAME} . "-meta";
 
-    # First time preparing to register with a meta node.
-    # There's a delay waiting on this pods DNS to be resolvable, and
-    # it looks like the /add-data endpoint returns a 200 even when that
-    # lookup fails.
-    # So slipping in this sleep for the time being
-    # sleep(15);
-
     # We're not going to define an exit strategy for failure here.
     # This should be handled by the probes on the pods
     while (true) {
       # There's no LWP/Simple available in our images, so forking out to curl 😥
       print "\n\n\nREGISTER WITH META SERVICE\n\n\n";
-      $exit_code = system('curl', '-H', 'Expect:', '-XPOST', '-v', '--silent', '--fail', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
+      $exit_code = system('curl', '-XPOST', '-v', '--silent', '--fail', '--retry', '5', '--retry-delay', '0', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
 
 
       if ($exit_code == 0) {
@@ -73,9 +66,7 @@ data:
       print "\n\n\nFailed: $!\n\n\n";
       $| = 1;
 
-      # Wait a few seconds and try again
-      # Maybe we should implement some rudamentary backoff
-      sleep(2);
+      exit 255
     }
 
     waitpid($pid, 0);
