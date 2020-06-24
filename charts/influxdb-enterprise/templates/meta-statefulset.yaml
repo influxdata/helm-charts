@@ -49,6 +49,12 @@ spec:
             {{- toYaml .Values.meta.securityContext | nindent 12 }}
           image: "{{ .Values.meta.image.repository | default "influxdb" }}:{{ .Values.meta.image.tag | default (printf "%s-%s" .Chart.AppVersion "meta") }}"
           imagePullPolicy: {{ .Values.meta.image.pullPolicy }}
+          env:
+            - name: INFLUXDB_META_INTERNAL_SHARED_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: shared-secret
+                  key: secret
           ports:
             - name: http
               containerPort: 8091

@@ -1,0 +1,42 @@
+{{- if .Values.auth.secretName -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}-set-auth
+  labels:
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  activeDeadlineSeconds: 300
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        {{- include "influxdb-enterprise.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ include "influxdb-enterprise.fullname" . }}-set-auth
+        image: curlimages/curl:7.70.0
+        env:
+        - name: INFLUXDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.auth.secretName }}
+              key: "username"
+        - name: INFLUXDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.auth.secretName }}
+              key: "password"
+        command:
+          - curl
+        args:
+          - "-X"
+          - "POST"
+          - "http://{{ include "influxdb-enterprise.fullname" . }}-data:8086/query"
+          - "--data-urlencode"
+          - "q=CREATE USER \"${INFLUXDB_USER}\" WITH PASSWORD '${INFLUXDB_PASSWORD}' WITH ALL PRIVILEGES"
+      restartPolicy: OnFailure
+{{- end -}}

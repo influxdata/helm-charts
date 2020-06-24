@@ -10,6 +10,9 @@ spec:
   clusterIP: None
   publishNotReadyAddresses: true
   ports:
+  - port: 8086
+    protocol: TCP
+    name: http
   - port: 8088
     protocol: TCP
     name: rpc
