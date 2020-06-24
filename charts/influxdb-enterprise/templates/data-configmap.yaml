@@ -10,6 +10,11 @@ data:
     bind-address = ":8088"
     reporting-disabled = false
 
+    {{ if .Values.auth.secretName }}
+    [http]
+    auth-enabled = true
+    {{ end }}
+
     [enterprise]
       {{ if .Values.license.key }}
       # license-key and license-path are mutually exclusive, use only one and leave the other blank

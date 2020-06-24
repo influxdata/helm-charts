@@ -68,7 +68,7 @@ spec:
               port: http
           readinessProbe:
             httpGet:
-              path: /status
+              path: /ping
               port: http
           volumeMounts:
           - name: config
