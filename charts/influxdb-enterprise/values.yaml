@@ -15,6 +15,10 @@ license: {}
   #  name: license
   #  key: json
 
+# A secret with keys "username" and "password" is required
+auth: {}
+  #secretName: auth
+
 meta:
   replicas: 3
   image: {}
@@ -35,6 +39,14 @@ meta:
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
+  #
+  #
+  # This secret needs a key called "secret" and it should be a long random string
+  # Please see docs for shared-internal-secret:
+  # https://docs.influxdata.com/enterprise_influxdb/v1.8/administration/config-data-nodes/#meta-internal-shared-secret
+  shared-secret:
+    secretName: shared-secret
+  #
   ## Persist data to a persistent volume
   ##
   persistence:
