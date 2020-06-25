@@ -53,7 +53,7 @@ spec:
             - name: INFLUXDB_META_INTERNAL_SHARED_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: shared-secret
+                  name: {{ .Values.meta.sharedSecret.secretName }}
                   key: secret
           ports:
             - name: http
