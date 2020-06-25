@@ -26,6 +26,11 @@ jobs:
         # Only build a kind cluster if there are chart changes to test.
         if: steps.lint.outputs.changed == 'true'
 
+      # Our Enterprise chart requires some resources created
+      - name: Create Enterprise Test Resources
+        run: |
+          kubectl apply -f ./charts/influxdb-enterprise/example-secrets.yaml
+
       - name: Run chart-testing (install)
         uses: helm/chart-testing-action@v1.0.0-rc.1
         with:

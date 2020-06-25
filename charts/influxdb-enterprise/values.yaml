@@ -6,18 +6,18 @@ nameOverride: ""
 fullnameOverride: ""
 imagePullSecrets: []
 
-license: {}
+license:
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
   # key: "your license key"
-  # secret:
-  #  name: license
-  #  key: json
+  secret:
+    name: license
+    key: json
 
 # A secret with keys "username" and "password" is required
-auth: {}
-  # secretName: auth
+auth:
+  secretName: auth
 
 meta:
   replicas: 3
