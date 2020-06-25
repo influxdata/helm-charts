@@ -66,6 +66,10 @@ meta:
     # annotations:
     accessMode: ReadWriteOnce
     size: 8Gi
+  # Pick one
+  podDisruptionBudget:
+    # maxUnavailable: 2
+    minAvailable: 2
 
 
 data:

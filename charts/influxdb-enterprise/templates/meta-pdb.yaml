@@ -1,0 +1,14 @@
+
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "influxdb-enterprise.fullname" . }}-meta-pdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      release: {{ .Release.Name }}
+      influxdb.influxdata.com/component: meta
+{{ toYaml .Values.meta.podDisruptionBudget | indent 2 }}
