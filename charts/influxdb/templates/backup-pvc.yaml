@@ -12,7 +12,7 @@ spec:
     requests:
       storage: {{ .Values.backup.persistence.size | quote }}
 {{- if .Values.backup.persistence.storageClass }}
-{{- if (eq "-" .Values.persistence.backup.storageClass) }}
+{{- if (eq "-" .Values.backup.persistence.storageClass) }}
   storageClassName: ""
 {{- else }}
   storageClassName: "{{ .Values.persistence.backup.storageClass }}"
