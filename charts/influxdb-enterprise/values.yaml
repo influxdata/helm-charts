@@ -10,32 +10,32 @@ license: {}
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
-  #key: "your license key"
-  #secret:
+  # key: "your license key"
+  # secret:
   #  name: license
   #  key: json
 
 # A secret with keys "username" and "password" is required
 auth: {}
-  #secretName: auth
+  # secretName: auth
 
 meta:
   replicas: 3
   image: {}
-    #override: true
-    #pullPolicy: IfNotPresent
-    #repository: influxdb
-    #tag: "meta"
-  #nodeSelector: {}
-  #tolerations: []
-  #affinity: {}
-  #podAnnotations: {}
-  #podSecurityContext: {}
-  #  fsGroup: 2000
-  #securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
+    # override: true
+    # pullPolicy: IfNotPresent
+    # repository: influxdb
+    # tag: "meta"
+  # nodeSelector: {}
+  # tolerations: []
+  # affinity: {}
+  # podAnnotations: {}
+  # podSecurityContext: {}
+  #   fsGroup: 2000
+  # securityContext: {}
+  #  capabilities:
+  #    drop:
+  #    - ALL
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
@@ -71,20 +71,20 @@ meta:
 data:
   replicas: 3
   image: {}
-    #override: true
-    #pullPolicy: IfNotPresent
-    #repository: influxdb
-    #tag: "data"
-  #nodeSelector: {}
-  #tolerations: []
-  #affinity: {}
-  #podAnnotations: {}
-  #podSecurityContext: {}
-  #  fsGroup: 2000
-  #securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
+    # override: true
+    # pullPolicy: IfNotPresent
+    # repository: influxdb
+    # tag: "data"
+  # nodeSelector: {}
+  # tolerations: []
+  # affinity: {}
+  # podAnnotations: {}
+  # podSecurityContext: {}
+  #   fsGroup: 2000
+  # securityContext: {}
+  #  capabilities:
+  #    drop:
+  #    - ALL
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
