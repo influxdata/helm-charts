@@ -8,11 +8,11 @@ metadata:
     {{- include "telegraf-operator.labels" . | nindent 4 }}
 spec:
   dnsNames:
-  - "{{ include "telegraf-operator.fullname" . }}.{{ .Values.namespace }}.svc"
+  - "{{ include "telegraf-operator.fullname" . }}.{{ .Release.Namespace }}.svc"
+  - "{{ include "telegraf-operator.fullname" . }}.{{ .Release.Namespace }}"
   isCA: true
   issuerRef:
     kind: Issuer
     name: telegraf-operator-issuer
-    namespace: {{ .Release.Namespace }}
   secretName: telegraf-operator-tls
 {{- end -}}
