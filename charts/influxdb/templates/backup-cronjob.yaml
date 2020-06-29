@@ -31,15 +31,19 @@ spec:
           {{- else }}
             emptyDir: {}
           {{- end }}
-          {{- if .Values.backup.gcs }}
-          {{- if .Values.backup.gcs.serviceAccountSecret }}
+          {{- if .Values.backup.remote.gcs }}
+          {{- if .Values.backup.remote.gcs.serviceAccountSecret }}
           - name: google-cloud-key
             secret:
-              secretName: {{ .Values.backup.gcs.serviceAccountSecret | quote }}
+              secretName: {{ .Values.backup.remote.gcs.serviceAccountSecret | quote }}
           {{- end }}
           {{- end }}
           serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
+          {{- if .Values.backup.remote.enabled }}
           initContainers:
+          {{ else }}
+          containers:
+          {{ end }}
           - name: influxdb-backup
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             volumeMounts:
@@ -55,8 +59,9 @@ spec:
                 -portable /backup/"$(date +%Y%m%d%H%M%S)"
             resources:
               {{- toYaml .Values.backup.resources | nindent 14 }}
+          {{- if .Values.backup.remote.enabled }}
           containers:
-          {{- if .Values.backup.gcs }}
+          {{- if .Values.backup.remote.gcs }}
           - name: gsutil-cp
             image: google/cloud-sdk:alpine
             command:
@@ -71,21 +76,21 @@ spec:
             volumeMounts:
             - name: backup
               mountPath: /backup
-            {{- if .Values.backup.gcs.serviceAccountSecretKey}}
+            {{- if .Values.backup.remote.gcs.serviceAccountSecretKey}}
             - name: google-cloud-key
               mountPath: /var/secrets/google/
             {{- end }}
             env:
               - name: DST_URL
-                value: {{ .Values.backup.gcs.destination}}
-              {{- if .Values.backup.gcs.serviceAccountSecretKey}}
+                value: {{ .Values.backup.remote.gcs.destination}}
+              {{- if .Values.backup.remote.gcs.serviceAccountSecretKey}}
               - name: KEY_FILE
-                value: /var/secrets/google/{{ .Values.backup.gcs.serviceAccountSecretKey }}
+                value: /var/secrets/google/{{ .Values.backup.remote.gcs.serviceAccountSecretKey }}
               {{- end }}
             resources:
               {{- toYaml .Values.backup.resources | nindent 14 }}
           {{- end }}
-          {{- if .Values.backup.azure }}
+          {{- if .Values.backup.remote.azure }}
           - name: azure-cli
             image: microsoft/azure-cli
             command:
@@ -102,15 +107,16 @@ spec:
               - name: SRC_URL
                 value: /backup
               - name: DST_CONTAINER
-                value: {{ .Values.backup.azure.destination_container }}
+                value: {{ .Values.backup.remote.azure.destination_container }}
               - name: DST_PATH
-                value: {{ .Values.backup.azure.destination_path }}
+                value: {{ .Values.backup.remote.azure.destination_path }}
               - name: AZURE_STORAGE_CONNECTION_STRING
                 valueFrom:
                   secretKeyRef:
-                    name: {{ .Values.backup.azure.storageAccountSecret }}
+                    name: {{ .Values.backup.remote.azure.storageAccountSecret }}
                     key: connection-string
             resources:
               {{- toYaml .Values.backup.resources | nindent 14 }}
+          {{- end }}
           {{- end }}
 {{- end }}
