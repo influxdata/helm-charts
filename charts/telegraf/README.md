@@ -64,3 +64,77 @@ To configure the chart, do either of the following:
   ```
 
   > **Tip**: Use the default [values.yaml](values.yaml).
+
+### Use a custom Telegraf configuration
+
+You can provide the Telegraf configuration as YAML-Value on the chart directly or by provisioning a separate ConfigMap.
+
+### 1. Provide the Configuration as YAML directly
+
+For example:
+
+```yaml
+# Content of example-values.yaml
+config:
+  agent:
+    interval: "10s"
+    round_interval: true
+    metric_batch_size: 1000
+    metric_buffer_limit: 10000
+    collection_jitter: "0s"
+    flush_interval: "10s"
+    flush_jitter: "0s"
+    precision: ""
+    debug: false
+    quiet: false
+    logfile: ""
+    hostname: "$HOSTNAME"
+    omit_hostname: false
+  processors:
+    - enum:
+        mapping:
+          field: "status"
+          dest: "status_code"
+          value_mappings:
+            healthy: 1
+            problem: 2
+            critical: 3
+  outputs:
+    - influxdb:
+        urls:
+          - "http://influxdb.monitoring.svc:8086"
+        database: "telegraf"
+  inputs:
+    - statsd:
+        service_address: ":8125"
+        percentiles:
+          - 50
+          - 95
+          - 99
+        metric_separator: "_"
+        allowed_pending_messages: 10000
+        percentile_limit: 1000
+```
+
+```shell
+helm upgrade --install my-release influxdata/telegraf -f example-values.yaml
+```
+
+> **Note:**
+>
+> The provided example uses the default telegraf configuration which are also provided in the `values.yaml` of this helm chart. You don't have to provide this by yourself. Just use this if you edit things by yourself.
+
+### 2. Provide a ConfigMap with the TOML configuration within it
+
+You can provide a TOML configuration file in a ConfigMap and let the helm chart use it:
+
+```shell
+kubectl create configmap telegraf-configuration \
+	--from-file=telegraf.conf
+
+helm upgrade --install my-release influxdata/telegraf --set existingConfigMapName=telegraf-configuration
+```
+
+> **Note:**
+>
+> This will overwrite the default Telegraf configuration completely. So you have to provide everything by yourself.

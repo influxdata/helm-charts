@@ -95,6 +95,11 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name:
 
+## If this is set, the config value will be ignored and the configuration from entered
+## configmap will be used. At this configmap musst be an entry with the name `telegraf.conf`. The value
+## of this entry musst be a valid Telegraf TOML configuration.
+# existingConfigMapName: telegraf-configuration
+
 ## Exposed telegraf configuration
 ## For full list of possible values see `/docs/all-config-values.yaml` and `/docs/all-config-values.toml`
 ## ref: https://docs.influxdata.com/telegraf/v1.1/administration/configuration/

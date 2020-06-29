@@ -87,7 +87,11 @@ spec:
       volumes:
       - name: config
         configMap:
+        {{- if not .Values.existingConfigMapName }}
           name: {{ include "telegraf.fullname" . }}
+        {{- else }}
+          name: {{ .Values.existingConfigMapName }}
+        {{- end }}
       {{- if .Values.volumes }}
 {{ toYaml .Values.volumes | indent 6 }}
       {{- end }}
