@@ -158,11 +158,19 @@ spec:
           name: api
         livenessProbe:
           httpGet:
+            {{- if .Values.env.BASE_PATH }}
+            path: {{ .Values.env.BASE_PATH }}/ping
+            {{- else }}
             path: /ping
+            {{- end}}
             port: api
         readinessProbe:
           httpGet:
+            {{- if .Values.env.BASE_PATH }}
+            path: {{ .Values.env.BASE_PATH }}/ping
+            {{- else }}
             path: /ping
+            {{- end}}
             port: api
         volumeMounts:
         - name: data
