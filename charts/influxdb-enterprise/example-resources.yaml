@@ -3,7 +3,7 @@ kind: Secret
 metadata:
   name: license
 stringData:
-  json: FAKE LICENSE KEY
+  json: YOUR JSON KEY
 ---
 apiVersion: v1
 kind: Secret
@@ -19,3 +19,13 @@ metadata:
   name: shared-secret
 stringData:
   secret: MY RANDOM STRING
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ddl-dml
+data:
+  ddl: |
+    CREATE DATABASE original
+    CREATE RETENTION POLICY oneday ON original DURATION 1d REPLICATION 1
+  dml: ""

@@ -10,14 +10,36 @@ license:
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
-  # key: "your license key"
-  secret:
-    name: license
-    key: json
+  key: ""
+  # secret:
+  #   name: license
+  #   key: json
 
 # A secret with keys "username" and "password" is required
-auth:
-  secretName: auth
+# This bootstrap configuration allows you to configure
+# some parts of the InfluxDB system at install time.
+#
+# This job ONLY runs once, after the first `helm upgrade --install`
+# or `helm install`
+#
+# This job WILL NOT run on upgrades
+#
+bootstrap:
+  # This section allows you to enable authentication'
+  # of the data nodes, which will create a username
+  # and password for your "admin" account.
+  # A secret should be provided, which will have the keys
+  # "username" and "password" available.
+  auth: {}
+  #   secretName: auth
+  # This section allows you to use DDL and DML to define
+  # databases, retention policies, and inject some data.
+  # When using the configMap setting, the keys "ddl" and "dml"
+  # must exist, even if one of them is empty.
+  # DDL is executed before DML, to enforce databases and retention policies
+  # to exist.
+  ddldml: {}
+  #   configMap: ddl-dml
 
 meta:
   replicas: 3

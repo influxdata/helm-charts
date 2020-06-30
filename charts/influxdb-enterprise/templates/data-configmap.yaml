@@ -10,7 +10,7 @@ data:
     bind-address = ":8088"
     reporting-disabled = false
 
-    {{ if .Values.auth.secretName }}
+    {{ if .Values.bootstrap.auth.secretName }}
     [http]
     auth-enabled = true
     {{ end }}

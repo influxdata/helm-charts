@@ -9,6 +9,6 @@ metadata:
 spec:
   selector:
     matchLabels:
-      release: {{ .Release.Name }}
+      app.kubernetes.io/managed-by: {{ .Release.Service }}
       influxdb.influxdata.com/component: meta
 {{ toYaml .Values.meta.podDisruptionBudget | indent 2 }}

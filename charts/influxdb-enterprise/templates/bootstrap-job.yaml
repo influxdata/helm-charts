@@ -1,0 +1,122 @@
+{{- if or .Values.bootstrap.auth.secretName (or .Values.bootstrap.ddldml.raw .Values.bootstrap.ddldml.configMap) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}-bootstrap
+  labels:
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  activeDeadlineSeconds: 300
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        {{- include "influxdb-enterprise.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.bootstrap.ddldml.configMap }}
+      volumes:
+      - name: ddldml
+        configMap:
+          name: {{ .Values.bootstrap.ddldml.configMap }}
+      {{ end }}
+      restartPolicy: OnFailure
+      # Consider this a middleware of setup components.
+      # Each is executed in-order until all of theme complete successfully.
+      # This means that each command must be idempotent.
+      initContainers:
+      {{- if .Values.bootstrap.auth.secretName }}
+      - name: auth
+        image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+        imagePullPolicy: {{ .Values.data.image.pullPolicy }}
+        # Exposing these environment variables makes this command idempotent
+        # as even if the authentication has been setup, we can still execute the command
+        # and it won't error as nothing has changed
+        env:
+        - name: INFLUX_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bootstrap.auth.secretName }}
+              key: "username"
+        - name: INFLUX_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bootstrap.auth.secretName }}
+              key: "password"
+        command:
+          - influx
+        args:
+          - -host
+          - {{ include "influxdb-enterprise.fullname" . }}-data
+          - -execute
+          - CREATE USER $(INFLUX_USERNAME) WITH PASSWORD '$(INFLUX_PASSWORD)' WITH ALL PRIVILEGES
+      {{ end }}
+      {{- if .Values.bootstrap.ddldml.configMap }}
+      - name: ddl
+        image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+        imagePullPolicy: {{ .Values.data.image.pullPolicy }}
+        {{- if .Values.bootstrap.auth.secretName }}
+        env:
+        - name: INFLUX_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bootstrap.auth.secretName }}
+              key: "username"
+        - name: INFLUX_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bootstrap.auth.secretName }}
+              key: "password"
+        {{ end }}
+        volumeMounts:
+        - name: ddldml
+          mountPath: /ddldml
+        command:
+          - influx
+        args:
+          - -host
+          - {{ include "influxdb-enterprise.fullname" . }}-data
+          - -import
+          - -path
+          - /ddldml/ddl
+      {{ end }}
+      {{- if .Values.bootstrap.ddldml.configMap }}
+      - name: dml
+        image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+        imagePullPolicy: {{ .Values.data.image.pullPolicy }}
+        {{- if .Values.bootstrap.auth.secretName }}
+        env:
+        - name: INFLUX_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bootstrap.auth.secretName }}
+              key: "username"
+        - name: INFLUX_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bootstrap.auth.secretName }}
+              key: "password"
+        {{ end }}
+        volumeMounts:
+        - name: ddldml
+          mountPath: /ddldml
+        command:
+          - influx
+        args:
+          - -host
+          - {{ include "influxdb-enterprise.fullname" . }}-data
+          - -import
+          - -path
+          - /ddldml/dml
+      {{ end }}
+      containers:
+      - name: success
+        image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+        imagePullPolicy: {{ .Values.data.image.pullPolicy }}
+        command:
+          - echo
+        args:
+          - "Bootstrap Success"
+{{ end }}
