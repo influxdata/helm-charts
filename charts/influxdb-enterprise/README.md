@@ -41,7 +41,9 @@ license:
 
 The meta cluster requires a shared internal secret to secure communication. This must be provided by specifying a secret name in the `values.yaml` file.
 
-The secret MUST container a key called `secret` that is a randomly generated string.
+The Kubernetes Secret MUST contain a key called `secret` that is a randomly generated string.
+
+Please see [example resources](./example-resources.yaml) to see what this looks like.
 
 ```yaml
 meta:
@@ -53,10 +55,26 @@ meta:
 
 If you want to configure authentication for your data nodes, you must provide the following within your `values.yaml`:
 
+Please see [example resources](./example-resources.yaml) to see what this looks like.
+
 ```yaml
 # A secret with keys "username" and "password" is required
-auth:
-  secretName: auth
+bootstrap:
+  auth:
+    secretName: auth
+```
+
+#### DDL/DML (Optional)
+
+If you wish to create databases or import data after installation, we've provided this DDL/DML hook. Your config map must contain the keys `ddl` and `dml`.
+
+Please see [example resources](./example-resources.yaml) to see what this looks like.
+
+```yaml
+# A ConfigMap with keys "ddl" and "dml" is required
+bootstrap:
+  ddldml:
+    configMap: ddl-dml
 ```
 
 ## Installing the Chart
