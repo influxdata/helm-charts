@@ -29,7 +29,7 @@ jobs:
       # Our Enterprise chart requires some resources created
       - name: Create Enterprise Test Resources
         run: |
-          kubectl apply -f ./charts/influxdb-enterprise/example-secrets.yaml
+          kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
 
       - name: Run chart-testing (install)
         uses: helm/chart-testing-action@v1.0.0-rc.1
