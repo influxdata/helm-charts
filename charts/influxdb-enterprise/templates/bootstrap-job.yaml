@@ -52,6 +52,13 @@ spec:
           - {{ include "influxdb-enterprise.fullname" . }}-data
           - -execute
           - CREATE USER $(INFLUX_USERNAME) WITH PASSWORD '$(INFLUX_PASSWORD)' WITH ALL PRIVILEGES
+        resources:
+          requests:
+            cpu: 100m
+            memory: 20Mi
+          limits:
+            cpu: 100m
+            memory: 20Mi
       {{ end }}
       {{- if .Values.bootstrap.ddldml.configMap }}
       - name: ddl
@@ -81,6 +88,13 @@ spec:
           - -import
           - -path
           - /ddldml/ddl
+        resources:
+          requests:
+            cpu: 100m
+            memory: 20Mi
+          limits:
+            cpu: 100m
+            memory: 20Mi
       {{ end }}
       {{- if .Values.bootstrap.ddldml.configMap }}
       - name: dml
@@ -110,6 +124,13 @@ spec:
           - -import
           - -path
           - /ddldml/dml
+        resources:
+          requests:
+            cpu: 100m
+            memory: 20Mi
+          limits:
+            cpu: 100m
+            memory: 20Mi
       {{ end }}
       containers:
       - name: success
@@ -119,4 +140,11 @@ spec:
           - echo
         args:
           - "Bootstrap Success"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 20Mi
+          limits:
+            cpu: 100m
+            memory: 20Mi
 {{ end }}
