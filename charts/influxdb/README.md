@@ -59,6 +59,7 @@ The following table lists configurable parameters, their descriptions, and their
 | readinessProbe | Health check for pod | {} |
 | startupProbe | Health check for pod | {} |
 | service.type | Kubernetes service type | ClusterIP |
+| service.loadBalancerIP | A user-specified IP address for service type LoadBalancer to use as External IP (if supported) | nil |
 | persistence.enabled | Boolean to enable and disable persistance | true |
 | persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil |
 | persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
