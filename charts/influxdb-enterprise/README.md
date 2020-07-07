@@ -64,6 +64,34 @@ bootstrap:
     secretName: auth
 ```
 
+#### TLS (Optional)
+
+If you want to configure TLS for your meta and/or data nodes, you must enable TLS inside the `values.yaml`. An example is below, but you'll need to replicate for the data nodes too:
+
+```yaml
+meta:
+  https:
+    enabled: true
+```
+
+If you want to use CertManager to provision the TLS certificates, you can add:
+
+```yaml
+meta:
+  https:
+    useCertManager: true
+    insecure: true # This chart uses an untrusted CA, so we need to mark the keys as insecure
+```
+
+Otherwise, you need to provide a secret with the keys `tls.crt` and `tls.key`. An example exists inside the [example resources](./example-resources.yaml).
+
+```yaml
+meta:
+  https:
+    secretName: my-tls-secret
+    insecure: true # Only enable if your CA isn't trusted
+```
+
 #### DDL/DML (Optional)
 
 If you wish to create databases or import data after installation, we've provided this DDL/DML hook. Your config map must contain the keys `ddl` and `dml`.

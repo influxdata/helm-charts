@@ -24,8 +24,29 @@ data:
       license-path = "/var/run/secrets/influxdb/license.json"
       {{ end }}
 
+    [cluster]
+    {{ if .Values.data.https.enabled }}
+    https-enabled = true
+
+    https-certificate = "/var/run/secrets/tls/tls.crt"
+    https-private-key = "/var/run/secrets/tls/tls.key"
+
+    {{ if .Values.data.https.insecure }}
+    https-insecure-tls = true
+    {{ end }}
+    {{ end }}
+
     [meta]
       dir = "/var/lib/influxdb/meta"
+
+      {{ if and .Values.meta.https.enabled }}
+      meta-tls-enabled = true
+
+      {{ if .Values.meta.https.insecure }}
+      meta-insecure-tls = true
+      {{ end }}
+
+      {{ end }}
 
     [hinted-handoff]
       dir = "/var/lib/influxdb/hh"
@@ -53,7 +74,11 @@ data:
     $SIG{KILL} = sub { kill 'KILL', $pid };
 
     # Register data node with meta leader
-    my $protocol = $ENV{HTTP_PROTOCOL};
+    {{ if .Values.meta.https.enabled }}
+    my $protocol = "https";
+    {{ else }}
+    my $protocol = "http";
+    {{ end }}
     my $meta_service = $ENV{RELEASE_NAME} . "-meta";
 
     # We're not going to define an exit strategy for failure here.
@@ -61,7 +86,7 @@ data:
     while (true) {
       # There's no LWP/Simple available in our images, so forking out to curl 😥
       print "\n\n\nREGISTER WITH META SERVICE\n\n\n";
-      $exit_code = system('curl', '-XPOST', '-v', '--silent', '--fail', '--retry', '5', '--retry-delay', '0', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
+      $exit_code = system('curl', {{ if .Values.meta.https.insecure }}'-k',{{ end }} '-XPOST', '-v', '--silent', '--fail', '--retry', '5', '--retry-delay', '0', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
 
 
       if ($exit_code == 0) {

@@ -29,9 +29,12 @@ jobs:
       # Our Enterprise chart requires some resources created
       - name: Create Enterprise Test Resources
         run: |
+          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
           kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
 
       - name: Run chart-testing (install)
         uses: helm/chart-testing-action@v1.0.0-rc.1
         with:
           command: install
+        env:
+          INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
