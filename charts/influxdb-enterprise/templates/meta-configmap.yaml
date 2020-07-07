@@ -22,6 +22,27 @@ data:
     [meta]
       dir = "/var/lib/influxdb/meta"
 
+      {{ if .Values.meta.https.enabled }}
+      https-enabled = true
+
+      https-certificate = "/var/run/secrets/tls/tls.crt"
+      https-private-key = "/var/run/secrets/tls/tls.key"
+
+      {{ if .Values.meta.https.insecure }}
+      https-insecure-tls = true
+      {{ end }}
+
+      {{ end }}
+
+      {{ if and .Values.data.https.enabled }}
+      data-use-tls = true
+
+      {{ if .Values.data.https.insecure }}
+      data-insecure-tls = true
+      {{ end }}
+
+      {{ end }}
+
   entrypoint.pl: |+
     #!/usr/bin/env perl
     $ENV{INFLUXDB_HOSTNAME} = `hostname -f`;
@@ -47,9 +68,9 @@ data:
     # This should be handled by the probes on the pods
     while (true) {
       if($meta_leader eq $ENV{INFLUXDB_HOSTNAME}) {
-        system('influxd-ctl', 'add-meta', "$ENV{INFLUXDB_HOSTNAME}:8091");
+        system('influxd-ctl', {{ if .Values.meta.https.enabled }}'-bind-tls',{{ end }}{{ if .Values.meta.https.insecure }}'-k',{{ end }} 'add-meta', "$ENV{INFLUXDB_HOSTNAME}:8091");
       } else {
-        system('influxd-ctl', 'join', "$meta_leader:8091");
+        system('influxd-ctl', {{ if .Values.meta.https.enabled }}'-bind-tls',{{ end }}{{ if .Values.meta.https.insecure }}'-k',{{ end }} 'join', "$meta_leader:8091");
       }
 
       if ($? == 0) {

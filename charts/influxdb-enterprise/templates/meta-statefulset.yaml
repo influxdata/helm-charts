@@ -39,6 +39,15 @@ spec:
         secret:
           secretName: {{ .Values.license.secret.name }}
       {{- end }}
+      {{- if .Values.meta.https.enabled }}
+      - name: tls
+        secret:
+          {{- if .Values.meta.https.useCertManager }}
+          secretName: {{ include "influxdb-enterprise.fullname" . }}-meta-tls
+          {{ else }}
+          secretName: {{ .Values.meta.https.secretName }}
+          {{ end }}
+      {{ end }}
       containers:
         - name: {{ .Chart.Name }}
           command:
@@ -66,10 +75,16 @@ spec:
             httpGet:
               path: /ping
               port: http
+              {{- if .Values.meta.https.enabled }}
+              scheme: HTTPS
+              {{- end }}
           readinessProbe:
             httpGet:
               path: /ping
               port: http
+              {{- if .Values.meta.https.enabled }}
+              scheme: HTTPS
+              {{- end }}
           volumeMounts:
           - name: config
             mountPath: /etc/influxdb
@@ -80,6 +95,10 @@ spec:
             mountPath: /var/run/secrets/influxdb/license.json
             subPath: json
           {{- end }}
+          {{- if .Values.meta.https.enabled }}
+          - name: tls
+            mountPath: /var/run/secrets/tls/
+          {{ end }}
           resources:
             {{- toYaml .Values.meta.resources | nindent 12 }}
       {{- with .Values.meta.nodeSelector }}
