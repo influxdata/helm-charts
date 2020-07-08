@@ -4,6 +4,5 @@ chart-dirs:
   - charts
 chart-repos:
   - "jetstack=https://charts.jetstack.io"
-helm-extra-args:
-  - "--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
+helm-extra-args: "--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
 debug: true
