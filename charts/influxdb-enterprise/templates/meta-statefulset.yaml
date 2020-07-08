@@ -11,7 +11,6 @@ spec:
   selector:
     matchLabels:
       influxdb.influxdata.com/component: meta
-      influxdb.influxdata.com/role: follower
       {{- include "influxdb-enterprise.selectorLabels" . | nindent 6 }}
   template:
     metadata:
@@ -21,7 +20,6 @@ spec:
     {{- end }}
       labels:
         influxdb.influxdata.com/component: meta
-        influxdb.influxdata.com/role: follower
         {{- include "influxdb-enterprise.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}

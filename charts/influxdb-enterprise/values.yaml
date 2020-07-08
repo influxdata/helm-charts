@@ -42,7 +42,7 @@ bootstrap:
     # configMap: ddl-dml
 
 meta:
-  replicas: 3
+  replicas: 1
   image: {}
     # override: true
     # pullPolicy: IfNotPresent
@@ -72,7 +72,7 @@ meta:
   ## Persist data to a persistent volume
   ##
   persistence:
-    enabled: true
+    enabled: false
     ## A manually managed Persistent Volume and Claim
     ## Requires persistence.enabled: true
     ## If defined, PVC must be created manually before volume will be bound
@@ -86,8 +86,8 @@ meta:
     ##
     # storageClass: "-"
     # annotations:
-    accessMode: ReadWriteOnce
-    size: 8Gi
+    # accessMode: ReadWriteOnce
+    # size: 8Gi
   # Pick one
   podDisruptionBudget:
     # maxUnavailable: 2
@@ -103,7 +103,7 @@ meta:
 
 
 data:
-  replicas: 3
+  replicas: 1
   image: {}
     # override: true
     # pullPolicy: IfNotPresent
@@ -125,7 +125,7 @@ data:
   ## Persist data to a persistent volume
   ##
   persistence:
-    enabled: true
+    enabled: false
     ## A manually managed Persistent Volume and Claim
     ## Requires persistence.enabled: true
     ## If defined, PVC must be created manually before volume will be bound
@@ -139,8 +139,8 @@ data:
     ##
     # storageClass: "-"
     # annotations:
-    accessMode: ReadWriteOnce
-    size: 8Gi
+    # accessMode: ReadWriteOnce
+    # size: 8Gi
   https:
     enabled: true
     # The `useCertManager` option, when set to true, will
