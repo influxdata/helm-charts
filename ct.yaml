@@ -4,5 +4,9 @@ chart-dirs:
   - charts
 chart-repos:
   - "jetstack=https://charts.jetstack.io"
-helm-extra-args: "--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
+# This doesn't work because they didn't expect it to be used for secrets
+# Track issue: https://github.com/helm/chart-testing/issues/212
+#helm-extra-args: "--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
+# Remove this excluded chart when the above can be satisfied
+excluded-charts: "influxdb-enterprise"
 debug: true
