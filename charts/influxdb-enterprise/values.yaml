@@ -30,7 +30,7 @@ bootstrap:
   # and password for your "admin" account.
   # A secret should be provided, which will have the keys
   # "username" and "password" available.
-  auth: #{}
+  auth: #  {}
     secretName: auth
   # This section allows you to use DDL and DML to define
   # databases, retention policies, and inject some data.
@@ -38,7 +38,7 @@ bootstrap:
   # must exist, even if one of them is empty.
   # DDL is executed before DML, to enforce databases and retention policies
   # to exist.
-  ddldml: #{}
+  ddldml: #  {}
     configMap: ddl-dml
 
 meta:
