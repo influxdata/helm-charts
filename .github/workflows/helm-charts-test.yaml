@@ -30,6 +30,7 @@ jobs:
       - name: Create Enterprise Test Resources
         run: |
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
+          sleep 30 # wait for CertManager
           kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
 
       - name: Run chart-testing (install)
