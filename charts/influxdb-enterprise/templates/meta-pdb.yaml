@@ -3,12 +3,11 @@ apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: {{ template "influxdb-enterprise.fullname" . }}-meta-pdb
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "influxdb-enterprise.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/managed-by: {{ .Release.Service }}
       influxdb.influxdata.com/component: meta
+      {{- include "influxdb-enterprise.selectorLabels" . | nindent 4 }}
 {{ toYaml .Values.meta.podDisruptionBudget | indent 2 }}

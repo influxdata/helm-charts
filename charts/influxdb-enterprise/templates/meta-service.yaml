@@ -4,7 +4,6 @@ metadata:
   name: {{ template "influxdb-enterprise.fullname" . }}-meta
   labels:
     influxdb.influxdata.com/component: meta
-    influxdb.influxdata.com/role: follower
     {{- include "influxdb-enterprise.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
@@ -19,5 +18,4 @@ spec:
     name: http
   selector:
     influxdb.influxdata.com/component: meta
-    influxdb.influxdata.com/role: follower
     {{- include "influxdb-enterprise.selectorLabels" . | nindent 4 }}
