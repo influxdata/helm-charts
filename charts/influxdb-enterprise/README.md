@@ -1,6 +1,6 @@
 # InfluxDB Enterprise
 
-## QuickStart
+## Quick Start
 
 ```bash
 helm repo add influxdata https://helm.influxdata.com/
@@ -11,7 +11,7 @@ helm upgrade --install influxdb influxdata/influxdb-enterprise --namespace monit
 
 ## Introduction
 
-This chart bootstraps an InfluxDB Enterprise cluster, with a StatefulSet for both the Meta and Data nodes.
+This chart bootstraps an InfluxDB Enterprise cluster, with a StatefulSet for both the meta and data nodes.
 
 ## Prerequisites
 
@@ -20,7 +20,15 @@ This chart bootstraps an InfluxDB Enterprise cluster, with a StatefulSet for bot
 
 ### Secrets
 
-This chart REQUIRES some mandatory secrets in-order to function.
+This chart requires the following secrets in order to function:
+
+- License
+- Shared Secret
+
+Optionally, you can also provide secrets to enable:
+
+- Authentication
+- TLS
 
 #### License
 
@@ -88,7 +96,8 @@ Otherwise, you need to provide a secret with the keys `tls.crt` and `tls.key`. A
 ```yaml
 meta:
   https:
-    secretName: my-tls-secret
+    secret:
+      name: my-tls-secret
     insecure: true # Only enable if your CA isn't trusted
 ```
 

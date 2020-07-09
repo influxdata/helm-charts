@@ -6,11 +6,12 @@ nameOverride: ""
 fullnameOverride: ""
 imagePullSecrets: []
 
+# License-key and license-path are mutually exclusive. Use only one and leave the other blank.
 license:
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
-  key: "fbe954a4-69c2-4b7e-bf69-cad2c2e5e6b9"
+  # key: ""
   # secret:
   #   name: license
   #   key: json
@@ -40,6 +41,7 @@ bootstrap:
   # to exist.
   ddldml: {}
     # configMap: ddl-dml
+    # resources: {}
 
 meta:
   replicas: 1
@@ -96,9 +98,12 @@ meta:
     enabled: true
     # The `useCertManager` option, when set to true, will
     # automatically create the certificate resources for you.
-    # You do not need to set the secretName when using this flag.
+    # You do not need to set the secret.name when using this flag.
     useCertManager: true
-    # secretName: tls-secret
+    secret:
+      name: tls-secret
+      # crt: tls.crt
+      # key: tls.key
     insecure: true
 
 
@@ -145,7 +150,10 @@ data:
     enabled: true
     # The `useCertManager` option, when set to true, will
     # automatically create the certificate resources for you.
-    # You do not need to set the secretName when using this flag.
+    # You do not need to set the secret.name when using this flag.
     useCertManager: true
-    # secretName: tls-secret
+    secret:
+      name: tls-secret
+      # crt: tls.crt
+      # key: tls.key
     insecure: true
