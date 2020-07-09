@@ -43,7 +43,14 @@ spec:
           {{- if .Values.meta.https.useCertManager }}
           secretName: {{ include "influxdb-enterprise.fullname" . }}-meta-tls
           {{ else }}
-          secretName: {{ .Values.meta.https.secretName }}
+          secretName: {{ .Values.meta.https.secret.name }}
+          {{ if or .Values.meta.https.secret.crt .Values.meta.https.secret.key }}
+          items:
+            - key: {{ .Values.meta.https.crt }}
+              path: tls.crt
+            - key: {{ .Values.meta.https.key }}
+              path: tls.key
+          {{ end }}
           {{ end }}
       {{ end }}
       containers:

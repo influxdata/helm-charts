@@ -141,10 +141,5 @@ spec:
         args:
           - "Bootstrap Success"
         resources:
-          requests:
-            cpu: 100m
-            memory: 20Mi
-          limits:
-            cpu: 100m
-            memory: 20Mi
+          {{ toYaml .Values.bootstrap.ddldml.resources | indent 12 }}
 {{ end }}
