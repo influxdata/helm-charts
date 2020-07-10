@@ -89,7 +89,7 @@ spec:
           - -path
           - /ddldml/ddl
         resources:
-          {{ toYaml .Values.bootstrap.ddldml.resources | indent 12 }}
+          {{ toYaml .Values.bootstrap.ddldml.resources | indent 10 }}
       {{ end }}
       {{- if .Values.bootstrap.ddldml.configMap }}
       - name: dml
@@ -120,7 +120,7 @@ spec:
           - -path
           - /ddldml/dml
         resources:
-          {{ toYaml .Values.bootstrap.ddldml.resources | indent 12 }}
+          {{ toYaml .Values.bootstrap.ddldml.resources | indent 10 }}
       {{ end }}
       containers:
       - name: success
