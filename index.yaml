@@ -449,6 +449,28 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.4.4/influxdb-4.4.4.tgz
     version: 4.4.4
+  influxdb-enterprise:
+  - apiVersion: v2
+    appVersion: 1.8.0
+    created: "2020-07-10T18:33:39.221741096Z"
+    description: Run InfluxDB Enterprise on Kubernetes
+    digest: 0691d6425ccf72f3476bca340e357cde8e01b72918c9d7ad727a779938fa1b78
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    name: influxdb-enterprise
+    sources:
+    - https://github.com/influxdata/influxdb
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-enterprise-0.1.0/influxdb-enterprise-0.1.0.tgz
+    version: 0.1.0
   influxdb2:
   - apiVersion: v2
     appVersion: 2.0.0-beta
