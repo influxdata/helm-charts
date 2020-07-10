@@ -101,6 +101,7 @@ The following table lists configurable parameters, their descriptions, and their
 | backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false` |
 | backup.gcs | Google Cloud Storage config | `nil`
 | backup.azure | Azure Blob Storage config | `nil`
+| backup.s3 | Amazon S3 (or compatible) config | `nil`
 | backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
 | backup.annotations | Annotations for backup cronjob | {} |
 | backup.podAnnotations | Annotations for backup cronjob pods | {} |
