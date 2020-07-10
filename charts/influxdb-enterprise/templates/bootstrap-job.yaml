@@ -89,12 +89,7 @@ spec:
           - -path
           - /ddldml/ddl
         resources:
-          requests:
-            cpu: 100m
-            memory: 20Mi
-          limits:
-            cpu: 100m
-            memory: 20Mi
+          {{ toYaml .Values.bootstrap.ddldml.resources | indent 12 }}
       {{ end }}
       {{- if .Values.bootstrap.ddldml.configMap }}
       - name: dml
@@ -125,12 +120,7 @@ spec:
           - -path
           - /ddldml/dml
         resources:
-          requests:
-            cpu: 100m
-            memory: 20Mi
-          limits:
-            cpu: 100m
-            memory: 20Mi
+          {{ toYaml .Values.bootstrap.ddldml.resources | indent 12 }}
       {{ end }}
       containers:
       - name: success
@@ -141,5 +131,10 @@ spec:
         args:
           - "Bootstrap Success"
         resources:
-          {{ toYaml .Values.bootstrap.ddldml.resources | indent 12 }}
+          requests:
+            cpu: 100m
+            memory: 20Mi
+          limits:
+            cpu: 100m
+            memory: 20Mi
 {{ end }}
