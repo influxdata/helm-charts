@@ -29,6 +29,10 @@ spec:
       securityContext:
         {{- toYaml .Values.data.podSecurityContext | nindent 8 }}
       volumes:
+      {{ if not .Values.data.persistence.enabled }}
+      - name: {{ include "influxdb-enterprise.fullname" . }}-data-data
+        emptyDir: {}
+      {{ end }}
       - name: config
         configMap:
           name: {{ include "influxdb-enterprise.fullname" . }}-data
