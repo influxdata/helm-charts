@@ -25,6 +25,7 @@ spec:
   {{- if .Values.config.collectd.enabled }}
   - name: collectd
     port: {{ .Values.config.collectd.bind_address | default 25826 }}
+    protocol: UDP
     targetPort: collectd
   {{- end }}
   {{- if .Values.config.udp.enabled }}

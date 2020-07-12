@@ -65,6 +65,7 @@ spec:
         {{- if .Values.config.collectd.enabled }}
         - name: collectd
           containerPort: {{ .Values.config.collectd.bind_address |  default 25826 }}
+          protocol: UDP
         {{- end }}
         {{- if .Values.config.udp.enabled }}
         - name: udp
