@@ -183,7 +183,7 @@ If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-
 
 ## Start with authentication
 
-In `values.yaml`, change `.Values.config.http.auth_enabled` to `true`.
+In `values.yaml`, change `.Values.config.http.auth-enabled` to `true`.
 
 > **Note:** To enforce authentication, InfluxDB requires an admin user to be set up. For details, see [Set up authentication](https://docs.influxdata.com/influxdb/v1.2/query_language/authentication_and_authorization/#set-up-authentication).
 
