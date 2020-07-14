@@ -1,0 +1,146 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}-meta
+  labels:
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.meta.replicas | default 3 }}
+  podManagementPolicy: Parallel
+  serviceName: {{ include "influxdb-enterprise.fullname" . }}-meta
+  selector:
+    matchLabels:
+      influxdb.influxdata.com/component: meta
+      {{- include "influxdb-enterprise.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.meta.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        influxdb.influxdata.com/component: meta
+        {{- include "influxdb-enterprise.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.meta.podSecurityContext | nindent 8 }}
+      volumes:
+      {{ if not .Values.meta.persistence.enabled }}
+      - name: {{ include "influxdb-enterprise.fullname" . }}-meta-data
+        emptyDir: {}
+      {{ end }}
+      - name: config
+        configMap:
+          name: {{ include "influxdb-enterprise.fullname" . }}-meta
+      {{- if .Values.license.secret }}
+      - name: license
+        secret:
+          secretName: {{ .Values.license.secret.name }}
+      {{- end }}
+      {{- if .Values.meta.https.enabled }}
+      - name: tls
+        secret:
+          {{- if .Values.meta.https.useCertManager }}
+          secretName: {{ include "influxdb-enterprise.fullname" . }}-meta-tls
+          {{ else }}
+          secretName: {{ .Values.meta.https.secret.name }}
+          {{ if or .Values.meta.https.secret.crt .Values.meta.https.secret.key }}
+          items:
+            - key: {{ .Values.meta.https.crt }}
+              path: tls.crt
+            - key: {{ .Values.meta.https.key }}
+              path: tls.key
+          {{ end }}
+          {{ end }}
+      {{ end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          command:
+          - "/usr/bin/perl"
+          args:
+          - "/etc/influxdb/entrypoint.pl"
+          securityContext:
+            {{- toYaml .Values.meta.securityContext | nindent 12 }}
+          image: "{{ .Values.meta.image.repository | default "influxdb" }}:{{ .Values.meta.image.tag | default (printf "%s-%s" .Chart.AppVersion "meta") }}"
+          imagePullPolicy: {{ .Values.meta.image.pullPolicy }}
+          env:
+            - name: INFLUXDB_META_INTERNAL_SHARED_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.meta.sharedSecret.secretName }}
+                  key: secret
+          ports:
+            - name: http
+              containerPort: 8091
+              protocol: TCP
+            - name: raft
+              containerPort: 8089
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+              {{- if .Values.meta.https.enabled }}
+              scheme: HTTPS
+              {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+              {{- if .Values.meta.https.enabled }}
+              scheme: HTTPS
+              {{- end }}
+          volumeMounts:
+          - name: config
+            mountPath: /etc/influxdb
+          - name: {{ include "influxdb-enterprise.fullname" . }}-meta-data
+            mountPath: /var/lib/influxdb
+          {{- if .Values.license.secret }}
+          - name: license
+            mountPath: /var/run/secrets/influxdb/license.json
+            subPath: json
+          {{- end }}
+          {{- if .Values.meta.https.enabled }}
+          - name: tls
+            mountPath: /var/run/secrets/tls/
+          {{ end }}
+          resources:
+            {{- toYaml .Values.meta.resources | nindent 12 }}
+      {{- with .Values.meta.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.meta.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.meta.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if and .Values.meta.persistence.enabled (not .Values.meta.persistence.existingClaim) }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ include "influxdb-enterprise.fullname" . }}-meta-data
+        annotations:
+        {{- range $key, $value := .Values.meta.persistence.annotations }}
+          {{ $key }}: "{{ $value }}"
+        {{- end }}
+      spec:
+        accessModes:
+          - {{ .Values.meta.persistence.accessMode | quote}}
+        resources:
+          requests:
+            storage: {{ .Values.meta.persistence.size | quote }}
+      {{- if .Values.meta.persistence.storageClass }}
+      {{- if (eq "-" .Values.meta.persistence.storageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.meta.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+  {{- end }}

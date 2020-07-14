@@ -1,0 +1,28 @@
+{{- if and .Values.meta.https.enabled .Values.meta.https.useCertManager -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}-meta
+  labels:
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+spec:
+  {{- $replicas := (int $.Values.meta.replicas) }}
+  {{- $fullname := include "influxdb-enterprise.fullname" . }}
+  {{- $namespace := .Release.Namespace }}
+  
+  dnsNames:
+  - {{ $fullname }}-meta
+  - {{ $fullname }}-meta.{{ .Release.Namespace }}.svc
+  
+  {{- range $i := until $replicas }}
+  - {{ $fullname }}-meta-{{ $i | toString }}.{{ $fullname }}-meta
+  - {{ $fullname }}-meta-{{ $i | toString }}.{{ $fullname }}-meta.{{ $namespace }}
+  - {{ $fullname }}-meta-{{ $i | toString }}.{{ $fullname }}-meta.{{ $namespace }}.svc
+  {{ end }}
+    
+  isCA: true
+  issuerRef:
+    kind: Issuer
+    name: {{ include "influxdb-enterprise.fullname" . }}
+  secretName: {{ include "influxdb-enterprise.fullname" . }}-meta-tls
+{{- end -}}
