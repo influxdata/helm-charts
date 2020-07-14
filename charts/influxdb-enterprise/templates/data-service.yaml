@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "influxdb-enterprise.fullname" . }}-data
+  labels:
+    influxdb.influxdata.com/component: data
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - port: 8086
+    protocol: TCP
+    name: http
+  - port: 8088
+    protocol: TCP
+    name: rpc
+  - port: 8089
+    protocol: TCP
+    name: udp
+  - port: 8091
+    protocol: TCP
+    name: raft
+  selector:
+    influxdb.influxdata.com/component: data
+    {{- include "influxdb-enterprise.selectorLabels" . | nindent 4 }}

@@ -13,6 +13,9 @@ podAnnotations: {}
 
 imagePullSecrets: []
 
+## Configure args passed to Telegraf containers
+args: []
+
 env:
   - name: HOSTNAME
     value: "telegraf-polling-service"

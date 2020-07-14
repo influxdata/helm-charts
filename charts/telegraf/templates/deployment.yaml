@@ -28,6 +28,10 @@ spec:
         imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
+        {{- if .Values.args }}
+        args:
+{{ toYaml .Values.args | indent 8 }}
+        {{- end }}
         env:
 {{ toYaml .Values.env | indent 8 }}
         volumeMounts:
