@@ -40,6 +40,9 @@ spec:
       - name: license
         secret:
           secretName: {{ .Values.license.secret.name }}
+          items:
+          - key: {{ .Values.license.secret.key }}
+            path: license.json
       {{- end }}
       {{- if .Values.meta.https.enabled }}
       - name: tls
@@ -101,8 +104,7 @@ spec:
             mountPath: /var/lib/influxdb
           {{- if .Values.license.secret }}
           - name: license
-            mountPath: /var/run/secrets/influxdb/license.json
-            subPath: json
+            mountPath: /var/run/secrets/influxdb/
           {{- end }}
           {{- if .Values.meta.https.enabled }}
           - name: tls
