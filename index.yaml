@@ -165,6 +165,32 @@ entries:
   influxdb:
   - apiVersion: v1
     appVersion: 1.8.0
+    created: "2020-07-16T22:22:59.778056934Z"
+    description: Scalable datastore for metrics, events, and real-time analytics.
+    digest: 7d68ef48dfe8bebc181383dbdfa1ae1ee8b1faed7945c13f0166e18fd3b4562e
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: influxdb
+    sources:
+    - https://github.com/influxdata/influxdb
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.8.1/influxdb-4.8.1.tgz
+    version: 4.8.1
+  - apiVersion: v1
+    appVersion: 1.8.0
     created: "2020-07-15T07:03:10.265112867Z"
     description: Scalable datastore for metrics, events, and real-time analytics.
     digest: dfbd72d28c5fe7a393e59be0fc97d6f4424e83c515aaea787468f4b638507d23
@@ -528,6 +554,27 @@ entries:
     - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.4.4/influxdb-4.4.4.tgz
     version: 4.4.4
   influxdb-enterprise:
+  - apiVersion: v2
+    appVersion: 1.8.0
+    created: "2020-07-16T22:22:59.883567949Z"
+    description: Run InfluxDB Enterprise on Kubernetes
+    digest: 4c000ef4b3b8574bf207124f4e0d593495b82ec4849277854740859cee1f940c
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    name: influxdb-enterprise
+    sources:
+    - https://github.com/influxdata/influxdb
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-enterprise-0.1.2/influxdb-enterprise-0.1.2.tgz
+    version: 0.1.2
   - apiVersion: v2
     appVersion: 1.8.0
     created: "2020-07-10T20:00:41.984303544Z"
