@@ -38,6 +38,13 @@ spec:
               secretName: {{ .Values.backup.gcs.serviceAccountSecret | quote }}
           {{- end }}
           {{- end }}
+          {{- if .Values.backup.s3 }}
+          {{- if .Values.backup.s3.credentialsSecret }}
+          - name: aws-credentials-secret
+            secret:
+              secretName: {{ .Values.backup.s3.credentialsSecret | quote }}
+          {{- end }}
+          {{- end }}
           serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
           initContainers:
           - name: influxdb-backup
@@ -110,6 +117,32 @@ spec:
                   secretKeyRef:
                     name: {{ .Values.backup.azure.storageAccountSecret }}
                     key: connection-string
+            resources:
+              {{- toYaml .Values.backup.resources | nindent 14 }}
+          {{- end }}
+          {{- if .Values.backup.s3 }}
+          - name: aws-cli
+            image: amazon/aws-cli
+            command:
+            - /bin/sh
+            args:
+            - '-c'
+            - |
+              aws {{- if .Values.backup.s3.endpointUrl }} --endpoint-url={{ .Values.backup.s3.endpointUrl }} {{- end }} s3 cp --recursive "$SRC_URL" "$DST_URL"
+            volumeMounts:
+            - name: backup
+              mountPath: /backup
+            {{- if .Values.backup.s3.credentialsSecret}}
+            - name: aws-credentials-secret
+              mountPath: /var/secrets/aws/
+            {{- end }}
+            env:
+              - name: AWS_CONFIG_FILE
+                value: /var/secrets/aws/credentials
+              - name: SRC_URL
+                value: /backup
+              - name: DST_URL
+                value: {{ .Values.backup.s3.destination }}
             resources:
               {{- toYaml .Values.backup.resources | nindent 14 }}
           {{- end }}

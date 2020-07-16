@@ -283,3 +283,14 @@ backup:
   #   storageAccountSecret: influxdb-backup-azure-key
   #   destination_container: influxdb-container
   #   destination_path: ""
+
+  ## Amazon S3 or compatible
+  ## Secret is expected to have AWS (or compatible) credentials stored in `credentials` field.
+  ## Please look at https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html#cli-configure-files-where
+  ## for the credentials format.
+  ## The bucket should already exist.
+  # s3:
+  #   credentialsSecret: aws-credentials-secret
+  #   destination: s3://bucket/path
+  #   ## Optional. Specify if you're using an alternate S3 endpoint.
+  #   # endpointUrl: ""
