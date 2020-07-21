@@ -17,11 +17,20 @@ spec:
     protocol: TCP
     name: rpc
   - port: 8089
-    protocol: TCP
+    protocol: UDP
     name: udp
-  - port: 8091
+  - port: 2003
+    # Graphite supports TCP and UDP,
+    # so this should __maybe__ be configurable
+    # Though most use TCP
     protocol: TCP
-    name: raft
+    name: graphite
+  - port: 4242
+    protocol: TCP
+    name: opentsdb
+  - port: 25826
+    protocol: UDP
+    name: collectd
   selector:
     influxdb.influxdata.com/component: data
     {{- include "influxdb-enterprise.selectorLabels" . | nindent 4 }}

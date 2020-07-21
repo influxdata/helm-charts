@@ -75,11 +75,23 @@ spec:
             value: {{ include "influxdb-enterprise.fullname" . }}
           ports:
             - name: http
-              containerPort: 8088
+              containerPort: 8086
               protocol: TCP
             - name: raft
-              containerPort: 8089
+              containerPort: 8088
               protocol: TCP
+            - name: udp
+              containerPort: 8089
+              protocol: UDP
+            - name: graphite
+              containerPort: 2003
+              protocol: TCP
+            - name: opentsdb
+              containerPort: 4242
+              protocol: TCP
+            - name: collectd
+              containerPort: 25826
+              protocol: UDP
           livenessProbe:
             httpGet:
               path: /ping
