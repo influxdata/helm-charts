@@ -53,9 +53,9 @@ spec:
           secretName: {{ .Values.data.https.secret.name }}
           {{ if or .Values.data.https.secret.crt .Values.data.https.secret.key }}
           items:
-            - key: {{ .Values.data.https.crt }}
+            - key: {{ .Values.data.https.secret.crt }}
               path: tls.crt
-            - key: {{ .Values.data.https.key }}
+            - key: {{ .Values.data.https.secret.key }}
               path: tls.key
           {{ end }}
           {{ end }}
