@@ -272,6 +272,7 @@ backup:
     accessMode: ReadWriteOnce
     size: 8Gi
   schedule: "0 0 * * *"
+  startingDeadlineSeconds: ""
   annotations: {}
   podAnnotations: {}
 
