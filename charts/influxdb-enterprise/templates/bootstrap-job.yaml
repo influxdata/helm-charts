@@ -48,6 +48,10 @@ spec:
         command:
           - influx
         args:
+        {{- if .Values.data.https.enabled }}
+          - -ssl 
+          - -unsafeSsl
+        {{ end }}
           - -host
           - {{ include "influxdb-enterprise.fullname" . }}-data
           - -execute
@@ -83,6 +87,10 @@ spec:
         command:
           - influx
         args:
+        {{- if .Values.data.https.enabled }}
+          - -ssl 
+          - -unsafeSsl
+        {{ end }}
           - -host
           - {{ include "influxdb-enterprise.fullname" . }}-data
           - -import
@@ -114,6 +122,10 @@ spec:
         command:
           - influx
         args:
+        {{- if .Values.data.https.enabled }}
+          - -ssl 
+          - -unsafeSsl
+        {{ end }}
           - -host
           - {{ include "influxdb-enterprise.fullname" . }}-data
           - -import
