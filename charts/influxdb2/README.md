@@ -49,3 +49,7 @@ The [InfluxDB](https://quay.io/influxdb/influxdb:2.0.0-beta) image stores data i
 If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) associated with StatefulSet is provisioned. The volume is created using dynamic volume provisioning. In case of a disruption (for example, a node drain), Kubernetes ensures that the same volume is reattached to the Pod, preventing any data loss. However, when persistence is **not enabled**, InfluxDB data is stored in an empty directory, so if a Pod restarts, data is lost.
 
 Check out our [Slack channel](https://www.influxdata.com/slack) for support and information.
+
+## Fixed Auth Credentials
+
+If you need to use fixed token and/or password you can fill `adminUser.password` and `adminUser.token` on your values file to avoid using random values generation.
