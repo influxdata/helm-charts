@@ -30,6 +30,10 @@ adminUser:
   organization: "influxdata"
   bucket: "default"
   user: "admin"
+  ## Leave empty to generate a random password and token.
+  ## Or fill any of these values to use fixed values.
+  password: ""
+  token: ""
 
 ## Persist data to a persistent volume
 ##
