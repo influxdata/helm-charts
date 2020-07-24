@@ -80,6 +80,7 @@ The following table lists configurable parameters, their descriptions, and their
 | env | environment variables for influxdb container | {} |
 | volumes | `volumes` stanza(s) to be used in the main container | nil |
 | mountPoints | `volumeMount` stanza(s) to be used in the main container | nil |
+| extraContainers | Additional containers to be added to the pod | {} |
 | config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#reporting-disabled-false) | false |
 | config.rpc | RPC address for backup and storage | {} |
 | config.meta | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#meta) | {} |
