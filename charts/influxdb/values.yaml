@@ -294,3 +294,23 @@ backup:
   #   destination: s3://bucket/path
   #   ## Optional. Specify if you're using an alternate S3 endpoint.
   #   # endpointUrl: ""
+
+backupRetention:
+  enabled: false
+  resources:
+    requests:
+      # memory: 512Mi
+      # cpu: 2
+    # limits:
+      # memory: 1Gi
+      # cpu: 4
+  schedule: "0 0 * * *"
+  startingDeadlineSeconds:
+  annotations: {}
+  podAnnotations: {}
+  daysToRetain: 7
+  # s3:
+  #   credentialsSecret: aws-credentials-secret
+  #   bucketName: bucket
+  #   ## Optional. Specify if you're using an alternate S3 endpoint.
+  #   # endpointUrl: ""
