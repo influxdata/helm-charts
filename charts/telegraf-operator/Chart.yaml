@@ -17,7 +17,7 @@ maintainers:
 - name: rawkode
   email: rawkode@influxdata.com
 
-kubeVersion: ">= 1.13.0"
+kubeVersion: ">= 1.13.0-r0"
 home: https://github.com/influxdata/telegraf-operator
 # A chart can be either an 'application' or a 'library' chart.
 #
