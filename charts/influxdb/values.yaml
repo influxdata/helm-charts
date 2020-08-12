@@ -46,6 +46,8 @@ service:
   ## Add annotations to service
   # annotations: {}
   type: ClusterIP
+  # externalIPs: []
+  # externalTrafficPolicy: ""
 
 ## Persist data to a persistent volume
 ##
