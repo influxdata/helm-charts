@@ -95,6 +95,7 @@ data:
       # There's no LWP/Simple available in our images, so forking out to curl 😥
       print "\n\n\nREGISTER WITH META SERVICE\n\n\n";
       $exit_code = system('curl', {{ if .Values.meta.https.insecure }}'-k',{{ end }} '-XPOST', '--silent', '--fail', '--retry', '5', '--retry-delay', '0', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
+      # $exit_code = system('curl', {{ if .Values.meta.https.insecure }}'-k',{{ end }} '-XPOST', '-v', '--silent', '--fail', '--retry', '5', '--retry-delay', '0', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
 
 
       if ($exit_code == 0) {

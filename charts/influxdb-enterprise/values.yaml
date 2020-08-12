@@ -95,6 +95,9 @@ meta:
     # maxUnavailable: 2
     minAvailable: 2
   https:
+    # If you need to debug the data nodes registration with the meta nodes, we recommend
+    # that you comment out the active curl command in the data-configmap and uncomment the following
+    # line, which has -v / debugging enabled.
     enabled: true
     # The `useCertManager` option, when set to true, will
     # automatically create the certificate resources for you.
@@ -147,6 +150,9 @@ data:
     # accessMode: ReadWriteOnce
     # size: 8Gi
   https:
+    # If you need to debug the data nodes registration with the meta nodes, we recommend
+    # that you comment out the active curl command in the data-configmap and uncomment the following
+    # line, which has -v / debugging enabled.
     enabled: true
     # The `useCertManager` option, when set to true, will
     # automatically create the certificate resources for you.
