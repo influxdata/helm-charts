@@ -107,6 +107,7 @@ meta:
       name: tls-secret
       # crt: tls.crt
       # key: tls.key
+      # ca: ca.crt
     insecure: true
 
 
@@ -162,4 +163,5 @@ data:
       name: tls-secret
       # crt: tls.crt
       # key: tls.key
+      # ca: ca.crt
     insecure: true

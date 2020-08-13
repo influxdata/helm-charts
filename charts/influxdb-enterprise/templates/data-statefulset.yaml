@@ -60,6 +60,16 @@ spec:
           {{ end }}
           {{ end }}
       {{ end }}
+      {{- if and .Values.data.https.enabled .Values.data.https.secret }}
+      {{- if .Values.data.https.secret.ca -}}
+      - name: tls-ca
+        secret:
+          secretName: {{ .Values.data.https.secret.name }}
+          items:
+            - key: {{ .Values.data.https.secret.ca }}
+              path: ca.crt
+      {{ end }}
+      {{ end }}
       containers:
         - name: {{ .Chart.Name }}
           command:
@@ -119,6 +129,13 @@ spec:
           {{- if .Values.data.https.enabled }}
           - name: tls
             mountPath: /var/run/secrets/tls/
+          {{ end }}
+          {{- if and .Values.data.https.enabled .Values.data.https.secret }}
+          {{- if .Values.data.https.secret.ca -}}
+          - name: tls-ca
+            mountPath: /etc/ssl/certs/ca-certificates.crt
+            subPath: ca.crt
+          {{ end }}
           {{ end }}
           resources:
             {{- toYaml .Values.data.resources | nindent 12 }}
