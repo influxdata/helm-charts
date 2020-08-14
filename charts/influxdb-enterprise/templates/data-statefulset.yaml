@@ -64,7 +64,11 @@ spec:
       {{- if .Values.data.https.secret.ca -}}
       - name: tls-ca
         secret:
+          {{ if .Values.data.https.secret.caSecret -}}
+          secretName: {{ .Values.data.https.secret.caSecret }}
+          {{ else }}
           secretName: {{ .Values.data.https.secret.name }}
+          {{ end }}
           items:
             - key: {{ .Values.data.https.secret.ca }}
               path: ca.crt

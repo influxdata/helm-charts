@@ -108,6 +108,7 @@ meta:
       # crt: tls.crt
       # key: tls.key
       # ca: ca.crt
+      # caSecret: secret-name # only use if different from the above
     insecure: true
 
 
@@ -163,5 +164,6 @@ data:
       name: tls-secret
       # crt: tls.crt
       # key: tls.key
-      # ca: ca.crt
+      ca: ca.crt
+      caSecret: secret-name # only use if different from the above
     insecure: true
