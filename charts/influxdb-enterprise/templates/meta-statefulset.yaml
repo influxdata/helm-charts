@@ -64,7 +64,7 @@ spec:
       {{- if .Values.meta.https.secret.ca -}}
       - name: tls-ca
         secret:
-          {{- if .Values.meta.https.secret.caSecret -}}
+          {{ if .Values.meta.https.secret.caSecret -}}
           secretName: {{ .Values.meta.https.secret.caSecret }}
           {{ else }}
           secretName: {{ .Values.meta.https.secret.name }}
