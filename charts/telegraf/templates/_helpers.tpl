@@ -134,7 +134,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "map[string]interface {}" }}
+            {{- if eq $key "tagpass" }}
+      [outputs.{{ $output }}.{{ $key }}]
+            {{- else }}
       [[outputs.{{ $output }}.{{ $key }}]]
+            {{- end }}
             {{- range $k, $v := $value }}
               {{- $tps := typeOf $v }}
               {{- if eq $tps "string" }}
