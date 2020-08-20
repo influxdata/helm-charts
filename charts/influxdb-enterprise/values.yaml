@@ -43,9 +43,13 @@ bootstrap:
     # configMap: ddl-dml
     # resources: {}
 
+
 # Sets the tagged version of the docker image that you want to run, will default to latest
+# The suffix is if you are pulling from influx repo, example images will be influxdb:1.8.0-meta and influxdb:1.8.0-data
+# If set to true, the suffix won't be added
 #image:
-#  tag: latest
+#  tag: v1.eg.whatever
+#  ignoresuffix: "true" | "false"
 
 meta:
   replicas: 1
@@ -57,8 +61,10 @@ meta:
   # tolerations: []
   # affinity: {}
   # podAnnotations: {}
+  #
   # podSecurityContext: {}
   #   fsGroup: 2000
+  #
   # This allows you to run the pods as a non-privileged user, set to the uid
   # securityContext: {}
   #   runAsUser: 2000
@@ -133,8 +139,10 @@ data:
   # tolerations: []
   # affinity: {}
   # podAnnotations: {}
+  #
   # podSecurityContext: {}
   #   fsGroup: 2000
+  #
   # This allows you to run the pods as a non-privileged user, set to the uid
   # securityContext: {}
   #   runAsUser: 2000
@@ -145,6 +153,7 @@ data:
   #  capabilities:
   #    drop:
   #    - ALL
+  #
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
