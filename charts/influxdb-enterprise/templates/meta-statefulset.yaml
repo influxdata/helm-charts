@@ -82,8 +82,8 @@ spec:
           - "/etc/influxdb/entrypoint.pl"
           securityContext:
             {{- toYaml .Values.meta.securityContext | nindent 12 }}
-          {{- if .Values.image.tag }}
-          image: "{{ .Values.meta.image.repository | default "influxdb" }}:{{ .Values.image.tag }}"
+          {{- if and (.Values.meta.image.repository) (.Values.image.tag) }}
+          image: "{{ .Values.meta.image.repository }}:{{ .Values.image.tag }}"
           {{ else }}
           image: "{{ .Values.meta.image.repository | default "influxdb" }}:{{ .Values.meta.image.tag | default (printf "%s-%s" .Chart.AppVersion "meta") }}"
           {{ end }}
