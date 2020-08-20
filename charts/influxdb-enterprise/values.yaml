@@ -43,20 +43,26 @@ bootstrap:
     # configMap: ddl-dml
     # resources: {}
 
+# Sets the tagged version of the docker image that you want to run, will default to latest
+#image:
+#  tag: latest
+
 meta:
   replicas: 1
   image: {}
     # override: true
     # pullPolicy: IfNotPresent
     # repository: influxdb
-    # tag: "meta"
   # nodeSelector: {}
   # tolerations: []
   # affinity: {}
   # podAnnotations: {}
   # podSecurityContext: {}
   #   fsGroup: 2000
+  # This allows you to run the pods as a non-privileged user, set to the uid
   # securityContext: {}
+  #   runAsUser: 2000
+  #   runAsGroup: 2000
   #  capabilities:
   #    drop:
   #    - ALL
@@ -64,7 +70,12 @@ meta:
   # runAsNonRoot: true
   # runAsUser: 1000
   #
-  #
+  # These are the commands that will be run before influxdb is started
+  # preruncmds:
+  #   - cmd: ls -l
+  #     description: We want to see what's in the directory
+  #   - cmd: stat $HOME/somefile
+  #     description: And we run a second command
   # This secret needs a key called "secret" and it should be a long random string
   # Please see docs for shared-internal-secret:
   # https://docs.influxdata.com/enterprise_influxdb/v1.8/administration/config-data-nodes/#meta-internal-shared-secret
@@ -118,20 +129,33 @@ data:
     # override: true
     # pullPolicy: IfNotPresent
     # repository: influxdb
-    # tag: "data"
   # nodeSelector: {}
   # tolerations: []
   # affinity: {}
   # podAnnotations: {}
   # podSecurityContext: {}
   #   fsGroup: 2000
+  # This allows you to run the pods as a non-privileged user, set to the uid
   # securityContext: {}
+  #   runAsUser: 2000
+  #   runAsGroup: 2000
+  #  capabilities:
+  #    drop:
+  #    - ALL
   #  capabilities:
   #    drop:
   #    - ALL
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
+  #
+  # These are the commands that will be run before influxdb is started
+  # preruncmds:
+  #   - cmd: ls -l
+  #     description: We want to see what's in the directory
+  #   - cmd: stat $HOME/somefile
+  #     description: And we run a second command
+  #
   ## Persist data to a persistent volume
   ##
   persistence:

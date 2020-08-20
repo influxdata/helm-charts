@@ -69,6 +69,17 @@ data:
     $ENV{INFLUXDB_HOSTNAME} = `hostname -f`;
     $ENV{INFLUXDB_HOSTNAME} =~ s/\n$//;
 
+    {{ if .Values.data.preruncmds }}
+    # These are commands that will run before influxdb is initialized
+    {{- range .Values.data.preruncmds }}
+    {{ if .description }}
+    # {{ .description }}
+    {{- end }}
+    system('{{ .cmd }}');
+    {{- end }}
+    {{ end }}
+
+
     $pid = fork();
 
     # Inside this conditional is our child process, which
