@@ -82,16 +82,7 @@ spec:
           - "/etc/influxdb/entrypoint.pl"
           securityContext:
             {{- toYaml .Values.meta.securityContext | nindent 12 }}
-          {{- $metaTagName := (printf "%s-%s" .Chart.AppVersion "meta") -}}
-          {{- if (.Values.image) }}
-          {{- if (.Values.image.tag) -}}
-          {{- $metaTagName = .Values.image.tag -}}
-          {{- end -}}
-          {{- if (.Values.image.addsuffix) -}}
-          {{- $metaTagName = printf "%s-%s" $metaTagName "meta" -}}
-          {{- end -}}
-          {{- end }}
-          image: "{{ .Values.meta.image.repository | default "influxdb" }}:{{ $metaTagName }}"
+          {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.meta) | indent 10 }}
           imagePullPolicy: {{ .Values.meta.image.pullPolicy }}
           env:
             - name: INFLUXDB_META_INTERNAL_SHARED_SECRET
