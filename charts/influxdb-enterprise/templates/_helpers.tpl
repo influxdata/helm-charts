@@ -55,13 +55,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 
 {{- define "influxdb-enterprise.image" -}}
-{{- $dataTagName := (printf "%s-%s" .chart.AppVersion "data") -}}
+{{- $dataTagName := (printf "%s-%s" .chart.AppVersion .podtype) -}}
 {{- if (.imageroot) }}
 {{- if (.imageroot.tag) -}}
 {{- $dataTagName = .imageroot.tag -}}
 {{- end -}}
 {{- if (.imageroot.addsuffix) -}}
-{{- $dataTagName = printf "%s-%s" $dataTagName "data" -}}
+{{- $dataTagName = printf "%s-%s" $dataTagName .podtype -}}
 {{- end -}}
 {{- end }}
 image: "{{ .podvals.image.repository | default "influxdb" }}:{{ $dataTagName }}"

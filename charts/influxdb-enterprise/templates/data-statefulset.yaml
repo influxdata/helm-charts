@@ -82,7 +82,7 @@ spec:
           - "/etc/influxdb/entrypoint.pl"
           securityContext:
             {{- toYaml .Values.data.securityContext | nindent 12 }}
-          {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.data) | indent 10 }}
+          {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.data "podtype" "data") | indent 10 }}
           imagePullPolicy: {{ .Values.data.image.pullPolicy }}
           env:
           - name: RELEASE_NAME
