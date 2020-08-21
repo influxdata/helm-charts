@@ -48,7 +48,19 @@ data:
     $ENV{INFLUXDB_HOSTNAME} = `hostname -f`;
     $ENV{INFLUXDB_HOSTNAME} =~ s/\n$//;
 
+    {{ if .Values.meta.preruncmds }}
+    # These are commands that will run before influxdb is initialized
+    {{- range .Values.meta.preruncmds }}
+    {{ if .description }}
+    # {{ .description }}
+    {{- end }}
+    system('{{ .cmd }}');
+    {{- end }}
+    {{ end }}
+
+
     $pid = fork();
+
 
     # Inside this conditional is our child process, which
     # will return `influxd-meta`
