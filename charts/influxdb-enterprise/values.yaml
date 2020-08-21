@@ -49,7 +49,7 @@ bootstrap:
 # If set to true, the suffix won't be added
 #image:
 #  tag: v1.eg.whatever
-#  ignoresuffix: "true" | "false"
+#  ignoresuffix: true | false
 
 meta:
   replicas: 1

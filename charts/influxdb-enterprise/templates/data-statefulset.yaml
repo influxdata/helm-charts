@@ -82,13 +82,17 @@ spec:
           - "/etc/influxdb/entrypoint.pl"
           securityContext:
             {{- toYaml .Values.data.securityContext | nindent 12 }}
-          {{- if .Values.image.tag -}}
-          {{- $dataTagName := .Values.image.tag -}}
-          {{- if .Values.image.addsuffix -}}
+
+          {{- $dataTagName := (printf "%s-%s" .Chart.AppVersion "data") -}}
+          {{- if (.Values.image) }}
+          {{- if (.Values.image.tag) -}}
+          {{- $dataTagName = .Values.image.tag -}}
+          {{- end -}}
+          {{- if (.Values.image.addsuffix) -}}
           {{- $dataTagName = printf "%s-%s" $dataTagName "data" -}}
           {{- end -}}
-          {{- end -}}
-          image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+          {{- end }}
+          image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ $dataTagName }}"
           imagePullPolicy: {{ .Values.data.image.pullPolicy }}
           env:
           - name: RELEASE_NAME
