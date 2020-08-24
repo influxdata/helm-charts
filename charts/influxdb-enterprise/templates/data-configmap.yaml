@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}-data
+  labels:
+    app.kubernetes.io/component: data
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+data:
+  influxdb.conf: |+
+    bind-address = ":8088"
+    reporting-disabled = false
+
+    {{ if .Values.bootstrap.auth.secretName }}
+    [http]
+    auth-enabled = true
+
+    {{ if .Values.data.https.enabled }}
+    https-enabled = true
+
+    https-certificate = "/var/run/secrets/tls/tls.crt"
+    https-private-key = "/var/run/secrets/tls/tls.key"
+    {{ end }}
+
+    {{ end }}
+
+    [enterprise]
+      {{ if .Values.license.key }}
+      # license-key and license-path are mutually exclusive, use only one and leave the other blank
+      license-key = "{{ .Values.license.key }}" #✨ mutually exclusive with license-path
+      {{ else }}
+      # license-key and license-path are mutually exclusive, use only one and leave the other blank
+      license-path = "/var/run/secrets/influxdb/license.json"
+      {{ end }}
+
+    [cluster]
+    {{ if .Values.data.https.enabled }}
+    https-enabled = true
+
+    https-certificate = "/var/run/secrets/tls/tls.crt"
+    https-private-key = "/var/run/secrets/tls/tls.key"
+
+    {{ if .Values.data.https.insecure }}
+    https-insecure-tls = true
+    {{ end }}
+    {{ end }}
+
+    [meta]
+      dir = "/var/lib/influxdb/meta"
+
+      {{ if and .Values.meta.https.enabled }}
+      meta-tls-enabled = true
+
+      {{ if .Values.meta.https.insecure }}
+      meta-insecure-tls = true
+      {{ end }}
+
+      {{ end }}
+
+    [hinted-handoff]
+      dir = "/var/lib/influxdb/hh"
+
+    [data]
+      dir = "/var/lib/influxdb/data"
+      wal-dir = "/var/lib/influxdb/wal"
+
+  entrypoint.pl: |+
+
+    #!/usr/bin/env perl
+    $ENV{INFLUXDB_HOSTNAME} = `hostname -f`;
+    $ENV{INFLUXDB_HOSTNAME} =~ s/\n$//;
+
+    {{ if .Values.data.preruncmds }}
+    # These are commands that will run before influxdb is initialized
+    {{- range .Values.data.preruncmds }}
+    {{ if .description }}
+    # {{ .description }}
+    {{- end }}
+    system('{{ .cmd }}');
+    {{- end }}
+    {{ end }}
+
+
+    $pid = fork();
+
+    # Inside this conditional is our child process, which
+    # will return `influxd-meta`
+    if($pid == 0) {
+      exec('influxd') or die("Failed to execute influxd: $!\n");
+    }
+
+    $SIG{HUP} = sub { kill 'HUP', $pid };
+    $SIG{TERM} = sub { kill 'TERM', $pid };
+    $SIG{KILL} = sub { kill 'KILL', $pid };
+
+    # Register data node with meta leader
+    {{ if .Values.meta.https.enabled }}
+    my $protocol = "https";
+    {{ else }}
+    my $protocol = "http";
+    {{ end }}
+    my $meta_service = $ENV{RELEASE_NAME} . "-meta";
+
+    # We're not going to define an exit strategy for failure here.
+    # This should be handled by the probes on the pods
+    while (true) {
+      # There's no LWP/Simple available in our images, so forking out to curl 😥
+      print "\n\n\nREGISTER WITH META SERVICE\n\n\n";
+      $exit_code = system('curl', {{ if .Values.meta.https.insecure }}'-k',{{ end }} '-XPOST', '--silent', '--fail', '--retry', '5', '--retry-delay', '0', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
+      # $exit_code = system('curl', {{ if .Values.meta.https.insecure }}'-k',{{ end }} '-XPOST', '-v', '--silent', '--fail', '--retry', '5', '--retry-delay', '0', "-Faddr=$ENV{INFLUXDB_HOSTNAME}:8088", "$protocol://$meta_service:8091/add-data");
+
+
+      if ($exit_code == 0) {
+        $| = 1;
+        last;
+      }
+      print "\n\n\nFailed: $!\n\n\n";
+      $| = 1;
+
+      exit 255
+    }
+
+    waitpid($pid, 0);
+    exit $?

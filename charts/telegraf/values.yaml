@@ -13,9 +13,25 @@ podAnnotations: {}
 
 imagePullSecrets: []
 
+## Configure args passed to Telegraf containers
+args: []
+
 env:
   - name: HOSTNAME
     value: "telegraf-polling-service"
+
+# An older "volumeMounts" key was previously added which will likely
+# NOT WORK as you expect. Please use this newer configuration.
+
+# volumes:
+# - name: telegraf-output-influxdb2
+#   configMap:
+#     name: "telegraf-output-influxdb2"
+# mountPoints:
+# - name: telegraf-output-influxdb2
+#   mountPath: /etc/telegraf/conf.d
+#   subPath: influxdb2.conf
+
 
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -30,6 +46,20 @@ resources: {}
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/user-guide/node-selection/
 nodeSelector: {}
+
+## Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+affinity: {}
+
+## Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+# - key: "key"
+#   operator: "Equal|Exists"
+#   value: "value"
+#   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
 service:
   enabled: true
@@ -110,13 +140,6 @@ config:
             problem: 2
             critical: 3
   outputs:
-    - health:
-        service_address: "http://:8888"
-        compares:
-          field: buffer_size
-          lt: 5000.0
-        contains:
-          field: buffer_size
     - influxdb:
         urls:
           - "http://influxdb.monitoring.svc:8086"
@@ -131,3 +154,8 @@ config:
         metric_separator: "_"
         allowed_pending_messages: 10000
         percentile_limit: 1000
+
+# Lifecycle hooks
+# hooks:
+#   postStart: ["/bin/sh", "-c", "echo Telegraf started"]
+#   preStop: ["/bin/sh", "-c", "sleep 60"]

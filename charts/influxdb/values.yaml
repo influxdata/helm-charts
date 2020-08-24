@@ -2,7 +2,7 @@
 ## ref: https://hub.docker.com/r/library/influxdb/tags/
 image:
   repository: "influxdb"
-  tag: "1.7.10-alpine"
+  tag: "1.8.0-alpine"
   pullPolicy: IfNotPresent
   ## If specified, use these secrets to access the images
   # pullSecrets:
@@ -28,6 +28,10 @@ readinessProbe: {}
   # timeoutSeconds: 1
   # scheme: HTTP
 
+securityContext: {}
+  # runAsUser: 999
+  # runAsGroup: 999
+
 startupProbe:
   enabled: false
   # failureThreshold: 6
@@ -42,6 +46,8 @@ service:
   ## Add annotations to service
   # annotations: {}
   type: ClusterIP
+  # externalIPs: []
+  # externalTrafficPolicy: ""
 
 ## Persist data to a persistent volume
 ##
@@ -160,6 +166,18 @@ ingress:
   annotations: {}
     # kubernetes.io/ingress.class: "nginx"
     # kubernetes.io/tls-acme: "true"
+  path: /
+
+
+## Add custom volume and volumeMounts
+# volumes:
+#   - name: ssl-cert-volume
+#     secret:
+#       secretName: secret-name
+# mountPoints:
+#   - name: ssl-cert-volume
+#     mountPath: /etc/ssl/certs/selfsigned/
+#     readOnly: true
 
 ## Use an alternate scheduler, e.g. "stork".
 ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
@@ -226,6 +244,30 @@ initScripts:
 
 backup:
   enabled: false
+  ## By default emptyDir is used as a transitory volume before uploading to object store.
+  ## As such, ensure that a sufficient ephemeral storage request is set to prevent node disk filling completely.
+  resources:
+    requests:
+      # memory: 512Mi
+      # cpu: 2
+      ephemeral-storage: "8Gi"
+    # limits:
+      # memory: 1Gi
+      # cpu: 4
+      # ephemeral-storage: "16Gi"
+  ## If backup destination is PVC, or want to use intermediate PVC before uploading to object store.
+  persistence:
+    enabled: false
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    annotations:
+    accessMode: ReadWriteOnce
+    size: 8Gi
   schedule: "0 0 * * *"
   annotations: {}
   podAnnotations: {}
@@ -243,3 +285,14 @@ backup:
   #   storageAccountSecret: influxdb-backup-azure-key
   #   destination_container: influxdb-container
   #   destination_path: ""
+
+  ## Amazon S3 or compatible
+  ## Secret is expected to have AWS (or compatible) credentials stored in `credentials` field.
+  ## Please look at https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html#cli-configure-files-where
+  ## for the credentials format.
+  ## The bucket should already exist.
+  # s3:
+  #   credentialsSecret: aws-credentials-secret
+  #   destination: s3://bucket/path
+  #   ## Optional. Specify if you're using an alternate S3 endpoint.
+  #   # endpointUrl: ""

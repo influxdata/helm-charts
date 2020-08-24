@@ -4,10 +4,7 @@ kind: Service
 metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "telegraf.name" . }}
-    helm.sh/chart: {{ include "telegraf.chart" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- include "telegraf.labels" . | nindent 4 }}
   {{- if .Values.service.annotations }}
   annotations:
 {{ toYaml .Values.service.annotations | indent 4 }}
@@ -15,16 +12,9 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-  {{- range $objectKey, $objectValue := .Values.config.outputs }}
-  {{- range $key, $value := . -}}
-  {{- $tp := typeOf $value -}}
-  {{- if eq $key "health" }}
-  - port: {{ trimPrefix "http://:" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix "http://:" $value.service_address | int64 }}
+  - port: 8888
+    targetPort: 8888
     name: "health"
-    {{- end }}
-  {{- end }}
-  {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.inputs }}
   {{- range $key, $value := . -}}
     {{- $tp := typeOf $value -}}
@@ -44,16 +34,16 @@ spec:
     protocol: "UDP"
     name: "statsd"
     {{- end }}
-    {{- if eq $key "tcp-listener" }}
+    {{- if eq $key "tcp_listener" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    name: "tcp_listener"
+    name: "tcp-listener"
     {{- end }}
-    {{- if eq $key "udp-listener" }}
+    {{- if eq $key "udp_listener" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     protocol: "UDP"
-    name: "udp_listener"
+    name: "udp-listener"
     {{- end }}
     {{- if eq $key "webhooks" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
@@ -73,6 +63,5 @@ spec:
   {{- end -}}
   {{- end }}
   selector:
-    app.kubernetes.io/name: {{ include "telegraf.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "telegraf.selectorLabels" . | nindent 4 }}
 {{- end -}}

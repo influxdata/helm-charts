@@ -3,9 +3,7 @@ kind: Deployment
 metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "telegraf.name" . }}
-    helm.sh/chart: {{ include "telegraf.chart" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "telegraf.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -30,15 +28,43 @@ spec:
         imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
+        {{- if .Values.args }}
+        args:
+{{ toYaml .Values.args | indent 8 }}
+        {{- end }}
         env:
 {{ toYaml .Values.env | indent 8 }}
         volumeMounts:
         - name: config
           mountPath: /etc/telegraf
-        {{- range .Values.volumeMounts}}
+        {{- range .Values.volumeMounts }}
         - name: {{ .name }}
           mountPath: {{ .mountPath }}
         {{- end }}
+        {{- if .Values.mountPoints }}
+{{ toYaml .Values.mountPoints | indent 8 }}
+        {{- end }}
+        {{- if .Values.hooks }}
+        {{- if or (.Values.hooks.postStart) (.Values.hooks.preStop) }}
+        lifecycle:
+        {{- if .Values.hooks.postStart }}
+          postStart:
+            exec:
+              command:
+        {{- range .Values.hooks.postStart }}
+                - {{ . | quote }}
+        {{- end }}
+        {{ end }}
+        {{- if .Values.hooks.preStop }}
+          preStop:
+            exec:
+              command:
+        {{- range .Values.hooks.preStop }}
+                - {{ . | quote }}
+        {{- end }}
+        {{ end }}
+        {{ end }}
+        {{ end }}
         {{- range $objectKey, $objectValue := .Values.config.outputs }}
         {{- range $key, $value := . -}}
         {{- $tp := typeOf $value -}}
@@ -62,10 +88,18 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+      {{- end }}
       volumes:
       - name: config
         configMap:
           name: {{ include "telegraf.fullname" . }}
-      {{- if .Values.volumeMounts }}
-{{ toYaml .Values.volumeMounts | indent 6 }}
-      {{- end}}
+      {{- if .Values.volumes }}
+{{ toYaml .Values.volumes | indent 6 }}
+      {{- end }}

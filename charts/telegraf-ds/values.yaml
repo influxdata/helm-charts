@@ -17,6 +17,9 @@ resources:
     memory: 2Gi
     cpu: 1
 
+## Configure args passed to Telegraf containers
+args: []
+
 env:
   # This pulls HOSTNAME from the node, not the pod.
   - name: HOSTNAME
@@ -39,6 +42,13 @@ env:
 ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
 ##
 tolerations: []
+
+## If the DaemonSet should run on the host's network namespace
+## hostNetwork: true
+
+## If using hostNetwork=true, set dnsPolicy to ClusterFirstWithHostNet
+## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#
+## dnsPolicy: ClusterFirstWithHostNet
 
 rbac:
   # Specifies whether RBAC resources should be created
@@ -81,3 +91,4 @@ config:
         password: ""
         user_agent: "telegraf"
         insecure_skip_verify: false
+  monitor_self: false

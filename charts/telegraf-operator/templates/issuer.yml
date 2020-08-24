@@ -1,0 +1,11 @@
+{{- if .Values.certManager.enable -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: telegraf-operator-issuer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "telegraf-operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+{{- end -}}

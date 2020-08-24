@@ -1,0 +1,28 @@
+{{- if eq .Values.certManager.enable true -}}
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/{{ include "telegraf-operator.fullname" . }}"
+  labels:
+    {{- include "telegraf-operator.labels" . | nindent 4 }}
+  name: {{ include "telegraf-operator.fullname" . }}
+webhooks:
+- clientConfig:
+    service:
+      name: {{ include "telegraf-operator.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-v1-pod
+  failurePolicy: Ignore
+  name: telegraf.influxdata.com
+  rules:
+  - apiGroups:
+    - '*'
+    apiVersions:
+    - '*'
+    operations:
+    - CREATE
+    - DELETE
+    resources:
+    - pods
+{{- end }}

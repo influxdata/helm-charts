@@ -3,10 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "telegraf.name" . }}
-    helm.sh/chart: {{ include "telegraf.chart" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- include "telegraf.labels" . | nindent 4 }}
 data:
   telegraf.conf: |+
     {{ template "global_tags" .Values.config.global_tags }}
@@ -14,4 +11,13 @@ data:
     {{ template "processors" .Values.config.processors }}
     {{ template "aggregators" .Values.config.aggregators }}
     {{ template "outputs" .Values.config.outputs }}
+    [[outputs.health]]
+      service_address = "http://:8888"
+      [[outputs.health.compares]]
+        field = "buffer_size"
+        lt = 5000.0
+      [[outputs.health.contains]]
+        field = "buffer_size"
     {{ template "inputs" .Values.config.inputs -}}
+    [[inputs.internal]]
+      collect_memstats = false

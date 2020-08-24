@@ -1,0 +1,179 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}-data
+  labels:
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.data.replicas | default 3 }}
+  podManagementPolicy: Parallel
+  serviceName: {{ include "influxdb-enterprise.fullname" . }}-data
+  selector:
+    matchLabels:
+      influxdb.influxdata.com/component: data
+      {{- include "influxdb-enterprise.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.data.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        influxdb.influxdata.com/component: data
+        {{- include "influxdb-enterprise.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.data.podSecurityContext | nindent 8 }}
+      volumes:
+      {{ if not .Values.data.persistence.enabled }}
+      - name: {{ include "influxdb-enterprise.fullname" . }}-data-data
+        emptyDir: {}
+      {{ end }}
+      - name: config
+        configMap:
+          name: {{ include "influxdb-enterprise.fullname" . }}-data
+      {{- if .Values.license.secret }}
+      - name: license
+        secret:
+          secretName: {{ .Values.license.secret.name }}
+          items:
+          - key: {{ .Values.license.secret.key }}
+            path: license.json
+      {{- end }}
+      {{- if .Values.data.https.enabled }}
+      - name: tls
+        secret:
+          {{- if .Values.data.https.useCertManager }}
+          secretName: {{ include "influxdb-enterprise.fullname" . }}-data-tls
+          {{ else }}
+          secretName: {{ .Values.data.https.secret.name }}
+          {{ if or .Values.data.https.secret.crt .Values.data.https.secret.key }}
+          items:
+            - key: {{ .Values.data.https.secret.crt }}
+              path: tls.crt
+            - key: {{ .Values.data.https.secret.key }}
+              path: tls.key
+          {{ end }}
+          {{ end }}
+      {{ end }}
+      {{- if and .Values.data.https.enabled .Values.data.https.secret }}
+      {{- if .Values.data.https.secret.ca -}}
+      - name: tls-ca
+        secret:
+          {{ if .Values.data.https.secret.caSecret -}}
+          secretName: {{ .Values.data.https.secret.caSecret }}
+          {{ else }}
+          secretName: {{ .Values.data.https.secret.name }}
+          {{ end }}
+          items:
+            - key: {{ .Values.data.https.secret.ca }}
+              path: ca.crt
+      {{ end }}
+      {{ end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          command:
+          - "/usr/bin/perl"
+          args:
+          - "/etc/influxdb/entrypoint.pl"
+          securityContext:
+            {{- toYaml .Values.data.securityContext | nindent 12 }}
+          {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.data "podtype" "data") | indent 10 }}
+          imagePullPolicy: {{ .Values.data.image.pullPolicy }}
+          env:
+          - name: RELEASE_NAME
+            value: {{ include "influxdb-enterprise.fullname" . }}
+          ports:
+            - name: http
+              containerPort: 8086
+              protocol: TCP
+            - name: raft
+              containerPort: 8088
+              protocol: TCP
+            - name: udp
+              containerPort: 8089
+              protocol: UDP
+            - name: graphite
+              containerPort: 2003
+              protocol: TCP
+            - name: opentsdb
+              containerPort: 4242
+              protocol: TCP
+            - name: collectd
+              containerPort: 25826
+              protocol: UDP
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+              {{- if .Values.data.https.enabled }}
+              scheme: HTTPS
+              {{- end }}
+          readinessProbe:
+            initialDelaySeconds: 30
+            httpGet:
+              path: /ping
+              port: http
+              {{- if .Values.data.https.enabled }}
+              scheme: HTTPS
+              {{- end }}
+          volumeMounts:
+          - name: config
+            mountPath: /etc/influxdb
+          - name: {{ include "influxdb-enterprise.fullname" . }}-data-data
+            mountPath: /var/lib/influxdb
+          {{- if .Values.license.secret }}
+          - name: license
+            mountPath: /var/run/secrets/influxdb/
+          {{- end }}
+          {{- if .Values.data.https.enabled }}
+          - name: tls
+            mountPath: /var/run/secrets/tls/
+          {{ end }}
+          {{- if and .Values.data.https.enabled .Values.data.https.secret }}
+          {{- if .Values.data.https.secret.ca -}}
+          - name: tls-ca
+            mountPath: /etc/ssl/certs/ca-certificates.crt
+            subPath: ca.crt
+          {{ end }}
+          {{ end }}
+          resources:
+            {{- toYaml .Values.data.resources | nindent 12 }}
+      {{- with .Values.data.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.data.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.data.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if and .Values.data.persistence.enabled (not .Values.data.persistence.existingClaim) }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ include "influxdb-enterprise.fullname" . }}-data-data
+        annotations:
+        {{- range $key, $value := .Values.data.persistence.annotations }}
+          {{ $key }}: "{{ $value }}"
+        {{- end }}
+      spec:
+        accessModes:
+          - {{ .Values.data.persistence.accessMode | quote}}
+        resources:
+          requests:
+            storage: {{ .Values.data.persistence.size | quote }}
+      {{- if .Values.data.persistence.storageClass }}
+      {{- if (eq "-" .Values.data.persistence.storageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.data.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+  {{- end }}

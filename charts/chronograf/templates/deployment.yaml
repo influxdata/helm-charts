@@ -32,6 +32,15 @@ spec:
             secretKeyRef:
               name: {{ template "chronograf.fullname" . }}
               key: token_secret
+{{- if .Values.oauth.use_id_token }}
+        - name: USE_ID_TOKEN
+          value: "true"
+        - name: JWKS_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: jwks_url
+{{- end }}
 {{- if .Values.oauth.github.enabled }}
         - name: GH_CLIENT_ID
           valueFrom:
@@ -88,6 +97,56 @@ spec:
               name: {{ template "chronograf.fullname" . }}
               key: go_public_url
 {{- end }}
+{{- if .Values.oauth.generic.enabled }}
+{{- if .Values.oauth.generic.name }}
+        - name: GENERIC_NAME
+          value: {{ quote .Values.oauth.generic.name }}
+{{- end }}
+{{- if .Values.oauth.generic.domains }}
+        - name: GENERIC_DOMAINS
+          value: {{ quote .Values.oauth.generic.domains }}
+{{- end }}
+        - name: GENERIC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: gen_client_id
+        - name: GENERIC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: gen_client_secret
+        - name: GENERIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: gen_api_key
+        - name: GENERIC_SCOPES
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: gen_scopes
+        - name: PUBLIC_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: gen_public_url
+        - name: GENERIC_AUTH_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: gen_auth_url
+        - name: GENERIC_TOKEN_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: gen_token_url
+        - name: GENERIC_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "chronograf.fullname" . }}
+              key: gen_api_url
+{{- end }}
 {{- end }}
 {{- if .Values.envFromSecret }}
         envFrom:
@@ -99,11 +158,19 @@ spec:
           name: api
         livenessProbe:
           httpGet:
+            {{- if .Values.env.BASE_PATH }}
+            path: {{ .Values.env.BASE_PATH }}/ping
+            {{- else }}
             path: /ping
+            {{- end}}
             port: api
         readinessProbe:
           httpGet:
+            {{- if .Values.env.BASE_PATH }}
+            path: {{ .Values.env.BASE_PATH }}/ping
+            {{- else }}
             path: /ping
+            {{- end}}
             port: api
         volumeMounts:
         - name: data
