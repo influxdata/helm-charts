@@ -137,7 +137,7 @@ spec:
           {{- if and .Values.data.https.enabled .Values.data.https.secret }}
           {{- if .Values.data.https.secret.ca -}}
           - name: tls-ca
-            mountPath: /etc/ssl/certs/ca-certificates.crt
+            mountPath: /usr/share/ca-certificates/selfsigned/ca.crt
             subPath: ca.crt
           {{ end }}
           {{ end }}
