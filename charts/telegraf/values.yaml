@@ -11,6 +11,8 @@ image:
 
 podAnnotations: {}
 
+podLabels: {}
+
 imagePullSecrets: []
 
 ## Configure args passed to Telegraf containers
