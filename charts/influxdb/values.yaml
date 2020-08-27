@@ -158,6 +158,9 @@ resources: {}
 # Annotations to be added to InfluxDB pods
 podAnnotations: {}
 
+# Labels to be added to InfluxDB pods
+podLabels: {}
+
 ingress:
   enabled: false
   tls: false

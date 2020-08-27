@@ -69,6 +69,7 @@ The following table lists configurable parameters, their descriptions, and their
 | persistence.accessMode | Access mode for the volume | ReadWriteOnce |
 | persistence.size | Storage size | 8Gi |
 | podAnnotations | Annotations for pod | {} |
+| podLabels | Labels for pod | {} |
 | ingress.enabled | Boolean flag to enable or disable ingress | false |
 | ingress.tls | Boolean to enable or disable tls for ingress. If enabled provide a secret in `ingress.secretName` containing TLS private key and certificate. | false |
 | ingress.secretName | Kubernetes secret containing TLS private key and certificate. It is `only` required if `ingress.tls` is enabled. | nil |
