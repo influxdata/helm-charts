@@ -16,4 +16,6 @@ sources:
 - https://github.com/influxdata/influxdb
 maintainers:
 - name: rawkode
-  email: rawkode@influxdata.com
+  email: david@rawkode.com
+- name: chobbs
+  email: chobbs@influxdata.com
