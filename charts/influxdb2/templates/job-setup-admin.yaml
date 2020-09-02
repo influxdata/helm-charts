@@ -6,8 +6,7 @@ metadata:
   name: {{ template "influxdb.fullname" . }}-create-admin-user
   annotations:
     "helm.sh/hook": post-install
-    "helm.sh/hook-delete-policy": hook-succeeded
-    "helm.sh/hook-delete-policy": "before-hook-creation"
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
 spec:
   activeDeadlineSeconds: 90
   template:
