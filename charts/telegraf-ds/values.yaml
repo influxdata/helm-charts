@@ -61,6 +61,10 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   # name:
 
+## Specify priorityClassName
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: system-node-critical
+
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
 config:
