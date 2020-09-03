@@ -631,6 +631,29 @@ entries:
   influxdb-enterprise:
   - apiVersion: v1
     appVersion: 1.8.0
+    created: "2020-09-03T19:29:50.234022672Z"
+    description: Run InfluxDB Enterprise on Kubernetes
+    digest: 15eedf776b1dc5ab64a5055e2b6a06e2ddba33e3c3dfbe52cd54efd955bbbf29
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: david@rawkode.com
+      name: rawkode
+    - email: chobbs@influxdata.com
+      name: chobbs
+    name: influxdb-enterprise
+    sources:
+    - https://github.com/influxdata/influxdb
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-enterprise-0.1.9/influxdb-enterprise-0.1.9.tgz
+    version: 0.1.9
+  - apiVersion: v1
+    appVersion: 1.8.0
     created: "2020-08-27T18:18:10.223829595Z"
     description: Run InfluxDB Enterprise on Kubernetes
     digest: c2329f921821fbcfc7903a57108f1192a537f22192d7d31930f00e98ca23b24f
@@ -819,6 +842,22 @@ entries:
     - https://github.com/influxdata/helm-charts/releases/download/influxdb-enterprise-0.1.0/influxdb-enterprise-0.1.0.tgz
     version: 0.1.0
   influxdb2:
+  - apiVersion: v2
+    appVersion: 2.0.0-beta
+    created: "2020-09-03T19:29:50.327505367Z"
+    description: A Helm chart for InfluxDB v2
+    digest: 17eb9f6ac78ae92f83631136841532ea15f8da445183905fa302b2d047fe0122
+    home: https://www.influxdata.com/products/influxdb-overview/influxdb-2-0/
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: influxdb2
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb2-1.0.6/influxdb2-1.0.6.tgz
+    version: 1.0.6
   - apiVersion: v2
     appVersion: 2.0.0-beta
     created: "2020-07-24T18:38:26.318028589Z"
