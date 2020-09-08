@@ -167,6 +167,20 @@ data:
   #
   ## Persist data to a persistent volume
   ##
+  ## Specify a service type
+  ## NodePort is default
+  ## ref: http://kubernetes.io/docs/user-guide/services/
+  ##
+  service:
+    ## Specify a service type
+    ## ClusterIP is default
+    ## ref: http://kubernetes.io/docs/user-guide/services/
+    ## Add annotations to service
+    # annotations: {}
+    type: ClusterIP
+    # loadBalancerIP: ""
+    # externalIPs: []
+    # externalTrafficPolicy: ""
   persistence:
     enabled: false
     ## A manually managed Persistent Volume and Claim
