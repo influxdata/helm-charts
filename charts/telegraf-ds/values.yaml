@@ -84,6 +84,27 @@ config:
     logfile: ""
     hostname: "$HOSTNAME"
     omit_hostname: false
+  inputs:
+    - cpu:
+        percpu: true
+        totalcpu: true
+        collect_cpu_time: false
+        report_active: false
+    - disk:
+        ignore_fs: ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+    - diskio:
+    - docker:
+        endpoint: "unix:///var/run/docker.sock"
+    - kernel:
+    - kubernetes:
+        url: "https://$HOSTIP:10250"
+        bearer_token: "/run/secrets/kubernetes.io/serviceaccount/token"
+        insecure_skip_verify: true
+    - mem:
+    - net:
+    - processes:
+    - swap:
+    - system:
   outputs:
     - influxdb:
         urls:

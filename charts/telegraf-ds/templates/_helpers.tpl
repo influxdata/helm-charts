@@ -177,6 +177,101 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end -}}
 
+{{- define "inputs" -}}
+{{- range $inputIdx, $configObject := . -}}
+    {{- range $input, $config := . -}}
+
+    [[inputs.{{- $input }}]]
+    {{- if $config -}}
+    {{- $tp := typeOf $config -}}
+    {{- if eq $tp "map[string]interface {}" -}}
+        {{- range $key, $value := $config -}}
+          {{- $tp := typeOf $value -}}
+          {{- if eq $tp "string" }}
+      {{ $key }} = {{ $value | quote }}
+          {{- end }}
+          {{- if eq $tp "float64" }}
+      {{ $key }} = {{ $value | int64 }}
+          {{- end }}
+          {{- if eq $tp "int" }}
+      {{ $key }} = {{ $value | int64 }}
+          {{- end }}
+          {{- if eq $tp "bool" }}
+      {{ $key }} = {{ $value }}
+          {{- end }}
+          {{- if eq $tp "[]interface {}" }}
+      {{ $key }} = [
+              {{- $numOut := len $value }}
+              {{- $numOut := sub $numOut 1 }}
+              {{- range $b, $val := $value }}
+                {{- $i := int64 $b }}
+                {{- $tp := typeOf $val }}
+                {{- if eq $i $numOut }}
+                  {{- if eq $tp "string" }}
+        {{ $val | quote }}
+                  {{- end }}
+                  {{- if eq $tp "float64" }}
+        {{ $val | int64 }}
+                  {{- end }}
+                {{- else }}
+                  {{- if eq $tp "string" }}
+        {{ $val | quote }},
+                  {{- end}}
+                  {{- if eq $tp "float64" }}
+        {{ $val | int64 }},
+                  {{- end }}
+                {{- end }}
+              {{- end }}
+      ]
+          {{- end }}
+        {{- end }}
+        {{- range $key, $value := $config -}}
+          {{- $tp := typeOf $value -}}
+          {{- if eq $tp "map[string]interface {}" }}
+      [[inputs.{{ $input }}.{{ $key }}]]
+            {{- range $k, $v := $value }}
+              {{- $tps := typeOf $v }}
+              {{- if eq $tps "string" }}
+        {{ $k }} = {{ $v | quote }}
+              {{- end }}
+              {{- if eq $tps "float64" }}
+        {{ $k }} = {{ $v | int64 }}.0
+              {{- end }}
+              {{- if eq $tps "int64" }}
+        {{ $k }} = {{ $v | int64 }}
+              {{- end }}
+              {{- if eq $tps "bool" }}
+        {{ $k }} = {{ $v }}
+              {{- end }}
+              {{- if eq $tps "[]interface {}"}}
+        {{ $k }} = [
+                {{- $numOut := len $value }}
+                {{- $numOut := sub $numOut 1 }}
+                {{- range $b, $val := $v }}
+                  {{- $i := int64 $b }}
+                  {{- if eq $i $numOut }}
+            {{ $val | quote }}
+                  {{- else }}
+            {{ $val | quote }},
+                  {{- end }}
+                {{- end }}
+        ]
+              {{- end }}
+              {{- if eq $tps "map[string]interface {}"}}
+        [[inputs.{{ $input }}.{{ $key }}.{{ $k }}]]
+                {{- range $foo, $bar := $v }}
+            {{ $foo }} = {{ $bar | quote }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+    {{- end }}
+    {{- end }}
+    {{ end }}
+{{- end }}
+{{- end -}}
+
 {{- define "processors" -}}
 {{- range $processorIdx, $configObject := . -}}
     {{- range $processor, $config := . -}}
