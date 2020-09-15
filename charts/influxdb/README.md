@@ -60,6 +60,8 @@ The following table lists configurable parameters, their descriptions, and their
 | startupProbe | Health check for pod | {} |
 | service.type | Kubernetes service type | ClusterIP |
 | service.loadBalancerIP | A user-specified IP address for service type LoadBalancer to use as External IP (if supported) | nil |
+| service.externalIPs | A user-specified list of externalIPs to add to the service | nil |
+| service.externalTrafficPolicy | A user specified external traffic policy | nil |
 | persistence.enabled | Boolean to enable and disable persistance | true |
 | persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil |
 | persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
@@ -67,6 +69,7 @@ The following table lists configurable parameters, their descriptions, and their
 | persistence.accessMode | Access mode for the volume | ReadWriteOnce |
 | persistence.size | Storage size | 8Gi |
 | podAnnotations | Annotations for pod | {} |
+| podLabels | Labels for pod | {} |
 | ingress.enabled | Boolean flag to enable or disable ingress | false |
 | ingress.tls | Boolean to enable or disable tls for ingress. If enabled provide a secret in `ingress.secretName` containing TLS private key and certificate. | false |
 | ingress.secretName | Kubernetes secret containing TLS private key and certificate. It is `only` required if `ingress.tls` is enabled. | nil |

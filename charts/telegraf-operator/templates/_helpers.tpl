@@ -66,9 +66,9 @@ Create the name of the service account to use
 Generate certificates for telegraf-operator mutating webhook 
 */}}
 {{- define "telegraf-operator.non_certmanager" -}}
-{{- $altNames := list ( printf "%s.%s" (include "telegraf-operator.name" .) .Release.Namespace ) ( printf "%s.%s.svc" (include "telegraf-operator.name" .) .Release.Namespace ) -}}
+{{- $altNames := list ( printf "%s.%s" (include "telegraf-operator.fullname" .) .Release.Namespace ) ( printf "%s.%s.svc" (include "telegraf-operator.fullname" .) .Release.Namespace ) -}}
 {{- $ca := genCA "telegraf-operator-ca" 365 -}}
-{{- $cert := genSignedCert ( include "telegraf-operator.name" . ) nil $altNames 365 $ca -}}
+{{- $cert := genSignedCert ( include "telegraf-operator.fullname" . ) nil $altNames 365 $ca -}}
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:

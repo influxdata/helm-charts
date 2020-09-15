@@ -60,6 +60,20 @@ spec:
           {{ end }}
           {{ end }}
       {{ end }}
+      {{- if and .Values.meta.https.enabled .Values.meta.https.secret }}
+      {{- if .Values.meta.https.secret.ca -}}
+      - name: tls-ca
+        secret:
+          {{ if .Values.meta.https.secret.caSecret -}}
+          secretName: {{ .Values.meta.https.secret.caSecret }}
+          {{ else }}
+          secretName: {{ .Values.meta.https.secret.name }}
+          {{ end }}
+          items:
+            - key: {{ .Values.meta.https.secret.ca }}
+              path: ca.crt
+      {{ end }}
+      {{ end }}
       containers:
         - name: {{ .Chart.Name }}
           command:
@@ -68,7 +82,7 @@ spec:
           - "/etc/influxdb/entrypoint.pl"
           securityContext:
             {{- toYaml .Values.meta.securityContext | nindent 12 }}
-          image: "{{ .Values.meta.image.repository | default "influxdb" }}:{{ .Values.meta.image.tag | default (printf "%s-%s" .Chart.AppVersion "meta") }}"
+          {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.meta "podtype" "meta") | indent 10 }}
           imagePullPolicy: {{ .Values.meta.image.pullPolicy }}
           env:
             - name: INFLUXDB_META_INTERNAL_SHARED_SECRET
@@ -109,6 +123,13 @@ spec:
           {{- if .Values.meta.https.enabled }}
           - name: tls
             mountPath: /var/run/secrets/tls/
+          {{ end }}
+          {{- if and .Values.meta.https.enabled .Values.meta.https.secret }}
+          {{- if .Values.meta.https.secret.ca -}}
+          - name: tls-ca
+            mountPath: /usr/share/ca-certificates/selfsigned/ca.crt
+            subPath: ca.crt
+          {{ end }}
           {{ end }}
           resources:
             {{- toYaml .Values.meta.resources | nindent 12 }}

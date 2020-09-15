@@ -50,3 +50,19 @@ Selector labels
 app.kubernetes.io/name: {{ include "influxdb-enterprise.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+
+
+
+{{- define "influxdb-enterprise.image" -}}
+{{- $dataTagName := (printf "%s-%s" .chart.AppVersion .podtype) -}}
+{{- if (.imageroot) }}
+{{- if (.imageroot.tag) -}}
+{{- $dataTagName = .imageroot.tag -}}
+{{- end -}}
+{{- if (.imageroot.addsuffix) -}}
+{{- $dataTagName = printf "%s-%s" $dataTagName .podtype -}}
+{{- end -}}
+{{- end }}
+image: "{{ .podvals.image.repository | default "influxdb" }}:{{ $dataTagName }}"
+{{- end }}

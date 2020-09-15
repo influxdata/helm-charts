@@ -43,20 +43,32 @@ bootstrap:
     # configMap: ddl-dml
     # resources: {}
 
+
+# Sets the tagged version of the docker image that you want to run, will default to latest
+# The suffix is if you are pulling from influx repo, example images will be influxdb:1.8.0-meta and influxdb:1.8.0-data
+# If set to true, the suffix won't be added
+#image:
+#  tag: v1.eg.whatever
+#  ignoresuffix: true | false
+
 meta:
   replicas: 1
   image: {}
     # override: true
     # pullPolicy: IfNotPresent
     # repository: influxdb
-    # tag: "meta"
   # nodeSelector: {}
   # tolerations: []
   # affinity: {}
   # podAnnotations: {}
+  #
   # podSecurityContext: {}
   #   fsGroup: 2000
+  #
+  # This allows you to run the pods as a non-privileged user, set to the uid
   # securityContext: {}
+  #   runAsUser: 2000
+  #   runAsGroup: 2000
   #  capabilities:
   #    drop:
   #    - ALL
@@ -64,7 +76,12 @@ meta:
   # runAsNonRoot: true
   # runAsUser: 1000
   #
-  #
+  # These are the commands that will be run before influxdb is started
+  # preruncmds:
+  #   - cmd: ls -l
+  #     description: We want to see what's in the directory
+  #   - cmd: stat $HOME/somefile
+  #     description: And we run a second command
   # This secret needs a key called "secret" and it should be a long random string
   # Please see docs for shared-internal-secret:
   # https://docs.influxdata.com/enterprise_influxdb/v1.8/administration/config-data-nodes/#meta-internal-shared-secret
@@ -95,6 +112,9 @@ meta:
     # maxUnavailable: 2
     minAvailable: 2
   https:
+    # If you need to debug the data nodes registration with the meta nodes, we recommend
+    # that you comment out the active curl command in the data-configmap and uncomment the following
+    # line, which has -v / debugging enabled.
     enabled: true
     # The `useCertManager` option, when set to true, will
     # automatically create the certificate resources for you.
@@ -104,6 +124,8 @@ meta:
       name: tls-secret
       # crt: tls.crt
       # key: tls.key
+      # ca: ca.crt
+      # caSecret: secret-name # only use if different from the above
     insecure: true
 
 
@@ -113,20 +135,36 @@ data:
     # override: true
     # pullPolicy: IfNotPresent
     # repository: influxdb
-    # tag: "data"
   # nodeSelector: {}
   # tolerations: []
   # affinity: {}
   # podAnnotations: {}
+  #
   # podSecurityContext: {}
   #   fsGroup: 2000
+  #
+  # This allows you to run the pods as a non-privileged user, set to the uid
   # securityContext: {}
+  #   runAsUser: 2000
+  #   runAsGroup: 2000
   #  capabilities:
   #    drop:
   #    - ALL
+  #  capabilities:
+  #    drop:
+  #    - ALL
+  #
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
+  #
+  # These are the commands that will be run before influxdb is started
+  # preruncmds:
+  #   - cmd: ls -l
+  #     description: We want to see what's in the directory
+  #   - cmd: stat $HOME/somefile
+  #     description: And we run a second command
+  #
   ## Persist data to a persistent volume
   ##
   persistence:
@@ -147,6 +185,9 @@ data:
     # accessMode: ReadWriteOnce
     # size: 8Gi
   https:
+    # If you need to debug the data nodes registration with the meta nodes, we recommend
+    # that you comment out the active curl command in the data-configmap and uncomment the following
+    # line, which has -v / debugging enabled.
     enabled: true
     # The `useCertManager` option, when set to true, will
     # automatically create the certificate resources for you.
@@ -156,4 +197,6 @@ data:
       name: tls-secret
       # crt: tls.crt
       # key: tls.key
+      # ca: ca.crt
+      # caSecret: secret-name # only use if different from the above
     insecure: true

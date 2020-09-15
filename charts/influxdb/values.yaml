@@ -46,6 +46,8 @@ service:
   ## Add annotations to service
   # annotations: {}
   type: ClusterIP
+  # externalIPs: []
+  # externalTrafficPolicy: ""
 
 ## Persist data to a persistent volume
 ##
@@ -155,6 +157,9 @@ resources: {}
 
 # Annotations to be added to InfluxDB pods
 podAnnotations: {}
+
+# Labels to be added to InfluxDB pods
+podLabels: {}
 
 ingress:
   enabled: false
