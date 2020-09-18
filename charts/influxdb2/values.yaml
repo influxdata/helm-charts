@@ -53,3 +53,6 @@ persistence:
   # storageClass: "-"
   accessMode: ReadWriteOnce
   size: 50Gi
+
+service:
+  port: 80

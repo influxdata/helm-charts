@@ -34,7 +34,7 @@ spec:
           - -c
           - |
             influx setup -f \
-            --host http://{{ template "influxdb.fullname" . }} \
+            --host http://{{ template "influxdb.fullname" . }}:{{ .Values.service.port }} \
             -o {{ .Values.adminUser.organization }} \
             -b {{ .Values.adminUser.bucket }} \
             -u {{ .Values.adminUser.user }} \
