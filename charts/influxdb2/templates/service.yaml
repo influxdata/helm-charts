@@ -4,7 +4,6 @@ metadata:
   name: {{ template "influxdb.fullname" . }}
   labels:
     {{- include "influxdb.labels" . | nindent 4 }}
-    app.kubernetes.io/component: backup
 spec:
   type: ClusterIP
   ports:
