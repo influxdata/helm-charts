@@ -1,8 +1,9 @@
 {{- if .Values.service.enabled -}}
+{{- if eq .Values.service.type "LoadBalancer" -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "telegraf.fullname" . }}
+  name: {{ include "telegraf.fullname" . -}}-tcp
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
   {{- if .Values.service.annotations }}
@@ -11,6 +12,9 @@ metadata:
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
+  {{- if .Values.service.loadBalancerIP -}}
+  loadbalancerIP: {{ .Values.service.loadBalancerIP }}
+  {{- end }}
   ports:
   - port: 8888
     targetPort: 8888
@@ -64,4 +68,104 @@ spec:
   {{- end }}
   selector:
     {{- include "telegraf.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "telegraf.fullname" . -}}-udp
+  labels:
+    {{- include "telegraf.labels" . | nindent 4 }}
+  {{- if .Values.service.annotations }}
+  annotations:
+{{ toYaml .Values.service.annotations | indent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if .Values.service.loadBalancerIP -}}
+  loadbalancerIP: {{ .Values.service.loadBalancerIP }}
+  {{- end }}
+  ports:
+  {{- range $objectKey, $objectValue := .Values.config.inputs }}
+  {{- range $key, $value := . -}}
+    {{- if eq $key "statsd" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    protocol: "UDP"
+    name: "statsd"
+    {{- end }}
+    {{- if eq $key "udp_listener" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    protocol: "UDP"
+    name: "udp-listener"
+    {{- end }}
+  {{- end -}}
+  {{- end }}
+  {{- range $objectKey, $objectValue := .Values.config.outputs }}
+  {{- range $key, $value := . -}}
+    {{- $tp := typeOf $value -}}
+    {{- if eq $key "prometheus_client" }}
+  - port: {{ trimPrefix ":" $value.listen | int64 }}
+    targetPort: {{ trimPrefix ":" $value.listen | int64 }}
+    name: "prometheus-client"
+    {{- end }}
+  {{- end -}}
+  {{- end }}
+  selector:
+    {{- include "telegraf.selectorLabels" . | nindent 4 }}
+{{else}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "telegraf.fullname" . }}
+  labels:
+    {{- include "telegraf.labels" . | nindent 4 }}
+  {{- if .Values.service.annotations }}
+  annotations:
+{{ toYaml .Values.service.annotations | indent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: 8888
+    targetPort: 8888
+    name: "health"
+  {{- range $objectKey, $objectValue := .Values.config.inputs }}
+  {{- range $key, $value := . -}}
+    {{- $tp := typeOf $value -}}
+    {{- if eq $key "http_listener" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    name: "http-listener"
+    {{- end }}
+    {{- if eq $key "http_listener_v2" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    name: "http-listener-v2"
+    {{- end }}
+    {{- if eq $key "tcp_listener" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    name: "tcp-listener"
+    {{- end }}
+    {{- if eq $key "webhooks" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    name: "webhooks"
+    {{- end }}
+  {{- end -}}
+  {{- end }}
+  {{- range $objectKey, $objectValue := .Values.config.outputs }}
+  {{- range $key, $value := . -}}
+    {{- $tp := typeOf $value -}}
+    {{- if eq $key "prometheus_client" }}
+  - port: {{ trimPrefix ":" $value.listen | int64 }}
+    targetPort: {{ trimPrefix ":" $value.listen | int64 }}
+    name: "prometheus-client"
+    {{- end }}
+  {{- end -}}
+  {{- end }}
+  selector:
+    {{- include "telegraf.selectorLabels" . | nindent 4 }}
+{{end}}
 {{- end -}}
