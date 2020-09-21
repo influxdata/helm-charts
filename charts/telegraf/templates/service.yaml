@@ -12,8 +12,8 @@ metadata:
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
-  {{- if .Values.service.loadBalancerIP -}}
-  loadbalancerIP: {{ .Values.service.loadBalancerIP }}
+  {{- if .Values.service.loadBalancerIPTCP -}}
+  loadbalancerIP: {{ .Values.service.loadBalancerIPTCP }}
   {{- end }}
   ports:
   - port: 8888
@@ -32,22 +32,10 @@ spec:
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "http-listener-v2"
     {{- end }}
-    {{- if eq $key "statsd" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    protocol: "UDP"
-    name: "statsd"
-    {{- end }}
     {{- if eq $key "tcp_listener" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "tcp-listener"
-    {{- end }}
-    {{- if eq $key "udp_listener" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    protocol: "UDP"
-    name: "udp-listener"
     {{- end }}
     {{- if eq $key "webhooks" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
@@ -81,8 +69,8 @@ metadata:
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
-  {{- if .Values.service.loadBalancerIP -}}
-  loadbalancerIP: {{ .Values.service.loadBalancerIP }}
+  {{- if .Values.service.loadBalancerIPUDP -}}
+  loadbalancerIP: {{ .Values.service.loadBalancerIPUDP }}
   {{- end }}
   ports:
   {{- range $objectKey, $objectValue := .Values.config.inputs }}
