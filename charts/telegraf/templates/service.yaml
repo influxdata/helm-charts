@@ -12,8 +12,8 @@ metadata:
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
-  {{- if .Values.service.loadBalancerIPTCP -}}
-  loadbalancerIP: {{ .Values.service.loadBalancerIPTCP }}
+  {{- if .Values.service.loadBalancerIPTCP }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIPTCP }}
   {{- end }}
   ports:
   - port: 8888
@@ -69,8 +69,8 @@ metadata:
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
-  {{- if .Values.service.loadBalancerIPUDP -}}
-  loadbalancerIP: {{ .Values.service.loadBalancerIPUDP }}
+  {{- if .Values.service.loadBalancerIPUDP }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIPUDP }}
   {{- end }}
   ports:
   {{- range $objectKey, $objectValue := .Values.config.inputs }}
