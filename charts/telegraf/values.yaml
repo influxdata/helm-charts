@@ -65,8 +65,12 @@ tolerations: []
 
 service:
   enabled: true
-  type: ClusterIP
+  type: ClusterIP # Using a LoadBalancer will create 2 services: 1 TCP and 1 UDP
   annotations: {}
+  # Used to set the loadBalancerIP for the TCP service if type is LoadBalancer (optional)
+  # loadBalancerIPTCP: ""
+  # Used to set the loadBalancerIP for the UDP service if type is LoadBalancer (optional)
+  # loadBalancerIPUDP: ""
 
 rbac:
   # Specifies whether RBAC resources should be created
