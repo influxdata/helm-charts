@@ -67,7 +67,7 @@ service:
   enabled: true
   # Used to set the type of service
   # Using a LoadBalancer will create 2 services: 1 TCP and 1 UDP, all other types create 1
-  type: ClusterIP 
+  type: ClusterIP
   annotations: {}
   # Used to set the loadBalancerIP for the TCP service if type is LoadBalancer (optional)
   # loadBalancerIPTCP: ""
