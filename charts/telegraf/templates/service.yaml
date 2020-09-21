@@ -131,10 +131,22 @@ spec:
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "http-listener-v2"
     {{- end }}
+    {{- if eq $key "statsd" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    protocol: "UDP"
+    name: "statsd"
+    {{- end }}
     {{- if eq $key "tcp_listener" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "tcp-listener"
+    {{- end }}
+    {{- if eq $key "udp_listener" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    protocol: "UDP"
+    name: "udp-listener"
     {{- end }}
     {{- if eq $key "webhooks" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
