@@ -90,6 +90,11 @@ spec:
             value: "$(_HOSTNAME).{{ include "influxdb.fullname" . }}"
         {{- end }}
         {{- end }}
+        {{- if .Values.envFromSecret }}
+        envFrom:
+        - secretRef:
+            name: {{ .Values.envFromSecret }}
+        {{- end }}
         livenessProbe:
           httpGet:
             path: /ping

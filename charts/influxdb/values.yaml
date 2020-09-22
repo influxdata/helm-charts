@@ -213,6 +213,12 @@ env: {}
   # - name: INFLUXDB_DB
   #   value: "demo"
 
+## The name of a secret in the same kubernetes namespace which contain values
+## to be added to the environment.
+## This can be used, for example, to set the INFLUXDB_HTTP_SHARED_SECRET
+## environment variable.
+envFromSecret: {}
+
 ## InfluxDB configuration
 ## ref: https://docs.influxdata.com/influxdb/v1.7/administration/config
 config:
