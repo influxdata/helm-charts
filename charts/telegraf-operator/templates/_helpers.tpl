@@ -105,7 +105,7 @@ metadata:
   labels:
     {{- include "telegraf-operator.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": "pre-install"
+    "helm.sh/hook": "pre-install,pre-upgrade"
     "helm.sh/hook-delete-policy": "before-hook-creation"
 data:
   tls.crt: {{ $cert.Cert | b64enc }}

@@ -6,8 +6,10 @@ metadata:
     influxdb.influxdata.com/component: data
     {{- include "influxdb-enterprise.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.data.service.type }}
+{{- if (eq "ClusterIP" .Values.data.service.type) }}
   clusterIP: None
+{{- end }}
   publishNotReadyAddresses: true
   ports:
   - port: 8086
@@ -16,9 +18,6 @@ spec:
   - port: 8088
     protocol: TCP
     name: rpc
-  - port: 8089
-    protocol: UDP
-    name: udp
   - port: 2003
     # Graphite supports TCP and UDP,
     # so this should __maybe__ be configurable
@@ -28,9 +27,26 @@ spec:
   - port: 4242
     protocol: TCP
     name: opentsdb
+    # LoadBalancer service type only allows for one protocol
+    # disbaling UDP ports
+{{- if (ne "LoadBalancer" .Values.data.service.type) }}
   - port: 25826
     protocol: UDP
     name: collectd
+  - port: 8089
+    protocol: UDP
+    name: udp
+{{- end }}
   selector:
     influxdb.influxdata.com/component: data
-    {{- include "influxdb-enterprise.selectorLabels" . | nindent 4 }}
+{{- include "influxdb-enterprise.selectorLabels" . | nindent 4 }}
+{{- if .Values.data.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.data.service.loadBalancerIP }}
+{{- end }}
+{{- if .Values.data.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.data.service.externalIPs | indent 4 }}
+{{- end }}
+{{- if .Values.data.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.data.service.externalTrafficPolicy }}
+{{- end }}
