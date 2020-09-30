@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: 2.0.0-beta
+appVersion: 2.0.0-rc
 
 name: influxdb2
 description: A Helm chart for InfluxDB v2
