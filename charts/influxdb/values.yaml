@@ -19,11 +19,13 @@ serviceAccount:
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 ##
 livenessProbe: {}
+  # path: "/ping"
   # initialDelaySeconds: 30
   # timeoutSeconds: 5
   # scheme: HTTP
 
 readinessProbe: {}
+  # path: "/ping"
   # initialDelaySeconds: 5
   # timeoutSeconds: 1
   # scheme: HTTP
@@ -34,6 +36,7 @@ securityContext: {}
 
 startupProbe:
   enabled: false
+  # path: "/ping"
   # failureThreshold: 6
   # periodSeconds: 5
   # scheme: HTTP
