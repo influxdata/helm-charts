@@ -65,6 +65,7 @@ spec:
         {{- if .Values.config.collectd.enabled }}
         - name: collectd
           containerPort: {{ .Values.config.collectd.bind_address |  default 25826 }}
+          protocol: UDP
         {{- end }}
         {{- if .Values.config.udp.enabled }}
         - name: udp
@@ -88,6 +89,11 @@ spec:
           - name: INFLUXDB_HOSTNAME # Values.env's HOSTNAME isn't fundamentally different from $HOSTNAME, but this way weg get a distinguished name at runtime.
             value: "$(_HOSTNAME).{{ include "influxdb.fullname" . }}"
         {{- end }}
+        {{- end }}
+        {{- if .Values.envFromSecret }}
+        envFrom:
+        - secretRef:
+            name: {{ .Values.envFromSecret }}
         {{- end }}
         livenessProbe:
           httpGet:

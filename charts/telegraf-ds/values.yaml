@@ -17,6 +17,9 @@ resources:
     memory: 2Gi
     cpu: 1
 
+## Configure args passed to Telegraf containers
+args: []
+
 env:
   # This pulls HOSTNAME from the node, not the pod.
   - name: HOSTNAME
@@ -57,6 +60,10 @@ serviceAccount:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   # name:
+
+## Specify priorityClassName
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: system-node-critical
 
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/

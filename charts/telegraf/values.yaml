@@ -11,7 +11,12 @@ image:
 
 podAnnotations: {}
 
+podLabels: {}
+
 imagePullSecrets: []
+
+## Configure args passed to Telegraf containers
+args: []
 
 env:
   - name: HOSTNAME
@@ -43,6 +48,20 @@ resources: {}
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/user-guide/node-selection/
 nodeSelector: {}
+
+## Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+affinity: {}
+
+## Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+# - key: "key"
+#   operator: "Equal|Exists"
+#   value: "value"
+#   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
 service:
   enabled: true
@@ -94,6 +113,8 @@ serviceAccount:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
+  # Annotations for the ServiceAccount
+  annotations: {}
 
 ## Exposed telegraf configuration
 ## For full list of possible values see `/docs/all-config-values.yaml` and `/docs/all-config-values.toml`

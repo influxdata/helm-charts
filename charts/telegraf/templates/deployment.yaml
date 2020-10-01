@@ -15,12 +15,19 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "telegraf.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8 }}
         {{- end }}
     spec:
+{{- if .Values.securityContext }}
+      securityContext:
+{{ toYaml .Values.securityContext | indent 8 }}
+{{- end }}
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
       containers:
       - name: {{ .Chart.Name }}
@@ -28,6 +35,10 @@ spec:
         imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
+        {{- if .Values.args }}
+        args:
+{{ toYaml .Values.args | indent 8 }}
+        {{- end }}
         env:
 {{ toYaml .Values.env | indent 8 }}
         volumeMounts:
@@ -83,6 +94,14 @@ spec:
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
       {{- end }}
       volumes:
       - name: config

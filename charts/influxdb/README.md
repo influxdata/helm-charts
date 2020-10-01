@@ -59,6 +59,9 @@ The following table lists configurable parameters, their descriptions, and their
 | readinessProbe | Health check for pod | {} |
 | startupProbe | Health check for pod | {} |
 | service.type | Kubernetes service type | ClusterIP |
+| service.loadBalancerIP | A user-specified IP address for service type LoadBalancer to use as External IP (if supported) | nil |
+| service.externalIPs | A user-specified list of externalIPs to add to the service | nil |
+| service.externalTrafficPolicy | A user specified external traffic policy | nil |
 | persistence.enabled | Boolean to enable and disable persistance | true |
 | persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil |
 | persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
@@ -66,6 +69,7 @@ The following table lists configurable parameters, their descriptions, and their
 | persistence.accessMode | Access mode for the volume | ReadWriteOnce |
 | persistence.size | Storage size | 8Gi |
 | podAnnotations | Annotations for pod | {} |
+| podLabels | Labels for pod | {} |
 | ingress.enabled | Boolean flag to enable or disable ingress | false |
 | ingress.tls | Boolean to enable or disable tls for ingress. If enabled provide a secret in `ingress.secretName` containing TLS private key and certificate. | false |
 | ingress.secretName | Kubernetes secret containing TLS private key and certificate. It is `only` required if `ingress.tls` is enabled. | nil |
@@ -101,6 +105,7 @@ The following table lists configurable parameters, their descriptions, and their
 | backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false` |
 | backup.gcs | Google Cloud Storage config | `nil`
 | backup.azure | Azure Blob Storage config | `nil`
+| backup.s3 | Amazon S3 (or compatible) config | `nil`
 | backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
 | backup.annotations | Annotations for backup cronjob | {} |
 | backup.podAnnotations | Annotations for backup cronjob pods | {} |
@@ -183,7 +188,7 @@ If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-
 
 ## Start with authentication
 
-In `values.yaml`, change `.Values.config.http.auth_enabled` to `true`.
+In `values.yaml`, change `.Values.config.http.auth-enabled` to `true`.
 
 > **Note:** To enforce authentication, InfluxDB requires an admin user to be set up. For details, see [Set up authentication](https://docs.influxdata.com/influxdb/v1.2/query_language/authentication_and_authorization/#set-up-authentication).
 

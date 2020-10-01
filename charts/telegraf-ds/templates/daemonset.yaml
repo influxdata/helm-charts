@@ -20,12 +20,19 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
+{{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+{{- end }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repo }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
+        {{- if .Values.args }}
+        args:
+{{ toYaml .Values.args | indent 8 }}
+        {{- end }}
         env:
         - name: HOSTIP
           valueFrom:
@@ -46,10 +53,18 @@ spec:
           mountPath: /var/run/docker.sock
         - name: config
           mountPath: /etc/telegraf
-    {{- with .Values.tolerations }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
       tolerations:
 {{ toYaml . | indent 8 }}
-    {{- end }}
+      {{- end }}
       volumes:
       - name: sysro
         hostPath:

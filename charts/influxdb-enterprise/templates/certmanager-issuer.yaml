@@ -1,0 +1,10 @@
+{{- if or .Values.data.https.useCertManager .Values.meta.https.useCertManager -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: {{ include "influxdb-enterprise.fullname" . }}
+  labels:
+    {{- include "influxdb-enterprise.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+{{- end -}}
