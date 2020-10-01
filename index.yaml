@@ -892,6 +892,22 @@ entries:
     version: 0.1.0
   influxdb2:
   - apiVersion: v2
+    appVersion: 2.0.0-rc
+    created: "2020-10-01T23:26:24.399854494Z"
+    description: A Helm chart for InfluxDB v2
+    digest: 410cde48037c9578c3561548e202fbfac03d0fe002515ccb02ae16c9c1f7522f
+    home: https://www.influxdata.com/products/influxdb-overview/influxdb-2-0/
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: influxdb2
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb2-1.0.8/influxdb2-1.0.8.tgz
+    version: 1.0.8
+  - apiVersion: v2
     appVersion: 2.0.0-beta
     created: "2020-09-22T20:03:14.356549418Z"
     description: A Helm chart for InfluxDB v2
