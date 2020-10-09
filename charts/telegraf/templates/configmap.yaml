@@ -13,10 +13,10 @@ data:
     {{ template "outputs" .Values.config.outputs }}
     [[outputs.health]]
       service_address = "http://:8888"
-      [outputs.health.compares]
+      [[outputs.health.compares]]
         field = "buffer_size"
         lt = 5000.0
-      [outputs.health.contains]
+      [[outputs.health.contains]]
         field = "buffer_size"
     {{ template "inputs" .Values.config.inputs -}}
     [[inputs.internal]]
