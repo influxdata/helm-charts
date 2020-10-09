@@ -13,13 +13,13 @@ data:
     {{ if .Values.bootstrap.auth.secretName }}
     [http]
     auth-enabled = true
+    {{ end }}
 
     {{ if .Values.data.https.enabled }}
     https-enabled = true
 
     https-certificate = "/var/run/secrets/tls/tls.crt"
     https-private-key = "/var/run/secrets/tls/tls.key"
-    {{ end }}
 
     {{ end }}
 
