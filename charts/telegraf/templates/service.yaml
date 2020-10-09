@@ -23,6 +23,11 @@ spec:
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "http-listener"
     {{- end }}
+    {{- if eq $key "influxdb_listener" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    name: "influxdb-listener"
+    {{- end }}
     {{- if eq $key "http_listener_v2" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}

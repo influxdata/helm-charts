@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repo: "telegraf"
-  tag: "1.14-alpine"
+  tag: "1.15-alpine"
   pullPolicy: IfNotPresent
 
 podAnnotations: {}
@@ -113,6 +113,8 @@ serviceAccount:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
+  # Annotations for the ServiceAccount
+  annotations: {}
 
 ## Exposed telegraf configuration
 ## For full list of possible values see `/docs/all-config-values.yaml` and `/docs/all-config-values.toml`
