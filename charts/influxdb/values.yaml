@@ -185,6 +185,11 @@ ingress:
 #     mountPath: /etc/ssl/certs/selfsigned/
 #     readOnly: true
 
+## Additional containers to be added to the pod.
+extraContainers: {}
+#  - name: my-sidecar
+#    image: nginx:latest
+
 ## Use an alternate scheduler, e.g. "stork".
 ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
 ##

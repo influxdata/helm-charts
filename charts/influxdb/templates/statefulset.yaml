@@ -130,6 +130,9 @@ spec:
         {{- if .Values.mountPoints }}
 {{ toYaml .Values.mountPoints | indent 8 }}
         {{- end }}
+      {{- if .Values.extraContainers }}
+{{ toYaml .Values.extraContainers | indent 6}}
+      {{- end }}
       volumes:
       - name: config
         configMap:
