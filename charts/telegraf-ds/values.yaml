@@ -4,7 +4,7 @@
 
 image:
   repo: "telegraf"
-  tag: "1.14-alpine"
+  tag: "1.15-alpine"
   pullPolicy: IfNotPresent
 
 ## Configure resource requests and limits
@@ -60,6 +60,10 @@ serviceAccount:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   # name:
+
+## Specify priorityClassName
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: system-node-critical
 
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/

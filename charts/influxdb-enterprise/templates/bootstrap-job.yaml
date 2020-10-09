@@ -29,7 +29,7 @@ spec:
       initContainers:
       {{- if .Values.bootstrap.auth.secretName }}
       - name: auth
-        image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+        {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.data "podtype" "data") | indent 8 }}
         imagePullPolicy: {{ .Values.data.image.pullPolicy }}
         # Exposing these environment variables makes this command idempotent
         # as even if the authentication has been setup, we can still execute the command
@@ -68,7 +68,7 @@ spec:
       {{ end }}
       {{- if .Values.bootstrap.ddldml.configMap }}
       - name: ddl
-        image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+        {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.data "podtype" "data") | indent 8 }}
         imagePullPolicy: {{ .Values.data.image.pullPolicy }}
         {{- if .Values.bootstrap.auth.secretName }}
         env:
@@ -101,11 +101,11 @@ spec:
           - -path
           - /ddldml/ddl
         resources:
-          {{ toYaml .Values.bootstrap.ddldml.resources | indent 10 }}
+          {{- toYaml .Values.bootstrap.ddldml.resources | nindent 10 }}
       {{ end }}
       {{- if .Values.bootstrap.ddldml.configMap }}
       - name: dml
-        image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+        {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.data "podtype" "data") | indent 8 }}
         imagePullPolicy: {{ .Values.data.image.pullPolicy }}
         {{- if .Values.bootstrap.auth.secretName }}
         env:
@@ -138,11 +138,11 @@ spec:
           - -path
           - /ddldml/dml
         resources:
-          {{ toYaml .Values.bootstrap.ddldml.resources | indent 10 }}
+          {{- toYaml .Values.bootstrap.ddldml.resources | nindent 10 }}
       {{ end }}
       containers:
       - name: success
-        image: "{{ .Values.data.image.repository | default "influxdb" }}:{{ .Values.data.image.tag | default (printf "%s-%s" .Chart.AppVersion "data") }}"
+        {{- include "influxdb-enterprise.image" (dict "chart" .Chart "imageroot" .Values.image "podvals" .Values.data "podtype" "data") | indent 8 }}
         imagePullPolicy: {{ .Values.data.image.pullPolicy }}
         command:
           - echo
