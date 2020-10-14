@@ -30,6 +30,9 @@ spec:
             - --telegraf-classes-directory=/etc/telegraf-operator
             - --enable-default-internal-plugin
             - "--telegraf-image={{ .Values.image.sidecarImage }}"
+            {{- if eq .Values.requireAnnotationsForSecret true }}
+            - "--require-annotations-for-secret"
+            {{- end }}
           env:
           - name: POD_NAMESPACE
             valueFrom:

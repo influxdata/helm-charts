@@ -45,3 +45,4 @@ resources:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+requireAnnotationsForSecret: false
