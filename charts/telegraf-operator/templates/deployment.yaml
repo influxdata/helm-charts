@@ -30,7 +30,7 @@ spec:
             - --telegraf-classes-directory=/etc/telegraf-operator
             - --enable-default-internal-plugin
             - "--telegraf-image={{ .Values.image.sidecarImage }}"
-            {{- if .Values.requireAnnotationsForSecret }}
+            {{- if eq .Values.requireAnnotationsForSecret true }}
             - "--require-annotations-for-secret"
             {{- end }}
           env:
