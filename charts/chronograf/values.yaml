@@ -122,3 +122,12 @@ env:
 ## The name of a secret in the same kubernetes namespace which contain values to be added to the environment
 ## This can be useful for auth tokens, etc
 envFromSecret: ""
+
+# volumes:
+# - name: chronograph-output-influxdb2
+#   configMap:
+#     name: "chronograph-output-influxdb2"
+# mountPoints:
+# - name: chronograph-output-influxdb2
+#   mountPath: /etc/chronograph/conf.d
+#   subPath: influxdb2.conf
