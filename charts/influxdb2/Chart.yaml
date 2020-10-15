@@ -4,6 +4,8 @@ appVersion: 2.0.0-rc
 name: influxdb2
 description: A Helm chart for InfluxDB v2
 home: https://www.influxdata.com/products/influxdb-overview/influxdb-2-0/
+sources:
+- https://github.com/influxdata/helm-charts/
 type: application
 version: 1.0.11
 maintainers:

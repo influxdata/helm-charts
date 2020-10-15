@@ -10,6 +10,8 @@ keywords:
 - timeseries
 - influxdata
 home: https://www.influxdata.com/time-series-platform/telegraf/
+sources:
+- https://github.com/influxdata/helm-charts/
 maintainers:
 - name: rawkode
   email: rawkode@influxdata.com

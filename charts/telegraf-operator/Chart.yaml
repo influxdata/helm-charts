@@ -19,6 +19,8 @@ maintainers:
 
 kubeVersion: ">= 1.13.0-r0"
 home: https://github.com/influxdata/telegraf-operator
+sources:
+- https://github.com/influxdata/helm-charts/
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives

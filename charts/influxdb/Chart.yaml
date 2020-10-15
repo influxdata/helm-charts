@@ -10,6 +10,8 @@ keywords:
   - influxdata
 home: https://www.influxdata.com/time-series-platform/influxdb/
 sources:
+- https://github.com/influxdata/helm-charts/
+sources:
   - https://github.com/influxdata/influxdb
 maintainers:
   - name: rawkode

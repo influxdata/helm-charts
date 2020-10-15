@@ -12,6 +12,8 @@ keywords:
 - influxdata
 - influxdb
 home: https://www.influxdata.com/time-series-platform/chronograf/
+sources:
+- https://github.com/influxdata/helm-charts/
 maintainers:
 - name: rawkode
   email: rawkode@influxdata.com
