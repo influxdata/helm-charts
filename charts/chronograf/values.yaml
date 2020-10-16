@@ -129,5 +129,5 @@ envFromSecret: ""
 #     name: "chronograf-output-influxdb2"
 # mountPoints:
 # - name: chronograf-output-influxdb2
-#   mountPath: /etc/chronograph/conf.d
+#   mountPath: /var/lib/chronograf/conf.d
 #   subPath: influxdb2.conf
