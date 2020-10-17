@@ -175,6 +175,13 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/chronograf
+        {{- range .Values.volumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
+        {{- if .Values.mountPoints }}
+{{ toYaml .Values.mountPoints | indent 8 }}
+        {{- end }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
     {{- with .Values.nodeSelector }}
@@ -197,3 +204,6 @@ spec:
         {{ else }}
           emptyDir: {}
         {{ end }}
+        {{- if .Values.volumes }}
+{{ toYaml .values.volumes | indent 6 }}
+        {{- end }}
