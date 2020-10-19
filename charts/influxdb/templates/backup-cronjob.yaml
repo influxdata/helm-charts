@@ -47,6 +47,8 @@ spec:
           {{- end }}
           {{- end }}
           serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
+          nodeSelector:
+            beta.kubernetes.io/os: linux
           initContainers:
           - name: influxdb-backup
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
