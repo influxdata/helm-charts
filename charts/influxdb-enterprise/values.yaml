@@ -13,7 +13,7 @@ license:
   # when you ship to production.
   # key: ""
   # secret:
-  #   name: license
+  #   name: influxdb-license
   #   key: json
 
 # A secret with keys "username" and "password" is required
@@ -32,7 +32,7 @@ bootstrap:
   # A secret should be provided, which will have the keys
   # "username" and "password" available.
   auth:
-    secretName: auth
+    secretName: influxdb-auth
   # This section allows you to use DDL and DML to define
   # databases, retention policies, and inject some data.
   # When using the configMap setting, the keys "ddl" and "dml"
@@ -40,7 +40,7 @@ bootstrap:
   # DDL is executed before DML, to enforce databases and retention policies
   # to exist.
   ddldml: {}
-    # configMap: ddl-dml
+    # configMap: influxdb-ddl-dml
     # resources: {}
 
 
@@ -86,7 +86,7 @@ meta:
   # Please see docs for shared-internal-secret:
   # https://docs.influxdata.com/enterprise_influxdb/v1.8/administration/config-data-nodes/#meta-internal-shared-secret
   sharedSecret:
-    secretName: shared-secret
+    secretName: influxdb-shared-secret
   #
   ## Persist data to a persistent volume
   ##
@@ -121,7 +121,7 @@ meta:
     # You do not need to set the secret.name when using this flag.
     useCertManager: true
     secret:
-      name: tls-secret
+      name: influxdb-tls
       # crt: tls.crt
       # key: tls.key
       # ca: ca.crt
@@ -208,7 +208,7 @@ data:
     # You do not need to set the secret.name when using this flag.
     useCertManager: true
     secret:
-      name: tls-secret
+      name: influxdb-tls
       # crt: tls.crt
       # key: tls.key
       # ca: ca.crt

@@ -1,14 +1,14 @@
 # apiVersion: v1
 # kind: Secret
 # metadata:
-#   name: license
+#   name: influxdb-license
 # stringData:
 #   json: YOUR JSON KEY
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: auth
+  name: influxdb-auth
 stringData:
   username: admin
   password: admin
@@ -16,14 +16,15 @@ stringData:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: shared-secret
+  name: influxdb-shared-secret
 stringData:
   secret: MY RANDOM STRING
 ---
 # apiVersion: v1
 # kind: Secret
 # metadata:
-#   name: tls
+#   name: influxdb-tls
+# type: kubernetes.io/tls
 # stringData:
 #   tls.crt: |
 #     SOME CERTIFICATE
@@ -33,7 +34,7 @@ stringData:
 # apiVersion: v1
 # kind: ConfigMap
 # metadata:
-#   name: ddl-dml
+#   name: influxdb-ddl-dml
 # data:
 #   ddl: |
 #     CREATE DATABASE original
