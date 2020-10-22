@@ -61,10 +61,10 @@ spec:
         resources:
           requests:
             cpu: 100m
-            memory: 20Mi
+            memory: 50Mi
           limits:
             cpu: 100m
-            memory: 20Mi
+            memory: 50Mi
       {{ end }}
       {{- if .Values.bootstrap.ddldml.configMap }}
       - name: ddl
@@ -151,8 +151,8 @@ spec:
         resources:
           requests:
             cpu: 100m
-            memory: 20Mi
+            memory: 50Mi
           limits:
             cpu: 100m
-            memory: 20Mi
+            memory: 50Mi
 {{ end }}
