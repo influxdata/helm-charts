@@ -23,6 +23,7 @@ spec:
           name: {{ .Values.bootstrap.ddldml.configMap }}
       {{ end }}
       restartPolicy: OnFailure
+      serviceAccountName: {{ template "influxdb-enterprise.serviceAccountName" . }}
       # Consider this a middleware of setup components.
       # Each is executed in-order until all of theme complete successfully.
       # This means that each command must be idempotent.
