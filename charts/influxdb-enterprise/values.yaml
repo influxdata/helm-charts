@@ -59,7 +59,18 @@ meta:
     # repository: influxdb
   # nodeSelector: {}
   # tolerations: []
-  # affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: influxdb.influxdata.com/component
+              operator: In
+              values:
+              - meta
+          topologyKey: kubernetes.io/hostname
   # podAnnotations: {}
   #
   # podSecurityContext: {}
@@ -137,7 +148,18 @@ data:
     # repository: influxdb
   # nodeSelector: {}
   # tolerations: []
-  # affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: influxdb.influxdata.com/component
+              operator: In
+              values:
+              - data
+          topologyKey: kubernetes.io/hostname
   # podAnnotations: {}
   #
   # podSecurityContext: {}
