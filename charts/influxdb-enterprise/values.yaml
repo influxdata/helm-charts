@@ -16,6 +16,13 @@ license:
   #   name: influxdb-license
   #   key: json
 
+# Service account to use for deployment
+# If the name is not specified default account will be used
+serviceAccount:
+  create: false
+  name: ''
+  annotations: {}
+
 # A secret with keys "username" and "password" is required
 # This bootstrap configuration allows you to configure
 # some parts of the InfluxDB system at install time.

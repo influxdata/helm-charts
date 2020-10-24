@@ -28,6 +28,7 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.data.podSecurityContext | nindent 8 }}
+      serviceAccountName: {{ template "influxdb-enterprise.serviceAccountName" . }}
       volumes:
       {{ if not .Values.data.persistence.enabled }}
       - name: {{ include "influxdb-enterprise.fullname" . }}-data-data
