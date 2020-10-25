@@ -33,7 +33,10 @@ spec:
         args:
           - -c
           - |
-            influx setup -f \
+            influx org list \
+            -n {{ .Values.adminUser.organization }} \
+            -t ${INFLUXDB_TOKEN} \
+            || influx setup -f \
             --host http://{{ template "influxdb.fullname" . }}:{{ .Values.service.port }} \
             -o {{ .Values.adminUser.organization }} \
             -b {{ .Values.adminUser.bucket }} \
