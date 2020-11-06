@@ -227,6 +227,7 @@ data:
     # annotations:
     # accessMode: ReadWriteOnce
     # size: 8Gi
+  maxseries: 1500000
   https:
     # If you need to debug the data nodes registration with the meta nodes, we recommend
     # that you comment out the active curl command in the data-configmap and uncomment the following
