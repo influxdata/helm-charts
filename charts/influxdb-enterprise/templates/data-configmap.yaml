@@ -62,6 +62,7 @@ data:
     [data]
       dir = "/var/lib/influxdb/data"
       wal-dir = "/var/lib/influxdb/wal"
+      max-series-per-database = {{ .Values.data.maxseries }}
 
   entrypoint.pl: |+
 
