@@ -132,7 +132,7 @@ envFromSecret: ""
 #   mountPath: /var/lib/chronograf/conf.d
 #   subPath: influxdb2.conf
 
-influxdb:
+influxdb: {}
   ## Name of an existing Secrect used to set the environment variables for the
   ## InfluxDB user and password. The expected keys in the secret are
   ## `influxdb-user` and `influxdb-password`.
