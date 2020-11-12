@@ -9,6 +9,7 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
   annotations:
+ {{- if (eq "true' .Values.persistence.keepPvc) }}
     "helm.sh/resource-policy": keep
 spec:
   accessModes:
