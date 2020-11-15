@@ -11,6 +11,7 @@ data:
     {{ template "processors" .Values.config.processors }}
     {{ template "aggregators" .Values.config.aggregators }}
     {{ template "outputs" .Values.config.outputs }}
+    {{- if .Values.metrics.enabled }}
     [[outputs.health]]
       service_address = "http://:8888"
       [[outputs.health.compares]]
@@ -21,3 +22,4 @@ data:
     {{ template "inputs" .Values.config.inputs -}}
     [[inputs.internal]]
       collect_memstats = false
+    {{- end }}
