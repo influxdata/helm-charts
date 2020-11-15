@@ -12,7 +12,7 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-  {{-if .Values.metrics.enabled }}
+  {{- if .Values.metrics.enabled }}
   - port: 8888
     targetPort: 8888
     name: "health"
