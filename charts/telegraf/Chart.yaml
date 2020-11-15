@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: v2
 name: telegraf
 version: 1.7.31
 appVersion: 1.15
@@ -17,4 +17,3 @@ maintainers:
     email: rawkode@influxdata.com
   - name: gitirabassi
     email: giacomo@influxdata.com
-engine: gotpl
