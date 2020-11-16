@@ -1294,6 +1294,29 @@ entries:
     version: 1.2.9
   telegraf:
   - apiVersion: v1
+    appVersion: "1.16"
+    created: "2020-11-16T23:50:00.18372013Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 0e69ee385b5d516921e808b866bd481492e775262e24bb294b11fac410f0eaeb
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    - influxdb
+    - agent
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: telegraf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.32/telegraf-1.7.32.tgz
+    version: 1.7.32
+  - apiVersion: v1
     appVersion: "1.15"
     created: "2020-10-12T08:26:15.510179431Z"
     description: Telegraf is an agent written in Go for collecting, processing, aggregating,
@@ -1712,6 +1735,29 @@ entries:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.9/telegraf-1.7.9.tgz
     version: 1.7.9
   telegraf-ds:
+  - apiVersion: v1
+    appVersion: "1.16"
+    created: "2020-11-16T23:50:00.284019109Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 3a7780fac8b1181abfa7b49cd7485d3c4e1253e26e241568fab7efee77597b45
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: contact@cerenit.fr
+      name: nsteinmetz
+    name: telegraf-ds
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-ds-1.0.18/telegraf-ds-1.0.18.tgz
+    version: 1.0.18
   - apiVersion: v1
     appVersion: "1.15"
     created: "2020-10-01T23:27:09.508455376Z"
