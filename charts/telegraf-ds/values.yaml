@@ -65,6 +65,21 @@ serviceAccount:
 ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
 # priorityClassName: system-node-critical
 
+override_config:
+  toml: ~
+  # Provide a literal TOML config
+  # toml: |+
+  #   [global_tags]
+  #     foo = "bar"
+  #   [agent]
+  #     interval = "10s"
+  #   [[inputs.mem]]
+  #   [[outputs.influxdb_v2]]
+  #     urls           = ["https://us-west-2-1.aws.cloud2.influxdata.com"]
+  #     bucket         = "data"
+  #     organization   = "OurCompany"
+  #     token          = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
 config:
