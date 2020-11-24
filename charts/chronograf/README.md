@@ -47,7 +47,7 @@ The following table lists configurable parameters, their descriptions, and their
 | Parameter                    | Description                                                                                               | Default                                     |
 |:-----------------------------|:----------------------------------------------------------------------------------------------------------|:--------------------------------------------|
 | `image.repository`           | image repository url                                                                                      | quay.io/influxdb/chronograf                 |
-| `image.tag`                  | controller container image tag                                                                            | 1.8.0                                       |
+| `image.tag`                  | controller container image tag                                                                            | 1.8.8                                       |
 | `image.pullPolicy`           | controller container image pull policy                                                                    | IfNotPresent                                |
 | `service.replicas`           | number of replicas for the specified service.type                                                         | 1                                           |
 | `service.type`               | ClusterIP, NodePort, or LoadBalancer                                                                      | ClusterIP                                   |
