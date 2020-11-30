@@ -131,3 +131,7 @@ envFromSecret: ""
 # - name: chronograf-output-influxdb2
 #   mountPath: /var/lib/chronograf/conf.d
 #   subPath: influxdb2.conf
+
+## Use Recreate when persistence is enabled
+updateStrategy:
+  type: RollingUpdate
