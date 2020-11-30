@@ -11,6 +11,7 @@ metadata:
   annotations:
  {{- if (eq "true' .Values.persistence.keepPvc) }}
     "helm.sh/resource-policy": keep
+ {{- end }}
 spec:
   accessModes:
   - {{ .Values.persistence.accessMode | quote }}
