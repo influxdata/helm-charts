@@ -55,6 +55,7 @@ The following table lists configurable parameters, their descriptions, and their
 | `persistence.storageClass`   | Storage class of backing PVC                                                                              | `nil` (uses alpha storage class annotation) |
 | `persistence.accessModes`    | Use volume as ReadOnly or ReadWrite                                                                       | `[ReadWriteOnce]`                           |
 | `persistence.size`           | Size of data volume                                                                                       | `8Gi`                                       |
+| `persistence.existingClaim`  | Use an existing PVC to persist data                                                                       | `nil`                                       |
 | `resources.requests.memory`  | Memory used for resource requests                                                                         | `256Mi`                                     |
 | `resources.requests.cpu`     | CPU used for resource requests                                                                            | `0.1`                                       |
 | `resources.limits.memory`    | Maximum memory that can be used for resource requests                                                     | `2Gi`                                       |
