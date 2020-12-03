@@ -200,7 +200,7 @@ spec:
         - name: data
         {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim | default (include "chronograf.fullname" .) }}
+            claimName: {{ .Values.persistence.existingClaim | default (template "chronograf.fullname" .) }}
         {{ else }}
           emptyDir: {}
         {{ end }}
