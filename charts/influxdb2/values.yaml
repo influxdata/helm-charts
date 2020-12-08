@@ -29,6 +29,7 @@ securityContext: {}
 ## Defaults indicated below
 ##
 adminUser:
+  create: true
   organization: "influxdata"
   bucket: "default"
   user: "admin"
