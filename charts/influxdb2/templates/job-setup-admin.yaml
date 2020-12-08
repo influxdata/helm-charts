@@ -1,3 +1,4 @@
+{{- if .Values.adminUser.create -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -41,3 +42,4 @@ spec:
             -p ${INFLUXDB_PASSWORD} \
             -t ${INFLUXDB_TOKEN}
       restartPolicy: OnFailure
+{{- end -}}
