@@ -159,6 +159,11 @@ config:
         allowed_pending_messages: 10000
         percentile_limit: 1000
 
+metrics:
+  health:
+    enabled: false
+  collect_memstats: false
+
 # Lifecycle hooks
 # hooks:
 #   postStart: ["/bin/sh", "-c", "echo Telegraf started"]
