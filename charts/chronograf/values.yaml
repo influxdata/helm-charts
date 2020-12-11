@@ -3,7 +3,7 @@
 image:
   repository: "chronograf"
   ## default: quay.io/influxdb/chronograf
-  tag: 1.8.0
+  tag: 1.8.8
   pullPolicy: IfNotPresent
 
 ## Specify a service type
@@ -132,3 +132,7 @@ envFromSecret: ""
 # - name: chronograf-output-influxdb2
 #   mountPath: /var/lib/chronograf/conf.d
 #   subPath: influxdb2.conf
+
+## Use Recreate when persistence is enabled
+updateStrategy:
+  type: RollingUpdate
