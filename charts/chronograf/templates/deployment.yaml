@@ -153,6 +153,18 @@ spec:
               key: gen_api_url
 {{- end }}
 {{- end }}
+{{- if .Values.influxdb.existingSecret }}
+        - name: INFLUXDB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: influxdb-user
+              name: {{ .Values.influxdb.existingSecret }}
+        - name: INFLUXDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: influxdb-password
+              name: {{ .Values.influxdb.existingSecret }}
+{{- end }}
 {{- if .Values.envFromSecret }}
         envFrom:
         - secretRef:
