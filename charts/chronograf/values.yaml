@@ -26,7 +26,7 @@ persistence:
   ##   GKE, AWS & OpenStack)
   # storageClass: "-"
   ## If keepPvc is true, pvc will not be deleted after running helm uninstall
-  # keepPvc: 
+  # keepPvc:
   accessMode: ReadWriteOnce
   size: 8Gi
 
