@@ -132,6 +132,10 @@ envFromSecret: ""
 #   mountPath: /var/lib/chronograf/conf.d
 #   subPath: influxdb2.conf
 
+## Use Recreate when persistence is enabled
+updateStrategy:
+  type: RollingUpdate
+
 influxdb: {}
   ## Name of an existing Secrect used to set the environment variables for the
   ## InfluxDB user and password. The expected keys in the secret are

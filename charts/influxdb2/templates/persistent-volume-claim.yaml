@@ -5,6 +5,8 @@ metadata:
   name: "{{- if not (empty .Values.persistence.name) }}{{ .Values.persistence.name }}{{- else }}{{ template "influxdb.fullname" . }}{{- end }}"
   labels:
     {{- include "influxdb.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: "keep"
 spec:
   accessModes:
     - {{ .Values.persistence.accessMode | quote }}
