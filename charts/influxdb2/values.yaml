@@ -23,10 +23,13 @@ tolerations: []
 
 affinity: {}
 
+securityContext: {}
+
 ## Create default user through Kubernetes job
 ## Defaults indicated below
 ##
 adminUser:
+  create: true
   organization: "influxdata"
   bucket: "default"
   user: "admin"

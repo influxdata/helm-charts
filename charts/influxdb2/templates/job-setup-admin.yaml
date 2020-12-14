@@ -1,3 +1,4 @@
+{{- if .Values.adminUser.create -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
       - name: {{ template "influxdb.fullname" . }}-create-admin-user
-        image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+        image: "{{ .Values.image.repository }}:v{{ .Chart.AppVersion }}"
         env:
           - name: INFLUXDB_PASSWORD
             valueFrom:
@@ -44,3 +45,4 @@ spec:
             -p ${INFLUXDB_PASSWORD} \
             -t ${INFLUXDB_TOKEN}
       restartPolicy: OnFailure
+{{- end -}}
