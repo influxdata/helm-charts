@@ -23,6 +23,8 @@ tolerations: []
 
 affinity: {}
 
+securityContext: {}
+
 ## Create default user through Kubernetes job
 ## Defaults indicated below
 ##
