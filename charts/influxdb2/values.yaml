@@ -56,6 +56,7 @@ persistence:
   # storageClass: "-"
   accessMode: ReadWriteOnce
   size: 50Gi
+  mountPath: /root/.influxdbv2
 
 service:
   port: 80
