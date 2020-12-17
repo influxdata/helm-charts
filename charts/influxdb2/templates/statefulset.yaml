@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
       {{- include "influxdb.selectorLabels" . | nindent 8 }}
+      annotations:
+      {{- toYaml .Values.podAnnotations | nindent 8 }}
     spec:
       volumes:
         - name: data
