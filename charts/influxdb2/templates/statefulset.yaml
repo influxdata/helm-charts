@@ -34,7 +34,8 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - influxd
-            - --engine-path {{ .Values.persistence.mountPath }}
+            - --engine-path
+            - {{ .Values.persistence.mountPath }}
           ports:
             - name: http
               containerPort: 8086
