@@ -32,9 +32,8 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:v{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - influxd
           args:
+            - influxd
             - --engine-path {{ .Values.persistence.mountPath }}
           ports:
             - name: http
