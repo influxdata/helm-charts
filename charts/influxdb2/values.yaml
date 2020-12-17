@@ -70,3 +70,12 @@ ingress:
     # kubernetes.io/ingress.class: "nginx"
     # kubernetes.io/tls-acme: "true"
   path: /
+
+## Pod disruption budget configuration
+##
+pdb:
+  ## Specifies whether a Pod disruption budget should be created
+  ##
+  create: true
+  minAvailable: 1
+  # maxUnavailable: 1
