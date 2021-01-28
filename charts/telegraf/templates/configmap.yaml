@@ -17,7 +17,7 @@ data:
       namepass = ["internal_write"]
       [[outputs.health.compares]]
         field = "buffer_size"
-        lt = 5000.0
+        lt = {{ .Values.metrics.health.threshold }}
       [[outputs.health.contains]]
         field = "buffer_size"
     {{- end }}
