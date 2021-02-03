@@ -1469,6 +1469,30 @@ entries:
     version: 1.2.9
   telegraf:
   - apiVersion: v2
+    appVersion: "1.17"
+    created: "2021-02-03T21:02:46.684796188Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: b923b0c11a4cee31df4c152fff4610b68cb857ad3524587fa441fa4047d7b6fd
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    icon: https://avatars0.githubusercontent.com/u/5713248?s=200&v=4
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    - influxdb
+    - agent
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: telegraf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.35/telegraf-1.7.35.tgz
+    version: 1.7.35
+  - apiVersion: v2
     appVersion: "1.16"
     created: "2020-12-16T21:54:00.740477147Z"
     description: Telegraf is an agent written in Go for collecting, processing, aggregating,
@@ -1958,6 +1982,31 @@ entries:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.9/telegraf-1.7.9.tgz
     version: 1.7.9
   telegraf-ds:
+  - apiVersion: v1
+    appVersion: "1.17"
+    created: "2021-02-03T21:02:46.773055528Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 6c0dc5d58ed38e91364fed074c9ade22b369559951327a262a8e97c691cd32b5
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: contact@cerenit.fr
+      name: nsteinmetz
+    name: telegraf-ds
+    sources:
+    - https://github.com/influxdata/helm-charts/charts/telegraf-ds
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-ds-1.0.20/telegraf-ds-1.0.20.tgz
+    version: 1.0.20
   - apiVersion: v1
     appVersion: "1.16"
     created: "2020-11-26T15:27:47.026517365Z"
