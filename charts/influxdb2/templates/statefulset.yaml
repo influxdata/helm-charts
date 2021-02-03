@@ -33,7 +33,7 @@ spec:
           image: "{{ .Values.image.repository }}:v{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
+            - name: {{ .Values.service.portName }}
               containerPort: 8086
               protocol: TCP
           {{- if .Values.securityContext }}
