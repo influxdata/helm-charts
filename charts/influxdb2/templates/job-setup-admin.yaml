@@ -39,6 +39,7 @@ spec:
             -o {{ .Values.adminUser.organization }} \
             -b {{ .Values.adminUser.bucket }} \
             -u {{ .Values.adminUser.user }} \
+            -r {{ .Values.adminUser.retention_policy }} \
             -p ${INFLUXDB_PASSWORD} \
             -t ${INFLUXDB_TOKEN}
       restartPolicy: OnFailure
