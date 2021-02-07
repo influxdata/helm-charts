@@ -3,7 +3,7 @@
 image:
   repository: "chronograf"
   ## default: quay.io/influxdb/chronograf
-  tag: 1.8.0
+  tag: 1.8.8
   pullPolicy: IfNotPresent
 
 ## Specify a service type
@@ -24,8 +24,9 @@ persistence:
   ## If undefined (the default) or set to null, no storageClassName spec is
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
-  ##
   # storageClass: "-"
+  ## If keepPvc is true, pvc will not be deleted after running helm uninstall
+  # keepPvc:
   accessMode: ReadWriteOnce
   size: 8Gi
 
@@ -122,3 +123,23 @@ env:
 ## The name of a secret in the same kubernetes namespace which contain values to be added to the environment
 ## This can be useful for auth tokens, etc
 envFromSecret: ""
+
+# volumes:
+# - name: chronograf-output-influxdb2
+#   configMap:
+#     name: "chronograf-output-influxdb2"
+# mountPoints:
+# - name: chronograf-output-influxdb2
+#   mountPath: /var/lib/chronograf/conf.d
+#   subPath: influxdb2.conf
+
+## Use Recreate when persistence is enabled
+updateStrategy:
+  type: RollingUpdate
+
+influxdb: {}
+  ## Name of an existing Secrect used to set the environment variables for the
+  ## InfluxDB user and password. The expected keys in the secret are
+  ## `influxdb-user` and `influxdb-password`.
+  ##
+  # existingSecret: influxdb-auth

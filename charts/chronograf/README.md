@@ -23,7 +23,7 @@ The Chronograf Helm chart uses the [Helm](https://helm.sh) package manager to bo
    ```bash
    helm upgrade --install my-release influxdata/chronograf
    ```
-    
+
    > **Tip**: `--install` can be shortened to `-i`.
 
    This command deploys Chronograf on the Kubernetes cluster using the default configuration. To find parameters you can configure during installation, see [Configure the chart](#configure-the-chart).
@@ -47,7 +47,7 @@ The following table lists configurable parameters, their descriptions, and their
 | Parameter                    | Description                                                                                               | Default                                     |
 |:-----------------------------|:----------------------------------------------------------------------------------------------------------|:--------------------------------------------|
 | `image.repository`           | image repository url                                                                                      | quay.io/influxdb/chronograf                 |
-| `image.tag`                  | controller container image tag                                                                            | 1.8.0                                       |
+| `image.tag`                  | controller container image tag                                                                            | 1.8.8                                       |
 | `image.pullPolicy`           | controller container image pull policy                                                                    | IfNotPresent                                |
 | `service.replicas`           | number of replicas for the specified service.type                                                         | 1                                           |
 | `service.type`               | ClusterIP, NodePort, or LoadBalancer                                                                      | ClusterIP                                   |
@@ -83,6 +83,7 @@ The following table lists configurable parameters, their descriptions, and their
 | `nodeSelector`               | Node labels for pod assignment                                                                            | {}                                          |
 | `tolerations`                | Toleration labels for pod assignment                                                                      | []                                          |
 | `affinity`                   | Affinity settings for pod assignment                                                                      | {}                                          |
+| `influxdb.existingSecret`    | Name of an existing Secrect used to set the environment variables for the InfluxDB user and password. The expected keys in the secret are `influxdb-user` and `influxdb-password`. |
 
 To configure the chart, do either of the following:
 

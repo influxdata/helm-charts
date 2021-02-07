@@ -5,6 +5,10 @@ metadata:
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 data:
+{{- if .Values.override_config.toml }}
+  telegraf.conf: |+
+    {{- .Values.override_config.toml | nindent 4 }}
+{{- else }}
   telegraf.conf: |+
     {{ template "global_tags" .Values.config.global_tags }}
     {{ template "agent" .Values.config.agent }}
@@ -37,3 +41,4 @@ data:
     url = "https://$HOSTIP:10250"
     bearer_token = "/run/secrets/kubernetes.io/serviceaccount/token"
     insecure_skip_verify = true
+{{- end }}

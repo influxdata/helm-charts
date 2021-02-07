@@ -12,9 +12,11 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
+  {{- if .Values.metrics.health.enabled }}
   - port: 8888
     targetPort: 8888
     name: "health"
+  {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.inputs }}
   {{- range $key, $value := . -}}
     {{- $tp := typeOf $value -}}

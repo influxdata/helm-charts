@@ -1,13 +1,14 @@
 apiVersion: v2
-appVersion: 2.0.0-beta
+appVersion: 2.0.2
 
 name: influxdb2
 description: A Helm chart for InfluxDB v2
 home: https://www.influxdata.com/products/influxdb-overview/influxdb-2-0/
 type: application
-version: 1.0.7
+version: 1.0.14
 maintainers:
-- name: rawkode
-  email: rawkode@influxdata.com
-- name: gitirabassi
-  email: giacomo@influxdata.com
+  - name: rawkode
+    email: rawkode@influxdata.com
+  - name: gitirabassi
+    email: giacomo@influxdata.com
+icon: https://avatars0.githubusercontent.com/u/5713248?s=200&v=4

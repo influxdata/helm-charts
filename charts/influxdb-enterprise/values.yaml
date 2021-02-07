@@ -13,8 +13,15 @@ license:
   # when you ship to production.
   # key: ""
   # secret:
-  #   name: license
+  #   name: influxdb-license
   #   key: json
+
+# Service account to use for deployment
+# If the name is not specified default account will be used
+serviceAccount:
+  create: false
+  name: ''
+  annotations: {}
 
 # A secret with keys "username" and "password" is required
 # This bootstrap configuration allows you to configure
@@ -32,7 +39,7 @@ bootstrap:
   # A secret should be provided, which will have the keys
   # "username" and "password" available.
   auth:
-    secretName: auth
+    secretName: influxdb-auth
   # This section allows you to use DDL and DML to define
   # databases, retention policies, and inject some data.
   # When using the configMap setting, the keys "ddl" and "dml"
@@ -40,7 +47,7 @@ bootstrap:
   # DDL is executed before DML, to enforce databases and retention policies
   # to exist.
   ddldml: {}
-    # configMap: ddl-dml
+    # configMap: influxdb-ddl-dml
     # resources: {}
 
 
@@ -59,7 +66,18 @@ meta:
     # repository: influxdb
   # nodeSelector: {}
   # tolerations: []
-  # affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: influxdb.influxdata.com/component
+              operator: In
+              values:
+              - meta
+          topologyKey: kubernetes.io/hostname
   # podAnnotations: {}
   #
   # podSecurityContext: {}
@@ -86,7 +104,7 @@ meta:
   # Please see docs for shared-internal-secret:
   # https://docs.influxdata.com/enterprise_influxdb/v1.8/administration/config-data-nodes/#meta-internal-shared-secret
   sharedSecret:
-    secretName: shared-secret
+    secretName: influxdb-shared-secret
   #
   ## Persist data to a persistent volume
   ##
@@ -121,7 +139,7 @@ meta:
     # You do not need to set the secret.name when using this flag.
     useCertManager: true
     secret:
-      name: tls-secret
+      name: influxdb-tls
       # crt: tls.crt
       # key: tls.key
       # ca: ca.crt
@@ -137,7 +155,18 @@ data:
     # repository: influxdb
   # nodeSelector: {}
   # tolerations: []
-  # affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: influxdb.influxdata.com/component
+              operator: In
+              values:
+              - data
+          topologyKey: kubernetes.io/hostname
   # podAnnotations: {}
   #
   # podSecurityContext: {}
@@ -208,7 +237,7 @@ data:
     # You do not need to set the secret.name when using this flag.
     useCertManager: true
     secret:
-      name: tls-secret
+      name: influxdb-tls
       # crt: tls.crt
       # key: tls.key
       # ca: ca.crt

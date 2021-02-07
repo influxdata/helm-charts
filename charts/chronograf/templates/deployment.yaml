@@ -9,6 +9,11 @@ metadata:
     heritage: "{{ .Release.Service }}"
 spec:
   replicas: {{ .Values.service.replicas }}
+  strategy:
+    type: {{ .Values.updateStrategy.type }}
+    {{- if eq .Values.updateStrategy.type "Recreate" }}
+    rollingUpdate: null
+    {{- end }}
   selector:
     matchLabels:
       app: {{ template "chronograf.fullname" . }}
@@ -148,6 +153,18 @@ spec:
               key: gen_api_url
 {{- end }}
 {{- end }}
+{{- if .Values.influxdb.existingSecret }}
+        - name: INFLUXDB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: influxdb-user
+              name: {{ .Values.influxdb.existingSecret }}
+        - name: INFLUXDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: influxdb-password
+              name: {{ .Values.influxdb.existingSecret }}
+{{- end }}
 {{- if .Values.envFromSecret }}
         envFrom:
         - secretRef:
@@ -175,6 +192,13 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/chronograf
+        {{- range .Values.volumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
+        {{- if .Values.mountPoints }}
+{{ toYaml .Values.mountPoints | indent 8 }}
+        {{- end }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
     {{- with .Values.nodeSelector }}
@@ -197,3 +221,6 @@ spec:
         {{ else }}
           emptyDir: {}
         {{ end }}
+        {{- if .Values.volumes }}
+{{ toYaml .Values.volumes | indent 8 }}
+        {{- end }}

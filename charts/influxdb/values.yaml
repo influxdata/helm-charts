@@ -19,11 +19,13 @@ serviceAccount:
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 ##
 livenessProbe: {}
+  # path: "/ping"
   # initialDelaySeconds: 30
   # timeoutSeconds: 5
   # scheme: HTTP
 
 readinessProbe: {}
+  # path: "/ping"
   # initialDelaySeconds: 5
   # timeoutSeconds: 1
   # scheme: HTTP
@@ -34,6 +36,7 @@ securityContext: {}
 
 startupProbe:
   enabled: false
+  # path: "/ping"
   # failureThreshold: 6
   # periodSeconds: 5
   # scheme: HTTP
@@ -182,6 +185,11 @@ ingress:
 #     mountPath: /etc/ssl/certs/selfsigned/
 #     readOnly: true
 
+## Additional containers to be added to the pod.
+extraContainers: {}
+#  - name: my-sidecar
+#    image: nginx:latest
+
 ## Use an alternate scheduler, e.g. "stork".
 ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
 ##
@@ -278,6 +286,7 @@ backup:
     accessMode: ReadWriteOnce
     size: 8Gi
   schedule: "0 0 * * *"
+  startingDeadlineSeconds: ""
   annotations: {}
   podAnnotations: {}
 
@@ -303,5 +312,25 @@ backup:
   # s3:
   #   credentialsSecret: aws-credentials-secret
   #   destination: s3://bucket/path
+  #   ## Optional. Specify if you're using an alternate S3 endpoint.
+  #   # endpointUrl: ""
+
+backupRetention:
+  enabled: false
+  resources:
+    requests:
+      # memory: 512Mi
+      # cpu: 2
+    # limits:
+      # memory: 1Gi
+      # cpu: 4
+  schedule: "0 0 * * *"
+  startingDeadlineSeconds:
+  annotations: {}
+  podAnnotations: {}
+  daysToRetain: 7
+  # s3:
+  #   credentialsSecret: aws-credentials-secret
+  #   bucketName: bucket
   #   ## Optional. Specify if you're using an alternate S3 endpoint.
   #   # endpointUrl: ""

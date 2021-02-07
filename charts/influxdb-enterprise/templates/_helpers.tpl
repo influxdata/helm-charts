@@ -51,8 +51,16 @@ app.kubernetes.io/name: {{ include "influxdb-enterprise.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-
-
+{{/*
+Create the name of the service account
+*/}}
+{{- define "influxdb-enterprise.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "influxdb-enterprise.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
 
 {{- define "influxdb-enterprise.image" -}}
 {{- $dataTagName := (printf "%s-%s" .chart.AppVersion .podtype) -}}

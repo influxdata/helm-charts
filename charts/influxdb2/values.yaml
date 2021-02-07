@@ -23,10 +23,13 @@ tolerations: []
 
 affinity: {}
 
+securityContext: {}
+
 ## Create default user through Kubernetes job
 ## Defaults indicated below
 ##
 adminUser:
+  create: true
   organization: "influxdata"
   bucket: "default"
   user: "admin"
@@ -53,3 +56,24 @@ persistence:
   # storageClass: "-"
   accessMode: ReadWriteOnce
   size: 50Gi
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8086
+  annotations: {}
+  labels: {}
+  portName: http
+
+ingress:
+  enabled: false
+  # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
+  # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
+  # ingressClassName: nginx
+  tls: false
+  # secretName: my-tls-cert # only needed if tls above is true
+  hostname: influxdb.foobar.com
+  annotations: {}
+    # kubernetes.io/ingress.class: "nginx"
+    # kubernetes.io/tls-acme: "true"
+  path: /

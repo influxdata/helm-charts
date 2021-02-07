@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repo: "telegraf"
-  tag: "1.14-alpine"
+  tag: "1.17-alpine"
   pullPolicy: IfNotPresent
 
 podAnnotations: {}
@@ -158,6 +158,11 @@ config:
         metric_separator: "_"
         allowed_pending_messages: 10000
         percentile_limit: 1000
+
+metrics:
+  health:
+    enabled: false
+  collect_memstats: false
 
 # Lifecycle hooks
 # hooks:

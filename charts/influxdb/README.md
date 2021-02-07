@@ -83,6 +83,7 @@ The following table lists configurable parameters, their descriptions, and their
 | env | environment variables for influxdb container | {} |
 | volumes | `volumes` stanza(s) to be used in the main container | nil |
 | mountPoints | `volumeMount` stanza(s) to be used in the main container | nil |
+| extraContainers | Additional containers to be added to the pod | {} |
 | config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#reporting-disabled-false) | false |
 | config.rpc | RPC address for backup and storage | {} |
 | config.meta | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#meta) | {} |
@@ -107,6 +108,7 @@ The following table lists configurable parameters, their descriptions, and their
 | backup.azure | Azure Blob Storage config | `nil`
 | backup.s3 | Amazon S3 (or compatible) config | `nil`
 | backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
+| backup.startingDeadlineSeconds | Deadline in seconds for starting the job if it misses its scheduled time for any reason | `nil` |
 | backup.annotations | Annotations for backup cronjob | {} |
 | backup.podAnnotations | Annotations for backup cronjob pods | {} |
 | backup.persistence.enabled | Boolean to enable and disable persistance | false |

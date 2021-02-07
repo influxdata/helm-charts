@@ -97,14 +97,14 @@ spec:
         {{- end }}
         livenessProbe:
           httpGet:
-            path: /ping
+            path: {{ .Values.livenessProbe.path | default "/ping" }}
             port: api
             scheme: {{ .Values.livenessProbe.scheme | default "HTTP" }}
           initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 30 }}
           timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds | default 5 }}
         readinessProbe:
           httpGet:
-            path: /ping
+            path: {{ .Values.readinessProbe.path | default "/ping" }}
             port: api
             scheme: {{ .Values.readinessProbe.scheme | default "HTTP" }}
           initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default 5 }}
@@ -112,7 +112,7 @@ spec:
         {{- if .Values.startupProbe.enabled }}
         startupProbe:
           httpGet:
-            path: /ping
+            path: {{ .Values.startupProbe.path | default "/ping" }}
             port: api
             scheme: {{ .Values.startupProbe.scheme | default "HTTP" }}
           failureThreshold: {{ .Values.startupProbe.failureThreshold | default 6 }}
@@ -130,6 +130,9 @@ spec:
         {{- if .Values.mountPoints }}
 {{ toYaml .Values.mountPoints | indent 8 }}
         {{- end }}
+      {{- if .Values.extraContainers }}
+{{ toYaml .Values.extraContainers | indent 6}}
+      {{- end }}
       volumes:
       - name: config
         configMap:

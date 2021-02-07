@@ -10,6 +10,7 @@ metadata:
     {{- toYaml .Values.backup.annotations | nindent 4 }}
 spec:
   schedule: {{ .Values.backup.schedule | quote }}
+  startingDeadlineSeconds: {{ .Values.backup.startingDeadlineSeconds }}
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -70,11 +71,13 @@ spec:
             - /bin/sh
             args:
             - '-c'
+            - '-e'
             - |
               if [ -n "$KEY_FILE" ]; then
                 gcloud auth activate-service-account --key-file $KEY_FILE
               fi
               gsutil -m cp -r /backup/* "$DST_URL"
+              rm -rf /backup/*
             volumeMounts:
             - name: backup
               mountPath: /backup
@@ -99,9 +102,11 @@ spec:
             - /bin/sh
             args:
             - '-c'
+            - '-e'
             - |
               az storage container create --name "$DST_CONTAINER"
               az storage blob upload-batch --destination "$DST_CONTAINER" --destination-path "$DST_PATH" --source "$SRC_URL"
+              rm -rf /backup/*
             volumeMounts:
             - name: backup
               mountPath: /backup
@@ -127,8 +132,10 @@ spec:
             - /bin/sh
             args:
             - '-c'
+            - '-e'
             - |
               aws {{- if .Values.backup.s3.endpointUrl }} --endpoint-url={{ .Values.backup.s3.endpointUrl }} {{- end }} s3 cp --recursive "$SRC_URL" "$DST_URL"
+              rm -rf /backup/*
             volumeMounts:
             - name: backup
               mountPath: /backup
