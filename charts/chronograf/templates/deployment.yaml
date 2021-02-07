@@ -222,5 +222,5 @@ spec:
           emptyDir: {}
         {{ end }}
         {{- if .Values.volumes }}
-{{ toYaml .values.volumes | indent 6 }}
+{{ toYaml .Values.volumes | indent 8 }}
         {{- end }}
