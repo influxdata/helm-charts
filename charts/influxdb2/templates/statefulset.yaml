@@ -37,7 +37,7 @@ spec:
             - --engine-path
             - {{ .Values.persistence.mountPath }}
           ports:
-            - name: http
+            - name: {{ .Values.service.portName }}
               containerPort: 8086
               protocol: TCP
           {{- if .Values.securityContext }}
