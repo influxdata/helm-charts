@@ -24,8 +24,9 @@ persistence:
   ## If undefined (the default) or set to null, no storageClassName spec is
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
-  ##
   # storageClass: "-"
+  ## If keepPvc is true, pvc will not be deleted after running helm uninstall
+  # keepPvc:
   accessMode: ReadWriteOnce
   size: 8Gi
 
