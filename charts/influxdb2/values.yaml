@@ -2,6 +2,8 @@ image:
   repository: quay.io/influxdb/influxdb
   pullPolicy: IfNotPresent
 
+podAnnotations: {}
+
 nameOverride: ""
 fullnameOverride: ""
 
