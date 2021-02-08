@@ -1,0 +1,18 @@
+{{- if .Values.pdb.create }}
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "telegraf.fullname" . }}
+  labels:
+  {{- include "telegraf.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.pdb.minAvailable }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- end }}
+  {{- if .Values.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+  {{- include "telegraf.selectorLabels" . | nindent 6 }}
+  {{- end }}

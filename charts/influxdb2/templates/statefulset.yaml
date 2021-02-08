@@ -34,6 +34,10 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:v{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - influxd
+            - --engine-path
+            - {{ .Values.persistence.mountPath }}
           ports:
             - name: {{ .Values.service.portName }}
               containerPort: 8086
@@ -52,10 +56,14 @@ spec:
               port: http
           volumeMounts:
           - name: data
-            mountPath: /root/.influxdbv2
+            mountPath: {{ .Values.persistence.mountPath }}
           resources:
             {{ .Values.resources | toYaml | nindent 12 | trim }}
 
+      {{- if .Values.securityContext.runAsGroup }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.runAsGroup }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{ toYaml . | nindent 8 | trim }}
