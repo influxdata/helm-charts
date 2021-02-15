@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repo: "telegraf"
-  tag: "1.16-alpine"
+  tag: "1.17-alpine"
   pullPolicy: IfNotPresent
 
 podAnnotations: {}
@@ -168,3 +168,12 @@ metrics:
 # hooks:
 #   postStart: ["/bin/sh", "-c", "echo Telegraf started"]
 #   preStop: ["/bin/sh", "-c", "sleep 60"]
+
+## Pod disruption budget configuration
+##
+pdb:
+  ## Specifies whether a Pod disruption budget should be created
+  ##
+  create: true
+  minAvailable: 1
+  # maxUnavailable: 1

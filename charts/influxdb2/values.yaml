@@ -2,6 +2,8 @@ image:
   repository: quay.io/influxdb/influxdb
   pullPolicy: IfNotPresent
 
+podAnnotations: {}
+
 nameOverride: ""
 fullnameOverride: ""
 
@@ -33,6 +35,7 @@ adminUser:
   organization: "influxdata"
   bucket: "default"
   user: "admin"
+  retention_policy: "0s"
   ## Leave empty to generate a random password and token.
   ## Or fill any of these values to use fixed values.
   password: ""
@@ -56,12 +59,21 @@ persistence:
   # storageClass: "-"
   accessMode: ReadWriteOnce
   size: 50Gi
+  mountPath: /root/.influxdbv2
 
 service:
+  type: ClusterIP
   port: 80
+  targetPort: 8086
+  annotations: {}
+  labels: {}
+  portName: http
 
 ingress:
   enabled: false
+  # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
+  # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
+  # ingressClassName: nginx
   tls: false
   # secretName: my-tls-cert # only needed if tls above is true
   hostname: influxdb.foobar.com
@@ -69,3 +81,12 @@ ingress:
     # kubernetes.io/ingress.class: "nginx"
     # kubernetes.io/tls-acme: "true"
   path: /
+
+## Pod disruption budget configuration
+##
+pdb:
+  ## Specifies whether a Pod disruption budget should be created
+  ##
+  create: true
+  minAvailable: 1
+  # maxUnavailable: 1

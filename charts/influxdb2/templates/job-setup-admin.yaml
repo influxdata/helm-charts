@@ -14,10 +14,16 @@ spec:
     metadata:
       labels:
         {{- include "influxdb.labels" . | nindent 8 }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
     spec:
       containers:
       - name: {{ template "influxdb.fullname" . }}-create-admin-user
         image: "{{ .Values.image.repository }}:v{{ .Chart.AppVersion }}"
+        {{- if .Values.securityContext }}
+        securityContext:
+          {{ toYaml .Values.securityContext | nindent 12 }}
+        {{- end }}
         env:
           - name: INFLUXDB_PASSWORD
             valueFrom:
@@ -39,7 +45,12 @@ spec:
             -o {{ .Values.adminUser.organization }} \
             -b {{ .Values.adminUser.bucket }} \
             -u {{ .Values.adminUser.user }} \
+            -r {{ .Values.adminUser.retention_policy }} \
             -p ${INFLUXDB_PASSWORD} \
             -t ${INFLUXDB_TOKEN}
       restartPolicy: OnFailure
+      {{- if .Values.securityContext.runAsGroup }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.runAsGroup }}
+      {{- end }}
 {{- end -}}
