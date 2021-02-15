@@ -61,6 +61,22 @@ persistence:
   size: 50Gi
   mountPath: /root/.influxdbv2
 
+statefulset:
+  livenessprobe:
+    path: /health
+    port: http
+    timeoutSeconds: 1
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
+  readinessprobe:
+    path: /health
+    port: http
+    timeoutSeconds: 1
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
+
 service:
   type: ClusterIP
   port: 80

@@ -48,12 +48,20 @@ spec:
           {{- end }}
           livenessProbe:
             httpGet:
-              path: /health
-              port: http
+              path: {{.Values.statefulset.livenessprobe.path}}
+              port: {{.Values.statefulset.livenessprobe.port}}
+            timeoutSeconds: {{.Values.statefulset.livenessprobe.timeoutSeconds}}
+            periodSeconds: {{.Values.statefulset.livenessprobe.periodSeconds}}
+            successThreshold: {{.Values.statefulset.livenessprobe.successThreshold}}
+            failureThreshold: {{.Values.statefulset.livenessprobe.failureThreshold}}
           readinessProbe:
             httpGet:
-              path: /health
-              port: http
+              path: {{.Values.statefulset.readinessprobe.path}}
+              port: {{.Values.statefulset.readinessprobe.port}}
+            timeoutSeconds: {{.Values.statefulset.readinessprobe.timeoutSeconds}}
+            periodSeconds: {{.Values.statefulset.readinessprobe.periodSeconds}}
+            successThreshold: {{.Values.statefulset.readinessprobe.successThreshold}}
+            failureThreshold: {{.Values.statefulset.readinessprobe.failureThreshold}}
           volumeMounts:
           - name: data
             mountPath: {{ .Values.persistence.mountPath }}
