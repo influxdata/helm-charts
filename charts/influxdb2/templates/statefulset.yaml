@@ -48,16 +48,16 @@ spec:
           {{- end }}
           livenessProbe:
             httpGet:
-              path: {{.Values.statefulset.livenessprobe.path}}
-              port: {{.Values.statefulset.livenessprobe.port}}
+              path: /health
+              port: http
             timeoutSeconds: {{.Values.statefulset.livenessprobe.timeoutSeconds}}
             periodSeconds: {{.Values.statefulset.livenessprobe.periodSeconds}}
             successThreshold: {{.Values.statefulset.livenessprobe.successThreshold}}
             failureThreshold: {{.Values.statefulset.livenessprobe.failureThreshold}}
           readinessProbe:
             httpGet:
-              path: {{.Values.statefulset.readinessprobe.path}}
-              port: {{.Values.statefulset.readinessprobe.port}}
+              path: /health
+              port: http
             timeoutSeconds: {{.Values.statefulset.readinessprobe.timeoutSeconds}}
             periodSeconds: {{.Values.statefulset.readinessprobe.periodSeconds}}
             successThreshold: {{.Values.statefulset.readinessprobe.successThreshold}}
