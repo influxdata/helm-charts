@@ -38,6 +38,9 @@ spec:
             - influxd
             - --engine-path
             - {{ .Values.persistence.mountPath }}
+          {{- with .Values.extraContainerArgs }}
+            {{ toYaml . | nindent 12 | trim }}
+          {{- end }}
           ports:
             - name: {{ .Values.service.portName }}
               containerPort: 8086

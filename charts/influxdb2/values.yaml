@@ -4,6 +4,8 @@ image:
 
 podAnnotations: {}
 
+extraContainerArgs: []
+
 nameOverride: ""
 fullnameOverride: ""
 
