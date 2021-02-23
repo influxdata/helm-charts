@@ -28,12 +28,20 @@ spec:
           - name: INFLUXDB_PASSWORD
             valueFrom:
               secretKeyRef:
+                {{- if .Values.adminUser.existingSecret }}
+                name: {{ .Values.adminUser.existingSecret -}}
+                {{ else }}
                 name: {{ template "influxdb.fullname" . }}-auth
+                {{- end }}
                 key: admin-password
           - name: INFLUXDB_TOKEN
             valueFrom:
               secretKeyRef:
+                {{- if .Values.adminUser.existingSecret }}
+                name: {{ .Values.adminUser.existingSecret -}}
+                {{ else }}
                 name: {{ template "influxdb.fullname" . }}-auth
+                {{- end }}
                 key: admin-token
         command:
           - bash

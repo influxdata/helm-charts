@@ -52,4 +52,17 @@ Check out our [Slack channel](https://www.influxdata.com/slack) for support and 
 
 ## Fixed Auth Credentials
 
-If you need to use fixed token and/or password you can fill `adminUser.password` and `adminUser.token` on your values file to avoid using random values generation.
+If you need to use fixed token and/or password you can set the values `adminUser.password` and `adminUser.token` or you can use an existing secret, which would be a better approach.
+
+Example Secret:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: influxdb-auth
+type: Opaque
+data:
+  admin-password: ...
+  admin-token: ...
+```
