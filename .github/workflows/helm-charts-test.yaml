@@ -13,10 +13,17 @@ jobs:
         run: git fetch --prune --unshallow
 
       - name: Run chart-testing (lint)
+        id: lint
         uses: helm/chart-testing-action@v1.0.0-rc.1
         with:
           command: lint
           config: ct.yaml
+
+      - uses: cachix/install-nix-action@v10
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Run conftest
         uses: workflow/nix-shell-action@v1
@@ -34,12 +41,14 @@ jobs:
 
       # Our Enterprise chart requires some resources created
       - name: Create Enterprise Test Resources
+        if: steps.lint.outputs.changed == 'true'
         run: |
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
           sleep 30 # wait for CertManager
           kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
 
       - name: Run chart-testing (install)
+        if: steps.lint.outputs.changed == 'true'
         uses: helm/chart-testing-action@v1.0.0-rc.1
         with:
           command: install
