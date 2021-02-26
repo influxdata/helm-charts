@@ -13,11 +13,17 @@ jobs:
         run: git fetch --prune --unshallow
 
       - name: Run chart-testing (lint)
-        id: lint
         uses: helm/chart-testing-action@v1.0.0-rc.1
         with:
           command: lint
           config: ct.yaml
+
+      - name: Run conftest
+        uses: workflow/nix-shell-action@v1
+        with:
+          packages: just,conftest
+          script: |
+            find ./charts -name "Justfile" -execdir just tests \;
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.0.0-alpha.3

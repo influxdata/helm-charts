@@ -1,0 +1,3 @@
+image:
+  repository: tests-repository
+  tag: 2.0.2

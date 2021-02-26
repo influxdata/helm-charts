@@ -1,0 +1,12 @@
+tests:
+    #!/usr/bin/env bash
+    for test in ./tests/*.rego;
+    do
+        baseName=$(basename ${test} .rego)
+
+        helm template influxdb2 . --output-dir=. --values ./values.yaml --values ./tests/${baseName}.yaml
+
+        conftest test  --policy ./tests/${baseName}.rego ./influxdb2/templates/
+
+        rm -rf influxdb2
+    done
