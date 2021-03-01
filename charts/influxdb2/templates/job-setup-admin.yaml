@@ -56,6 +56,8 @@ spec:
             -r {{ .Values.adminUser.retention_policy }} \
             -p ${INFLUXDB_PASSWORD} \
             -t ${INFLUXDB_TOKEN}
+      nodeSelector:
+        kubernetes.io/os: linux
       restartPolicy: OnFailure
       {{- if .Values.securityContext.runAsGroup }}
       securityContext:
