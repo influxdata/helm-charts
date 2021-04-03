@@ -32,12 +32,14 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:v{{ .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - influxd
             - --engine-path
             - {{ .Values.persistence.mountPath }}
+            - --bolt-path
+            - {{ .Values.persistence.mountPath }}/influxd.bolt
           ports:
             - name: {{ .Values.service.portName }}
               containerPort: 8086
