@@ -1,5 +1,6 @@
 image:
-  repository: quay.io/influxdb/influxdb
+  repository: influxdb
+  # tag:
   pullPolicy: IfNotPresent
 
 podAnnotations: {}
@@ -64,7 +65,7 @@ persistence:
   # storageClass: "-"
   accessMode: ReadWriteOnce
   size: 50Gi
-  mountPath: /root/.influxdbv2
+  mountPath: /var/lib/influxdbv2
 
 service:
   type: ClusterIP
