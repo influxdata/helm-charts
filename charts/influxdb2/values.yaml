@@ -28,11 +28,22 @@ affinity: {}
 
 securityContext: {}
 
-## Create default user through Kubernetes job
+## Extra environment variables to configure influxdb
+## e.g.
+# env:
+#   - name: FOO
+#     value: BAR
+#   - name: BAZ
+#     valueFrom:
+#       secretKeyRef:
+#         name: my-secret
+#         key: my-key
+env: {}
+
+## Create default user through docker entrypoint
 ## Defaults indicated below
 ##
 adminUser:
-  create: true
   organization: "influxdata"
   bucket: "default"
   user: "admin"
