@@ -2,8 +2,6 @@ InfluxDB 2 is deployed as a StatefulSet on your cluster.
 
 You can access it by using the service name: {{ template "influxdb.fullname" . }}
 
-{{- if .Values.adminUser.create }}
-
 To retrieve the password for the '{{ .Values.adminUser.user}}' user:
 
 {{- if .Values.adminUser.existingSecret }}
@@ -14,5 +12,4 @@ To retrieve the password for the '{{ .Values.adminUser.user}}' user:
 
   echo $(kubectl get secret {{ include "influxdb.fullname" . }}-auth -o "jsonpath={.data['admin-password']}" --namespace {{ .Release.Namespace }} | base64 --decode)
 
-{{- end }}
 {{- end }}
