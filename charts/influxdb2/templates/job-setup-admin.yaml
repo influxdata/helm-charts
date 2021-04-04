@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: {{ template "influxdb.fullname" . }}-create-admin-user
-        image: "{{ .Values.image.repository }}:v{{ .Chart.AppVersion }}"
+        image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
         {{- if .Values.securityContext }}
         securityContext:
           {{ toYaml .Values.securityContext | nindent 12 }}
