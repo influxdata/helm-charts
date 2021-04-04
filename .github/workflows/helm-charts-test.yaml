@@ -14,7 +14,7 @@ jobs:
 
       - name: Run chart-testing (lint)
         id: lint
-        uses: helm/chart-testing-action@v1.0.0-rc.1
+        uses: helm/chart-testing-action@v2.0.1
         with:
           command: lint
           config: ct.yaml
@@ -34,7 +34,7 @@ jobs:
           kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
 
       - name: Run chart-testing (install)
-        uses: helm/chart-testing-action@v1.0.0-rc.1
+        uses: helm/chart-testing-action@v2.0.1
         with:
           command: install
         env:
