@@ -119,6 +119,11 @@ serviceAccount:
 ## Exposed telegraf configuration
 ## For full list of possible values see `/docs/all-config-values.yaml` and `/docs/all-config-values.toml`
 ## ref: https://docs.influxdata.com/telegraf/v1.1/administration/configuration/
+override_config:
+  enabled: false
+  # toml: ~
+  # Provide a literal TOML config
+
 config:
   agent:
     interval: "10s"
@@ -158,6 +163,11 @@ config:
         metric_separator: "_"
         allowed_pending_messages: 10000
         percentile_limit: 1000
+
+query_script:
+  enabled: false
+  # shell: ~
+  # Provide a literal Shell script
 
 metrics:
   health:

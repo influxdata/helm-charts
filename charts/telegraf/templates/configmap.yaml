@@ -5,6 +5,10 @@ metadata:
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 data:
+{{- if .Values.override_config.enabled }}
+  telegraf.conf: |+
+    {{- .Values.override_config.toml | nindent 4 }}
+{{- else }}
   telegraf.conf: |+
     {{ template "global_tags" .Values.config.global_tags }}
     {{ template "agent" .Values.config.agent }}
@@ -23,3 +27,8 @@ data:
     {{ template "inputs" .Values.config.inputs -}}
     [[inputs.internal]]
       collect_memstats = {{ .Values.metrics.collect_memstats }}
+{{- end }}
+{{- if .Values.query_script.enabled }}
+  query.sh: |+
+    {{- .Values.query_script.shell | nindent 4 }}
+{{- end }}
