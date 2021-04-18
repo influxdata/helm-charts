@@ -122,7 +122,7 @@ serviceAccount:
 override_config:
   # toml: ~
   # Provide a literal TOML config
-  
+
 config:
   agent:
     interval: "10s"
