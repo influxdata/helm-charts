@@ -5,9 +5,9 @@ metadata:
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 data:
-{{- if .Values.override_config }}
+{{- if .Values.config_toml }}
   telegraf.conf: |+
-    {{- .Values.override_config.toml | nindent 4 }}
+    {{- .Values.config_toml | nindent 4 }}
 {{- else }}
   telegraf.conf: |+
     {{ template "global_tags" .Values.config.global_tags }}
