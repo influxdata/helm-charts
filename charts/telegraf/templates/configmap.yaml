@@ -23,3 +23,7 @@ data:
     {{ template "inputs" .Values.config.inputs -}}
     [[inputs.internal]]
       collect_memstats = {{ .Values.metrics.collect_memstats }}
+{{- if .Values.query_script.shell }}
+  query.sh: |+
+    {{- .Values.query_script.shell | nindent 4 }}
+{{- end }}

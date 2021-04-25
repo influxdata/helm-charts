@@ -159,6 +159,11 @@ config:
         allowed_pending_messages: 10000
         percentile_limit: 1000
 
+## Optionally create a script to be used by telegraf exec input plugin
+query_script:
+  shell:
+    # Provide a literal shell script
+
 metrics:
   health:
     enabled: false
