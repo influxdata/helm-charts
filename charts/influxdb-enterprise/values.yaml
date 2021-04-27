@@ -145,6 +145,9 @@ meta:
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
     insecure: true
+  ## Additional meta container environment variables e.g.:
+  ##   INFLUXDB_META_LOGGING_ENABLED: "false"
+  env: {}
 
 
 data:
@@ -243,3 +246,6 @@ data:
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
     insecure: true
+  ## Additional data container environment variables e.g.:
+  ##   INFLUXDB_HTTP_FLUX_ENABLED: "true"
+  env: {}
