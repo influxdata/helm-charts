@@ -1,5 +1,5 @@
 {{- if eq .Values.certManager.enable true -}}
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   annotations:
@@ -14,6 +14,9 @@ webhooks:
       namespace: {{ .Release.Namespace }}
       path: /mutate-v1-pod
   failurePolicy: Ignore
+  sideEffects: None
+  admissionReviewVersions:
+  - 'v1'
   name: telegraf.influxdata.com
   rules:
   - apiGroups:
