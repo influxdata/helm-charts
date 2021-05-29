@@ -42,7 +42,7 @@ spec:
                   -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }} \
                   -portable /backup/"$(date +%Y%m%d%H%M%S)"
               resources:
-                {{- toYaml .Values.backup.resources | nindent 14 }}
+                {{- toYaml .Values.backup.resources | nindent 16 }}
           containers:
             - name: {{ .Values.backup.container.name }}
               image: {{ .Values.backup.container.image }}
