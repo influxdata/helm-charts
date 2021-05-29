@@ -107,3 +107,8 @@ pdb:
   create: true
   minAvailable: 1
   # maxUnavailable: 1
+
+serviceAccount:
+  create: true
+  name:
+  annotations: {}
