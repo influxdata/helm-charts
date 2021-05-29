@@ -31,8 +31,8 @@ spec:
             - name: influxdb-backup
               image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
               volumeMounts:
-                - mountPath: backup
-                  name: /backup
+                - mountPath: /backup
+                  name: backup
               command:
                 - /bin/sh
               args:
