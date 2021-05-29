@@ -51,8 +51,8 @@ spec:
               args:
                 - -c
                 - |
-                  {{ .Values.backup.container.command.config }}
-                  {{ .Values.backup.container.command.sync }}
+                  "{{ .Values.backup.container.command.config }}"
+                  "{{ .Values.backup.container.command.sync }}"
               volumeMounts:
                 - mountPath: /backup
                   name: backup
