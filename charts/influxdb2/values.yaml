@@ -112,3 +112,41 @@ serviceAccount:
   create: true
   name:
   annotations: {}
+
+backup:
+  # Setup a backup cronjob using rclone (https://rclone.org/)
+  # rclone supports various backends which makes it easy to push
+  # the backups to any backend service
+  enabled: false
+  # Annotates the CronJob
+  annotations: {}
+  # Setup your schedule to run the cronjob
+  schedule: "0 0 * * *"
+  startingDeadlineSeconds: ""
+  podAnnotations: {}
+  # emptyDir has been used as a transitory volume before uploading to the backend
+  # store. Make sure that a sufficient ephemeral storage request is set to prevent
+  # node disk filling completely.
+  resources:
+    requests:
+      # memory: 512Mi
+      # cpu: 2
+      ephemeral-storage: 10Gi
+    limits:
+    # memory: 1Gi
+    # cpu: 4
+    # ephemeral-storage: 50Gi
+  # The container is configured to only work with rclone as it already supports
+  # GDrive, Amazon S3, Dropbox, FTP, HTTP, local etc.
+  # More information at: https://rclone.org/overview/
+  container:
+    name: influxdb-rclone
+    image: rclone/rclone:latest
+    command:
+      # config command is used to create the config required by rclone
+      # Example for Mega.nz config
+      # rclone config create remote mega user user@example.com pass MYPASSword --obscure
+      config: rclone config create remote local
+      # sync command transfers the local data volume at /backup to /influxdb-backup
+      sync: rclone sync /backup remote:/influxdb-backup --progress --copy-links
+    env: {}

@@ -1,0 +1,66 @@
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "influxdb.fullname" }}-backup
+  labels:
+    {{- include "influxdb.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+  annotations:
+    {{- toYaml .Values.backup.annotations | nindent 4 }}
+spec:
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          {{- if .Values.backup.podAnnotations }}
+          annotations:
+            {{ toYaml .Values.backup.podAnnotations | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "influxdb.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            - name: backup
+              emptyDir: {}
+          serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
+          securityContext:
+            {{ toYaml .Values.securityContext | nindent 12 }}
+          initContainers:
+            - name: influxdb-backup
+              image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+              volumeMounts:
+                - mountPath: backup
+                  name: /backup
+              command:
+                - /bin/sh
+              args:
+                - '-c'
+                - |
+                  influxdb backup \
+                  -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }} \
+                  -portable /backup/"$(date +%Y%m%d%H%M%S)"
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 14 }}
+          containers:
+            - name: {{ .Values.backup.container.name }}
+              image: {{ .Values.backup.container.image }}
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - |
+                  {{ .Values.backup.container.command.config }}
+                  {{ .Values.backup.container.command.sync }}
+              volumeMounts:
+                - mountPath: /backup
+                  name: backup
+              env:
+                {{- with .Values.backup.container.env }}
+                {{ . | nindent 12 }}
+                {{- end }}
+  schedule: {{ .Values.backup.schedule | quote }}
+  startingDeadlineSeconds: {{ .Values.backup.startingDeadlineSeconds }}
+  concurrencyPolicy: Forbid
+{{- end }}
