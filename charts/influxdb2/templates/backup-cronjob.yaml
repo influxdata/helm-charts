@@ -38,9 +38,9 @@ spec:
               args:
                 - '-c'
                 - |
-                  influxdb backup \
+                  influx backup \
                   -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }} \
-                  -portable /backup/"$(date +%Y%m%d%H%M%S)"
+                  /backup/"$(date +%Y%m%d%H%M%S)"
               resources:
                 {{- toYaml .Values.backup.resources | nindent 16 }}
           containers:
