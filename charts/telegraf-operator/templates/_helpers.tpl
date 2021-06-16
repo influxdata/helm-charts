@@ -63,13 +63,13 @@ Create the name of the service account to use
 {{- end -}}
 
 {{/*
-Generate certificates for telegraf-operator mutating webhook 
+Generate certificates for telegraf-operator mutating webhook
 */}}
 {{- define "telegraf-operator.non_certmanager" -}}
 {{- $altNames := list ( printf "%s.%s" (include "telegraf-operator.fullname" .) .Release.Namespace ) ( printf "%s.%s.svc" (include "telegraf-operator.fullname" .) .Release.Namespace ) -}}
 {{- $ca := genCA "telegraf-operator-ca" 365 -}}
 {{- $cert := genSignedCert ( include "telegraf-operator.fullname" . ) nil $altNames 365 $ca -}}
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   annotations:
@@ -85,6 +85,9 @@ webhooks:
       path: /mutate-v1-pod
     caBundle: {{ $ca.Cert | b64enc }}
   failurePolicy: Ignore
+  sideEffects: None
+  admissionReviewVersions:
+  - 'v1'
   name: telegraf.influxdata.com
   rules:
   - apiGroups:
