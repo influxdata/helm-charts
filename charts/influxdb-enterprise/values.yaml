@@ -55,8 +55,8 @@ bootstrap:
 # The suffix is if you are pulling from influx repo, example images will be influxdb:1.8.0-meta and influxdb:1.8.0-data
 # If set to true, the suffix won't be added
 # image:
-#   tag: v1.eg.whatever
-#   ignoresuffix: true | false
+#  tag: v1.eg.whatever
+#  ignoresuffix: true | false
 
 meta:
   replicas: 1
