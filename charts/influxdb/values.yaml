@@ -264,15 +264,22 @@ backup:
   podAnnotations: {}
 
   ## Google Cloud Storage
-  # gcs:
+  gcs:
+    image:
+      repository: google/cloud-sdk
+      tag: alpine
   #    serviceAccountSecret: influxdb-backup-key
   #    serviceAccountSecretKey: key.json
   #    destination: gs://bucket/influxdb
 
+
   ## Azure
   ## Secret is expected to have connection string stored in `connection-string` field
   ## Existing container will be used or private one withing storage account will be created.
-  # azure:
+  azure:
+    image:
+      repository: mcr.microsoft.com/azure-cli
+      tag: latest
   #   storageAccountSecret: influxdb-backup-azure-key
   #   destination_container: influxdb-container
   #   destination_path: ""
@@ -282,7 +289,10 @@ backup:
   ## Please look at https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html#cli-configure-files-where
   ## for the credentials format.
   ## The bucket should already exist.
-  # s3:
+  s3:
+    image:
+      repository: amazon/aws
+      tag: latest
   #   credentialsSecret: aws-credentials-secret
   #   destination: s3://bucket/path
   #   ## Optional. Specify if you're using an alternate S3 endpoint.
