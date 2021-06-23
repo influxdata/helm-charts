@@ -88,6 +88,10 @@ spec:
           env:
           - name: RELEASE_NAME
             value: {{ include "influxdb-enterprise.fullname" . }}
+          {{- range $key, $val := .Values.data.env }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+          {{- end}}
           ports:
             - name: http
               containerPort: 8086

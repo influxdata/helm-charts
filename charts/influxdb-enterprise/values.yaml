@@ -11,10 +11,10 @@ license:
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
-  # key: ""
-  # secret:
-  #   name: influxdb-license
-  #   key: json
+  key: ""
+  secret: {}
+    # name: influxdb-license
+    # key: json
 
 # Service account to use for deployment
 # If the name is not specified default account will be used
@@ -145,6 +145,9 @@ meta:
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
     insecure: true
+  ## Additional meta container environment variables e.g.:
+  ##   INFLUXDB_META_LOGGING_ENABLED: "false"
+  env: {}
 
 
 data:
@@ -243,3 +246,6 @@ data:
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
     insecure: true
+  ## Additional data container environment variables e.g.:
+  ##   INFLUXDB_HTTP_FLUX_ENABLED: "true"
+  env: {}
