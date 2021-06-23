@@ -11,10 +11,10 @@ license:
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
-  # key: ""
-  # secret:
-  #   name: influxdb-license
-  #   key: json
+  key: ""
+  secret: {}
+    # name: influxdb-license
+    # key: json
 
 # Service account to use for deployment
 # If the name is not specified default account will be used
