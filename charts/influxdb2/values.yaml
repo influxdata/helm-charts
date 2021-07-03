@@ -121,7 +121,7 @@ ingress:
   # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
   # ingressClassName: nginx
   tls: false
-  # secretName: my-tls-cert # only needed if tls above is true
+  # secretName: my-tls-cert # only needed if tls above is true or default certificate is not configured for Nginx
   hostname: influxdb.foobar.com
   annotations: {}
     # kubernetes.io/ingress.class: "nginx"
