@@ -11,14 +11,7 @@ data:
 
     [meta]
       dir = "/var/lib/influxdb/meta"
-      {{- range $key, $value := index .Values.config.meta }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.meta | indent 6 }}
 
       {{- if .Values.enterprise.enabled }}
       internal-shared-secret = "{{ sha256sum .Values.enterprise.meta.seed }}"
@@ -28,74 +21,25 @@ data:
     [data]
       dir = "/var/lib/influxdb/data"
       wal-dir = "/var/lib/influxdb/wal"
-      {{- range $key, $value := index .Values.config.data }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.data | indent 6 }}
 
     [coordinator]
-      {{- range $key, $value := index .Values.config.coordinator }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.coordinator | indent 6 }}
 
     [retention]
-      {{- range $key, $value := index .Values.config.retention }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.retention | indent 6 }}
 
     [shard-precreation]
-      {{- range $key, $value := index .Values.config.shard_precreation }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.shard_precreation | indent 6 }}
 
     [monitor]
-      {{- range $key, $value := index .Values.config.monitor }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.monitor | indent 6 }}
 
     [subscriber]
-      {{- range $key, $value := index .Values.config.subscriber }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.subscriber | indent 6 }}
 
     [http]
-      {{- range $key, $value := index .Values.config.http }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.http | indent 6 }}
 
     # TODO: allow multiple graphite listeners
 
@@ -121,58 +65,23 @@ data:
     # TODO: allow multiple collectd listeners with templates
 
     [[collectd]]
-      {{- range $key, $value := index .Values.config.collectd }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.collectd | indent 6 }}
 
     # TODO: allow multiple opentsdb listeners with templates
 
     [[opentsdb]]
-      {{- range $key, $value := index .Values.config.opentsdb }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.opentsdb | indent 6 }}
 
     # TODO: allow multiple udp listeners with templates
 
     [[udp]]
-      {{- range $key, $value := index .Values.config.udp }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.udp | indent 6 }}
 
     [continuous_queries]
-      {{- range $key, $value := index .Values.config.continuous_queries }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.continuous_queries | indent 6 }}
 
     [logging]
-      {{- range $key, $value := index .Values.config.logging }}
-      {{- $tp := typeOf $value }}
-      {{- if eq $tp "string" }}
-      {{ $key }} = {{ $value | quote }}
-      {{- else }}
-      {{ $key }} = {{ $value }}
-      {{- end  }}
-      {{- end }}
+      {{- include "influxdb.formatConfigMap" .Values.config.logging | indent 6 }}
 
     {{ if .Values.enterprise.enabled -}}
     [enterprise]

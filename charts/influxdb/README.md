@@ -62,6 +62,7 @@ The following table lists configurable parameters, their descriptions, and their
 | service.loadBalancerIP | A user-specified IP address for service type LoadBalancer to use as External IP (if supported) | nil |
 | service.externalIPs | A user-specified list of externalIPs to add to the service | nil |
 | service.externalTrafficPolicy | A user specified external traffic policy | nil |
+| service.loadBalancerSourceRanges | A user-specified list of IP ranges in CIDR notation passed to as allowed the LoadBalancer | nil |
 | persistence.enabled | Boolean to enable and disable persistance | true |
 | persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil |
 | persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |

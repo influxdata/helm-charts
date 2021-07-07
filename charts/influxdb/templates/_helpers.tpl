@@ -61,3 +61,20 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Format service config key values
+todo: Numeric values require special handling due to the Helm upstream issue, otherwise they may be converted to scientific
+notation, for example 1073741824 -> 1.073741824e+09.
+Reference: https://github.com/helm/helm/issues/1707
+*/}}
+{{- define "influxdb.formatConfigMap" }}
+{{- range $key, $value := index . }}
+{{- $tp := typeOf $value }}
+{{- if eq $tp "string" }}
+{{ $key }} = {{ $value | quote }}
+{{- else }}
+{{ $key }} = {{ $value }}
+{{- end }}
+{{- end }}
+{{- end -}}
