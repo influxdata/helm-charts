@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repo: "telegraf"
-  tag: "1.17-alpine"
+  tag: "1.19-alpine"
   pullPolicy: IfNotPresent
 
 podAnnotations: {}
