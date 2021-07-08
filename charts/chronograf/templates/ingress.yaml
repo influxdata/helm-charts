@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled -}}
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ template "chronograf.fullname" . }}
@@ -22,7 +22,10 @@ spec:
     http:
       paths:
       - path: {{ .Values.ingress.path }}
+        pathType: ImplementationSpecific
         backend:
-          serviceName: {{ template "chronograf.fullname" . }}
-          servicePort: 80
+          service:
+            name: {{ template "chronograf.fullname" . }}
+            port:
+              number: 80
 {{- end -}}
