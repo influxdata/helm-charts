@@ -51,3 +51,14 @@ Selector labels
 app.kubernetes.io/name: {{ include "influxdb.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "influxdb.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "influxdb.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
