@@ -72,7 +72,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
       {{ $key }} = {{ $value | quote }}
   {{- end }}
   {{- if eq $tp "float64"}}
-      {{ $key }} = {{ $value | int64 }}
+      {{ $key }} = {{ $value | float64 }}
   {{- end }}
   {{- if eq $tp "int"}}
       {{ $key }} = {{ $value | int64 }}
@@ -97,7 +97,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
       {{ $key }} = {{ $value | quote }}
           {{- end }}
           {{- if eq $tp "float64" }}
-      {{ $key }} = {{ $value | int64 }}
+      {{ $key }} = {{ $value | float64 }}
           {{- end }}
           {{- if eq $tp "int" }}
       {{ $key }} = {{ $value | int64 }}
@@ -117,14 +117,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         {{ $val | quote }}
                   {{- end }}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }}
+        {{ $val | float64 }}
                   {{- end }}
                 {{- else }}
                   {{- if eq $tp "string" }}
         {{ $val | quote }},
                   {{- end}}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }},
+        {{ $val | float64 }},
                   {{- end }}
                 {{- end }}
               {{- end }}
@@ -141,7 +141,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         {{ $k }} = {{ $v | quote }}
               {{- end }}
               {{- if eq $tps "float64" }}
-        {{ $k }} = {{ $v | int64 }}.0
+        {{ $k }} = {{ $v | float64 }}.0
               {{- end }}
               {{- if eq $tps "int64" }}
         {{ $k }} = {{ $v | int64 }}
@@ -192,7 +192,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
       {{ $key }} = {{ $value | quote }}
           {{- end }}
           {{- if eq $tp "float64" }}
-      {{ $key }} = {{ $value | int64 }}
+      {{ $key }} = {{ $value | float64 }}
           {{- end }}
           {{- if eq $tp "int" }}
       {{ $key }} = {{ $value | int64 }}
@@ -212,14 +212,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         {{ $val | quote }}
                   {{- end }}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }}
+        {{ $val | float64 }}
                   {{- end }}
                 {{- else }}
                   {{- if eq $tp "string" }}
         {{ $val | quote }},
                   {{- end}}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }},
+        {{ $val | float64 }},
                   {{- end }}
                 {{- end }}
               {{- end }}
@@ -281,7 +281,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
       {{ $key }} = {{ $value | quote }}
           {{- end }}
           {{- if eq $tp "float64" }}
-      {{ $key }} = {{ $value | int64 }}
+      {{ $key }} = {{ $value | float64 }}
           {{- end }}
           {{- if eq $tp "int" }}
       {{ $key }} = {{ $value | int64 }}
@@ -301,14 +301,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         {{ $val | quote }}
                   {{- end }}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }}
+        {{ $val | float64 }}
                   {{- end }}
                 {{- else }}
                   {{- if eq $tp "string" }}
         {{ $val | quote }},
                   {{- end}}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }},
+        {{ $val | float64 }},
                   {{- end }}
                 {{- end }}
               {{- end }}
@@ -375,7 +375,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
             {{ $foo }} = {{ $bar }}
                 {{- end }}
                 {{- if eq $tp "float64" }}
-            {{ $foo }} = {{ int64 $bar }}
+            {{ $foo }} = {{ float64 $bar }}
                 {{- end }}
                 {{- end }}
               {{- end }}
@@ -404,7 +404,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
       {{ $key }} = {{ $value | quote }}
           {{- end }}
           {{- if eq $tp "float64" }}
-      {{ $key }} = {{ $value | int64 }}
+      {{ $key }} = {{ $value | float64 }}
           {{- end }}
           {{- if eq $tp "int" }}
       {{ $key }} = {{ $value | int64 }}
@@ -424,14 +424,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         {{ $val | quote }}
                   {{- end }}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }}
+        {{ $val | float64 }}
                   {{- end }}
                 {{- else }}
                   {{- if eq $tp "string" }}
         {{ $val | quote }},
                   {{- end}}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }},
+        {{ $val | float64 }},
                   {{- end }}
                 {{- end }}
               {{- end }}
