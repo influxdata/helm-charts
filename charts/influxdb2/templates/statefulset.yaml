@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ template "influxdb.fullname" . }}
+  annotations:
+    {{ include "influxdb.annotations" . | nindent 4 }}  
   labels:
     {{ include "influxdb.labels" . | nindent 4 }}
 spec:
