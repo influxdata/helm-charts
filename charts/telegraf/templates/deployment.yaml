@@ -41,6 +41,11 @@ spec:
         {{- end }}
         env:
 {{ toYaml .Values.env | indent 8 }}
+{{- if .Values.envFromSecret }}
+        envFrom:
+          - secretRef:
+              name: {{ .Values.envFromSecret }}
+{{- end }}
         volumeMounts:
         - name: config
           mountPath: /etc/telegraf
