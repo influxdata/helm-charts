@@ -71,6 +71,16 @@ tolerations: []
 #   value: "value"
 #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
+# Init containers for the pod
+initContainers: []
+# - name: ubuntu
+#   image: ubuntu
+
+# Extra sidecar containers for the pod
+extraContainers: []
+# - name: ubuntu
+#   image: ubuntu
+
 service:
   enabled: true
   type: ClusterIP
