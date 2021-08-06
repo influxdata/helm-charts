@@ -33,10 +33,16 @@ env:
     valueFrom:
       fieldRef:
         fieldPath: status.hostIP
+  # Mount the host filesystem and set the appropriate env variables.
+  # ref: https://github.com/influxdata/telegraf/blob/master/docs/FAQ.md
+  # HOST_PROC is required by the cpu, disk, diskio, kernel and processes input plugins
   - name: "HOST_PROC"
-    value: "/rootfs/proc"
+    value: "/hostfs/proc"
+  # HOST_SYS is required by the diskio plugin
   - name: "HOST_SYS"
-    value: "/rootfs/sys"
+    value: "/hostfs/sys"
+  - name: "HOST_MOUNT_PREFIX"
+    value: "/hostfs"
 
 ## Tolerations for pod assignment
 ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
