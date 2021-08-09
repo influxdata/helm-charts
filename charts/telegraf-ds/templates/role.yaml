@@ -3,7 +3,7 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: influx:stats:viewer
+  name: influx-stats-viewer
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
     rbac.authorization.k8s.io/aggregate-view-telegraf-stats: "true"

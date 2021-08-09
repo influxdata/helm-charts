@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: influx:telegraf:viewer
+  name: influx-telegraf-viewer
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 subjects:
