@@ -1,7 +1,7 @@
 replicaCount: 3
 image:
   repository: quay.io/influxdb/telegraf-operator
-  tag: 1.2.0
+  tag: ""
   pullPolicy: IfNotPresent
   sidecarImage: "docker.io/library/telegraf:1.14.4"
 
