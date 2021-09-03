@@ -64,6 +64,7 @@ ingress:
   enabled: false
   tls: false
   hostname: chronograf.foobar.com
+  className: null
   annotations: {}
     # kubernetes.io/ingress.class: "nginx"
     # secretName: my-tls-cert

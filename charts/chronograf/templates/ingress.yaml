@@ -17,6 +17,9 @@ spec:
       - {{ .Values.ingress.hostname | quote }}
       secretName: {{ .Values.ingress.secretName | default (printf "%s-tls" (include "chronograf.fullname" .)) }}
 {{- end }}
+{{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+{{- end }}
   rules:
   - host: {{ .Values.ingress.hostname }}
     http:
