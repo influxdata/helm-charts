@@ -14,6 +14,8 @@ keywords:
 maintainers:
 - name: wojciechka
   email: wkocjan@influxdata.com
+- name: rawkode
+  email: rawkode@influxdata.com
 
 kubeVersion: ">= 1.13.0-r0"
 home: https://github.com/influxdata/telegraf-operator
