@@ -106,6 +106,7 @@ persistence:
   accessMode: ReadWriteOnce
   size: 50Gi
   mountPath: /var/lib/influxdb2
+  subPath: ""
 
 service:
   type: ClusterIP
