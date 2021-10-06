@@ -93,6 +93,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
     {{- if eq $tp "map[string]interface {}" -}}
         {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
+          {{- if and (eq $tp "string")(regexMatch "^\$.*") }}
+      {{ $key }} = {{ $value }}
+          {{- end }}
           {{- if eq $tp "string" }}
       {{ $key }} = {{ $value | quote }}
           {{- end }}
