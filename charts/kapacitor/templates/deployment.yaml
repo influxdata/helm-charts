@@ -14,8 +14,6 @@ spec:
   replicas: 1
   strategy:
 {{ toYaml .Values.strategy | trim | indent 4 }}
-    {{ if eq .Values.strategy.type "Recreate" }}rollingUpdate: null{{ end }}
-{{- end }}
   selector:
     matchLabels:
       app: {{ template "kapacitor.fullname" . }}
