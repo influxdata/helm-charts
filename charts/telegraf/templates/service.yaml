@@ -57,6 +57,14 @@ spec:
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "webhooks"
     {{- end }}
+    {{- if eq $key "socket_listener" }}
+    {{- if or (hasPrefix "udp" $value.service_address) (hasPrefix "tcp" $value.service_address) }}
+  - port: {{ regexFind "[0-9]+$" $value.service_address  | int64 }}
+    targetPort: {{ regexFind "[0-9]+$" $value.service_address  | int64 }}
+    protocol: {{ upper (substr 0 3 $value.service_address) }}
+    name: {{ printf "%s-%s" "socket-listener" (regexFind "[0-9]+$" $value.service_address) }}
+    {{- end }}
+    {{- end }}
   {{- end -}}
   {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.outputs }}

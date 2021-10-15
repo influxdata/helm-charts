@@ -37,9 +37,7 @@ jobs:
         run: ct lint
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1.0.0
-        with:
-          installLocalPathProvisioner: true
+        uses: helm/kind-action@v1.2.0
         if: steps.list-changed.outputs.changed == 'true'
 
       # Our Enterprise chart requires some resources created
