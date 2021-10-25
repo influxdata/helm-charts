@@ -30,6 +30,7 @@ spec:
         {{- else }}
           emptyDir: {}
       {{- end }}
+      serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
       {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       initContainers:
         - name: volume-permissions
