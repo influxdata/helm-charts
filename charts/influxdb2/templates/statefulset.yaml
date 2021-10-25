@@ -40,7 +40,7 @@ spec:
             - /bin/bash
             - -ec
             - |
-              chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} {{ .Values.persistence.mountPath }}
+              chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.runAsGroup }} {{ .Values.persistence.mountPath }}
           securityContext: {{- .Values.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
           {{- if .Values.volumePermissions.resources }}
           resources: {{- toYaml .Values.volumePermissions.resources | nindent 12 }}
@@ -125,9 +125,9 @@ spec:
           resources:
             {{ .Values.resources | toYaml | nindent 12 | trim }}
 
-      {{- if .Values.securityContext.fsGroup }}
+      {{- if .Values.securityContext.runAsGroup }}
       securityContext:
-        fsGroup: {{ .Values.securityContext.fsGroup }}
+        fsGroup: {{ .Values.securityContext.runAsGroup }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
