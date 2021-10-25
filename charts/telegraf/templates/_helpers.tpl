@@ -201,29 +201,49 @@ app.kubernetes.io/instance: {{ .Release.Name }}
       {{ $key }} = {{ $value }}
           {{- end }}
           {{- if eq $tp "[]interface {}" }}
-      {{ $key }} = [
-              {{- $numOut := len $value }}
-              {{- $numOut := sub $numOut 1 }}
+            {{- $val0 := index $value 0 -}}
+            {{- $val0tp := typeOf $val0 -}}
+            {{- if eq $val0tp "map[string]interface {}" -}}
               {{- range $b, $val := $value }}
-                {{- $i := int64 $b }}
-                {{- $tp := typeOf $val }}
-                {{- if eq $i $numOut }}
-                  {{- if eq $tp "string" }}
-        {{ $val | quote }}
-                  {{- end }}
-                  {{- if eq $tp "float64" }}
-        {{ $val | int64 }}
-                  {{- end }}
-                {{- else }}
-                  {{- if eq $tp "string" }}
-        {{ $val | quote }},
-                  {{- end}}
-                  {{- if eq $tp "float64" }}
-        {{ $val | int64 }},
-                  {{- end }}
+      [[inputs.{{- $input }}.{{- $key }}]]
+                {{- range $valkey, $valvalue := $val }}
+                    {{- $valvaluetp := typeOf $valvalue }}
+                    {{- if eq $valvaluetp "string" }}
+        {{ $valkey }} = {{ $valvalue | quote }}
+                    {{- end }}
+                    {{- if eq $valvaluetp "float64" }}
+        {{ $valkey }} = {{ $valvalue | int64 }}
+                    {{- end }}
+                    {{- if eq $valvaluetp "bool" }}
+        {{ $valkey }} = {{ $valvalue }}
+                    {{- end }}
                 {{- end }}
               {{- end }}
+            {{- else }}
+      {{ $key }} = [
+                {{- $numOut := len $value }}
+                {{- $numOut := sub $numOut 1 }}
+                {{- range $b, $val := $value }}
+                  {{- $i := int64 $b }}
+                  {{- $tp := typeOf $val }}
+                  {{- if eq $i $numOut }}
+                    {{- if eq $tp "string" }}
+          {{ $val | quote }}
+                    {{- end }}
+                    {{- if eq $tp "float64" }}
+          {{ $val | int64 }}
+                    {{- end }}
+                  {{- else }}
+                    {{- if eq $tp "string" }}
+          {{ $val | quote }},
+                    {{- end}}
+                    {{- if eq $tp "float64" }}
+          {{ $val | int64 }},
+                    {{- end }}
+                  {{- end }}
+                {{- end }}
       ]
+            {{- end }}
           {{- end }}
           {{- end }}
           {{- range $key, $value := $config -}}
