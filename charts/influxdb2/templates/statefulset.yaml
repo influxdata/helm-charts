@@ -15,11 +15,11 @@ spec:
       labels:
       {{- include "influxdb.selectorLabels" . | nindent 8 }}
       annotations:
-      {{- toYaml .Values.podAnnotations | nindent 8 }}
+    {{- toYaml .Values.podAnnotations | nindent 8 }}
     spec:
       volumes:
         - name: data
-        {{- if .Values.persistence.enabled }}
+       {{- if .Values.persistence.enabled }}
           {{- if not (empty .Values.persistence.name) }}
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.name }}
@@ -29,7 +29,25 @@ spec:
           {{- end }}
         {{- else }}
           emptyDir: {}
-        {{- end }}
+      {{- end }}
+      {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
+      initContainers:
+        - name: volume-permissions
+          image: "{{ .Values.volumePermissions.image.registry }}/{{ .Values.volumePermissions.image.repository }}:{{ .Values.volumePermissions.image.tag }}"
+          imagePullPolicy: {{ .Values.volumePermissions.image.pullPolicy }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} {{ .Values.persistence.mountPath }}
+          securityContext: {{- .Values.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
+          {{- if .Values.volumePermissions.resources }}
+          resources: {{- toYaml .Values.volumePermissions.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: {{ .Values.persistence.mountPath }}
+              name: data
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -106,9 +124,9 @@ spec:
           resources:
             {{ .Values.resources | toYaml | nindent 12 | trim }}
 
-      {{- if .Values.securityContext.runAsGroup }}
+      {{- if .Values.securityContext.fsGroup }}
       securityContext:
-        fsGroup: {{ .Values.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
