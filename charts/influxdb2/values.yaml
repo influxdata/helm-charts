@@ -112,11 +112,11 @@ pdb:
 
 rbac:
   # Specifies whether RBAC resources should be created
-  create: true
+  create: false
 
 psp:
   # Specifies whether Pod Security Policy should be created
-  create: true
+  create: false
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
