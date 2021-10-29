@@ -4,9 +4,17 @@ chart-dirs:
   - charts
 chart-repos:
   - "jetstack=https://charts.jetstack.io"
+
+# We don't run release unless the Chart version was bunmped,
+# so lets not enforce the lint to validate this change either.
+# This makes it easier for people to contribute, and the maintainers
+# take ownership of bumping version when required.
+check-version-increment: false
+
+debug: true
+
 # This doesn't work because they didn't expect it to be used for secrets
 # Track issue: https://github.com/helm/chart-testing/issues/212
 #helm-extra-args: "--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
 # Remove this excluded chart when the above can be satisfied
 excluded-charts: "influxdb-enterprise"
-debug: true

@@ -2,7 +2,7 @@
 ## ref: https://hub.docker.com/r/library/influxdb/tags/
 image:
   repository: "influxdb"
-  tag: "1.8.0-alpine"
+  tag: "1.8.6-alpine"
   pullPolicy: IfNotPresent
   ## If specified, use these secrets to access the images
   # pullSecrets:
@@ -169,6 +169,7 @@ ingress:
   tls: false
   # secretName: my-tls-cert # only needed if tls above is true
   hostname: influxdb.foobar.com
+  className: null
   annotations: {}
     # kubernetes.io/ingress.class: "nginx"
     # kubernetes.io/tls-acme: "true"

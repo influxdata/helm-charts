@@ -33,6 +33,9 @@ spec:
             {{- if eq .Values.requireAnnotationsForSecret true }}
             - "--require-annotations-for-secret"
             {{- end }}
+            {{- if eq .Values.hotReload true }}
+            - "--telegraf-watch-config=inotify"
+            {{- end }}
           env:
           - name: POD_NAMESPACE
             valueFrom:

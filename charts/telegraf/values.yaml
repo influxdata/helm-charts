@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repo: "telegraf"
-  tag: "1.16-alpine"
+  tag: "1.20-alpine"
   pullPolicy: IfNotPresent
 
 podAnnotations: {}
@@ -17,6 +17,14 @@ imagePullSecrets: []
 
 ## Configure args passed to Telegraf containers
 args: []
+
+
+# The name of a secret in the same kubernetes namespace which contains values to
+# be added to the environment (must be manually created)
+# This can be useful for auth tokens, etc.
+
+# envFromSecret: "telegraf-tokens"
+
 
 env:
   - name: HOSTNAME
@@ -168,3 +176,12 @@ metrics:
 # hooks:
 #   postStart: ["/bin/sh", "-c", "echo Telegraf started"]
 #   preStop: ["/bin/sh", "-c", "sleep 60"]
+
+## Pod disruption budget configuration
+##
+pdb:
+  ## Specifies whether a Pod disruption budget should be created
+  ##
+  create: true
+  minAvailable: 1
+  # maxUnavailable: 1
