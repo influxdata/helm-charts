@@ -20,10 +20,9 @@ data:
       [[outputs.health.contains]]
         field = "buffer_size"
     {{- end }}
-    {{- if .Values.config.inputs_override_config }}
-      {{ .Values.config.inputs_override_config | nindent 4 }}
-    {{- else }}
     {{ template "inputs" .Values.config.inputs -}}
-    {{- end }}
     [[inputs.internal]]
       collect_memstats = {{ .Values.metrics.collect_memstats }}
+    {{- if .Values.config.toml }}
+    {{ .Values.config.toml | nindent 4 }}
+    {{- end }}
