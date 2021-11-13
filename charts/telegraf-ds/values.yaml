@@ -56,6 +56,19 @@ tolerations: []
 ## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#
 ## dnsPolicy: ClusterFirstWithHostNet
 
+## If using dnsPolicy=None, set dnsConfig
+## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config
+## dnsConfig:
+##   nameservers:
+##     - 1.2.3.4
+##   searches:
+##     - ns1.svc.cluster-domain.example
+##     - my.dns.search.suffix
+##   options:
+##     - name: ndots
+##       value: "2"
+##     - name: edns0
+
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
