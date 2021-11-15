@@ -5,7 +5,7 @@
 ## Add the InfluxData Helm repository
 
 ```bash
-helm repo add influxdata https://influxdata.github.io/helm-charts
+helm repo add influxdata https://helm.influxdata.com
 ```
 
 ## Install InfluxDB
