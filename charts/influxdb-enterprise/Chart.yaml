@@ -4,7 +4,6 @@ appVersion: 1.9.5
 engine: gotpl
 
 name: influxdb-enterprise
-type: application
 description: Run InfluxDB Enterprise on Kubernetes
 keywords:
   - influxdb
