@@ -1,6 +1,6 @@
 image:
   repository: influxdb
-  tag: 2.0.6-alpine
+  tag: 2.1.1-alpine
   pullPolicy: IfNotPresent
 
 podAnnotations: {}
