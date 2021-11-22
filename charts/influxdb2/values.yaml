@@ -76,7 +76,7 @@ persistence:
   # storageClass: "-"
   accessMode: ReadWriteOnce
   size: 50Gi
-  mountPath: /var/lib/influxdbv2
+  mountPath: /var/lib/influxdb2
 
 service:
   type: ClusterIP
