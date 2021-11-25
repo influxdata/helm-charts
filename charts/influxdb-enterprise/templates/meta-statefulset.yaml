@@ -37,7 +37,7 @@ spec:
       - name: config
         configMap:
           name: {{ include "influxdb-enterprise.fullname" . }}-meta
-      {{- if .Values.license.secret }}
+      {{- if (.Values.license | default dict).secret }}
       - name: license
         secret:
           secretName: {{ .Values.license.secret.name }}
@@ -117,7 +117,7 @@ spec:
             mountPath: /etc/influxdb
           - name: {{ include "influxdb-enterprise.fullname" . }}-meta-data
             mountPath: /var/lib/influxdb
-          {{- if .Values.license.secret }}
+          {{- if (.Values.license | default dict).secret }}
           - name: license
             mountPath: /var/run/secrets/influxdb/
           {{- end }}
