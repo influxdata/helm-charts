@@ -1,5 +1,5 @@
 {{- if or .Values.data.https.useCertManager .Values.meta.https.useCertManager -}}
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: {{ include "influxdb-enterprise.fullname" . }}
