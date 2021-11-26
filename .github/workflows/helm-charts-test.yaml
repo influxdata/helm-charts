@@ -47,6 +47,7 @@ jobs:
           sleep 30 # wait for CertManager
           kubectl create namespace influxdb-enterprise-test
           kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml --namespace=influxdb-enterprise-test
+          echo INFLUXDB_ENTERPRISE_LICENSE_KEY = "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
