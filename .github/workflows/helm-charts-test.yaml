@@ -45,11 +45,12 @@ jobs:
         run: |
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.3/cert-manager.yaml
           sleep 30 # wait for CertManager
-          kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
+          kubectl create namespace influxdb-enterprise-test
+          kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml --namespace=influxdb-enterprise-test
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install
+        run: ct install --namespace=influxdb-enterprise-test
         env:
           INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
