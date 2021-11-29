@@ -27,6 +27,12 @@ serviceAccount:
   name: ''
   annotations: {}
 
+## The name of a secret in the same kubernetes namespace which contain values
+## to be added to the environment.
+## This can be used, for example, to set the INFLUXDB_ENTERPRISE_LICENSE_KEY
+## or INFLUXDB_ENTERPRISE_LICENSE_PATH environment variable.
+envFromSecret: {}
+
 # A secret with keys "username" and "password" is required
 # This bootstrap configuration allows you to configure
 # some parts of the InfluxDB system at install time.
