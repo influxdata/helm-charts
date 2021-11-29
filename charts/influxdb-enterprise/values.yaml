@@ -6,6 +6,10 @@ nameOverride: ""
 fullnameOverride: ""
 imagePullSecrets: []
 
+daemonset:
+  enabled: true
+  hostNetworking: true
+
 # License-key and license-path are mutually exclusive. Use only one and leave the other blank.
 license: {}
   # You can put your license key here for testing this chart out,
