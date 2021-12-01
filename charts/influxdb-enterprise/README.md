@@ -45,6 +45,25 @@ license:
     key: json
 ```
 
+Since InfluxDB Enterprise can grab the license key from environment variable `INFLUXDB_ENTERPRISE_LICENSE_KEY`,
+you can also leave `license` entry empty, save the key to a secret
+and then refer to the secret in `envFromSecret`.
+
+```yaml
+license: {}
+  # You can put your license key here for testing this chart out,
+  # but we STRONGLY recommend using a license file stored in a secret
+  # when you ship to production.
+  # key: "your license key"
+  # secret:
+  #  name: license
+  #  key: json
+
+...
+
+envFromSecret: influxdb-license
+```
+
 #### Shared Secret
 
 The meta cluster requires a shared internal secret to secure communication. This must be provided by specifying a secret name in the `values.yaml` file.
