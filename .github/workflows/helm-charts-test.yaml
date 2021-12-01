@@ -1,6 +1,6 @@
 name: "helm-charts/test"
 
-on: pull_request
+on: pull_request_target
 
 jobs:
   lint-test:
@@ -8,6 +8,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          ref: "refs/pull/${{ github.event.number }}/merge"
 
       - name: Fetch history
         run: git fetch --prune --unshallow
@@ -32,6 +34,9 @@ jobs:
           if [[ -n "$changed" ]]; then
             echo "::set-output name=changed::true"
           fi
+          if [[ "$changed" == *"influxdb-enterprise"* ]]; then
+            echo "::set-output name=enterprise::true"
+          fi
 
       - name: Run chart-testing (lint)
         run: ct lint
@@ -43,13 +48,18 @@ jobs:
       # Our Enterprise chart requires some resources created
       - name: Create Enterprise Test Resources
         run: |
-          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
+          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.3/cert-manager.yaml
           sleep 30 # wait for CertManager
-          kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
-        if: steps.list-changed.outputs.changed == 'true'
-
-      - name: Run chart-testing (install)
-        run: ct install
+          kubectl create namespace test-ns
+          kubectl create secret generic influxdb-license --from-literal=INFLUXDB_ENTERPRISE_LICENSE_KEY=${INFLUXDB_ENTERPRISE_LICENSE_KEY} --namespace=test-ns
+          kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml --namespace=test-ns
         env:
           INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
+        if: |
+          steps.list-changed.outputs.changed == 'true' &&
+          steps.list-changed.outputs.enterprise == 'true' &&
+          contains(github.event.pull_request.labels.*.name, 'ci:safe')
+
+      - name: Run chart-testing (install)
+        run: ct install --namespace=test-ns
         if: steps.list-changed.outputs.changed == 'true'
