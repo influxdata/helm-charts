@@ -34,7 +34,7 @@ spec:
           service:
             name: {{ include "influxdb.fullname" . }}
             port:
-              number: 8086
+              name: {{ .Values.service.portName }}
 {{- else }}
           serviceName: {{ include "influxdb.fullname" . }}
           servicePort: 8086
