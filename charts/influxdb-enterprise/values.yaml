@@ -7,7 +7,7 @@ fullnameOverride: ""
 imagePullSecrets: []
 
 # License-key and license-path are mutually exclusive. Use only one and leave the other blank.
-license:
+license: {}
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
