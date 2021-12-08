@@ -46,10 +46,16 @@ jobs:
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
           sleep 30 # wait for CertManager
           kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
+          kubectl create secret generic influxdb-license --from-literal=INFLUXDB_ENTERPRISE_LICENSE_KEY=${INFLUXDB_ENTERPRISE_LICENSE_KEY}
+        env:
+          INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
         run: ct install --namespace=default
-        env:
-          INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
+
+# When https://github.com/helm/chart-testing/issues/212 is fixed, this can be used to set the license key instead of using env from secret
+#        run: ct install --namespace=default --helm-extra-args="--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
+#        env:
+#          INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
