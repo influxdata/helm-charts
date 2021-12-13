@@ -207,39 +207,24 @@ app.kubernetes.io/instance: {{ .Release.Name }}
               {{- range $b, $val := $value }}
                 {{- $i := int64 $b }}
                 {{- $tp := typeOf $val }}
-                {{- if eq $i $numOut }}
-                  {{- if eq $tp "string" }}
+                {{- if eq $tp "string" }}
         {{ $val | quote }}
-                  {{- end }}
-                  {{- if eq $tp "float64" }}
-                    {{- if eq $key "percentiles" }}
-                      {{- $xval := float64 (int64 $val) }}
-                      {{- if eq $val $xval }}
+                {{- end }}
+                {{- if eq $tp "float64" }}
+                  {{- if eq $key "percentiles" }}
+                    {{- $xval := float64 (int64 $val) }}
+                    {{- if eq $val $xval }}
         {{ $val | int64 }}.0
-                      {{- else }}
+                    {{- else }}
         {{ $val | float64 }}
-                      {{- end }}
-                    {{- else }}
+                    {{- end }}
+                  {{- else }}
         {{ $val | int64 }}
-                    {{- end }}
-                  {{- end }}
-                {{- else }}
-                  {{- if eq $tp "string" }}
-        {{ $val | quote }},
-                  {{- end}}
-                  {{- if eq $tp "float64" }}
-                    {{- if eq $key "percentiles" }}
-                      {{- $xval := float64 (int64 $val) }}
-                      {{- if eq $val $xval }}
-        {{ $val | int64 }}.0,
-                      {{- else }}
-        {{ $val | float64 }},
-                      {{- end }}
-                    {{- else }}
-        {{ $val | int64 }},
-                    {{- end }}
                   {{- end }}
                 {{- end }}
+                {{- if ne $i $numOut -}}
+        ,
+                {{- end -}}
               {{- end }}
       ]
           {{- end }}
