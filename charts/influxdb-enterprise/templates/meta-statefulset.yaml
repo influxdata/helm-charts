@@ -91,6 +91,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.meta.sharedSecret.secretName }}
                   key: secret
+          {{- if .Values.envFromSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.envFromSecret }}
+          {{- end }}
           ports:
             - name: http
               containerPort: 8091
