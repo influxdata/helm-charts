@@ -27,7 +27,7 @@ data:
       {{ if .Values.license.key }}
       # license-key and license-path are mutually exclusive, use only one and leave the other blank
       license-key = "{{ .Values.license.key }}" #✨ mutually exclusive with license-path
-      {{ else }}
+      {{ else if .Values.license.secret }}
       # license-key and license-path are mutually exclusive, use only one and leave the other blank
       license-path = "/var/run/secrets/influxdb/license.json"
       {{ end }}
