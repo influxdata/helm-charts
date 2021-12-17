@@ -74,7 +74,7 @@ The following table lists configurable parameters, their descriptions, and their
 | ingress.tls | Boolean to enable or disable tls for ingress. If enabled provide a secret in `ingress.secretName` containing TLS private key and certificate. | false |
 | ingress.secretName | Kubernetes secret containing TLS private key and certificate. It is `only` required if `ingress.tls` is enabled. | nil |
 | ingress.hostname | Hostname for the ingress | influxdb.foobar.com |
-| annotations | ingress annotations | nil |
+| ingress.annotations | ingress annotations | nil |
 | schedulerName | Use an [alternate scheduler](https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/), e.g. "stork". | nil |
 | nodeSelector | Node labels for pod assignment | {} |
 | affinity | [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for pod assignment |  {|

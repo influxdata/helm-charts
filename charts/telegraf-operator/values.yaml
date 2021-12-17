@@ -2,7 +2,7 @@ replicaCount: 3
 image:
   repository: quay.io/influxdb/telegraf-operator
   pullPolicy: IfNotPresent
-  sidecarImage: "docker.io/library/telegraf:1.14.4"
+  sidecarImage: "docker.io/library/telegraf:1.19"
 
 classes:
   secretName: "telegraf-operator-classes"
@@ -46,3 +46,6 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 requireAnnotationsForSecret: false
+# allow hot reload ; disabled by default to support versions of telegraf
+# that do not support hot-reload and --watch-config flag
+hotReload: false

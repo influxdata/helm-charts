@@ -318,7 +318,30 @@ app.kubernetes.io/instance: {{ .Release.Name }}
           {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "map[string]interface {}" }}
-      [[processors.{{ $processor }}.{{ $key }}]]
+      {{- if or (eq $processor "converter") (eq $processor "override") (eq $processor "clone") }}
+      [processors.{{ $processor }}.{{ $key }}]
+            {{- range $k, $v := $value }}
+              {{- $tps := typeOf $v }}
+              {{- if eq $tps "string" }}
+        {{ $k }} = {{ $v | quote }}
+              {{- end }}
+              {{- if eq $tps "[]interface {}"}}
+        {{ $k }} = [
+                {{- $numOut := len $v }}
+                {{- $numOut := sub $numOut 1 }}
+                {{- range $b, $val := $v }}
+                  {{- $i := int64 $b }}
+                  {{- if eq $i $numOut }}
+            {{ $val | quote }}
+                  {{- else }}
+            {{ $val | quote }},
+                  {{- end }}
+                {{- end }}
+        ]
+              {{- end }}
+              {{- end }}
+      {{- else }}
+       [[processors.{{ $processor }}.{{ $key }}]]
             {{- range $k, $v := $value }}
               {{- $tps := typeOf $v }}
               {{- if eq $tps "string" }}
@@ -359,6 +382,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
             {{- end }}
           {{- end }}
           {{- end }}
+      {{- end }}
     {{- end }}
     {{- end }}
     {{ end }}
@@ -417,7 +441,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
           {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "map[string]interface {}" }}
+          {{- if or (eq $key "tagpass") (eq $key "tagdrop") }}
+      [aggregators.{{ $aggregator }}.{{ $key }}]
+          {{- else }}
       [[aggregators.{{ $aggregator }}.{{ $key }}]]
+          {{- end }}
             {{- range $k, $v := $value }}
               {{- $tps := typeOf $v }}
               {{- if eq $tps "string" }}

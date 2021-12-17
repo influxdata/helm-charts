@@ -1,14 +1,16 @@
 {{- if .Values.ingress.enabled -}}
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+apiVersion: networking.k8s.io/v1
+{{- else }}
 apiVersion: networking.k8s.io/v1beta1
+{{- end }}
 kind: Ingress
 metadata:
   name: {{ include "influxdb.fullname" . }}
   labels:
     {{- include "influxdb.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+{{ toYaml .Values.ingress.annotations | indent 4 }}
 spec:
 {{- if .Values.ingress.tls }}
   tls:
@@ -16,12 +18,25 @@ spec:
       - {{ .Values.ingress.hostname | quote }}
       secretName: {{ .Values.ingress.secretName }}
 {{- end }}
+{{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+{{- end }}
   rules:
   - host: {{ .Values.ingress.hostname }}
     http:
       paths:
       - path: {{ .Values.ingress.path }}
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: Prefix
+{{- end }}
         backend:
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+          service:
+            name: {{ include "influxdb.fullname" . }}
+            port:
+              name: {{ .Values.service.portName }}
+{{- else }}
           serviceName: {{ include "influxdb.fullname" . }}
-          servicePort: http
+          servicePort: {{ .Values.service.portName }}
+{{- end }}
 {{- end -}}

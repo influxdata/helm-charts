@@ -43,11 +43,8 @@ spec:
         - name: varrunutmpro
           mountPath: /var/run/utmp
           readOnly: true
-        - name: sysro
-          mountPath: /rootfs/sys
-          readOnly: true
-        - name: procro
-          mountPath: /rootfs/proc
+        - name: hostfsro
+          mountPath: /hostfs
           readOnly: true
         - name: docker-socket
           mountPath: /var/run/docker.sock
@@ -66,15 +63,12 @@ spec:
 {{ toYaml . | indent 8 }}
       {{- end }}
       volumes:
-      - name: sysro
+      - name: hostfsro
         hostPath:
-          path: /sys
+          path: /
       - name: docker-socket
         hostPath:
           path: /var/run/docker.sock
-      - name: procro
-        hostPath:
-          path: /proc
       - name: varrunutmpro
         hostPath:
           path: /var/run/utmp
@@ -84,4 +78,8 @@ spec:
       hostNetwork: {{ default .Values.hostNetwork  false }}
       {{- if .Values.dnsPolicy }}
       dnsPolicy: {{ .Values.dnsPolicy }}
+      {{- end }}
+      {{- with .Values.dnsConfig }}
+      dnsConfig:
+{{ toYaml . | indent 8 }}
       {{- end }}
