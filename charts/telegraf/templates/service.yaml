@@ -63,6 +63,12 @@ spec:
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "webhooks"
     {{- end }}
+    {{- if eq $key "syslog" }}
+  - port: {{ regexFind "[0-9]+$" $value.server  | int64 }}
+    targetPort: {{ regexFind "[0-9]+$" $value.server  | int64 }}
+    protocol: {{ upper (substr 0 3 $value.server) }}
+    name: "syslog"
+    {{- end }}  
     {{- if eq $key "socket_listener" }}
     {{- if or (hasPrefix "udp" $value.service_address) (hasPrefix "tcp" $value.service_address) }}
   - port: {{ regexFind "[0-9]+$" $value.service_address  | int64 }}
