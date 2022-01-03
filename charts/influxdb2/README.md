@@ -1,7 +1,5 @@
 # InfluxDB v2 Helm chart
 
-**Warning**: This InfluxDB Helm chart and the software it deploys are in a beta phase.
-
 [InfluxDB](https://github.com/influxdata/influxdb) is an open source time series
 database with no external dependencies. It's useful for recording metrics,
 events, and performing analytics.
@@ -48,7 +46,7 @@ This command removes all Kubernetes components associated with the chart and del
 
 ## Persistence
 
-The [InfluxDB](https://quay.io/influxdb/influxdb:2.0.0-beta) image stores data in the `/root/.influxdbv2` directory in the container.
+The [InfluxDB v2](https://hub.docker.com/_/influxdb/) image stores data in the `/var/lib/influxdb2` directory in the container.
 
 If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/)
 associated with StatefulSet is provisioned. The volume is created using dynamic

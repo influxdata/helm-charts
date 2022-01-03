@@ -441,7 +441,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
           {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "map[string]interface {}" }}
+          {{- if or (eq $key "tagpass") (eq $key "tagdrop") }}
+      [aggregators.{{ $aggregator }}.{{ $key }}]
+          {{- else }}
       [[aggregators.{{ $aggregator }}.{{ $key }}]]
+          {{- end }}
             {{- range $k, $v := $value }}
               {{- $tps := typeOf $v }}
               {{- if eq $tps "string" }}
