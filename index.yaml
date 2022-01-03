@@ -1454,6 +1454,23 @@ entries:
   influxdb2:
   - apiVersion: v2
     appVersion: 2.1.1
+    created: "2022-01-03T17:46:36.594545871Z"
+    description: A Helm chart for InfluxDB v2
+    digest: 452d9b73d2f32dd06131066291ebea77bae48d8f49987de86073f4fbc0ef17a6
+    home: https://www.influxdata.com/products/influxdb/
+    icon: https://avatars0.githubusercontent.com/u/5713248?s=200&v=4
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: influxdb2
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb2-2.0.6/influxdb2-2.0.6.tgz
+    version: 2.0.6
+  - apiVersion: v2
+    appVersion: 2.1.1
     created: "2021-12-07T10:28:52.297310831Z"
     description: A Helm chart for InfluxDB v2
     digest: 8163005d61c2dea75ce7a21cee1013a755250c510140b8b07111d33aec049db9
@@ -3592,4 +3609,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2021-12-20T18:59:30.378220363Z"
+generated: "2022-01-03T17:46:36.596314783Z"
