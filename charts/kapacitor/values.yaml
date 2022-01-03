@@ -6,6 +6,10 @@ image:
   tag: "1.6.2-alpine"
   pullPolicy: "IfNotPresent"
 
+## Deployment Strategy type
+# strategy:
+#   type: Recreate
+
 ## Specify a service type, defaults to NodePort
 ## ref: http://kubernetes.io/docs/user-guide/services/
 ##
