@@ -28,6 +28,35 @@ affinity: {}
 
 securityContext: {}
 
+## Customize liveness, readiness and startup probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+##
+livenessProbe: {}
+  # path: "/health"
+  # scheme: "HTTP"
+  # initialDelaySeconds: 0
+  # periodSeconds: 10
+  # timeoutSeconds: 1
+  # failureThreshold: 3
+
+readinessProbe: {}
+  # path: "/health"
+  # scheme: "HTTP"
+  # initialDelaySeconds: 0
+  # periodSeconds: 10
+  # timeoutSeconds: 1
+  # successThreshold: 1
+  # failureThreshold: 3
+
+startupProbe:
+  enabled: false
+  # path: "/health"
+  # scheme: "HTTP"
+  # initialDelaySeconds: 30
+  # periodSeconds: 5
+  # timeoutSeconds: 1
+  # failureThreshold: 6
+
 ## Extra environment variables to configure influxdb
 ## e.g.
 # env:

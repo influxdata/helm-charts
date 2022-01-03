@@ -94,12 +94,34 @@ spec:
           {{- end }}
           livenessProbe:
             httpGet:
-              path: /health
+              path: {{ .Values.livenessProbe.path | default "/health" }}
               port: http
+              scheme: {{ .Values.livenessProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 0 }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold | default 3 }}
           readinessProbe:
             httpGet:
-              path: /health
+              path: {{ .Values.readinessProbe.path | default "/health" }}
               port: http
+              scheme: {{ .Values.readinessProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default 0 }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds | default 1 }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold | default 1 }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold | default 3 }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.startupProbe.path | default "/health" }}
+              port: http
+              scheme: {{ .Values.startupProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds | default 5 }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold | default 6 }}
+          {{- end }}
           volumeMounts:
           - name: data
             mountPath: {{ .Values.persistence.mountPath }}
