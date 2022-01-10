@@ -12,6 +12,10 @@ metadata:
     app: {{ template "kapacitor.fullname" . }}
 spec:
   replicas: 1
+  {{- with .Values.strategy }}
+  strategy:
+{{ toYaml . | trim | indent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       app: {{ template "kapacitor.fullname" . }}

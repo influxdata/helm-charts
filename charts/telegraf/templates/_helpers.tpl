@@ -207,21 +207,24 @@ app.kubernetes.io/instance: {{ .Release.Name }}
               {{- range $b, $val := $value }}
                 {{- $i := int64 $b }}
                 {{- $tp := typeOf $val }}
-                {{- if eq $i $numOut }}
-                  {{- if eq $tp "string" }}
+                {{- if eq $tp "string" }}
         {{ $val | quote }}
-                  {{- end }}
-                  {{- if eq $tp "float64" }}
+                {{- end }}
+                {{- if eq $tp "float64" }}
+                  {{- if eq $key "percentiles" }}
+                    {{- $xval := float64 (int64 $val) }}
+                    {{- if eq $val $xval }}
+        {{ $val | int64 }}.0
+                    {{- else }}
+        {{ $val | float64 }}
+                    {{- end }}
+                  {{- else }}
         {{ $val | int64 }}
                   {{- end }}
-                {{- else }}
-                  {{- if eq $tp "string" }}
-        {{ $val | quote }},
-                  {{- end}}
-                  {{- if eq $tp "float64" }}
-        {{ $val | int64 }},
-                  {{- end }}
                 {{- end }}
+                {{- if ne $i $numOut -}}
+        ,
+                {{- end -}}
               {{- end }}
       ]
           {{- end }}
@@ -441,7 +444,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
           {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "map[string]interface {}" }}
+          {{- if or (eq $key "tagpass") (eq $key "tagdrop") }}
+      [aggregators.{{ $aggregator }}.{{ $key }}]
+          {{- else }}
       [[aggregators.{{ $aggregator }}.{{ $key }}]]
+          {{- end }}
             {{- range $k, $v := $value }}
               {{- $tps := typeOf $v }}
               {{- if eq $tps "string" }}
