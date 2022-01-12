@@ -172,7 +172,9 @@ metrics:
     enabled: false
     service_address: "http://:8888"
     threshold: 5000.0
-  collect_memstats: false
+  internal:
+    enabled: true
+    collect_memstats: false
 
 # Lifecycle hooks
 # hooks:

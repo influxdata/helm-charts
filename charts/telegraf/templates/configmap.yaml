@@ -22,5 +22,7 @@ data:
         field = "buffer_size"
     {{- end }}
     {{ template "inputs" .Values.config.inputs -}}
+    {{- if .Values.metrics.internal.enabled }}
     [[inputs.internal]]
-      collect_memstats = {{ .Values.metrics.collect_memstats }}
+      collect_memstats = {{ or .Values.metrics.internal.collect_memstats (.Values.metrics.collect_memstats | default false) }}
+    {{- end }}
