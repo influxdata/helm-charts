@@ -12,9 +12,10 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-  {{- if .Values.metrics.health.enabled }}
-  - port: 8888
-    targetPort: 8888
+  {{- $health := include "telegraf.health" . | fromYaml }}
+  {{- with $health }}
+  - port: {{ trimPrefix "http://:" .service_address | int64 }}
+    targetPort: {{ trimPrefix "http://:" .service_address | int64 }}
     name: "health"
   {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.inputs }}

@@ -170,6 +170,7 @@ config:
 metrics:
   health:
     enabled: false
+    service_address: "http://:8888"
     threshold: 5000.0
   collect_memstats: false
 

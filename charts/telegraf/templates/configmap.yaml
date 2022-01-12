@@ -13,11 +13,11 @@ data:
     {{ template "outputs" .Values.config.outputs }}
     {{- if .Values.metrics.health.enabled }}
     [[outputs.health]]
-      service_address = "http://:8888"
+      service_address = "{{ .Values.metrics.health.service_address }}"
       namepass = ["internal_write"]
       [[outputs.health.compares]]
         field = "buffer_size"
-        lt = {{ .Values.metrics.health.threshold }}
+        lt = {{ .Values.metrics.health.threshold | int64 }}.0
       [[outputs.health.contains]]
         field = "buffer_size"
     {{- end }}
