@@ -125,6 +125,7 @@ spec:
           volumeMounts:
           - name: data
             mountPath: {{ .Values.persistence.mountPath }}
+            subPath: {{ .Values.persistence.subPath }}
           resources:
             {{ .Values.resources | toYaml | nindent 12 | trim }}
 
