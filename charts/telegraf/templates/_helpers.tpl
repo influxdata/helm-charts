@@ -532,3 +532,22 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Get health configuration
+*/}}
+{{- define "telegraf.health" -}}
+{{- if .Values.metrics.health.enabled -}}
+    {{- .Values.metrics.health | toYaml -}}
+{{- else -}}
+    {{- $health := dict -}}
+    {{- range $objectKey, $objectValue := .Values.config.outputs }}
+        {{- range $key, $value := . -}}
+        {{- if eq $key "health" -}}
+            {{- $health = $value -}}
+        {{- end -}}
+        {{- end -}}
+    {{- end }}
+    {{- $health | toYaml -}}
+{{- end -}}
+{{- end -}}
