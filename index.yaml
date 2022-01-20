@@ -2021,6 +2021,33 @@ entries:
   telegraf:
   - apiVersion: v2
     appVersion: 1.21.2
+    created: "2022-01-20T17:11:22.945539513Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: b65944125e8e06549398b50ca2c91b892b77bb1878e8a2dc52823d19de0f6bf0
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    icon: https://avatars0.githubusercontent.com/u/5713248?s=200&v=4
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    - influxdb
+    - agent
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: telegraf
+    sources:
+    - https://github.com/influxdata/helm-charts/tree/master/charts/telegraf
+    - https://github.com/influxdata/helm-charts/
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.8.12/telegraf-1.8.12.tgz
+    version: 1.8.12
+  - apiVersion: v2
+    appVersion: 1.21.2
     created: "2022-01-20T09:38:07.112938531Z"
     description: Telegraf is an agent written in Go for collecting, processing, aggregating,
       and writing metrics.
@@ -3775,4 +3802,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2022-01-20T09:38:07.114622352Z"
+generated: "2022-01-20T17:11:22.946495325Z"
