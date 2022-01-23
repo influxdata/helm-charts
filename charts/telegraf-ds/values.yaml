@@ -84,6 +84,9 @@ serviceAccount:
 ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
 # priorityClassName: system-node-critical
 
+# Specify the pod's SecurityContext, including the OS user and group to run the pod
+podSecurityContext: {}
+
 override_config:
   toml: ~
   # Provide a literal TOML config
