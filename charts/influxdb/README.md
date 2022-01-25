@@ -84,23 +84,23 @@ The following table lists configurable parameters, their descriptions, and their
 | volumes | `volumes` stanza(s) to be used in the main container | nil |
 | mountPoints | `volumeMount` stanza(s) to be used in the main container | nil |
 | extraContainers | Additional containers to be added to the pod | {} |
-| config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#reporting-disabled-false) | false |
+| config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#reporting-disabled-false) | false |
 | config.rpc | RPC address for backup and storage | {} |
-| config.meta | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#meta) | {} |
-| config.data | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#data) | {} |
-| config.coordinator | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#coordinator) | {} |
-| config.retention | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#retention) | {} |
-| config.shard_precreation | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#shard-precreation) | {} |
-| config.monitor | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#monitor) | {} |
-| config.http | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#http) | {} |
-| config.logging | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#logging) | {} |
-| config.subscriber | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#subscriber) | {} |
-| config.graphite | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#graphite) | {} |
-| config.collectd | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#collectd) | {} |
-| config.opentsdb | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#opentsdb) | {} |
-| config.udp | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#udp) | {} |
-| config.continous_queries | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#continuous-queries) | {} |
-| config.tls | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#tls) | {} |
+| config.meta | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#meta) | {} |
+| config.data | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#data) | {} |
+| config.coordinator | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#coordinator) | {} |
+| config.retention | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#retention) | {} |
+| config.shard_precreation | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#shard-precreation) | {} |
+| config.monitor | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#monitor) | {} |
+| config.http | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#http) | {} |
+| config.logging | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#logging) | {} |
+| config.subscriber | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#subscriber) | {} |
+| config.graphite | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#graphite) | {} |
+| config.collectd | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#collectd) | {} |
+| config.opentsdb | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#opentsdb) | {} |
+| config.udp | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#udp) | {} |
+| config.continous_queries | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#continuous-queries) | {} |
+| config.tls | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#tls) | {} |
 | initScripts.enabled | Boolean flag to enable and disable initscripts. If the container finds any files with the extensions .sh or .iql inside of the /docker-entrypoint-initdb.d folder, it will execute them. The order they are executed in is determined by the shell. This is usually alphabetical order. | false |
 | initScripts.scripts | Init scripts | {} |
 | backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false` |
@@ -202,7 +202,7 @@ Alternatively, if `.Values.setDefaultUser.user.existingSecret` is set the user a
 
 ## Back up and restore
 
-Before proceeding, please read [Backing up and restoring in InfluxDB OSS](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/). While the chart offers backups by means of the [`backup-cronjob`](./templates/backup-cronjob.yaml), restores do not fall under the chart's scope today but can be achieved by one-off kubernetes jobs.
+Before proceeding, please read [Backing up and restoring in InfluxDB OSS](https://docs.influxdata.com/influxdb/v1.8/administration/backup_and_restore/). While the chart offers backups by means of the [`backup-cronjob`](./templates/backup-cronjob.yaml), restores do not fall under the chart's scope today but can be achieved by one-off kubernetes jobs.
 
 ### Backups
 
@@ -262,7 +262,7 @@ spec:
               memory: 8Gi
       containers:
         - name: influxdb-restore
-          image: influxdb:1.7-alpine
+          image: influxdb:1.8-alpine
           volumeMounts:
             - name: backup
               mountPath: /backup
@@ -287,7 +287,7 @@ spec:
 ```
 
 At which point the data from the new `<db name>_bak` dbs would have to be side loaded into the original dbs.
-Please see [InfluxDB documentation for more restore examples](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/#restore-examples).
+Please see [InfluxDB documentation for more restore examples](https://docs.influxdata.com/influxdb/v1.8/administration/backup_and_restore/#restore-examples).
 
 ## Mounting Extra Volumes
 
