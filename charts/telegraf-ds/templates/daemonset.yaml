@@ -83,3 +83,7 @@ spec:
       dnsConfig:
 {{ toYaml . | indent 8 }}
       {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+{{ toYaml . | indent 8 }}
+      {{- end }}
