@@ -15,7 +15,7 @@ serviceAccount:
   annotations: {}
 
 ## Customize liveness, readiness and startup probes
-## ref: https://docs.influxdata.com/influxdb/v1.7/tools/api/#ping-http-endpoint
+## ref: https://docs.influxdata.com/influxdb/v1.8/tools/api/#ping-http-endpoint
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 ##
 livenessProbe: {}
@@ -229,7 +229,7 @@ env: {}
 envFromSecret: {}
 
 ## InfluxDB configuration
-## ref: https://docs.influxdata.com/influxdb/v1.7/administration/config
+## ref: https://docs.influxdata.com/influxdb/v1.8/administration/config
 config:
   reporting_disabled: false
   rpc: {}
