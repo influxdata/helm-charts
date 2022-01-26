@@ -1906,6 +1906,33 @@ entries:
     version: 1.0.2
   kapacitor:
   - apiVersion: v1
+    appVersion: 1.6.3
+    created: "2022-01-26T20:11:22.883239966Z"
+    description: InfluxDB's native data processing engine. It can process both stream
+      and batch data from InfluxDB.
+    digest: 2018d7e7057ac4e009b691a8eb5da10a757e168d7072aa00fd2d937d2b65fa66
+    home: https://www.influxdata.com/time-series-platform/kapacitor/
+    keywords:
+    - kapacitor
+    - stream
+    - etl
+    - timeseries
+    - influxdb
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    name: kapacitor
+    sources:
+    - https://github.com/influxdata/kapacitor
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/kapacitor-1.4.2/kapacitor-1.4.2.tgz
+    version: 1.4.2
+  - apiVersion: v1
     appVersion: 1.6.2
     created: "2022-01-03T18:47:24.634525031Z"
     description: InfluxDB's native data processing engine. It can process both stream
@@ -3876,4 +3903,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2022-01-25T13:02:24.661632884Z"
+generated: "2022-01-26T20:11:22.884146303Z"
