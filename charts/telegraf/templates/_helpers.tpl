@@ -201,6 +201,23 @@ app.kubernetes.io/instance: {{ .Release.Name }}
       {{ $key }} = {{ $value }}
           {{- end }}
           {{- if eq $tp "[]interface {}" }}
+            {{- if eq (index $value 0 | typeOf) "map[string]interface {}" -}}
+              {{- range $b, $val := $value }}
+      [[inputs.{{- $input }}.{{- $key }}]]
+                {{- range $k, $v := $val }}
+                  {{- $tps := typeOf $v }}
+                  {{- if eq $tps "string" }}
+         {{ $k }} = {{ $v | quote }}
+                  {{- end }}
+                  {{- if eq $tps "float64" }}
+         {{ $k }} = {{ $v | int64 }}
+                  {{- end }}
+                  {{- if eq $tps "bool" }}
+         {{ $k }} = {{ $v }}
+                  {{- end }}
+                {{- end }}
+              {{- end }}
+            {{- else }}
       {{ $key }} = [
               {{- $numOut := len $value }}
               {{- $numOut := sub $numOut 1 }}
@@ -227,6 +244,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
                 {{- end -}}
               {{- end }}
       ]
+            {{- end }}
           {{- end }}
           {{- end }}
           {{- range $key, $value := $config -}}
