@@ -62,7 +62,7 @@ The following table lists configurable parameters, their descriptions, and their
 | `resources.limits.cpu` | Kapacitor cpu limit | `2` |
 | `envVars` | Environment variables to set initial Kapacitor configuration (https://hub.docker.com/_/kapacitor/) | `{}` |
 | `influxURL` | InfluxDB url used to interact with Kapacitor (also can be set with ```envVars.KAPACITOR_INFLUXDB_0_URLS_0```) | `http://influxdb-influxdb.tick:8086` |
-| `existingSecret` | Name of an existing Secrect used to set the environment variables for the InfluxDB user and password. The expected keys in the secret are `influxdb-user` and `influxdb-password`. |
+| `existingSecret` | Name of an existing Secrect used to set certain environment variables with sensitive data, like the InfluxDB credentials and the Slack event handler URL. The following keys are accepted in the secret `influxdb-user`, `influxdb-password` and `kapacitor-slack-url` (optional). |
 | `rbac.create` | Create and use RBAC resources | `true` |
 | `rbac.namespaced` | Creates Role and Rolebinding instead of the default ClusterRole and ClusteRoleBindings for the Kapacitor instance  | `false` |
 | `serviceAccount.annotations` | ServiceAccount annotations | `{}` |

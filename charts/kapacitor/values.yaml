@@ -65,11 +65,11 @@ resources:
 ##
 # influxURL: http://influxdb-influxdb.tick:8086
 
-## Name of an existing Secrect used to set the environment variables for the
-## InfluxDB user and password. The expected keys in the secret are
-## `influxdb-user` and `influxdb-password`.
+## Name of an existing Secrect used to set certain environment variables with sensitive data,
+## like the InfluxDB credentials and the Slack event handler URL. The following keys are accepted
+## in the secret `influxdb-user`, `influxdb-password` and `kapacitor-slack-url` (optional).
 ##
-# existingSecret: influxdb-auth
+# existingSecret: kapacitor
 
 ## Role based access control
 rbac:

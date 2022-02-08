@@ -49,6 +49,12 @@ spec:
             secretKeyRef:
               key: influxdb-password
               name: {{ .Values.existingSecret }}
+        - name: KAPACITOR_SLACK_URL
+          valueFrom:
+            secretKeyRef:
+              key: kapacitor-slack-url
+              name: {{ .Values.existingSecret }}
+              optional: true
         {{- end }}
         ports:
         - containerPort: 9092
