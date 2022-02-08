@@ -2,7 +2,8 @@
 ##
 image:
   repository: "chronograf"
-  ## default: quay.io/influxdb/chronograf
+  ## DockerHub is now the preferred repo
+  ## alternative: quay.io/influxdb/chronograf
   tag: 1.9.3
   pullPolicy: IfNotPresent
 
