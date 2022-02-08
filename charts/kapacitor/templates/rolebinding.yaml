@@ -1,5 +1,9 @@
 {{- if and .Values.rbac.create .Values.rbac.namespaced -}}
+{{- if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1" }}
+apiVersion: rbac.authorization.k8s.io/v1
+{{- else }}
 apiVersion: rbac.authorization.k8s.io/v1beta1
+{{- end }}
 kind: RoleBinding
 metadata:
   name: {{ template "kapacitor.fullname" . }}
