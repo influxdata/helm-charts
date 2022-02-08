@@ -3,7 +3,7 @@
 image:
   repository: "chronograf"
   ## default: quay.io/influxdb/chronograf
-  tag: 1.9.1
+  tag: 1.9.3
   pullPolicy: IfNotPresent
 
 ## Specify a service type
