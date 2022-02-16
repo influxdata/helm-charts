@@ -46,7 +46,7 @@ The default configuration parameters are listed in `values.yaml`. To change the 
 
 ```console
 helm upgrade --install my-release \
-  --set config.outputs.influxdb.url=http://foo.bar:8086 \
+  --set outputs.influxdb.urls=["http://foo.bar:8086"] \
     influxdata/telegraf-ds
 ```
 
