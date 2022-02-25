@@ -4,6 +4,7 @@ metadata:
 {{- if .Values.meta.service.annotations }}
   annotations:
 {{ toYaml .Values.meta.service.annotations | indent 4 }}
+{{- end }}
   name: {{ template "influxdb-enterprise.fullname" . }}-meta
   labels:
     influxdb.influxdata.com/component: meta
