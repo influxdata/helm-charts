@@ -114,7 +114,7 @@ meta:
   #
   service:
     ## Add annotations to service
-    # annotations: {}
+    annotations: {}
   #
   ## Persist data to a persistent volume
   persistence:
@@ -212,7 +212,7 @@ data:
     # externalIPs: []
     # externalTrafficPolicy: ""
     ## Add annotations to service
-    # annotations: {}
+    annotations: {}
   #
   ## Persist data to a persistent volume
   persistence:
