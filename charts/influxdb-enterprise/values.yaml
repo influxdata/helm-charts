@@ -112,8 +112,15 @@ meta:
   sharedSecret:
     secretName: influxdb-shared-secret
   #
+  service:
+    ## Specify a service type
+    ## ClusterIP is default
+    ## ref: http://kubernetes.io/docs/user-guide/services/
+    type: ClusterIP
+    ## Add annotations to service
+    # annotations: {}
+  #
   ## Persist data to a persistent volume
-  ##
   persistence:
     enabled: false
     ## A manually managed Persistent Volume and Claim
@@ -200,22 +207,18 @@ data:
   #   - cmd: stat $HOME/somefile
   #     description: And we run a second command
   #
-  ## Persist data to a persistent volume
-  ##
-  ## Specify a service type
-  ## NodePort is default
-  ## ref: http://kubernetes.io/docs/user-guide/services/
-  ##
   service:
     ## Specify a service type
     ## ClusterIP is default
     ## ref: http://kubernetes.io/docs/user-guide/services/
-    ## Add annotations to service
-    # annotations: {}
     type: ClusterIP
     # loadBalancerIP: ""
     # externalIPs: []
     # externalTrafficPolicy: ""
+    ## Add annotations to service
+    # annotations: {}
+  #
+  ## Persist data to a persistent volume
   persistence:
     enabled: false
     ## A manually managed Persistent Volume and Claim

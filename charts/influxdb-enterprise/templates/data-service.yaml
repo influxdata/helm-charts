@@ -1,6 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
+{{- if .Values.data.service.annotations }}
+  annotations:
+{{ toYaml .Values.data.service.annotations | indent 4 }}
+{{- end }}
   name: {{ template "influxdb-enterprise.fullname" . }}-data
   labels:
     influxdb.influxdata.com/component: data
