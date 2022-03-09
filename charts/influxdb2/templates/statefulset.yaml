@@ -30,6 +30,7 @@ spec:
         {{- else }}
           emptyDir: {}
         {{- end }}
+      serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
