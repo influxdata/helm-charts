@@ -13,10 +13,6 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
     app: {{ template "kapacitor.fullname" . }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: {{ template "kapacitor.fullname" . }}
 subjects:
 - kind: ServiceAccount
   name: {{ template "kapacitor.serviceAccountName" . }}
