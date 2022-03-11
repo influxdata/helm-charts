@@ -3851,6 +3851,31 @@ entries:
     version: 1.0.5
   telegraf-operator:
   - apiVersion: v2
+    appVersion: v1.3.5
+    created: "2022-03-11T17:41:44.308090131Z"
+    description: A Helm chart for Kubernetes to deploy telegraf-operator
+    digest: 1c8e30cc97544e5131917254823c279e0ae8aaaed33e544c9dec728ce35e1d8e
+    home: https://github.com/influxdata/telegraf-operator
+    keywords:
+    - telegraf
+    - telegraf-operator
+    - sidecar
+    - operator
+    - injector
+    - mutatingwebhook
+    - influxdata
+    - influxdb
+    kubeVersion: '>= 1.13.0-r0'
+    maintainers:
+    - email: wkocjan@influxdata.com
+      name: wojciechka
+    - name: rawkode
+    name: telegraf-operator
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.3.5/telegraf-operator-1.3.5.tgz
+    version: 1.3.5
+  - apiVersion: v2
     appVersion: v1.3.4
     created: "2022-02-17T15:31:24.907928236Z"
     description: A Helm chart for Kubernetes to deploy telegraf-operator
@@ -4210,4 +4235,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2022-03-11T17:29:41.492162602Z"
+generated: "2022-03-11T17:41:44.309146652Z"
