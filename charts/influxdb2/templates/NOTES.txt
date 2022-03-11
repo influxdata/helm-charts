@@ -13,3 +13,5 @@ To retrieve the password for the '{{ .Values.adminUser.user}}' user:
   echo $(kubectl get secret {{ include "influxdb.fullname" . }}-auth -o "jsonpath={.data['admin-password']}" --namespace {{ .Release.Namespace }} | base64 --decode)
 
 {{- end }}
+
+Note: with enabled persistence, admin password is only set once during the initial deployment. The password is not changed when InfluxDB 2 is re-deployed with different password.
