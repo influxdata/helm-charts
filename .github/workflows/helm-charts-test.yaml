@@ -62,9 +62,10 @@ jobs:
       - name: Run chart-testing (install)
         id: install
         run: |
-          output=$(ct install --namespace=default)
+          output=$RUNNER_TEMP/$GITHUB_RUN_ID.txt
+          ct install --namespace=default 2>&1 | tee $output
           patterns="Error loading config file"
-          messages=$(egrep "$patterns" <<< $output)
+          messages=$(egrep "$patterns" $output)
           exitcode=$?
           if [[ $exitcode -eq 0 ]]; then
             echo '::warning:: logs check failed'
