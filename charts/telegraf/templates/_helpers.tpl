@@ -83,10 +83,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end -}}
 
-{{- define "outputs" -}}
+{{- define "outputs.v1" -}}
 {{- range $outputIdx, $configObject := . -}}
-    {{- range $output, $config := . -}}
-
+    {{- range $output, $config := . }}
     [[outputs.{{- $output }}]]
     {{- if $config -}}
     {{- $tp := typeOf $config -}}
@@ -178,10 +177,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end -}}
 
-{{- define "inputs" -}}
+{{- define "inputs.v1" -}}
 {{- range $inputIdx, $configObject := . -}}
-    {{- range $input, $config := . -}}
-
+    {{- range $input, $config := . }}
     [[inputs.{{- $input }}]]
     {{- if $config -}}
     {{- $tp := typeOf $config -}}
@@ -288,10 +286,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end -}}
 
-{{- define "processors" -}}
+{{- define "processors.v1" -}}
 {{- range $processorIdx, $configObject := . -}}
-    {{- range $processor, $config := . -}}
-
+    {{- range $processor, $config := . }}
     [[processors.{{- $processor }}]]
     {{- if $config -}}
     {{- $tp := typeOf $config -}}
@@ -410,11 +407,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end -}}
 
-
-{{- define "aggregators" -}}
+{{- define "aggregators.v1" -}}
 {{- range $aggregatorIdx, $configObject := . -}}
-    {{- range $aggregator, $config := . -}}
-
+    {{- range $aggregator, $config := . }}
     [[aggregators.{{- $aggregator }}]]
     {{- if $config -}}
     {{- $tp := typeOf $config -}}
@@ -569,3 +564,184 @@ Get health configuration
     {{- $health | toYaml -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Backward compatible version support.
+*/}}
+
+{{- define "outputs" -}}
+{{- include "section" (prepend . "outputs") -}}
+{{- end -}}
+
+{{- define "inputs" -}}
+{{- include "section" (prepend . "inputs") -}}
+{{- end -}}
+
+{{- define "processors" -}}
+{{- include "section" (prepend . "processors") -}}
+{{- end -}}
+
+{{- define "aggregators" -}}
+{{- include "section" (prepend . "aggregators") -}}
+{{- end -}}
+
+{{- define "detect.version" -}}
+{{ ternary 2 1 (eq ((default 2 .Values.tplVersion) | int64) 2) }}
+{{- end -}}
+
+{{- define "section" -}}
+{{- $name := index . 0 -}}
+{{- $version := index . 1 | int64 -}}
+{{- $suffix := ternary "v2" "v1" (eq 2 $version) -}}
+{{- $templateName := printf "%s.%s" $name $suffix -}}
+{{- with index . 2 -}}
+  {{ include $templateName . }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Version 2 of aggregators, processors, inputs and outputs templates.
+*/}}
+
+{{- define "processors.v2" -}}
+{{- range $processorIdx, $configObject := . -}}
+    {{- range $processor, $config := . }}
+    [[processors.{{- $processor }}]]
+    {{- if $config -}}
+    {{- $tp := typeOf $config -}}
+    {{- if eq $tp "map[string]interface {}" -}}
+      {{- $args := dict "key" $processor "value" $config "level" 1 "type" "processors" -}}
+      {{ include "any.table" $args }}
+    {{- end }}
+    {{- end }}
+    {{ end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "aggregators.v2" -}}
+{{- range $aggregatorIdx, $configObject := . -}}
+    {{- range $aggregator, $config := . }}
+    [[aggregators.{{- $aggregator }}]]
+    {{- if $config -}}
+    {{- $tp := typeOf $config -}}
+    {{- if eq $tp "map[string]interface {}" -}}
+      {{- $args := dict "key" $aggregator "value" $config "level" 1 "type" "aggregators" -}}
+      {{ include "any.table" $args }}
+    {{- end }}
+    {{- end }}
+    {{ end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "inputs.v2" -}}
+{{- range $inputIdx, $configObject := . -}}
+    {{- range $input, $config := . }}
+    [[inputs.{{- $input }}]]
+    {{- if $config -}}
+    {{- $tp := typeOf $config -}}
+    {{- if eq $tp "map[string]interface {}" -}}
+      {{- $args := dict "key" $input "value" $config "level" 1 "type" "inputs" -}}
+      {{ include "any.table" $args }}
+    {{- end }}
+    {{- end }}
+    {{ end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "outputs.v2" -}}
+{{- range $outputIdx, $configObject := . -}}
+    {{- range $output, $config := . }}
+    [[outputs.{{- $output }}]]
+    {{- if $config -}}
+    {{- $tp := typeOf $config -}}
+    {{- if eq $tp "map[string]interface {}" -}}
+      {{- $args := dict "key" $output "value" $config "level" 1 "type" "outputs" -}}
+      {{ include "any.table" $args }}
+    {{- end }}
+    {{- end }}
+    {{ end }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Renders indented table.
+*/}}
+
+{{- define "any.table" -}}
+{{- $n := (mul .level 2) | add 2 | int }}
+{{- $args := dict "key" .key "value" .value "type" .type -}}
+{{- include "any.table.raw" $args | indent $n }}
+{{- end }}
+
+{{/*
+Renders a table.
+Renders primitive and arrays of primitive types first, then nested tables and arrays of nested tables.
+*/}}
+
+{{- define "any.table.raw" -}}
+{{- $key := .key }}
+{{- $type := .type }}
+{{- range $k, $v := .value }}
+  {{- $tps := typeOf $v }}
+  {{- if eq $tps "string" }}
+  {{ $k }} = {{ $v | quote }}
+  {{- else if eq $tps "float64" }}
+    {{- $rv := float64 (int64 $v) }}
+    {{- if eq $rv $v }}
+  {{ $k }} = {{ $v | int64 }}
+    {{- else }}
+  {{ $k }} = {{ $v }}
+    {{- end }}
+  {{- else if eq $tps "int64" }}
+  {{ $k }} = {{ $v }}
+  {{- else if eq $tps "bool" }}
+  {{ $k }} = {{ $v }}
+  {{- else if eq $tps "[]interface {}" }}
+    {{- if ne (index $v 0 | typeOf) "map[string]interface {}" }}
+  {{ $k }} = [
+      {{- $numOut := len $v }}
+      {{- $numOut := sub $numOut 1 }}
+      {{- range $b, $xv := $v }}
+        {{- $i := int64 $b }}
+        {{- $xtps := typeOf $xv }}
+        {{- if eq $xtps "string" }}
+    {{ $xv | quote }}
+        {{- else if eq $xtps "float64" }}
+          {{- $rxv := float64 (int64 $xv) }}
+          {{- if eq $rxv $xv }}
+            {{- if eq $k "percentiles" }}
+    {{ $xv | int64 }}.0
+            {{- else }}
+    {{ $xv | int64 }}
+            {{- end }}
+          {{- else }}
+    {{ $xv }}
+          {{- end }}
+        {{- else if eq $xtps "int64" }}
+    {{ $xv }}
+        {{- end }}
+        {{- if ne $i $numOut -}}
+        ,
+        {{- end -}}
+      {{- end }}
+  ]
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- range $k, $v := .value }}
+  {{- $tps := typeOf $v }}
+  {{- if eq $tps "map[string]interface {}" }}
+      {{- $args := dict "key" (printf "%s.%s" $key $k) "value" $v "type" $type }}
+  [{{ $type }}.{{ $args.key }}]
+      {{- include "any.table" $args -}}
+  {{- else if eq $tps "[]interface {}" }}
+    {{- if eq (index $v 0 | typeOf) "map[string]interface {}" }}
+      {{- range $b, $xv := $v }}
+        {{- $args := dict "key" (printf "%s.%s" $key $k) "value" $xv  "type" $type }}
+  [[{{ $type }}.{{ $args.key }}]]
+        {{- include "any.table" $args -}}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

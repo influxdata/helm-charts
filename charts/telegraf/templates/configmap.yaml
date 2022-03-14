@@ -6,11 +6,12 @@ metadata:
     {{- include "telegraf.labels" . | nindent 4 }}
 data:
   telegraf.conf: |+
+    {{- $tplVersion := include "detect.version" . -}}
     {{ template "global_tags" .Values.config.global_tags }}
     {{ template "agent" .Values.config.agent }}
-    {{ template "processors" .Values.config.processors }}
-    {{ template "aggregators" .Values.config.aggregators }}
-    {{ template "outputs" .Values.config.outputs }}
+    {{ template "processors" (list $tplVersion .Values.config.processors) }}
+    {{ template "aggregators" (list $tplVersion .Values.config.aggregators) }}
+    {{ template "outputs" (list $tplVersion .Values.config.outputs) }}
     {{- if .Values.metrics.health.enabled }}
     [[outputs.health]]
       service_address = "{{ .Values.metrics.health.service_address }}"
@@ -21,7 +22,7 @@ data:
       [[outputs.health.contains]]
         field = "buffer_size"
     {{- end }}
-    {{ template "inputs" .Values.config.inputs -}}
+    {{ template "inputs" (list $tplVersion .Values.config.inputs) }}
     {{- if .Values.metrics.internal.enabled }}
     [[inputs.internal]]
       collect_memstats = {{ or .Values.metrics.internal.collect_memstats (.Values.metrics.collect_memstats | default false) }}
