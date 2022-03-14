@@ -60,7 +60,13 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --namespace=default
+        id: install
+        run: |
+          # install chart(s)
+          OUTPUT=$(ct install --namespace=default)
+          # check logs for unwanted messages (job fails if found)
+          PATTERNS="Error loading config file"
+          ! egrep "$PATTERNS" <<< $OUTPUT
 # When https://github.com/helm/chart-testing/issues/212 is fixed, this can be used to set the license key instead of using env from secret
 #        run: ct install --namespace=default --helm-extra-args="--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
 #        env:
