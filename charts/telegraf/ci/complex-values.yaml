@@ -1,0 +1,100 @@
+config:
+  processors:
+    - enum:
+        mapping:
+          - field: "status"
+            dest: "status_code"
+            value_mappings:
+              healthy: 1
+              problem: 2
+              critical: 3
+    - enum:
+        order: 1
+        mapping:
+          - field: system_location_section
+            dest: system_location_sectionFloorNumber
+            value_mappings:
+              2nd: 2
+              1st: 1
+              Ground: 0
+              Basement: -1
+    - converter:
+        order: 2
+        fields:
+          integer:
+            - system_location_sectionFloorNumber
+  aggregators:
+    - basicstats:
+        period: "30s"
+        drop_original: true
+        stats:
+          - "sum"
+        taginclude:
+          - "counter"
+          - "sql_instance"
+        tagpass:
+          counter:
+            - "Blocked tasks"
+            - "CPU usage %"
+            - "Used memory (KB)"
+  inputs:
+    - cpu:
+    - statsd:
+        service_address: ":8125"
+        percentiles:
+          - 50
+          - 95
+          - 99
+          - 99.5
+        metric_separator: "_"
+        allowed_pending_messages: 10000
+        percentile_limit: 1000
+    - postgresql_extensible:
+        address: "host=localhost user=postgres sslmode=disable"
+        query:
+          - sqlquery: "SELECT count(*) as total_user_count FROM users"
+            version: 801
+          - sqlquery: "SELECT count(*) as total_post_count FROM posts"
+            version: 801
+    - mqtt_consumer:
+        qos: 0
+        servers:
+          - "tcp://127.0.0.1:1883"
+        topics:
+          - "telegraf/host01/cpu"
+          - "telegraf/+/mem"
+          - "sensors/#"
+        topic_parsing:
+          - topic: "telegraf/one/cpu/23"
+            measurement: "_/_/measurement/_"
+            types:
+              test: "int"
+        json_v2:
+          - measurement_name: ""
+            timestamp_path: ""
+            object:
+              - path: "@this"
+                tags:
+                  - "device"
+                  - "data.type"
+                  - "owner"
+                field:
+                  - path: ""
+                    type: "int"
+    - modbus:
+        name: "PS MAIN ENGINE"
+        controller: 'tcp://127.0.0.1:502'
+        slave_id: 1
+        holding_registers:
+          - name: "Coolant Level"
+            byte_order: CDAB
+            data_type: FLOAT32
+            scale: 0.001
+            address: [51410, 51411]
+  outputs:
+    - file:
+        files:
+          - "stdout"
+
+## Use tpl v2 templates
+tplVersion: 1
