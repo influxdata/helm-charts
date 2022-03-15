@@ -10,5 +10,5 @@ roleRef:
   name: {{ include "telegraf-operator.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "telegraf-operator.fullname" . }}
+  name: {{ include "telegraf-operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
