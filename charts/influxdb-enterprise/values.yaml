@@ -158,6 +158,9 @@ meta:
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
     insecure: true
+  ## Additional data container environment variables e.g.:
+  ##   INFLUXDB_HTTP_FLUX_ENABLED: "true"
+  env: {}
 
 
 data:
@@ -254,3 +257,6 @@ data:
     insecure: true
   flux:
     enabled: true
+  ## Additional data container environment variables e.g.:
+  ##   INFLUXDB_HTTP_FLUX_ENABLED: "true"
+  env: {}
