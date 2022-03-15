@@ -1,3 +1,4 @@
+## this config requires v2 config templates to render valid configuration (tplVersion, see at the end)
 config:
   processors:
     - enum:
@@ -9,6 +10,7 @@ config:
             healthy: 1
             problem: 2
             critical: 3
+    # issue 119
     - enum:
         order: 1
         mapping:
@@ -24,7 +26,25 @@ config:
         fields:
           integer:
             - system_location_sectionFloorNumber
+    # issue 119
+    - enum:
+        mapping:
+          field: state
+          dest: status_code
+          default: -1
+          value_mappings:
+            RUNNING: 1
+            RUNNABLE: 1
+            SUSPENDED: 2
+            PENDING_CREATE: 3
+            MAINTENANCE: 4
+            UNKNOWN_STATE: 0
+    - converter:
+        fields:
+          integer: ["check_passed", "content_mismatch"]
+          tag: ["error_code", "http_status"]
   aggregators:
+    # issue 375
     - basicstats:
         period: "30s"
         drop_original: true
@@ -40,6 +60,7 @@ config:
             - "Used memory (KB)"
   inputs:
     - cpu:
+    # issue 382
     - statsd:
         service_address: ":8125"
         percentiles:
@@ -50,6 +71,7 @@ config:
         metric_separator: "_"
         allowed_pending_messages: 10000
         percentile_limit: 1000
+    # issue 111
     - postgresql_extensible:
         address: "host=localhost user=postgres sslmode=disable"
         query:
@@ -57,6 +79,7 @@ config:
             version: 801
           - sqlquery: "SELECT count(*) as total_post_count FROM posts"
             version: 801
+    # issue 433
     - mqtt_consumer:
         qos: 0
         servers:
@@ -82,6 +105,7 @@ config:
                 field:
                   - path: ""
                     type: "int"
+    # issue 429
     - modbus:
         name: "PS MAIN ENGINE"
         controller: 'tcp://127.0.0.1:502'
