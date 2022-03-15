@@ -10,8 +10,8 @@ data:
     bind-address = ":8088"
     reporting-disabled = false
 
-    {{ if .Values.bootstrap.auth.secretName }}
     [http]
+    {{ if .Values.bootstrap.auth.secretName }}
     auth-enabled = true
     {{ end }}
 
@@ -21,6 +21,10 @@ data:
     https-certificate = "/var/run/secrets/tls/tls.crt"
     https-private-key = "/var/run/secrets/tls/tls.key"
 
+    {{ end }}
+
+    {{ if .Values.data.flux.enabled }}
+    flux-enabled = true
     {{ end }}
 
     [enterprise]
