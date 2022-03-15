@@ -91,6 +91,10 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.meta.sharedSecret.secretName }}
                   key: secret
+          {{- range $key, $val := .Values.meta.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+          {{- end}}
           {{- if .Values.envFromSecret }}
           envFrom:
             - secretRef:
