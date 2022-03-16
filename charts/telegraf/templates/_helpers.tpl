@@ -540,36 +540,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
-Create the name of the service account to use
-*/}}
-{{- define "telegraf.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (include "telegraf.fullname" .) .Values.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Get health configuration
-*/}}
-{{- define "telegraf.health" -}}
-{{- if .Values.metrics.health.enabled -}}
-    {{- .Values.metrics.health | toYaml -}}
-{{- else -}}
-    {{- $health := dict -}}
-    {{- range $objectKey, $objectValue := .Values.config.outputs }}
-        {{- range $key, $value := . -}}
-        {{- if eq $key "health" -}}
-            {{- $health = $value -}}
-        {{- end -}}
-        {{- end -}}
-    {{- end }}
-    {{- $health | toYaml -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Backward compatible version support.
 */}}
 
@@ -603,67 +573,37 @@ Backward compatible version support.
 {{- end }}
 {{- end -}}
 
-{{/*
-Version 2 of aggregators, processors, inputs and outputs templates.
-*/}}
-
 {{- define "processors.v2" -}}
-{{- range $processorIdx, $configObject := . -}}
-    {{- range $processor, $config := . }}
-    [[processors.{{- $processor }}]]
-    {{- if $config -}}
-    {{- $tp := typeOf $config -}}
-    {{- if eq $tp "map[string]interface {}" -}}
-      {{- $args := dict "key" $processor "value" $config "level" 1 "type" "processors" -}}
-      {{ include "any.table" $args }}
-    {{- end }}
-    {{- end }}
-    {{ end }}
-{{- end -}}
+  {{ include "section.v2" (list "processors" .) }}
 {{- end -}}
 
 {{- define "aggregators.v2" -}}
-{{- range $aggregatorIdx, $configObject := . -}}
-    {{- range $aggregator, $config := . }}
-    [[aggregators.{{- $aggregator }}]]
-    {{- if $config -}}
-    {{- $tp := typeOf $config -}}
-    {{- if eq $tp "map[string]interface {}" -}}
-      {{- $args := dict "key" $aggregator "value" $config "level" 1 "type" "aggregators" -}}
-      {{ include "any.table" $args }}
-    {{- end }}
-    {{- end }}
-    {{ end }}
-{{- end -}}
+  {{ include "section.v2" (list "aggregators" .) }}
 {{- end -}}
 
 {{- define "inputs.v2" -}}
-{{- range $inputIdx, $configObject := . -}}
-    {{- range $input, $config := . }}
-    [[inputs.{{- $input }}]]
-    {{- if $config -}}
-    {{- $tp := typeOf $config -}}
-    {{- if eq $tp "map[string]interface {}" -}}
-      {{- $args := dict "key" $input "value" $config "level" 1 "type" "inputs" -}}
-      {{ include "any.table" $args }}
-    {{- end }}
-    {{- end }}
-    {{ end }}
-{{- end -}}
+  {{ include "section.v2" (list "inputs" .) }}
 {{- end -}}
 
 {{- define "outputs.v2" -}}
-{{- range $outputIdx, $configObject := . -}}
-    {{- range $output, $config := . }}
-    [[outputs.{{- $output }}]]
+  {{ include "section.v2" (list "outputs" .) }}
+{{- end -}}
+
+{{- define "section.v2" -}}
+{{- $name := index . 0 -}}
+{{- with index . 1 -}}
+{{- range $itemIdx, $configObject := . -}}
+    {{- range $item, $config := . }}
+    [[{{ $name }}.{{- $item }}]]
     {{- if $config -}}
     {{- $tp := typeOf $config -}}
     {{- if eq $tp "map[string]interface {}" -}}
-      {{- $args := dict "key" $output "value" $config "level" 1 "type" "outputs" -}}
+      {{- $args := dict "key" $item "value" $config "level" 1 "type" $name -}}
       {{ include "any.table" $args }}
     {{- end }}
     {{- end }}
     {{ end }}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -754,3 +694,33 @@ Renders primitive and arrays of primitive types first, then nested tables and ar
   {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "telegraf.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "telegraf.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get health configuration
+*/}}
+{{- define "telegraf.health" -}}
+{{- if .Values.metrics.health.enabled -}}
+    {{- .Values.metrics.health | toYaml -}}
+{{- else -}}
+    {{- $health := dict -}}
+    {{- range $objectKey, $objectValue := .Values.config.outputs }}
+        {{- range $key, $value := . -}}
+        {{- if eq $key "health" -}}
+            {{- $health = $value -}}
+        {{- end -}}
+        {{- end -}}
+    {{- end }}
+    {{- $health | toYaml -}}
+{{- end -}}
+{{- end -}}
