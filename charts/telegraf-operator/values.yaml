@@ -24,8 +24,6 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 serviceAccount:
-  # Specifies whether a ServiceAccount should be created
-  create: true
   # Annotations to add to the service account
   annotations: {}
 podSecurityContext: {}
