@@ -60,9 +60,22 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --namespace=default
+        id: install
+        run: |
+          ct install --namespace=default 2>&1 | tee $RUNNER_TEMP/$GITHUB_RUN_NUMBER.txt
 # When https://github.com/helm/chart-testing/issues/212 is fixed, this can be used to set the license key instead of using env from secret
 #        run: ct install --namespace=default --helm-extra-args="--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
 #        env:
 #          INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
+        if: steps.list-changed.outputs.changed == 'true'
+
+      - name: Check logs for errors
+        run: |
+          set +e
+          patterns="Error loading config file"
+          grep -f $GITHUB_WORKSPACE/.github/workflows/patterns.txt $RUNNER_TEMP/$GITHUB_RUN_NUMBER.txt
+          if [[ $? -eq 0 ]]; then
+            echo "::error:: Errors found in logs"
+            exit 1
+          fi
         if: steps.list-changed.outputs.changed == 'true'
