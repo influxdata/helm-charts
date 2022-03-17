@@ -6,7 +6,7 @@ metadata:
     {{- include "telegraf.labels" . | nindent 4 }}
 data:
   telegraf.conf: |+
-    {{- $tplVersion := include "detect.version" . -}}
+    {{- $tplVersion := include "detect.version" . }}
     {{ template "global_tags" .Values.config.global_tags }}
     {{ template "agent" .Values.config.agent }}
     {{ template "processors" (list $tplVersion .Values.config.processors) }}
