@@ -1693,23 +1693,6 @@ entries:
   influxdb2:
   - apiVersion: v2
     appVersion: 2.1.1
-    created: "2022-03-17T10:34:26.980287896Z"
-    description: A Helm chart for InfluxDB v2
-    digest: d10c16f06983ee446c77e1d8ccf2e5db590244c0ddbe07eef092bc4d0da55b55
-    home: https://www.influxdata.com/products/influxdb/
-    icon: https://avatars0.githubusercontent.com/u/5713248?s=200&v=4
-    maintainers:
-    - email: rawkode@influxdata.com
-      name: rawkode
-    - email: giacomo@influxdata.com
-      name: gitirabassi
-    name: influxdb2
-    type: application
-    urls:
-    - https://github.com/influxdata/helm-charts/releases/download/influxdb2-2.0.11/influxdb2-2.0.11.tgz
-    version: 2.0.11
-  - apiVersion: v2
-    appVersion: 2.1.1
     created: "2022-03-11T17:29:41.491253579Z"
     description: A Helm chart for InfluxDB v2
     digest: 86bdc694f7f30aa0f62cb43a3cde004c7b10a4dbb22c9fd967b8ee4e5282e762
@@ -2364,6 +2347,33 @@ entries:
     - https://github.com/influxdata/helm-charts/releases/download/kapacitor-1.2.9/kapacitor-1.2.9.tgz
     version: 1.2.9
   telegraf:
+  - apiVersion: v2
+    appVersion: 1.21.4
+    created: "2022-03-17T10:34:49.2872878Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 66ed3d90ca3f2311696f06026a9e738437eff78898d6ff24026c03017dca6501
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    icon: https://avatars0.githubusercontent.com/u/5713248?s=200&v=4
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    - influxdb
+    - agent
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: telegraf
+    sources:
+    - https://github.com/influxdata/helm-charts/tree/master/charts/telegraf
+    - https://github.com/influxdata/helm-charts/
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.8.15/telegraf-1.8.15.tgz
+    version: 1.8.15
   - apiVersion: v2
     appVersion: 1.21.3
     created: "2022-02-08T16:47:49.904553737Z"
@@ -4301,4 +4311,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2022-03-17T10:34:26.982284594Z"
+generated: "2022-03-17T10:34:49.288447007Z"
