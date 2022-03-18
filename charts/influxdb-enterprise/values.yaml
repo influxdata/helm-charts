@@ -255,8 +255,11 @@ data:
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
     insecure: true
+<<<<<<< HEAD
   flux:
     enabled: true
+=======
+>>>>>>> 0c457dbedfbcb1a2bd9cc8e98ef9d238a6927458
   ## Additional data container environment variables e.g.:
   ##   INFLUXDB_HTTP_FLUX_ENABLED: "true"
   env: {}
