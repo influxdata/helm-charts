@@ -43,8 +43,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
-Obsolete labels
+Legacy labels check
 */}}
 {{- define "chronograf.legacyLabels" -}}
-{{- default false .Values.legacyLabels -}}
+{{- if (hasKey .Values "legacyLabels") -}}
+  {{ .Values.legacyLabels }}
+{{- else -}}
+  {{ true }}
+{{- end -}}
 {{- end -}}
