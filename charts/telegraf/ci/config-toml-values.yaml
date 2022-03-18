@@ -28,4 +28,3 @@ override_config:
     percentile_limit = 1000
     percentiles = [50.0, 90.0, 99.0, 99.9, 99.95, 100.0]
     service_address = ":8125"
-
