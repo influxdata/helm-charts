@@ -3,14 +3,20 @@ kind: Service
 metadata:
   name: {{ template "chronograf.fullname" . }}
   labels:
+    {{- if eq "true" (include "chronograf.legacyLabels" .) }}
     app: {{ template "chronograf.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
+    {{- end }}
+    {{- include "chronograf.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
   - port: 80
     targetPort: 8888
   selector:
+    {{- if eq "true" (include "chronograf.legacyLabels" .) }}
     app: {{ template "chronograf.fullname" . }}
+    {{- end }}
+    {{- include "chronograf.selectorLabels" . | nindent 4 }}
