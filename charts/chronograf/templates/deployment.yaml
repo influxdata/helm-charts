@@ -188,7 +188,7 @@ spec:
             path: {{ .Values.env.BASE_PATH }}/ping
             {{- else }}
             path: /ping
-            {{- end}}
+            {{- end }}
             port: api
         readinessProbe:
           httpGet:
@@ -196,8 +196,19 @@ spec:
             path: {{ .Values.env.BASE_PATH }}/ping
             {{- else }}
             path: /ping
-            {{- end}}
+            {{- end }}
             port: api
+        {{- if .Values.startupProbe.enabled }}
+        startupProbe:
+          httpGet:
+            {{- if .Values.env.BASE_PATH }}
+            path: {{ .Values.env.BASE_PATH }}/ping
+            {{- else }}
+            path: /ping
+            {{- end }}
+            port: api
+          initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds | default 5 }}
+        {{- end }}
         volumeMounts:
         - name: data
           mountPath: /var/lib/chronograf
