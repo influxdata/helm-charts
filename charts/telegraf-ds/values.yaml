@@ -44,7 +44,7 @@ env:
   - name: "HOST_MOUNT_PREFIX"
     value: "/hostfs"
 
-## Add custom volumes and volumeMounts
+## Add custom volumes and mountPoints
 # volumes:
 # - name: telegraf-output-influxdb2
 #   configMap:
