@@ -57,6 +57,12 @@ tolerations: []
 ##
 affinity: {}
 
+## Customize probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+##
+startupProbe:
+  enabled: true
+
 ## Configure the ingress object to hook into existing infastructure
 ## ref : http://kubernetes.io/docs/user-guide/ingress/
 ## OPTIONALLY you can set .Values.ingress.secretName to set which secret to use
