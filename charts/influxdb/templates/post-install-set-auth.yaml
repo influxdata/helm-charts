@@ -45,5 +45,9 @@ spec:
              curl -X POST http://{{ include "influxdb.fullname" . }}:{{ .Values.config.http.bind_address | default 8086 }}/query \
              --data-urlencode \
              "q=CREATE USER \"${INFLUXDB_USER}\" WITH PASSWORD '${INFLUXDB_PASSWORD}' {{ .Values.setDefaultUser.user.privileges }}"
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      {{- end }}
       restartPolicy: {{ .Values.setDefaultUser.restartPolicy }}
 {{- end -}}
