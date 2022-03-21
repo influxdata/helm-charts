@@ -34,8 +34,10 @@ data:
     [[inputs.disk]]
     ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
 
+    {{- if .Values.config.docker_endpoint }}
     [[inputs.docker]]
-    endpoint = "unix:///var/run/docker.sock"
+    endpoint = {{ .Values.config.docker_endpoint | quote }}
+    {{- end }}
 
     [[inputs.kubernetes]]
     url = "https://$HOSTIP:10250"

@@ -135,3 +135,4 @@ config:
         user_agent: "telegraf"
         insecure_skip_verify: false
   monitor_self: false
+  docker_endpoint: "unix:///var/run/docker.sock"

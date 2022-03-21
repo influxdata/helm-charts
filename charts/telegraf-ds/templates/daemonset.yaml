@@ -46,8 +46,10 @@ spec:
         - name: hostfsro
           mountPath: /hostfs
           readOnly: true
+        {{- if hasPrefix "unix" .Values.config.docker_endpoint }}
         - name: docker-socket
-          mountPath: /var/run/docker.sock
+          mountPath: {{ trimPrefix "unix://" .Values.config.docker_endpoint }}
+        {{- end }}
         - name: config
           mountPath: /etc/telegraf
       {{- with .Values.nodeSelector }}
@@ -66,9 +68,12 @@ spec:
       - name: hostfsro
         hostPath:
           path: /
+      {{- if hasPrefix "unix" .Values.config.docker_endpoint }}
       - name: docker-socket
         hostPath:
-          path: /var/run/docker.sock
+          path: {{ trimPrefix "unix://" .Values.config.docker_endpoint }}
+          type: Socket
+      {{- end }}
       - name: varrunutmpro
         hostPath:
           path: /var/run/utmp
