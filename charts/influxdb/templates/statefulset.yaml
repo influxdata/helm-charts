@@ -56,8 +56,10 @@ spec:
       - name: {{ include "influxdb.fullname" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        {{- if .Values.resources }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
+        {{- end }}
         ports:
         - name: api
           containerPort: {{ .Values.config.http.bind_address | default 8086 }}
