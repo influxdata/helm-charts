@@ -85,12 +85,34 @@ spec:
         - name: meta
           containerPort: {{ .Values.config.meta.bind_address | default 8091 }}
         {{- end }}
-        {{- if .Values.env }}
+        {{- if or .Values.env .Values.setDefaultUser.enabled }}
         env:
+        {{- if .Values.env }}
 {{ toYaml .Values.env | indent 10 }}
+        {{- end }}
         {{- if .Values.enterprise.enabled }}
           - name: INFLUXDB_HOSTNAME # Values.env's HOSTNAME isn't fundamentally different from $HOSTNAME, but this way weg get a distinguished name at runtime.
             value: "$(_HOSTNAME).{{ include "influxdb.fullname" . }}"
+        {{- end }}
+        {{- if .Values.setDefaultUser.enabled }}
+          - name: INFLUXDB_ADMIN_USER
+            valueFrom:
+              secretKeyRef:
+                {{- if .Values.setDefaultUser.user.existingSecret }}
+                name: {{ .Values.setDefaultUser.user.existingSecret -}}
+                {{ else }}
+                name: {{ include "influxdb.fullname" . }}-auth
+                {{- end }}
+                key: influxdb-user
+          - name: INFLUXDB_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                {{- if .Values.setDefaultUser.user.existingSecret }}
+                name: {{ .Values.setDefaultUser.user.existingSecret -}}
+                {{ else }}
+                name: {{ include "influxdb.fullname" . }}-auth
+                {{- end }}
+                key: influxdb-password
         {{- end }}
         {{- end }}
         {{- if .Values.envFromSecret }}
