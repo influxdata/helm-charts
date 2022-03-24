@@ -72,8 +72,15 @@ tolerations: []
 #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
 service:
+  # Specifies whether service should be created
   enabled: true
+  # Service type
   type: ClusterIP
+  # Static IP address for LoadBalancer service type
+  # loadBalancerIP: 10.10.10.10
+  # Specify whether LoadBalancer service type should be multiprotocol or separate services for TCP and UDP are created. True by default when not set.
+  # multiprotocol: true
+  # Annotations for the Service
   annotations: {}
 
 rbac:

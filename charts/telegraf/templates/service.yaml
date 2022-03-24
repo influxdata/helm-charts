@@ -1,8 +1,14 @@
 {{- if .Values.service.enabled -}}
+{{- $protocols := fromYaml (include "service.protocols" .) -}}
+{{- $outer := . -}}
+{{- range $i, $key := keys $protocols | sortAlpha -}}
+{{- $ps := get $protocols $key -}}
+{{- $nameExt := ternary "" (printf "-%s" $key) (empty $key) -}}
+{{- with $outer }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "telegraf.fullname" . }}
+  name: {{ include "telegraf.fullname" . }}{{ $nameExt }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
   {{- if .Values.service.annotations }}
@@ -11,86 +17,46 @@ metadata:
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
+  {{- if and (eq .Values.service.type "LoadBalancer") .Values.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
+  {{- end }}
   ports:
-  {{- $health := include "telegraf.health" . | fromYaml }}
-  {{- with $health }}
-  - port: {{ trimPrefix "http://:" .service_address | int64 }}
-    targetPort: {{ trimPrefix "http://:" .service_address | int64 }}
-    name: "health"
+  {{- if .Values.metrics.health.enabled }}
+    {{- $entry := fromYaml (include "service.health" .) -}}
+    {{- if not (empty $entry) -}}
+      {{- $protocol := default "TCP" $entry.protocol -}}
+      {{- if has $protocol $ps -}}
+        {{ toYaml (list $entry) | nindent 2 }}
+      {{- end -}}
+    {{- end -}}
   {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.inputs }}
-  {{- range $key, $value := . -}}
-    {{- $tp := typeOf $value -}}
-    {{- if eq $key "http_listener" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    name: "http-listener"
-    {{- end }}
-    {{- if eq $key "influxdb_listener" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    name: "influxdb-listener"
-    {{- end }}
-    {{- if eq $key "http_listener_v2" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    name: "http-listener-v2"
-    {{- end }}
-    {{- if eq $key "influxdb_v2_listener" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    name: "influxdb-v2-listener"
-    {{- end }}
-    {{- if eq $key "statsd" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    protocol: "UDP"
-    name: "statsd"
-    {{- end }}
-    {{- if eq $key "tcp_listener" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    name: "tcp-listener"
-    {{- end }}
-    {{- if eq $key "udp_listener" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    protocol: "UDP"
-    name: "udp-listener"
-    {{- end }}
-    {{- if eq $key "webhooks" }}
-  - port: {{ trimPrefix ":" $value.service_address | int64 }}
-    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
-    name: "webhooks"
-    {{- end }}
-    {{- if eq $key "syslog" }}
-      {{- if regexMatch "^(tcp|udp).*" $value.server }}
-  - port: {{ regexFind "[0-9]+$" $value.server  | int64 }}
-    targetPort: {{ regexFind "[0-9]+$" $value.server  | int64 }}
-    protocol: {{ upper (substr 0 3 $value.server) }}
-    name: "syslog"
-      {{- end }}
-    {{- end }}
-    {{- if eq $key "socket_listener" }}
-    {{- if or (hasPrefix "udp" $value.service_address) (hasPrefix "tcp" $value.service_address) }}
-  - port: {{ regexFind "[0-9]+$" $value.service_address  | int64 }}
-    targetPort: {{ regexFind "[0-9]+$" $value.service_address  | int64 }}
-    protocol: {{ upper (substr 0 3 $value.service_address) }}
-    name: {{ printf "%s-%s" "socket-listener" (regexFind "[0-9]+$" $value.service_address) }}
-    {{- end }}
-    {{- end }}
+  {{- range $key, $value := . }}
+    {{- $entry := fromYaml (include "service.inputs" (list $key $value)) -}}
+    {{- if not (empty $entry) -}}
+      {{- $protocol := default "TCP" $entry.protocol -}}
+      {{- if has $protocol $ps -}}
+        {{ toYaml (list $entry) | nindent 2 }}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
   {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.outputs }}
   {{- range $key, $value := . -}}
-    {{- $tp := typeOf $value -}}
-    {{- if eq $key "prometheus_client" }}
-  - port: {{ trimPrefix ":" $value.listen | int64 }}
-    targetPort: {{ trimPrefix ":" $value.listen | int64 }}
-    name: "prometheus-client"
-    {{- end }}
+    {{- $entry := fromYaml (include "service.outputs" (list $key $value)) -}}
+    {{- if not (empty $entry) -}}
+      {{- $protocol := default "TCP" $entry.protocol -}}
+      {{- if has $protocol $ps -}}
+        {{ toYaml (list $entry) | nindent 2 }}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
   {{- end }}
   selector:
     {{- include "telegraf.selectorLabels" . | nindent 4 }}
+{{- end }}
+{{- if and (gt (len $protocols) 1) (lt $i (len $protocols)) }}
+---
+{{- end }}
+{{- end -}}
 {{- end -}}
