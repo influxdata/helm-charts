@@ -15,11 +15,9 @@ rules:
   - ""
   resources:
   - namespaces
-  verbs:
-  - ["get", "list"]
+  verbs: ["get", "list"]
 - apiGroups:
   - ""
   resources:
   - pods
-  verbs:
-  - ["get"]
+  verbs: ["get"]
