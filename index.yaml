@@ -2,6 +2,29 @@ apiVersion: v1
 entries:
   chronograf:
   - apiVersion: v1
+    appVersion: 1.9.4
+    created: "2022-03-29T17:03:49.104583144Z"
+    description: Open-source web application written in Go and React.js that provides
+      the tools to visualize your monitoring data and easily create alerting and automation
+      rules.
+    digest: dfada9de7513595487aa1151ee5c27c483e52505e5f01aa7923c0c79ae629f63
+    home: https://www.influxdata.com/time-series-platform/chronograf/
+    keywords:
+    - chronograf
+    - visualizaion
+    - timeseries
+    - influxdata
+    - influxdb
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: chronograf
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/chronograf-1.2.5/chronograf-1.2.5.tgz
+    version: 1.2.5
+  - apiVersion: v1
     appVersion: 1.9.3
     created: "2022-03-21T12:06:12.042581136Z"
     description: Open-source web application written in Go and React.js that provides
@@ -4514,4 +4537,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2022-03-29T16:18:52.059913641Z"
+generated: "2022-03-29T17:03:49.105936261Z"
