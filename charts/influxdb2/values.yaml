@@ -3,7 +3,13 @@ image:
   tag: 2.2.0-alpine
   pullPolicy: IfNotPresent
 
+## Annotations to be added to InfluxDB pods
+##
 podAnnotations: {}
+
+## Labels to be added to InfluxDB pods
+##
+podLabels: {}
 
 nameOverride: ""
 fullnameOverride: ""
