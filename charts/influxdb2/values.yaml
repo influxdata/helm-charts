@@ -120,6 +120,30 @@ persistence:
   mountPath: /var/lib/influxdb2
   subPath: ""
 
+## Add custom volume and volumeMounts
+##
+# volumes:
+#   - name: influxdb2-templates
+#     hostPath:
+#       path: /data/influxdb2-templates
+#       type: Directory
+# mountPoints:
+#   - name: influxdb2-templates
+#     mountPath: /influxdb2-templates
+#     readOnly: true
+
+## Allow executing custom init scripts
+## If the container finds any files with the .sh extension inside of the
+## /docker-entrypoint-initdb.d folder, it will execute them. The order they are
+## executed in is determined by the shell. This is usually alphabetical order.
+##
+initScripts:
+  enabled: false
+  scripts:
+    init.sh: |+
+      #!/bin/bash
+      influx apply -u https://raw.githubusercontent.com/influxdata/community-templates/master/influxdb2_operational_monitoring/influxdb2_operational_monitoring.yml
+
 ## Specify a service type
 ## ref: http://kubernetes.io/docs/user-guide/services/
 ##

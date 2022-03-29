@@ -30,6 +30,15 @@ spec:
         {{- else }}
           emptyDir: {}
         {{- end }}
+        {{- if .Values.initScripts.enabled }}
+        - name: init
+          configMap:
+            name: {{ include "influxdb.fullname" . }}-init
+            defaultMode: 0744
+        {{- end }}
+        {{- if .Values.volumes }}
+          {{- toYaml .Values.volumes | nindent 8 }}
+        {{- end }}
       serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
@@ -127,6 +136,13 @@ spec:
           - name: data
             mountPath: {{ .Values.persistence.mountPath }}
             subPath: {{ .Values.persistence.subPath }}
+          {{- if .Values.initScripts.enabled }}
+          - name: init
+            mountPath: /docker-entrypoint-initdb.d
+          {{- end }}
+          {{- if .Values.mountPoints }}
+            {{- toYaml .Values.mountPoints | nindent 10 }}
+          {{- end }}
           resources:
             {{ .Values.resources | toYaml | nindent 12 | trim }}
 
