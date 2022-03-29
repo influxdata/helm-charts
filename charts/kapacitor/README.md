@@ -47,7 +47,7 @@ The following table lists configurable parameters, their descriptions, and their
 | Parameter               | Description                           | Default                                                    |
 | ----------------------- | ----------------------------------    | ---------------------------------------------------------- |
 | `image.repository` | image repository url | Kapacitor image | `kapacitor` |
-| `image.tag` | Kapacitor image version | `1.5.2-alpine` |
+| `image.tag` | Kapacitor image version | `1.6.4-alpine` |
 | `image.pullPolicy` | Kapacitor image pull policy |  `IfNotPresent` |
 | `strategy` | Kapacitor deployment strategy config |  |
 | `service.type` | Kapacitor web service type  | `ClusterIP` |

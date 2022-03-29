@@ -3,7 +3,7 @@
 ##
 image:
   repository: "kapacitor"
-  tag: "1.6.3-alpine"
+  tag: "1.6.4-alpine"
   pullPolicy: "IfNotPresent"
 
 ## Deployment Strategy type
