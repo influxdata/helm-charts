@@ -98,38 +98,11 @@ enterprise:
   #      memory: 1Gi
   #      cpu: 4
 
-## Create default user through Kubernetes job
-## Defaults indicated below
+## Set default user
 ##
 setDefaultUser:
   enabled: false
-
-  ## Image of the container used for job
-  ## Default: appropriate/curl:latest
-  ##
-  image: appropriate/curl:latest
-
-  ## Deadline for job so it does not retry forever.
-  ## Default: activeDeadline: 300
-  ##
-  activeDeadline: 300
-
-  ## Specify the number of retries before considering job as failed.
-  ## https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#pod-backoff-failure-policy
-  ##
-  backoffLimit: 6
-
-  ## Hook delete policy for helm.
-  ## Default: hookDeletePolicy: hook-succeeded
-  ##
-  hookDeletePolicy: hook-succeeded
-
-  ## Restart policy for job
-  ## Default: OnFailure
-  restartPolicy: OnFailure
-
   user:
-
     ## The user name
     ## Default: "admin"
     username: "admin"
@@ -143,10 +116,6 @@ setDefaultUser:
     ## keys are `influxdb-user` and `influxdb-password`.
     ## If set, the username and password values above are ignored.
     # existingSecret: influxdb-auth
-
-    ## User privileges
-    ## Default: "WITH ALL PRIVILEGES"
-    privileges: "WITH ALL PRIVILEGES"
 
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/

@@ -192,11 +192,9 @@ If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-
 
 In `values.yaml`, change `.Values.config.http.auth-enabled` to `true`.
 
-> **Note:** To enforce authentication, InfluxDB requires an admin user to be set up. For details, see [Set up authentication](https://docs.influxdata.com/influxdb/v1.2/query_language/authentication_and_authorization/#set-up-authentication).
+To handle this set up during startup, set `.Values.setDefaultUser.enabled` to `true`.
 
-To handle this set up during startup, enable a job in `values.yaml` by setting `.Values.setDefaultUser.enabled` to `true`.
-
-Make sure to uncomment or configure the job settings after enabling it. If a password is not set, a random password will be generated.
+Make sure to uncomment or configure default user settings after enabling it. If a password is not set, a random password will be generated.
 
 Alternatively, if `.Values.setDefaultUser.user.existingSecret` is set the user and password are obtained from an existing Secret, the expected keys are `influxdb-user` and `influxdb-password`. Use this variable if you need to check in the `values.yaml` in a repository to avoid exposing your secrets.
 
