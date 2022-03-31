@@ -3,7 +3,7 @@
 Expand the name of the chart.
 */}}
 {{- define "telegraf.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- tpl (default .Chart.Name .Values.nameOverride) . | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -12,8 +12,8 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "telegraf.fullname" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- if tpl .Values.fullnameOverride . -}}
+{{- tpl .Values.fullnameOverride . | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- if contains $name .Release.Name -}}
