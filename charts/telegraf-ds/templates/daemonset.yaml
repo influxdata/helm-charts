@@ -52,6 +52,9 @@ spec:
         {{- end }}
         - name: config
           mountPath: /etc/telegraf
+        {{- if .Values.mountPoints }}
+{{ toYaml .Values.mountPoints | indent 8 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
@@ -80,6 +83,9 @@ spec:
       - name: config
         configMap:
           name:  {{ include "telegraf.fullname" . }}
+      {{- if .Values.volumes }}
+{{ toYaml .Values.volumes | indent 6 }}
+      {{- end }}
       hostNetwork: {{ default false .Values.hostNetwork }}
       {{- if .Values.dnsPolicy }}
       dnsPolicy: {{ .Values.dnsPolicy }}
