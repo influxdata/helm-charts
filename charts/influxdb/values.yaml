@@ -262,6 +262,7 @@ backup:
   startingDeadlineSeconds: ""
   annotations: {}
   podAnnotations: {}
+  nodeSelector: {}
 
   ## Google Cloud Storage
   gcs:
