@@ -13,12 +13,15 @@ set -e
 # Sanity check to avoid removing all backups.
 [[ "$DAYS_TO_RETAIN" -lt 1 ]] && DAYS_TO_RETAIN=1
 
+# Prepare endpoint-url argument
+[[ -z "$S3_ENDPOINT" ]] && endpoint_arg="" || endpoint_arg="--endpoint-url ${S3_ENDPOINT}"
+
 function get_records {
     before_date="$1"
 
     aws s3api list-objects \
         --bucket ${S3_BUCKET} \
-        --endpoint-url ${S3_ENDPOINT} \
+        ${endpoint_arg} \
         --query "Contents[?LastModified<='${before_date}'][].{Key: Key}"
 }
 
@@ -56,7 +59,7 @@ function remove_old_backups {
 
     for path in "${del_paths[@]::${num_to_delete}}"; do
         aws s3 rm "s3://${S3_BUCKET}/${path}" \
-            --endpoint-url "${S3_ENDPOINT}"
+            ${endpoint_arg}
     done
 }
 
