@@ -20,6 +20,12 @@ resources:
 ## Adds custom labels to daemonset
 additionalLabels: {}
 
+## Adds labels to daemonset spec template for pods
+podLabels: {}
+
+## Adds custom annotations to daemonset spec template for pods
+podAnnotations: {}
+
 ## Configure args passed to Telegraf containers
 args: []
 
