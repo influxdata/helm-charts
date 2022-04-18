@@ -17,6 +17,9 @@ resources:
     memory: 2Gi
     cpu: 1
 
+## Adds custom labels to daemonset
+additionalLabels: {}
+
 ## Configure args passed to Telegraf containers
 args: []
 
