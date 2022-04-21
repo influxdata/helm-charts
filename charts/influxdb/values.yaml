@@ -41,7 +41,7 @@ startupProbe:
   # periodSeconds: 5
   # scheme: HTTP
 
-## Specify a service type
+## Specify a service type and optional port
 ## NodePort is default
 ## ref: http://kubernetes.io/docs/user-guide/services/
 ##
@@ -51,6 +51,9 @@ service:
   type: ClusterIP
   # externalIPs: []
   # externalTrafficPolicy: ""
+  # nodePort(s) value for the LoadBalancer and NodePort service types
+  nodePorts:
+    http: ""
 
 ## Persist data to a persistent volume
 ##
