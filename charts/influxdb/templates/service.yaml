@@ -14,6 +14,9 @@ spec:
   - name: api
     port: {{ .Values.config.http.bind_address | default 8086 }}
     targetPort: api
+    {{- if (and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.nodePorts.http))) }}
+    nodePort: {{ .Values.service.nodePorts.http | int }}
+    {{- end }}
   - name: rpc
     port: {{ .Values.config.rpc.bind_address | default 8088 }}
     targetPort: rpc
