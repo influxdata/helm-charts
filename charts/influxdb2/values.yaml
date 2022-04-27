@@ -140,9 +140,9 @@ persistence:
 
 ## Allow executing custom init scripts
 ## If the container finds any files with the .sh extension inside of the
-## /docker-entrypoint-initdb.d folder, it will execute them. 
+## /docker-entrypoint-initdb.d folder, it will execute them.
 ## When multiple scripts are present, they will be executed in lexical sort order by name.
-## For more details see Custom Initialization Scripts in https://hub.docker.com/_/influxdb .
+## For more details see Custom Initialization Scripts in https://hub.docker.com/_/influxdb
 initScripts:
   enabled: false
   scripts:
