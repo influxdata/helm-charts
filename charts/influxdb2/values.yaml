@@ -148,7 +148,7 @@ initScripts:
   scripts:
     init.sh: |+
       #!/bin/bash
-      influx apply -u https://raw.githubusercontent.com/influxdata/community-templates/master/influxdb2_operational_monitoring/influxdb2_operational_monitoring.yml
+      influx apply --force yes -u https://raw.githubusercontent.com/influxdata/community-templates/master/influxdb2_operational_monitoring/influxdb2_operational_monitoring.yml
 
 ## Specify a service type
 ## ref: http://kubernetes.io/docs/user-guide/services/
