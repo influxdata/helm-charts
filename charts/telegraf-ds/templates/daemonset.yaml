@@ -4,6 +4,9 @@ metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
+    {{- if .Values.additionalLabels }}
+{{ toYaml .Values.additionalLabels | indent 4 }}
+    {{- end }}
 spec:
   selector:
     matchLabels:
@@ -14,10 +17,16 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "telegraf.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels | indent 8 }}
+        {{- end }}
       annotations:
         # Include a hash of the configmap in the pod template
         # This means that if the configmap changes, the deployment will be rolled
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+      {{- end }}
     spec:
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
 {{- if .Values.priorityClassName }}
