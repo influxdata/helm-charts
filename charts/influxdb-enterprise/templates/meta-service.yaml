@@ -10,8 +10,10 @@ metadata:
     influxdb.influxdata.com/component: meta
     {{- include "influxdb-enterprise.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.meta.service.type }}
+{{- if (eq "ClusterIP" .Values.meta.service.type) }}
   clusterIP: None
+{{- end }}
   publishNotReadyAddresses: true
   ports:
   - port: 8089
