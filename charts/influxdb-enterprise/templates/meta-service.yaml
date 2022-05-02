@@ -22,6 +22,9 @@ spec:
   - port: 8091
     protocol: TCP
     name: http
+{{- if .Values.meta.service.nodePort }}
+    nodePort: {{ .Values.meta.service.nodePort }}
+{{- end }}
   selector:
     influxdb.influxdata.com/component: meta
     {{- include "influxdb-enterprise.selectorLabels" . | nindent 4 }}

@@ -120,6 +120,7 @@ meta:
     # loadBalancerIP: ""
     # externalIPs: []
     # externalTrafficPolicy: ""
+    # nodePort: 30086
     ## Add annotations to service
     # annotations: {}
   #
@@ -220,6 +221,7 @@ data:
     # loadBalancerIP: ""
     # externalIPs: []
     # externalTrafficPolicy: ""
+    # nodePort: 30091
     ## Add annotations to service
     # annotations: {}
   #
