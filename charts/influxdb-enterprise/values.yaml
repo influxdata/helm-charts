@@ -117,6 +117,9 @@ meta:
     ## ClusterIP is default
     ## ref: http://kubernetes.io/docs/user-guide/services/
     type: ClusterIP
+    # loadBalancerIP: ""
+    # externalIPs: []
+    # externalTrafficPolicy: ""
     ## Add annotations to service
     # annotations: {}
   #
