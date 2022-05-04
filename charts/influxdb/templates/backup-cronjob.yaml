@@ -27,6 +27,10 @@ spec:
           labels:
             {{- include "influxdb.selectorLabels" . | nindent 12 }}
         spec:
+          {{- if .Values.nodeSelector }}
+          nodeSelector:
+            {{ toYaml .Values.nodeSelector | indent 12 }}
+          {{- end }}
           restartPolicy: OnFailure
           volumes:
           - name: backup
