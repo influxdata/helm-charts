@@ -74,7 +74,7 @@ spec:
           containers:
           {{- if .Values.backup.gcs }}
           - name: gsutil-cp
-            image: "{{ .Values.backup.gcs.image.repository }}:{{ .Values.backup.gcs.image.tag }}"
+            image: google/cloud-sdk:alpine
             command:
             - /bin/sh
             args:
@@ -105,7 +105,7 @@ spec:
           {{- end }}
           {{- if .Values.backup.azure }}
           - name: azure-cli
-            image: "{{ .Values.backup.azure.image.repository }}:{{ .Values.backup.azure.image.tag }}"
+            image: mcr.microsoft.com/azure-cli
             command:
             - /bin/sh
             args:
@@ -135,7 +135,7 @@ spec:
           {{- end }}
           {{- if .Values.backup.s3 }}
           - name: aws-cli
-            image: "{{ .Values.backup.s3.image.repository }}:{{ .Values.backup.s3.image.tag }}"
+            image: amazon/aws-cli
             command:
             - /bin/sh
             args:
