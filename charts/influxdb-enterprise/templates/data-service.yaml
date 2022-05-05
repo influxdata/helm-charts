@@ -19,6 +19,9 @@ spec:
   - port: 8086
     protocol: TCP
     name: http
+{{- if .Values.data.service.nodePort }}
+    nodePort: {{ .Values.data.service.nodePort }}
+{{- end }}
   - port: 8088
     protocol: TCP
     name: rpc
