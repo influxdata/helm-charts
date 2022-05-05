@@ -291,7 +291,7 @@ backup:
   ## The bucket should already exist.
   s3:
     image:
-      repository: amazon/aws-cli
+      repository: amazon/aws
       tag: latest
     # credentialsSecret: aws-credentials-secret
     # destination: s3://bucket/path
