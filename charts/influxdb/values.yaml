@@ -266,17 +266,17 @@ backup:
 
   ## Google Cloud Storage
   # gcs:
-  #    serviceAccountSecret: influxdb-backup-key
-  #    serviceAccountSecretKey: key.json
-  #    destination: gs://bucket/influxdb
+    # serviceAccountSecret: influxdb-backup-key
+    # serviceAccountSecretKey: key.json
+    # destination: gs://bucket/influxdb
 
   ## Azure
   ## Secret is expected to have connection string stored in `connection-string` field
   ## Existing container will be used or private one withing storage account will be created.
   # azure:
-  #   storageAccountSecret: influxdb-backup-azure-key
-  #   destination_container: influxdb-container
-  #   destination_path: ""
+    # storageAccountSecret: influxdb-backup-azure-key
+    # destination_container: influxdb-container
+    # destination_path: ""
 
   ## Amazon S3 or compatible
   ## Secret is expected to have AWS (or compatible) credentials stored in `credentials` field.
@@ -284,10 +284,10 @@ backup:
   ## for the credentials format.
   ## The bucket should already exist.
   # s3:
-  #   credentialsSecret: aws-credentials-secret
-  #   destination: s3://bucket/path
-  #   ## Optional. Specify if you're using an alternate S3 endpoint.
-  #   # endpointUrl: ""
+    # credentialsSecret: aws-credentials-secret
+    # destination: s3://bucket/path
+    ## Optional. Specify if you're using an alternate S3 endpoint.
+    # endpointUrl: ""
 
 backupRetention:
   enabled: false
