@@ -269,9 +269,9 @@ backup:
     image:
       repository: google/cloud-sdk
       tag: alpine
-  #    serviceAccountSecret: influxdb-backup-key
-  #    serviceAccountSecretKey: key.json
-  #    destination: gs://bucket/influxdb
+    # serviceAccountSecret: influxdb-backup-key
+    # serviceAccountSecretKey: key.json
+    # destination: gs://bucket/influxdb
 
 
   ## Azure
