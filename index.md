@@ -1,6 +1,6 @@
 # InfluxData Helm Repository
 
-![InfluxData](https://influxdata.github.io/branding/img/downloads/influxdata-logo--tagline--castle-alpha.png)
+![InfluxData](https://github.com/influxdata/helm-charts/raw/gh-pages/docs/assets/images/influxdata-logo.png)
 
 ## Add the InfluxData Helm repository
 
