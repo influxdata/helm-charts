@@ -10,6 +10,8 @@ image:
 # strategy:
 #   type: Recreate
 
+strategy: {}
+
 ## Specify a service type, defaults to NodePort
 ## ref: http://kubernetes.io/docs/user-guide/services/
 ##
@@ -48,6 +50,7 @@ resources:
 ## ref: https://hub.docker.com/_/kapacitor/
 ## ref: https://docs.influxdata.com/kapacitor/latest/administration/configuration/
 ##
+envVars: {}
 # Examples below
 #
 # envVars:
@@ -110,7 +113,7 @@ sidecar:
     #   cpu: 50m
     #   memory: 50Mi
   ## skipTlsVerify Set to true to skip tls verification for kube api calls
-  # skipTlsVerify: true
+  skipTlsVerify: false
   sideload:
     enabled: false
     label: kapacitor_sideload
