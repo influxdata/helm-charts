@@ -1,0 +1,5 @@
+initScripts:
+  enabled: true
+
+persistence:
+  enabled: false

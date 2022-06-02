@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   name: {{ template "influxdb.fullname" . }}
   labels:
-    {{ include "influxdb.labels" . | nindent 4 }}
+    {{- include "influxdb.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
@@ -14,8 +14,13 @@ spec:
     metadata:
       labels:
       {{- include "influxdb.selectorLabels" . | nindent 8 }}
+      {{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels | indent 8 }}
+      {{- end }}
+      {{- if .Values.podAnnotations }}
       annotations:
-      {{- toYaml .Values.podAnnotations | nindent 8 }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+      {{- end }}
     spec:
       volumes:
         - name: data
@@ -29,6 +34,15 @@ spec:
           {{- end }}
         {{- else }}
           emptyDir: {}
+        {{- end }}
+        {{- if .Values.initScripts.enabled }}
+        - name: init
+          configMap:
+            name: {{ include "influxdb.fullname" . }}-init
+            defaultMode: 0744
+        {{- end }}
+        {{- if .Values.volumes }}
+          {{- toYaml .Values.volumes | nindent 8 }}
         {{- end }}
       serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
       containers:
@@ -76,22 +90,19 @@ spec:
                   name: {{ template "influxdb.fullname" . }}-auth
                   {{- end }}
                   key: admin-token
-
             # Path to the BoltDB database.
             - name: INFLUXD_BOLT_PATH
               value: {{ .Values.persistence.mountPath }}/influxd.bolt
             # Path to persistent storage engine files where InfluxDB stores all Time-Structure Merge Tree (TSM) data on disk.
             - name: INFLUXD_ENGINE_PATH
               value: {{ .Values.persistence.mountPath }}
-
-            # Extra environment variables from .Values.env
             {{- with .Values.env }}
+            # Extra environment variables from .Values.env
             {{- toYaml . | nindent 12 }}
             {{- end }}
-
           {{- if .Values.securityContext }}
           securityContext:
-            {{ toYaml .Values.securityContext | nindent 12 }}
+            {{- toYaml .Values.securityContext | nindent 12 }}
           {{- end }}
           livenessProbe:
             httpGet:
@@ -127,6 +138,13 @@ spec:
           - name: data
             mountPath: {{ .Values.persistence.mountPath }}
             subPath: {{ .Values.persistence.subPath }}
+          {{- if .Values.initScripts.enabled }}
+          - name: init
+            mountPath: /docker-entrypoint-initdb.d
+          {{- end }}
+          {{- if .Values.mountPoints }}
+            {{- toYaml .Values.mountPoints | nindent 10 }}
+          {{- end }}
           resources:
             {{ .Values.resources | toYaml | nindent 12 | trim }}
 
