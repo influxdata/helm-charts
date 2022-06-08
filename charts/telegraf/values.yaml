@@ -189,3 +189,12 @@ pdb:
   create: true
   minAvailable: 1
   # maxUnavailable: 1
+
+# Init container
+initContainer:
+  enabled: false
+#  image: influxdb
+#  imageTag: 1.8-alpine
+#  securityContext:
+#    container:
+#  command: ["/bin/sh", "-c", "echo 'OK'"]

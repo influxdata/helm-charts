@@ -29,6 +29,22 @@ spec:
 {{ toYaml .Values.securityContext | indent 8 }}
 {{- end }}
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
+      initContainers:
+      {{- if (eq .Values.initContainer.enabled true) }}
+        - name: {{ .Chart.Name }}-init-container
+          image: {{ .Values.initContainer.image }}:{{ .Values.initContainer.imageTag }}
+          imagePullPolicy: {{ .Values.initContainer.imagePullPolicy | quote }}
+          {{- if .Values.initContainer.securityContext.container }}
+          securityContext:
+          {{ toYaml .Values.initContainer.securityContext.container | indent 12 }}
+          {{- end }}
+          {{- if .Values.initContainer.command }}
+          command:
+            {{- range $x := .Values.initContainer.command }}
+            - {{ tpl $x $ }}
+          {{- end }}
+          {{- end }}
+      {{- end }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repo }}:{{ .Values.image.tag }}"

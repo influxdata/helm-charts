@@ -120,6 +120,16 @@ config:
     - file:
         files:
           - "stdout"
+initContainer:
+  enabled: true
+  image: influxdb
+  imageTag: 1.8-alpine
+  securityContext:
+    container:
+      capabilities:
+        drop:
+          - all
+  command: ["/bin/sh", "-c", "echo 'OK'"]
 
 ## Use tpl v2 templates
 tplVersion: 2
