@@ -138,9 +138,9 @@ config:
                       critical: 3
     outputs:
         - influxdb:
-                urls:
-                    - "http://influxdb.monitoring.svc:8086"
-                database: "telegraf"
+              urls:
+                - "http://influxdb.monitoring.svc:8086"
+              database: "telegraf"
     inputs:
         - statsd:
               service_address: ":8125"
