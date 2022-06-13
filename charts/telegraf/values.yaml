@@ -140,7 +140,7 @@ config:
         - influxdb:
               urls:
                 - "http://influxdb.monitoring.svc:8086"
-            database: "telegraf"
+              database: "telegraf"
     inputs:
         - statsd:
               service_address: ":8125"
