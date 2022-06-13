@@ -122,14 +122,14 @@ config:
         flush_interval: "10s"
         flush_jitter: "0s"
         precision: ""
-        debug: false
+        debug: falseb
         quiet: false
         logfile: ""
         hostname: "$HOSTNAME"
         omit_hostname: false
     processors:
         - enum:
-            mapping:
+              mapping:
                 field: "status"
                 dest: "status_code"
                 value_mappings:
@@ -138,19 +138,19 @@ config:
                     critical: 3
     outputs:
         - influxdb:
-            urls:
+              urls:
                 - "http://influxdb.monitoring.svc:8086"
             database: "telegraf"
     inputs:
         - statsd:
-            service_address: ":8125"
-            percentiles:
-                - 50
-                - 95
-                - 99
-            metric_separator: "_"
-            allowed_pending_messages: 10000
-            percentile_limit: 1000
+              service_address: ":8125"
+              percentiles:
+                  - 50
+                  - 95
+                  - 99
+              metric_separator: "_"
+              allowed_pending_messages: 10000
+              percentile_limit: 1000
 metrics:
     health:
         enabled: false
