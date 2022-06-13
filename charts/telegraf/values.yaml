@@ -139,7 +139,7 @@ config:
     outputs:
         - influxdb:
               urls:
-                - "http://influxdb.monitoring.svc:8086"
+                  - "http://influxdb.monitoring.svc:8086"
               database: "telegraf"
     inputs:
         - statsd:
