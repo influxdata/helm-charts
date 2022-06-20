@@ -44,6 +44,12 @@ spec:
         {{- if .Values.volumes }}
           {{- toYaml .Values.volumes | nindent 8 }}
         {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end}}
+      {{- end }}
       serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
