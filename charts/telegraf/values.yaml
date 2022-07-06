@@ -129,28 +129,28 @@ config:
         omit_hostname: false
     processors:
         - enum:
-            mapping:
-                field: "status"
-                dest: "status_code"
-                value_mappings:
-                    healthy: 1
-                    problem: 2
-                    critical: 3
+              mapping:
+                  field: "status"
+                  dest: "status_code"
+                  value_mappings:
+                      healthy: 1
+                      problem: 2
+                      critical: 3
     outputs:
         - influxdb:
-            urls:
-                - "http://influxdb.monitoring.svc:8086"
-            database: "telegraf"
+              urls:
+                  - "http://influxdb.monitoring.svc:8086"
+              database: "telegraf"
     inputs:
         - statsd:
-            service_address: ":8125"
-            percentiles:
-                - 50
-                - 95
-                - 99
-            metric_separator: "_"
-            allowed_pending_messages: 10000
-            percentile_limit: 1000
+              service_address: ":8125"
+              percentiles:
+                  - 50
+                  - 95
+                  - 99
+              metric_separator: "_"
+              allowed_pending_messages: 10000
+              percentile_limit: 1000
 metrics:
     health:
         enabled: false

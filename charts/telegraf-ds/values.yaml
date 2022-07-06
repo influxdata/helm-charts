@@ -31,15 +31,15 @@ env:
     # This pulls HOSTNAME from the node, not the pod.
     - name: HOSTNAME
       valueFrom:
-        fieldRef:
-            fieldPath: spec.nodeName
+          fieldRef:
+              fieldPath: spec.nodeName
     # In test clusters where hostnames are resolved in /etc/hosts on each node,
     # the HOSTNAME is not resolvable from inside containers
     # So inject the host IP as well
     - name: HOSTIP
       valueFrom:
-        fieldRef:
-            fieldPath: status.hostIP
+          fieldRef:
+              fieldPath: status.hostIP
     # Mount the host filesystem and set the appropriate env variables.
     # ref: https://github.com/influxdata/telegraf/blob/master/docs/FAQ.md
     # HOST_PROC is required by the cpu, disk, diskio, kernel and processes input plugins
@@ -135,14 +135,14 @@ config:
         omit_hostname: false
     outputs:
         - influxdb:
-            urls:
-                - "http://influxdb.monitoring.svc:8086"
-            database: "telegraf"
-            retention_policy: ""
-            timeout: "5s"
-            username: ""
-            password: ""
-            user_agent: "telegraf"
-            insecure_skip_verify: false
+              urls:
+                  - "http://influxdb.monitoring.svc:8086"
+              database: "telegraf"
+              retention_policy: ""
+              timeout: "5s"
+              username: ""
+              password: ""
+              user_agent: "telegraf"
+              insecure_skip_verify: false
     monitor_self: false
     docker_endpoint: "unix:///var/run/docker.sock"
