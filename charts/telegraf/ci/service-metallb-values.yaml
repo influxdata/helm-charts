@@ -1,0 +1,21 @@
+service:
+  type: LoadBalancer
+  multiprotocol: false
+
+config:
+  inputs:
+    - influxdb_listener:
+        service_address: ":8086"
+    - socket_listener:
+        service_address: "tcp://:8001"
+    - statsd:
+        service_address: ":8125"
+    - syslog:
+        server: "tcp://:6514"
+  outputs:
+    - prometheus_client:
+        listen: ":9273"
+
+metrics:
+  health:
+    enabled: true
