@@ -191,3 +191,82 @@ pdb:
   create: true
   minAvailable: 1
   # maxUnavailable: 1
+
+
+backup:
+  enabled: false
+  ## By default emptyDir is used as a transitory volume before uploading to object store.
+  ## As such, ensure that a sufficient ephemeral storage request is set to prevent node disk filling completely.
+  resources:
+    requests:
+      # memory: 512Mi
+      # cpu: 2
+      ephemeral-storage: "8Gi"
+    # limits:
+      # memory: 1Gi
+      # cpu: 4
+      # ephemeral-storage: "16Gi"
+  ## If backup destination is PVC, or want to use intermediate PVC before uploading to object store.
+  persistence:
+    enabled: false
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    # annotations:
+    accessMode: ReadWriteOnce
+    size: 8Gi
+  schedule: "0 0 * * *"
+  host: ""
+  startingDeadlineSeconds: ""
+  annotations: {}
+  podAnnotations: {}
+  nodeSelector: {}
+
+  ## Google Cloud Storage
+  # gcs:
+    # serviceAccountSecret: influxdb-backup-key
+    # serviceAccountSecretKey: key.json
+    # destination: gs://bucket/influxdb
+
+  ## Azure
+  ## Secret is expected to have connection string stored in `connection-string` field
+  ## Existing container will be used or private one withing storage account will be created.
+  # azure:
+    # storageAccountSecret: influxdb-backup-azure-key
+    # destination_container: influxdb-container
+    # destination_path: ""
+
+  ## Amazon S3 or compatible
+  ## Secret is expected to have AWS (or compatible) credentials stored in `credentials` field.
+  ## Please look at https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html#cli-configure-files-where
+  ## for the credentials format.
+  ## The bucket should already exist.
+  # s3:
+    # credentialsSecret: aws-credentials-secret
+    # destination: s3://bucket/path
+    ## Optional. Specify if you're using an alternate S3 endpoint.
+    # endpointUrl: ""
+
+backupRetention:
+  enabled: false
+  resources:
+    requests:
+      # memory: 512Mi
+      # cpu: 2
+    # limits:
+      # memory: 1Gi
+      # cpu: 4
+  schedule: "0 0 * * *"
+  startingDeadlineSeconds:
+  annotations: {}
+  podAnnotations: {}
+  daysToRetain: 7
+  # s3:
+  #   credentialsSecret: aws-credentials-secret
+  #   bucketName: bucket
+  #   ## Optional. Specify if you're using an alternate S3 endpoint.
+  #   # endpointUrl: ""
