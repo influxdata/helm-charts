@@ -18,7 +18,6 @@ imagePullSecrets: []
 ## Configure args passed to Telegraf containers
 args: []
 
-
 # The name of a secret in the same kubernetes namespace which contains values to
 # be added to the environment (must be manually created)
 # This can be useful for auth tokens, etc.
@@ -52,10 +51,12 @@ resources: {}
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/user-guide/node-selection/
 nodeSelector: {}
+
 ## Affinity for pod assignment
 ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 ##
 affinity: {}
+
 ## Tolerations for pod assignment
 ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
 ##
@@ -69,6 +70,7 @@ service:
   enabled: true
   type: ClusterIP
   annotations: {}
+
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
@@ -136,17 +138,17 @@ config:
     omit_hostname: false
   processors:
     - enum:
-      mapping:
-        field: "status"
-        dest: "status_code"
-        value_mappings:
-          healthy: 1
-          problem: 2
-          critical: 3
+        mapping:
+          field: "status"
+          dest: "status_code"
+          value_mappings:
+            healthy: 1
+            problem: 2
+            critical: 3
   outputs:
     - influxdb:
-      urls:
-        - "http://influxdb.monitoring.svc:8086"
+        urls:
+          - "http://influxdb.monitoring.svc:8086"
         database: "telegraf"
   inputs:
     - statsd:

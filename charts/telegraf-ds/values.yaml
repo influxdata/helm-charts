@@ -3,9 +3,9 @@
 ## ref: https://hub.docker.com/r/library/telegraf/tags/
 
 image:
-repo: "telegraf"
-tag: "1.24-alpine"
-pullPolicy: IfNotPresent
+  repo: "telegraf"
+  tag: "1.24-alpine"
+  pullPolicy: IfNotPresent
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources:
@@ -15,12 +15,16 @@ resources:
   limits:
     memory: 2Gi
     cpu: 1
+
 ## Pod annotations
 podAnnotations: {}
+
 ## Pod labels
 podLabels: {}
+
 ## Configure args passed to Telegraf containers
 args: []
+
 ## The name of a secret in the same kubernetes namespace which contains values to
 ## be added to the environment (must be manually created)
 ## This can be useful for auth tokens, etc.
@@ -50,6 +54,7 @@ env:
     value: "/hostfs/sys"
   - name: "HOST_MOUNT_PREFIX"
     value: "/hostfs"
+
 ## Add custom volumes and mounts
 # volumes:
 # - name: telegraf-output-influxdb2
@@ -64,6 +69,7 @@ env:
 ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
 ##
 tolerations: []
+
 ## If the DaemonSet should run on the host's network namespace
 ## hostNetwork: true
 
@@ -83,6 +89,7 @@ tolerations: []
 ##     - name: ndots
 ##       value: "2"
 ##     - name: edns0
+
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
@@ -101,6 +108,7 @@ serviceAccount:
 
 # Specify the pod's SecurityContext, including the OS user and group to run the pod
 podSecurityContext: {}
+
 override_config:
   toml: ~
   # Provide a literal TOML config
@@ -115,6 +123,7 @@ override_config:
   #     bucket         = "data"
   #     organization   = "OurCompany"
   #     token          = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
 config:
