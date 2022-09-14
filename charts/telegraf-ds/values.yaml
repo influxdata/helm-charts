@@ -123,7 +123,7 @@ override_config:
   #     bucket         = "data"
   #     organization   = "OurCompany"
   #     token          = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  
+
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
 config:
