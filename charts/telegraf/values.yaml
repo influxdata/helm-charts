@@ -3,23 +3,30 @@
 ## ref: https://hub.docker.com/r/library/telegraf/tags/
 
 replicaCount: 1
+
 image:
   repo: "telegraf"
   tag: "1.24-alpine"
   pullPolicy: IfNotPresent
+
 podAnnotations: {}
+
 podLabels: {}
+
 imagePullSecrets: []
+
 ## Configure args passed to Telegraf containers
 args: []
+
+
 # The name of a secret in the same kubernetes namespace which contains values to
 # be added to the environment (must be manually created)
 # This can be useful for auth tokens, etc.
 
 # envFromSecret: "telegraf-tokens"
-env:
-  - name: HOSTNAME
-    value: "telegraf-polling-service"
+  env:
+    - name: HOSTNAME
+      value: "telegraf-polling-service"
 # An older "volumeMounts" key was previously added which will likely
 # NOT WORK as you expect. Please use this newer configuration.
 
@@ -140,17 +147,18 @@ config:
     - influxdb:
       urls:
         - "http://influxdb.monitoring.svc:8086"
-          database: "telegraf"
+        database: "telegraf"
   inputs:
     - statsd:
-      service_address: ":8125"
-      percentiles:
-        - 50
-        - 95
-        - 99
-      metric_separator: "_"
-      allowed_pending_messages: 10000
-      percentile_limit: 1000
+        service_address: ":8125"
+        percentiles:
+          - 50
+          - 95
+          - 99
+        metric_separator: "_"
+        allowed_pending_messages: 10000
+        percentile_limit: 1000
+
 metrics:
   health:
     enabled: false
@@ -159,6 +167,7 @@ metrics:
   internal:
     enabled: true
     collect_memstats: false
+
 # Lifecycle hooks
 # hooks:
 #   postStart: ["/bin/sh", "-c", "echo Telegraf started"]

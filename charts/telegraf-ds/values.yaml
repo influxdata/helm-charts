@@ -11,8 +11,8 @@ pullPolicy: IfNotPresent
 resources:
   requests:
     memory: 256Mi
-  cpu: 0.1
-    limits:
+    cpu: 0.1
+  limits:
     memory: 2Gi
     cpu: 1
 ## Pod annotations
@@ -28,27 +28,27 @@ args: []
 
 ## Environment
 env:
-# This pulls HOSTNAME from the node, not the pod.
-- name: HOSTNAME
-  valueFrom:
-    fieldRef:
-      fieldPath: spec.nodeName
-# In test clusters where hostnames are resolved in /etc/hosts on each node,
-# the HOSTNAME is not resolvable from inside containers
-# So inject the host IP as well
-- name: HOSTIP
-  valueFrom:
-    fieldRef:
-      fieldPath: status.hostIP
-# Mount the host filesystem and set the appropriate env variables.
-# ref: https://github.com/influxdata/telegraf/blob/master/docs/FAQ.md
-# HOST_PROC is required by the cpu, disk, diskio, kernel and processes input plugins
-- name: "HOST_PROC"
+  # This pulls HOSTNAME from the node, not the pod.
+  - name: HOSTNAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  # In test clusters where hostnames are resolved in /etc/hosts on each node,
+  # the HOSTNAME is not resolvable from inside containers
+  # So inject the host IP as well
+  - name: HOSTIP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.hostIP
+  # Mount the host filesystem and set the appropriate env variables.
+  # ref: https://github.com/influxdata/telegraf/blob/master/docs/FAQ.md
+  # HOST_PROC is required by the cpu, disk, diskio, kernel and processes input plugins
+  - name: "HOST_PROC"
     value: "/hostfs/proc"
-# HOST_SYS is required by the diskio plugin
-- name: "HOST_SYS"
+  # HOST_SYS is required by the diskio plugin
+  - name: "HOST_SYS"
     value: "/hostfs/sys"
-- name: "HOST_MOUNT_PREFIX"
+  - name: "HOST_MOUNT_PREFIX"
     value: "/hostfs"
 ## Add custom volumes and mounts
 # volumes:
@@ -86,13 +86,14 @@ tolerations: []
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
-  serviceAccount:
-# Specifies whether a ServiceAccount should be created
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
   create: true
-# The name of the ServiceAccount to use.
-# If not set and create is true, a name is generated using the fullname template
-# name:
-# Annotations for the ServiceAccount
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  # name:
+  # Annotations for the ServiceAccount
   annotations: {}
 ## Specify priorityClassName
 ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
@@ -101,7 +102,7 @@ rbac:
 # Specify the pod's SecurityContext, including the OS user and group to run the pod
 podSecurityContext: {}
 override_config:
-toml: ~
+  toml: ~
   # Provide a literal TOML config
   # toml: |+
   #   [global_tags]
@@ -117,8 +118,8 @@ toml: ~
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
 config:
-# global_tags:
-#   cluster: "mycluster"
+  # global_tags:
+  #   cluster: "mycluster"
   agent:
     interval: "10s"
     round_interval: true
@@ -135,14 +136,14 @@ config:
     omit_hostname: false
   outputs:
     - influxdb:
-      urls:
-        - "http://influxdb.monitoring.svc:8086"
-      database: "telegraf"
-      retention_policy: ""
-      timeout: "5s"
-      username: ""
-      password: ""
-      user_agent: "telegraf"
-      insecure_skip_verify: false
-monitor_self: false
-docker_endpoint: "unix:///var/run/docker.sock"
+        urls:
+          - "http://influxdb.monitoring.svc:8086"
+        database: "telegraf"
+        retention_policy: ""
+        timeout: "5s"
+        username: ""
+        password: ""
+        user_agent: "telegraf"
+        insecure_skip_verify: false
+  monitor_self: false
+  docker_endpoint: "unix:///var/run/docker.sock"
