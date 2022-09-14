@@ -4,9 +4,9 @@
 
 replicaCount: 1
 image:
-    repo: "telegraf"
-    tag: "1.24-alpine"
-    pullPolicy: IfNotPresent
+  repo: "telegraf"
+  tag: "1.24-alpine"
+  pullPolicy: IfNotPresent
 podAnnotations: {}
 podLabels: {}
 imagePullSecrets: []
@@ -18,8 +18,8 @@ args: []
 
 # envFromSecret: "telegraf-tokens"
 env:
-    - name: HOSTNAME
-      value: "telegraf-polling-service"
+  - name: HOSTNAME
+    value: "telegraf-polling-service"
 # An older "volumeMounts" key was previously added which will likely
 # NOT WORK as you expect. Please use this newer configuration.
 
@@ -35,12 +35,12 @@ env:
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources: {}
-# requests:
-#   memory: 128Mi
-#   cpu: 100m
-# limits:
-#   memory: 128Mi
-#   cpu: 100m
+  # requests:
+  #   memory: 128Mi
+  #   cpu: 100m
+  # limits:
+  #   memory: 128Mi
+  #   cpu: 100m
 
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/user-guide/node-selection/
@@ -59,16 +59,16 @@ tolerations: []
 #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
 service:
-    enabled: true
-    type: ClusterIP
-    annotations: {}
+  enabled: true
+  type: ClusterIP
+  annotations: {}
 rbac:
-    # Specifies whether RBAC resources should be created
-    create: true
-    # Create only for the release namespace or cluster wide (Role vs ClusterRole)
-    clusterWide: false
-    # Rules for the created rule
-    rules: []
+  # Specifies whether RBAC resources should be created
+  create: true
+  # Create only for the release namespace or cluster wide (Role vs ClusterRole)
+  clusterWide: false
+  # Rules for the created rule
+  rules: []
 # When using the prometheus input to scrape all pods you need extra rules set to the ClusterRole to be
 # able to scan the pods for scraping labels. The following rules have been taken from:
 # https://github.com/helm/charts/blob/master/stable/prometheus/templates/server-clusterrole.yaml#L8-L46
@@ -102,63 +102,63 @@ rbac:
 #        - get
 
 serviceAccount:
-    # Specifies whether a ServiceAccount should be created
-    create: true
-    # The name of the ServiceAccount to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name:
-    # Annotations for the ServiceAccount
-    annotations: {}
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+  # Annotations for the ServiceAccount
+  annotations: {}
 ## Exposed telegraf configuration
 ## For full list of possible values see `/docs/all-config-values.yaml` and `/docs/all-config-values.toml`
 ## ref: https://docs.influxdata.com/telegraf/v1.1/administration/configuration/
 config:
-    agent:
-        interval: "10s"
-        round_interval: true
-        metric_batch_size: 1000
-        metric_buffer_limit: 10000
-        collection_jitter: "0s"
-        flush_interval: "10s"
-        flush_jitter: "0s"
-        precision: ""
-        debug: false
-        quiet: false
-        logfile: ""
-        hostname: "$HOSTNAME"
-        omit_hostname: false
-    processors:
-        - enum:
-            mapping:
-                field: "status"
-                dest: "status_code"
-                value_mappings:
-                    healthy: 1
-                    problem: 2
-                    critical: 3
-    outputs:
-        - influxdb:
-            urls:
-                - "http://influxdb.monitoring.svc:8086"
-            database: "telegraf"
-    inputs:
-        - statsd:
-            service_address: ":8125"
-            percentiles:
-                - 50
-                - 95
-                - 99
-            metric_separator: "_"
-            allowed_pending_messages: 10000
-            percentile_limit: 1000
+  agent:
+    interval: "10s"
+    round_interval: true
+    metric_batch_size: 1000
+    metric_buffer_limit: 10000
+    collection_jitter: "0s"
+    flush_interval: "10s"
+    flush_jitter: "0s"
+    precision: ""
+    debug: false
+    quiet: false
+    logfile: ""
+    hostname: "$HOSTNAME"
+    omit_hostname: false
+  processors:
+    - enum:
+      mapping:
+        field: "status"
+        dest: "status_code"
+        value_mappings:
+          healthy: 1
+          problem: 2
+          critical: 3
+  outputs:
+    - influxdb:
+      urls:
+        - "http://influxdb.monitoring.svc:8086"
+          database: "telegraf"
+  inputs:
+    - statsd:
+      service_address: ":8125"
+      percentiles:
+        - 50
+        - 95
+        - 99
+      metric_separator: "_"
+      allowed_pending_messages: 10000
+      percentile_limit: 1000
 metrics:
-    health:
-        enabled: false
-        service_address: "http://:8888"
-        threshold: 5000.0
-    internal:
-        enabled: true
-        collect_memstats: false
+  health:
+    enabled: false
+    service_address: "http://:8888"
+    threshold: 5000.0
+  internal:
+    enabled: true
+    collect_memstats: false
 # Lifecycle hooks
 # hooks:
 #   postStart: ["/bin/sh", "-c", "echo Telegraf started"]
@@ -167,8 +167,8 @@ metrics:
 ## Pod disruption budget configuration
 ##
 pdb:
-    ## Specifies whether a Pod disruption budget should be created
-    ##
-    create: true
-    minAvailable: 1
-    # maxUnavailable: 1
+  ## Specifies whether a Pod disruption budget should be created
+  ##
+  create: true
+  minAvailable: 1
+  # maxUnavailable: 1
