@@ -42,6 +42,13 @@ resources:
   requests:
     cpu: 50m
     memory: 64Mi
+sidecarResources:
+  limits:
+    cpu: 200m
+    memory: 200Mi
+  requests:
+    cpu: 10m
+    memory: 10Mi
 nodeSelector: {}
 tolerations: []
 affinity: {}
