@@ -133,7 +133,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "map[string]interface {}" }}
-      [[outputs.{{ $output }}.{{ $key }}]]
+      [outputs.{{ $output }}.{{ $key }}]
             {{- range $k, $v := $value }}
               {{- $tps := typeOf $v }}
               {{- if eq $tps "string" }}
@@ -163,7 +163,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         ]
               {{- end }}
               {{- if eq $tps "map[string]interface {}"}}
-        [[outputs.{{ $output }}.{{ $key }}.{{ $k }}]]
+        [outputs.{{ $output }}.{{ $key }}.{{ $k }}]
                 {{- range $foo, $bar := $v }}
             {{ $foo }} = {{ $bar | quote }}
                 {{- end }}
