@@ -3,33 +3,23 @@
 ## ref: https://hub.docker.com/r/library/telegraf/tags/
 
 replicaCount: 1
-
 image:
   repo: "telegraf"
-  tag: "1.23-alpine"
+  tag: "1.24-alpine"
   pullPolicy: IfNotPresent
-
 podAnnotations: {}
-
 podLabels: {}
-
 imagePullSecrets: []
-
 ## Configure args passed to Telegraf containers
 args: []
-
-
 # The name of a secret in the same kubernetes namespace which contains values to
 # be added to the environment (must be manually created)
 # This can be useful for auth tokens, etc.
 
 # envFromSecret: "telegraf-tokens"
-
-
 env:
   - name: HOSTNAME
     value: "telegraf-polling-service"
-
 # An older "volumeMounts" key was previously added which will likely
 # NOT WORK as you expect. Please use this newer configuration.
 
@@ -42,26 +32,23 @@ env:
 #   mountPath: /etc/telegraf/conf.d
 #   subPath: influxdb2.conf
 
-
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources: {}
-  # requests:
-  #   memory: 128Mi
-  #   cpu: 100m
-  # limits:
-  #   memory: 128Mi
-  #   cpu: 100m
+# requests:
+#   memory: 128Mi
+#   cpu: 100m
+# limits:
+#   memory: 128Mi
+#   cpu: 100m
 
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/user-guide/node-selection/
 nodeSelector: {}
-
 ## Affinity for pod assignment
 ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 ##
 affinity: {}
-
 ## Tolerations for pod assignment
 ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
 ##
@@ -75,7 +62,6 @@ service:
   enabled: true
   type: ClusterIP
   annotations: {}
-
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
@@ -123,7 +109,6 @@ serviceAccount:
   name:
   # Annotations for the ServiceAccount
   annotations: {}
-
 ## Exposed telegraf configuration
 ## For full list of possible values see `/docs/all-config-values.yaml` and `/docs/all-config-values.toml`
 ## ref: https://docs.influxdata.com/telegraf/v1.1/administration/configuration/
@@ -166,7 +151,6 @@ config:
         metric_separator: "_"
         allowed_pending_messages: 10000
         percentile_limit: 1000
-
 metrics:
   health:
     enabled: false
@@ -175,7 +159,6 @@ metrics:
   internal:
     enabled: true
     collect_memstats: false
-
 # Lifecycle hooks
 # hooks:
 #   postStart: ["/bin/sh", "-c", "echo Telegraf started"]
