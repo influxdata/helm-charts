@@ -2626,6 +2626,33 @@ entries:
     version: 1.2.9
   telegraf:
   - apiVersion: v2
+    appVersion: 1.24.1
+    created: "2022-09-26T17:56:53.550275463Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 674d7f5e297ee2cd55644001b4ab3d0028dea0ab36a3c1962bfd43daec8f32b3
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    icon: https://avatars0.githubusercontent.com/u/5713248?s=200&v=4
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    - influxdb
+    - agent
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    name: telegraf
+    sources:
+    - https://github.com/influxdata/helm-charts/tree/master/charts/telegraf
+    - https://github.com/influxdata/helm-charts/
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.8.21/telegraf-1.8.21.tgz
+    version: 1.8.21
+  - apiVersion: v2
     appVersion: 1.23.3
     created: "2022-08-17T08:19:40.617418615Z"
     description: Telegraf is an agent written in Go for collecting, processing, aggregating,
@@ -3760,6 +3787,31 @@ entries:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-1.7.9/telegraf-1.7.9.tgz
     version: 1.7.9
   telegraf-ds:
+  - apiVersion: v1
+    appVersion: 1.24.1
+    created: "2022-09-26T17:56:53.834009555Z"
+    description: Telegraf is an agent written in Go for collecting, processing, aggregating,
+      and writing metrics.
+    digest: 2ba373a78f7e7cac217d4b97e71bc7580ac6355c2f05f5a2e2b92667bb614ab8
+    home: https://www.influxdata.com/time-series-platform/telegraf/
+    keywords:
+    - telegraf
+    - collector
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: contact@cerenit.fr
+      name: nsteinmetz
+    name: telegraf-ds
+    sources:
+    - https://github.com/influxdata/helm-charts/charts/telegraf-ds
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/telegraf-ds-1.1.3/telegraf-ds-1.1.3.tgz
+    version: 1.1.3
   - apiVersion: v1
     appVersion: 1.23.3
     created: "2022-09-26T15:03:40.756527459Z"
@@ -5024,4 +5076,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2022-09-26T15:03:40.758275137Z"
+generated: "2022-09-26T17:56:53.835374562Z"
