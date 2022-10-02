@@ -150,8 +150,6 @@ config:
         urls:
           - "http://influxdb.monitoring.svc:8086"
         database: "telegraf"
-    - prometheus_client:
-        listen: "8080"
   inputs:
     - statsd:
         service_address: ":8125"
