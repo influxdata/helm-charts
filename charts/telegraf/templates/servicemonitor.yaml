@@ -1,0 +1,22 @@
+{{- if .Values.serviceMonitor.create }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "telegraf.serviceMonitorName" . }}
+  labels:
+    {{- include "telegraf.labels" . | nindent 4 }}
+  {{- if .Values.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml .Values.serviceMonitor.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+    {{- include "telegraf.labels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  endpoints:
+    - port: prometheus-client
+      path: /metrics
+{{- end }}
