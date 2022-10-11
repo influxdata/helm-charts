@@ -116,6 +116,8 @@ serviceMonitor:
   # The name of the ServiceMonitor to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
+  # Extra Labels for the ServiceMonitor
+  labels: {}
   # Annotations for the ServiceMonitor
   annotations: {}
 ## Exposed telegraf configuration
