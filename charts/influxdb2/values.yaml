@@ -1,7 +1,10 @@
 image:
   repository: influxdb
-  tag: 2.2.0-alpine
+  tag: 2.3.0-alpine
   pullPolicy: IfNotPresent
+  ## If specified, use these secrets to access the images
+  # pullSecrets:
+  #   - registry-secret
 
 ## Annotations to be added to InfluxDB pods
 ##
