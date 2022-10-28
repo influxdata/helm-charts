@@ -25,7 +25,7 @@ spec:
   {{- range $key, $value := . -}}
     {{- $tp := typeOf $value -}}
     {{- if eq $key "prometheus_client" }}
-    - port: {{ trimPrefix ":" $value.listen | int64 }}
+    - port: {{ trimPrefix ":" $value.listen }}
       path: {{ $value.path | default "/metrics" }}
     {{- end }}
   {{- end -}}
