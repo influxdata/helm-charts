@@ -4,7 +4,7 @@
 
 The InfluxDB Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap an InfluxDB StatefulSet and service on a [Kubernetes](http://kubernetes.io) cluster.
 
-> **Note:** ### If you're using the InfluxDB Enterprise Helm chart, check out [InfluxDB Enterprise Helm chart](#influxdb-enterprise-helm-chart).
+> **Note:** ### If you're using the InfluxDB Enterprise Helm chart, check out [InfluxDB Enterprise Helm chart](https://github.com/influxdata/helm-charts/tree/master/charts/influxdb-enterprise).
 
 ## Prerequisites
 
@@ -140,48 +140,6 @@ To configure the chart, do either of the following:
   > **Tip**: Use the default [values.yaml](values.yaml).
 
 For information about running InfluxDB in Docker, see the [full image documentation](https://hub.docker.com/_/influxdb/).
-
-### InfluxDB Enterprise Helm chart
-
-[InfluxDB Enterprise](https://www.influxdata.com/products/influxdb-enterprise/) includes features designed for production workloads, including high availability and horizontal scaling. InfluxDB Enterprise requires an InfluxDB Enterprise license.
-
-#### Configure the InfluxDB Enterprise chart
-
-To enable InfluxDB Enterprise, set the following keys and values in a values file provided to Helm.
-
-| Key | Description | Recommended value |
-| --- | --- | --- |
-| `livenessProbe.initalDelaySeconds` | Used to allow enough time to join meta nodes to a cluster | `3600` |
-| `image.tag` | Set to a `data` image. See https://hub.docker.com/_/influxdb for details | `data` |
-| `service.ClusterIP` | Use a headless service for StatefulSets | `"None"` |
-| `env.name[_HOSTNAME]` | Used to provide a unique `name.service` for InfluxDB. See [values.yaml]() for an example | `valueFrom.fieldRef.fieldPath: metadata.name` |
-| `enterprise.enabled` | Create StatefulSets for use with `influx-data` and `influx-meta` images | `true` |
-| `enterprise.licensekey` | License for InfluxDB Enterprise |  |
-| `enterprise.clusterSize` | Replicas for `influx` StatefulSet | Dependent on license |
-| `enterprise.meta.image.tag` | Set to an `meta` image. See https://hub.docker.com/_/influxdb for details | `meta` |
-| `enterprise.meta.clusterSize` | Replicas for `influxdb-meta` StatefulSet. | `3` |
-| `enterprise.meta.resources` | Resources requests and limits for meta `influxdb-meta` pods | See `values.yaml` |
-
-#### Join pods to InfluxDB Enterprise cluster
-
-Meta and data pods must be joined using the command `influxd-ctl` found on meta pods.
-We recommend running `influxd-ctl` on one and only one meta pod and joining meta pods together before data pods. For each meta pod, run `influxd-ctl`.
-
-In the following examples, we use the pod names `influxdb-meta-0` and `influxdb-0` and the service name `influxdb`.
-
-For example, using the default settings, your script should look something like this:
-
-```shell script
-kubectl exec influxdb-meta-0 influxd-ctl add-meta influxdb-meta-0.influxdb-meta:8091
-```
-
-From the same meta pod, for each data pod, run `influxd-ctl`. With default settings, your script should look something like this:
-
-```shell script
-kubectl exec influxdb-meta-0 influxd-ctl add-data influxdb-0.influxdb:8088
-```
-
-When using `influxd-ctl`, use the appropriate DNS name for your pods, following the naming scheme of `pod.service`.
 
 ## Persistence
 
