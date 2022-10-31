@@ -120,8 +120,6 @@ meta:
     secretName: shared-secret
 ```
 
-
-
 #### Authentication (Optional)
 
 If you want to configure authentication for your data nodes, you must provide the following within your `values.yaml`:
