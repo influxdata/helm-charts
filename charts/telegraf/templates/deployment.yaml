@@ -29,6 +29,10 @@ spec:
 {{ toYaml .Values.securityContext | indent 8 }}
 {{- end }}
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
+{{- if .Values.initContainers }}
+      initContainers:
+{{ toYaml .Values.initContainers | indent 6 }}
+{{- end }}
       containers:
       - name: {{ .Chart.Name }}
 {{- if .Values.containerSecurityContext }}
@@ -96,6 +100,9 @@ spec:
             path: /
             port: {{ trimPrefix "http://:" .service_address | int64 }}
         {{- end }}
+{{- if .Values.sideCars }}
+{{ toYaml .Values.sideCars | indent 6 }}
+{{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
 {{ toYaml .Values.imagePullSecrets | indent 8 }}

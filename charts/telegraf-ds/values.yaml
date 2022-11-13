@@ -17,8 +17,16 @@ resources:
     cpu: 1
 ## Pod annotations
 podAnnotations: {}
+## override the app label
+# nameOverride: telegraf-poller
 ## Pod labels
 podLabels: {}
+## telegraf Container ports
+ports: []
+# - containerPort: 9127
+#   protocol: UDP
+#   hostPort: 9127
+#   name: statsd
 ## Configure args passed to Telegraf containers
 args: []
 ## The name of a secret in the same kubernetes namespace which contains values to
@@ -145,4 +153,13 @@ config:
         user_agent: "telegraf"
         insecure_skip_verify: false
   monitor_self: false
-  docker_endpoint: "unix:///var/run/docker.sock"
+  runtime_endpoint: "unix:///var/run/docker.sock"
+extraObjects: []
+initContainers: []
+  # - name: hello
+  #   image: library:busybox
+  #   command: ["/bin/sh", "-c", "echo 'OK'"]
+sideCars: []
+  # - name: hello
+  #   image: library:busybox
+  #   command: ["/bin/sh", "-c", "sleep 30000"]
