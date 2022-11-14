@@ -151,6 +151,22 @@ config:
         metric_separator: "_"
         allowed_pending_messages: 10000
         percentile_limit: 1000
+## Overrides generated configuration
+## Please note that config element may still be needed for plugins ports (when applicable) to be exposed by the service.
+override_config:
+  toml: ~
+  # Provide a literal TOML config
+  # toml: |+
+  #   [global_tags]
+  #     foo = "bar"
+  #   [agent]
+  #     interval = "10s"
+  #   [[inputs.mem]]
+  #   [[outputs.influxdb_v2]]
+  #     urls           = ["https://us-west-2-1.aws.cloud2.influxdata.com"]
+  #     bucket         = "data"
+  #     organization   = "OurCompany"
+  #     token          = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 metrics:
   health:
     enabled: false

@@ -5,6 +5,10 @@ metadata:
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 data:
+{{- if .Values.override_config.toml }}
+  telegraf.conf: |+
+    {{ .Values.override_config.toml | nindent 4 }}
+{{- else }}
   telegraf.conf: |+
     {{- $tplVersion := include "detect.version" . }}
     {{ template "global_tags" .Values.config.global_tags }}
@@ -27,3 +31,4 @@ data:
     [[inputs.internal]]
       collect_memstats = {{ or .Values.metrics.internal.collect_memstats (.Values.metrics.collect_memstats | default false) }}
     {{- end }}
+{{- end }}
