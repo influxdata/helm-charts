@@ -10,8 +10,10 @@ metadata:
     influxdb.influxdata.com/component: meta
     {{- include "influxdb-enterprise.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.meta.service.type }}
+{{- if (eq "ClusterIP" .Values.meta.service.type) }}
   clusterIP: None
+{{- end }}
   publishNotReadyAddresses: true
   ports:
   - port: 8089
@@ -20,6 +22,19 @@ spec:
   - port: 8091
     protocol: TCP
     name: http
+{{- if .Values.meta.service.nodePort }}
+    nodePort: {{ .Values.meta.service.nodePort }}
+{{- end }}
   selector:
     influxdb.influxdata.com/component: meta
     {{- include "influxdb-enterprise.selectorLabels" . | nindent 4 }}
+{{- if .Values.meta.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.meta.service.loadBalancerIP }}
+{{- end }}
+{{- if .Values.meta.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.meta.service.externalIPs | indent 4 }}
+{{- end }}
+{{- if .Values.meta.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.meta.service.externalTrafficPolicy }}
+{{- end }}

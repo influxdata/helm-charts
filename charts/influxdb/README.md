@@ -62,6 +62,7 @@ The following table lists configurable parameters, their descriptions, and their
 | service.loadBalancerIP | A user-specified IP address for service type LoadBalancer to use as External IP (if supported) | nil |
 | service.externalIPs | A user-specified list of externalIPs to add to the service | nil |
 | service.externalTrafficPolicy | A user specified external traffic policy | nil |
+| service.nodePorts.http | Node port to expose for HTTP API if `service.type=NodePort` or `service.type=LoadBalancer` | Random port from range 30000-32767 |
 | persistence.enabled | Boolean to enable and disable persistance | true |
 | persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil |
 | persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
@@ -192,11 +193,9 @@ If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-
 
 In `values.yaml`, change `.Values.config.http.auth-enabled` to `true`.
 
-> **Note:** To enforce authentication, InfluxDB requires an admin user to be set up. For details, see [Set up authentication](https://docs.influxdata.com/influxdb/v1.2/query_language/authentication_and_authorization/#set-up-authentication).
+To handle this set up during startup, set `.Values.setDefaultUser.enabled` to `true`.
 
-To handle this set up during startup, enable a job in `values.yaml` by setting `.Values.setDefaultUser.enabled` to `true`.
-
-Make sure to uncomment or configure the job settings after enabling it. If a password is not set, a random password will be generated.
+Make sure to uncomment or configure default user settings after enabling it. If a password is not set, a random password will be generated.
 
 Alternatively, if `.Values.setDefaultUser.user.existingSecret` is set the user and password are obtained from an existing Secret, the expected keys are `influxdb-user` and `influxdb-password`. Use this variable if you need to check in the `values.yaml` in a repository to avoid exposing your secrets.
 

@@ -8,10 +8,13 @@ kind: Ingress
 metadata:
   name: {{ template "chronograf.fullname" . }}
   labels:
+    {{- if eq "true" (include "chronograf.legacyLabels" .) }}
     app: {{ template "chronograf.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
+    {{- end }}
+    {{- include "chronograf.labels" . | nindent 4 }}
   annotations:
 {{ toYaml .Values.ingress.annotations | indent 4 }}
 spec:

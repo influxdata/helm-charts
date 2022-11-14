@@ -93,6 +93,7 @@ config:
             measurement: "_/_/measurement/_"
             types:
               test: "int"
+        data_format: "json_v2"
         json_v2:
           - measurement_name: ""
             timestamp_path: ""

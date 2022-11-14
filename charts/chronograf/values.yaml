@@ -4,7 +4,7 @@ image:
   repository: "chronograf"
   ## DockerHub is now the preferred repo
   ## alternative: quay.io/influxdb/chronograf
-  tag: 1.9.3
+  tag: 1.9.4
   pullPolicy: IfNotPresent
 
 ## Specify a service type
@@ -56,6 +56,12 @@ tolerations: []
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 ##
 affinity: {}
+
+## Customize probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+##
+startupProbe:
+  enabled: true
 
 ## Configure the ingress object to hook into existing infastructure
 ## ref : http://kubernetes.io/docs/user-guide/ingress/
