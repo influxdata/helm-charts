@@ -43,4 +43,12 @@ data:
     url = "https://$HOSTIP:10250"
     bearer_token = "/var/run/secrets/kubernetes.io/serviceaccount/token"
     insecure_skip_verify = true
+    label_include = [
+    {{- range $index, $label := .Values.config.kubernetes.label_include}}
+      {{- if $index}},{{end}} {{- $label | quote}}
+    {{- end}} ]
+    label_exclude = [
+    {{- range $index, $label := .Values.config.kubernetes.label_exclude}}
+      {{- if $index}},{{end}} {{- $label | quote}}
+    {{- end}} ]
 {{- end }}
