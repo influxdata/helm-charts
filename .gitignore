@@ -4,3 +4,6 @@
 
 # Terraform
 /terraform/.terraform
+
+# IntelliJ
+.idea/
