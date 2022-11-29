@@ -109,6 +109,24 @@ serviceAccount:
   name:
   # Annotations for the ServiceAccount
   annotations: {}
+
+# To make use of the serviceMonitorm, please add a prometheus_client entry to config.outputs:
+    # - prometheus_client:
+    #     listen: ":9273"
+    #     path: /metrics
+serviceMonitor:
+  # Specifies whether a ServiceMonitor should be created
+  create: false
+  # The name of the ServiceMonitor to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+  # Extra Labels for the ServiceMonitor
+  labels: {}
+  # Annotations for the ServiceMonitor
+  annotations: {}
+  # To install the serviceMonitor in a different namespace than the release set its name here
+  # For example if your prometheus is <v0.19.0 the serviceMonitor must be installed in the prometheus namespace
+  namespaceOverride:
 ## Exposed telegraf configuration
 ## For full list of possible values see `/docs/all-config-values.yaml` and `/docs/all-config-values.toml`
 ## ref: https://docs.influxdata.com/telegraf/v1.1/administration/configuration/

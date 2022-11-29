@@ -1,0 +1,8 @@
+config:
+  outputs:
+    - prometheus_client:
+        listen: ":9273"
+serviceMonitor:
+  create: true
+  labels:
+    team: losers

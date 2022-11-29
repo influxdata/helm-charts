@@ -59,9 +59,15 @@ jobs:
           INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
 
+      - name: Create custom resources
+        run: |
+          kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/bundle.yaml
+        if: steps.list-changed.outputs.changed == 'true'
+
       - name: Run chart-testing (install)
         id: install
         run: |
+          set -o pipefail;
           ct install --namespace=default 2>&1 | tee $RUNNER_TEMP/$GITHUB_RUN_NUMBER.txt
 # When https://github.com/helm/chart-testing/issues/212 is fixed, this can be used to set the license key instead of using env from secret
 #        run: ct install --namespace=default --helm-extra-args="--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"

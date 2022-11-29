@@ -1,0 +1,33 @@
+{{- if .Values.serviceMonitor.create }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "telegraf.serviceMonitorName" . }}
+  namespace: {{ .Values.serviceMonitor.namespaceOverride | default .Release.Namespace }}
+  labels:
+    {{- include "telegraf.labels" . | nindent 4 }}
+    {{- if .Values.serviceMonitor.labels }}
+      {{- toYaml .Values.serviceMonitor.labels | nindent 4 }}
+    {{- end }}    
+  {{- if .Values.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml .Values.serviceMonitor.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+    {{- include "telegraf.labels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  endpoints:
+  {{- range $objectKey, $objectValue := .Values.config.outputs }}
+  {{- range $key, $value := . -}}
+    {{- $tp := typeOf $value -}}
+    {{- if eq $key "prometheus_client" }}
+    - port: {{ trimPrefix ":" $value.listen }}
+      path: {{ $value.path | default "/metrics" }}
+    {{- end }}
+  {{- end -}}
+  {{- end }}
+{{- end }}

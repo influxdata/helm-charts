@@ -707,6 +707,17 @@ Create the name of the service account to use
 {{- end -}}
 
 {{/*
+Create the name of the service monitor to use
+*/}}
+{{- define "telegraf.serviceMonitorName" -}}
+{{- if .Values.serviceMonitor.create -}}
+    {{ default (include "telegraf.fullname" .) .Values.serviceMonitor.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceMonitor.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Get health configuration
 */}}
 {{- define "telegraf.health" -}}
