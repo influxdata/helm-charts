@@ -5,7 +5,7 @@
 replicaCount: 1
 image:
   repo: "telegraf"
-  tag: "1.24-alpine"
+  tag: "1.25-alpine"
   pullPolicy: IfNotPresent
 podAnnotations: {}
 ## override the app label
