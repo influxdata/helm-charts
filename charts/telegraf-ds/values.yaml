@@ -86,6 +86,7 @@ tolerations: []
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
+  additionalRules: []
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
