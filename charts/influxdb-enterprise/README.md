@@ -11,12 +11,73 @@ helm upgrade --install influxdb influxdata/influxdb-enterprise --namespace monit
 
 ## Introduction
 
-This chart bootstraps an InfluxDB Enterprise cluster, with a StatefulSet for both the meta and data nodes.
+[InfluxDB Enterprise](https://www.influxdata.com/products/influxdb-enterprise/) includes features designed for production workloads, including high availability and horizontal scaling. InfluxDB Enterprise requires an InfluxDB Enterprise license. This chart bootstraps an InfluxDB Enterprise cluster, with a StatefulSet for both the meta and data nodes.
 
 ## Prerequisites
 
 - Kubernetes 1.4+
 - PV provisioner support in the underlying infrastructure (optional)
+
+## Installing the Chart
+
+To install the chart with the release name `my-release`:
+
+```bash
+helm upgrade --install my-release influxdata/influxdb-enterprise
+```
+
+The command deploys InfluxDB Enterprise on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+
+> **Tip**: List all releases using `helm list`
+
+## Uninstalling the Chart
+
+To uninstall/delete the `my-release` deployment:
+
+```bash
+helm uninstall my-release
+```
+
+The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+## Configure the InfluxDB Enterprise chart
+
+To enable InfluxDB Enterprise, set the following keys and values in a values file provided to Helm.
+
+| Key | Description | Recommended value |
+| --- | --- | --- |
+| `livenessProbe.initalDelaySeconds` | Used to allow enough time to join meta nodes to a cluster | `3600` |
+| `image.tag` | Set to a `data` image. See https://hub.docker.com/_/influxdb for details | `data` |
+| `service.ClusterIP` | Use a headless service for StatefulSets | `"None"` |
+| `env.name[_HOSTNAME]` | Used to provide a unique `name.service` for InfluxDB. See [values.yaml]() for an example | `valueFrom.fieldRef.fieldPath: metadata.name` |
+| `enterprise.enabled` | Create StatefulSets for use with `influx-data` and `influx-meta` images | `true` |
+| `enterprise.licensekey` | License for InfluxDB Enterprise |  |
+| `enterprise.clusterSize` | Replicas for `influx` StatefulSet | Dependent on license |
+| `enterprise.meta.image.tag` | Set to an `meta` image. See https://hub.docker.com/_/influxdb for details | `meta` |
+| `enterprise.meta.clusterSize` | Replicas for `influxdb-meta` StatefulSet. | `3` |
+| `enterprise.meta.resources` | Resources requests and limits for meta `influxdb-meta` pods | See `values.yaml` |
+
+#### Join pods to InfluxDB Enterprise cluster
+
+Meta and data pods must be joined using the command `influxd-ctl` found on meta pods.
+We recommend running `influxd-ctl` on one and only one meta pod and joining meta pods together before data pods. For each meta pod, run `influxd-ctl`.
+
+In the following examples, we use the pod names `influxdb-meta-0` and `influxdb-0` and the service name `influxdb`.
+
+For example, using the default settings, your script should look something like this:
+
+```shell script
+kubectl exec influxdb-meta-0 influxd-ctl add-meta influxdb-meta-0.influxdb-meta:8091
+```
+
+From the same meta pod, for each data pod, run `influxd-ctl`. With default settings, your script should look something like this:
+
+```shell script
+kubectl exec influxdb-meta-0 influxd-ctl add-data influxdb-0.influxdb:8088
+```
+
+When using `influxd-ctl`, use the appropriate DNS name for your pods, following the naming scheme of `pod.service`.
+
 
 ### Secrets
 
@@ -113,25 +174,3 @@ bootstrap:
   ddldml:
     configMap: ddl-dml
 ```
-
-## Installing the Chart
-
-To install the chart with the release name `my-release`:
-
-```bash
-helm upgrade --install my-release influxdata/influxdb-enterprise
-```
-
-The command deploys InfluxDB Enterprise on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
-
-> **Tip**: List all releases using `helm list`
-
-## Uninstalling the Chart
-
-To uninstall/delete the `my-release` deployment:
-
-```bash
-helm uninstall my-release
-```
-
-The command removes all the Kubernetes components associated with the chart and deletes the release.
