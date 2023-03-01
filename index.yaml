@@ -487,6 +487,32 @@ entries:
   influxdb:
   - apiVersion: v1
     appVersion: 1.8.10
+    created: "2023-03-01T14:58:44.217664595Z"
+    description: Scalable datastore for metrics, events, and real-time analytics.
+    digest: 901e2e02a40103c3890a11d5db9f8695d15fe3d6721c5c5227a42e54aecc7d59
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: influxdb
+    sources:
+    - https://github.com/influxdata/influxdb
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.12.1/influxdb-4.12.1.tgz
+    version: 4.12.1
+  - apiVersion: v1
+    appVersion: 1.8.10
     created: "2022-05-09T11:34:07.474336088Z"
     description: Scalable datastore for metrics, events, and real-time analytics.
     digest: 874afb2e71fb8eec4bfc1ba7ead3645d02001c04d73a2096cd2df5990509cb21
@@ -1422,6 +1448,28 @@ entries:
     - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.4.4/influxdb-4.4.4.tgz
     version: 4.4.4
   influxdb-enterprise:
+  - apiVersion: v1
+    appVersion: 1.10.0
+    created: "2023-03-01T14:58:44.416677316Z"
+    description: Run InfluxDB Enterprise on Kubernetes
+    digest: 8ca62248c8c60a5e17f878d17a951f56fa3eb64512ecbf37928139f04b66db7f
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: david@rawkode.com
+      name: rawkode
+    - email: chobbs@influxdata.com
+      name: chobbs
+    name: influxdb-enterprise
+    sources:
+    - https://github.com/influxdata/influxdb
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-enterprise-0.1.22/influxdb-enterprise-0.1.22.tgz
+    version: 0.1.22
   - apiVersion: v1
     appVersion: 1.10.0
     created: "2022-10-11T12:59:25.075289526Z"
@@ -5400,4 +5448,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2023-02-17T13:05:24.626823364Z"
+generated: "2023-03-01T14:58:44.418163135Z"
