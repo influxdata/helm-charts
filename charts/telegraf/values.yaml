@@ -112,6 +112,23 @@ serviceAccount:
 ## Exposed telegraf configuration
 ## For full list of possible values see `/docs/all-config-values.yaml` and `/docs/all-config-values.toml`
 ## ref: https://docs.influxdata.com/telegraf/v1.1/administration/configuration/
+override_config:
+  toml: ~
+  #   [[processors.starlark]]
+  #       ## The Starlark source can be set as a string in this configuration file, or
+  #       ## by referencing a file containing the script.  Only one source or script
+  #       ## should be set at once.
+
+  #       ## Source of the Starlark script.
+  #       source = '''
+  #     def apply(metric):
+  #        if metric.name == "prometheus_remote_write":
+  #             for k, v in metric.fields.items():
+  #                 metric.name = k
+  #                 metric.fields["value"] = v
+  #                 metric.fields.pop(k)
+  #        return metric
+  #     '''
 config:
   agent:
     interval: "10s"
