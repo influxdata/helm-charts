@@ -298,9 +298,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
     {{- if $config -}}
     {{- $tp := typeOf $config -}}
     {{- if eq $tp "map[string]interface {}" -}}
-        {{- if eq $processor "starlark" }}
-            {{- include "telegraf.starlark_processor" . | nindent 4 }}
-        {{- end }}
         {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "string" }}
