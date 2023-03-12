@@ -291,11 +291,16 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "processors.v1" -}}
 {{- range $processorIdx, $configObject := . -}}
     {{- range $processor, $config := . -}}
-
+    {{- if eq $processor "starlark" }}
+        {{- include "telegraf.starlark_processor" . | nindent 4 }}
+    {{- else }}
     [[processors.{{- $processor }}]]
     {{- if $config -}}
     {{- $tp := typeOf $config -}}
     {{- if eq $tp "map[string]interface {}" -}}
+        {{- if eq $processor "starlark" }}
+            {{- include "telegraf.starlark_processor" . | nindent 4 }}
+        {{- end }}
         {{- range $key, $value := $config -}}
           {{- $tp := typeOf $value -}}
           {{- if eq $tp "string" }}
@@ -407,6 +412,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
     {{- end }}
     {{- end }}
     {{ end }}
+  {{- end }}
 {{- end }}
 {{- end -}}
 
@@ -724,3 +730,24 @@ Get health configuration
     {{- $health | toYaml -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Helper function to create a starlark processor configuration block
+*/}}
+{{- define "telegraf.starlark_processor" -}}
+[[processors.starlark]]
+  ## The Starlark source can be set as a string in this configuration file, or
+  ## by referencing a file containing the script.  Only one source or script
+  ## should be set at once.
+
+  ## Source of the Starlark script.
+  source = '''
+def apply(metric):
+   if metric.name == "prometheus_remote_write":
+        for k, v in metric.fields.items():
+            metric.name = k
+            metric.fields["value"] = v
+            metric.fields.pop(k)
+   return metric
+'''
+{{- end }}
