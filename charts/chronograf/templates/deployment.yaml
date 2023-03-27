@@ -3,10 +3,13 @@ kind: Deployment
 metadata:
   name: {{ template "chronograf.fullname" . }}
   labels:
+    {{- if eq "true" (include "chronograf.legacyLabels" .) }}
     app: {{ template "chronograf.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
+    {{- end }}
+    {{- include "chronograf.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.service.replicas }}
   strategy:
@@ -16,11 +19,17 @@ spec:
     {{- end }}
   selector:
     matchLabels:
+      {{- if eq "true" (include "chronograf.legacyLabels" .) }}
       app: {{ template "chronograf.fullname" . }}
+      {{- end }}
+      {{- include "chronograf.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
+        {{- if eq "true" (include "chronograf.legacyLabels" .) }}
         app: {{ template "chronograf.fullname" . }}
+        {{- end }}
+        {{- include "chronograf.selectorLabels" . | nindent 8 }}
     spec:
       containers:
       - name: {{ .Chart.Name }}
@@ -179,7 +188,7 @@ spec:
             path: {{ .Values.env.BASE_PATH }}/ping
             {{- else }}
             path: /ping
-            {{- end}}
+            {{- end }}
             port: api
         readinessProbe:
           httpGet:
@@ -187,8 +196,19 @@ spec:
             path: {{ .Values.env.BASE_PATH }}/ping
             {{- else }}
             path: /ping
-            {{- end}}
+            {{- end }}
             port: api
+        {{- if .Values.startupProbe.enabled }}
+        startupProbe:
+          httpGet:
+            {{- if .Values.env.BASE_PATH }}
+            path: {{ .Values.env.BASE_PATH }}/ping
+            {{- else }}
+            path: /ping
+            {{- end }}
+            port: api
+          initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds | default 5 }}
+        {{- end }}
         volumeMounts:
         - name: data
           mountPath: /var/lib/chronograf

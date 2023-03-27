@@ -2,7 +2,7 @@ replicaCount: 3
 image:
   repository: quay.io/influxdb/telegraf-operator
   pullPolicy: IfNotPresent
-  sidecarImage: "docker.io/library/telegraf:1.19"
+  sidecarImage: "docker.io/library/telegraf:1.22"
 
 classes:
   secretName: "telegraf-operator-classes"
@@ -42,6 +42,13 @@ resources:
   requests:
     cpu: 50m
     memory: 64Mi
+sidecarResources:
+  limits:
+    cpu: 200m
+    memory: 200Mi
+  requests:
+    cpu: 10m
+    memory: 10Mi
 nodeSelector: {}
 tolerations: []
 affinity: {}

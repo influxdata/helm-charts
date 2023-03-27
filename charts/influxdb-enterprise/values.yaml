@@ -7,7 +7,7 @@ fullnameOverride: ""
 imagePullSecrets: []
 
 # License-key and license-path are mutually exclusive. Use only one and leave the other blank.
-license:
+license: {}
   # You can put your license key here for testing this chart out,
   # but we STRONGLY recommend using a license file stored in a secret
   # when you ship to production.
@@ -22,6 +22,12 @@ serviceAccount:
   create: false
   name: ''
   annotations: {}
+
+## The name of a secret in the same kubernetes namespace which contain values
+## to be added to the environment.
+## This can be used, for example, to set the INFLUXDB_ENTERPRISE_LICENSE_KEY
+## or INFLUXDB_ENTERPRISE_LICENSE_PATH environment variable.
+# envFromSecret: influxdb-license
 
 # A secret with keys "username" and "password" is required
 # This bootstrap configuration allows you to configure
@@ -106,8 +112,19 @@ meta:
   sharedSecret:
     secretName: influxdb-shared-secret
   #
+  service:
+    ## Specify a service type
+    ## ClusterIP is default
+    ## ref: http://kubernetes.io/docs/user-guide/services/
+    type: ClusterIP
+    # loadBalancerIP: ""
+    # externalIPs: []
+    # externalTrafficPolicy: ""
+    # nodePort: 30086
+    ## Add annotations to service
+    # annotations: {}
+  #
   ## Persist data to a persistent volume
-  ##
   persistence:
     enabled: false
     ## A manually managed Persistent Volume and Claim
@@ -145,7 +162,9 @@ meta:
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
     insecure: true
-
+  ## Additional data container environment variables e.g.:
+  ##   INFLUXDB_HTTP_FLUX_ENABLED: "true"
+  env: {}
 
 data:
   replicas: 1
@@ -194,22 +213,19 @@ data:
   #   - cmd: stat $HOME/somefile
   #     description: And we run a second command
   #
-  ## Persist data to a persistent volume
-  ##
-  ## Specify a service type
-  ## NodePort is default
-  ## ref: http://kubernetes.io/docs/user-guide/services/
-  ##
   service:
     ## Specify a service type
     ## ClusterIP is default
     ## ref: http://kubernetes.io/docs/user-guide/services/
-    ## Add annotations to service
-    # annotations: {}
     type: ClusterIP
     # loadBalancerIP: ""
     # externalIPs: []
     # externalTrafficPolicy: ""
+    # nodePort: 30091
+    ## Add annotations to service
+    # annotations: {}
+  #
+  ## Persist data to a persistent volume
   persistence:
     enabled: false
     ## A manually managed Persistent Volume and Claim
@@ -243,3 +259,8 @@ data:
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
     insecure: true
+  flux:
+    enabled: true
+  ## Additional data container environment variables e.g.:
+  ##   INFLUXDB_HTTP_FLUX_ENABLED: "true"
+  env: {}

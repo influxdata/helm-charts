@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   name: {{ template "influxdb.fullname" . }}
   labels:
-    {{ include "influxdb.labels" . | nindent 4 }}
+    {{- include "influxdb.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
@@ -14,8 +14,13 @@ spec:
     metadata:
       labels:
       {{- include "influxdb.selectorLabels" . | nindent 8 }}
+      {{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels | indent 8 }}
+      {{- end }}
+      {{- if .Values.podAnnotations }}
       annotations:
-      {{- toYaml .Values.podAnnotations | nindent 8 }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+      {{- end }}
     spec:
       volumes:
         - name: data
@@ -30,6 +35,22 @@ spec:
         {{- else }}
           emptyDir: {}
         {{- end }}
+        {{- if .Values.initScripts.enabled }}
+        - name: init
+          configMap:
+            name: {{ include "influxdb.fullname" . }}-init
+            defaultMode: 0744
+        {{- end }}
+        {{- if .Values.volumes }}
+          {{- toYaml .Values.volumes | nindent 8 }}
+        {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end}}
+      {{- end }}
+      serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -75,34 +96,61 @@ spec:
                   name: {{ template "influxdb.fullname" . }}-auth
                   {{- end }}
                   key: admin-token
-
             # Path to the BoltDB database.
             - name: INFLUXD_BOLT_PATH
               value: {{ .Values.persistence.mountPath }}/influxd.bolt
             # Path to persistent storage engine files where InfluxDB stores all Time-Structure Merge Tree (TSM) data on disk.
             - name: INFLUXD_ENGINE_PATH
               value: {{ .Values.persistence.mountPath }}
-
-            # Extra environment variables from .Values.env
             {{- with .Values.env }}
+            # Extra environment variables from .Values.env
             {{- toYaml . | nindent 12 }}
             {{- end }}
-
           {{- if .Values.securityContext }}
           securityContext:
-            {{ toYaml .Values.securityContext | nindent 12 }}
+            {{- toYaml .Values.securityContext | nindent 12 }}
           {{- end }}
           livenessProbe:
             httpGet:
-              path: /health
+              path: {{ .Values.livenessProbe.path | default "/health" }}
               port: http
+              scheme: {{ .Values.livenessProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 0 }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold | default 3 }}
           readinessProbe:
             httpGet:
-              path: /health
+              path: {{ .Values.readinessProbe.path | default "/health" }}
               port: http
+              scheme: {{ .Values.readinessProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default 0 }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds | default 1 }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold | default 1 }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold | default 3 }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.startupProbe.path | default "/health" }}
+              port: http
+              scheme: {{ .Values.startupProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds | default 5 }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold | default 6 }}
+          {{- end }}
           volumeMounts:
           - name: data
             mountPath: {{ .Values.persistence.mountPath }}
+            subPath: {{ .Values.persistence.subPath }}
+          {{- if .Values.initScripts.enabled }}
+          - name: init
+            mountPath: /docker-entrypoint-initdb.d
+          {{- end }}
+          {{- if .Values.mountPoints }}
+            {{- toYaml .Values.mountPoints | nindent 10 }}
+          {{- end }}
           resources:
             {{ .Values.resources | toYaml | nindent 12 | trim }}
 

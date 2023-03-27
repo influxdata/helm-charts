@@ -1,5 +1,9 @@
 {{- if .Values.backup.enabled }}
+{{- if .Capabilities.APIVersions.Has "batch/v1" }}
+apiVersion: batch/v1
+{{- else }}
 apiVersion: batch/v1beta1
+{{- end }}
 kind: CronJob
 metadata:
   name: {{ include "influxdb.fullname" . }}-backup
@@ -24,6 +28,10 @@ spec:
             {{- include "influxdb.selectorLabels" . | nindent 12 }}
         spec:
           restartPolicy: OnFailure
+          {{- with .Values.backup.nodeSelector }}
+          nodeSelector:
+             {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumes:
           - name: backup
           {{- if .Values.backup.persistence.enabled }}
@@ -97,7 +105,7 @@ spec:
           {{- end }}
           {{- if .Values.backup.azure }}
           - name: azure-cli
-            image: microsoft/azure-cli
+            image: mcr.microsoft.com/azure-cli
             command:
             - /bin/sh
             args:

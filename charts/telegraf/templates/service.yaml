@@ -12,9 +12,10 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-  {{- if .Values.metrics.health.enabled }}
-  - port: 8888
-    targetPort: 8888
+  {{- $health := include "telegraf.health" . | fromYaml }}
+  {{- with $health }}
+  - port: {{ trimPrefix "http://:" .service_address | int64 }}
+    targetPort: {{ trimPrefix "http://:" .service_address | int64 }}
     name: "health"
   {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.inputs }}
@@ -34,6 +35,11 @@ spec:
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "http-listener-v2"
+    {{- end }}
+    {{- if eq $key "influxdb_v2_listener" }}
+  - port: {{ trimPrefix ":" $value.service_address | int64 }}
+    targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+    name: "influxdb-v2-listener"
     {{- end }}
     {{- if eq $key "statsd" }}
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
@@ -56,6 +62,14 @@ spec:
   - port: {{ trimPrefix ":" $value.service_address | int64 }}
     targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
     name: "webhooks"
+    {{- end }}
+    {{- if eq $key "syslog" }}
+      {{- if regexMatch "^(tcp|udp).*" $value.server }}
+  - port: {{ regexFind "[0-9]+$" $value.server  | int64 }}
+    targetPort: {{ regexFind "[0-9]+$" $value.server  | int64 }}
+    protocol: {{ upper (substr 0 3 $value.server) }}
+    name: "syslog"
+      {{- end }}
     {{- end }}
     {{- if eq $key "socket_listener" }}
     {{- if or (hasPrefix "udp" $value.service_address) (hasPrefix "tcp" $value.service_address) }}

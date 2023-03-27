@@ -5,6 +5,12 @@ on: pull_request
 jobs:
   lint-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node_image_version:
+          - v1.21.1 # default used by helm/kind-action@v1.2.0 (kubernetes-sigs/kind@0.11.1)
+          - v1.22.4
+    name: lint-test (k8s ${{ matrix.node_image_version }})
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -15,7 +21,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v1
         with:
-          version: v3.4.0
+          version: v3.6.3
 
       - uses: actions/setup-python@v2
         with:
@@ -38,18 +44,38 @@ jobs:
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.2.0
+        with:
+          node_image: kindest/node:${{ matrix.node_image_version }}
         if: steps.list-changed.outputs.changed == 'true'
 
       # Our Enterprise chart requires some resources created
       - name: Create Enterprise Test Resources
         run: |
-          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
+          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.4/cert-manager.yaml
           sleep 30 # wait for CertManager
           kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
+          kubectl create secret generic influxdb-license --from-literal=INFLUXDB_ENTERPRISE_LICENSE_KEY=${INFLUXDB_ENTERPRISE_LICENSE_KEY}
+        env:
+          INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install
-        env:
-          INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
+        id: install
+        run: |
+          ct install --namespace=default 2>&1 | tee $RUNNER_TEMP/$GITHUB_RUN_NUMBER.txt
+# When https://github.com/helm/chart-testing/issues/212 is fixed, this can be used to set the license key instead of using env from secret
+#        run: ct install --namespace=default --helm-extra-args="--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
+#        env:
+#          INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
+        if: steps.list-changed.outputs.changed == 'true'
+
+      - name: Check logs for errors
+        run: |
+          set +e
+          patterns="Error loading config file"
+          grep -f $GITHUB_WORKSPACE/.github/workflows/patterns.txt $RUNNER_TEMP/$GITHUB_RUN_NUMBER.txt
+          if [[ $? -eq 0 ]]; then
+            echo "::error:: Errors found in logs"
+            exit 1
+          fi
         if: steps.list-changed.outputs.changed == 'true'

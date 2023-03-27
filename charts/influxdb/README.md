@@ -4,7 +4,7 @@
 
 The InfluxDB Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap an InfluxDB StatefulSet and service on a [Kubernetes](http://kubernetes.io) cluster.
 
-> **Note:** ### If you're using the InfluxDB Enterprise Helm chart, check out [InfluxDB Enterprise Helm chart](#influxdb-enterprise-helm-chart).
+> **Note:** ### If you're using the InfluxDB Enterprise Helm chart, check out [InfluxDB Enterprise Helm chart](https://github.com/influxdata/helm-charts/tree/master/charts/influxdb-enterprise).
 
 ## Prerequisites
 
@@ -62,6 +62,7 @@ The following table lists configurable parameters, their descriptions, and their
 | service.loadBalancerIP | A user-specified IP address for service type LoadBalancer to use as External IP (if supported) | nil |
 | service.externalIPs | A user-specified list of externalIPs to add to the service | nil |
 | service.externalTrafficPolicy | A user specified external traffic policy | nil |
+| service.nodePorts.http | Node port to expose for HTTP API if `service.type=NodePort` or `service.type=LoadBalancer` | Random port from range 30000-32767 |
 | persistence.enabled | Boolean to enable and disable persistance | true |
 | persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil |
 | persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
@@ -84,23 +85,23 @@ The following table lists configurable parameters, their descriptions, and their
 | volumes | `volumes` stanza(s) to be used in the main container | nil |
 | mountPoints | `volumeMount` stanza(s) to be used in the main container | nil |
 | extraContainers | Additional containers to be added to the pod | {} |
-| config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#reporting-disabled-false) | false |
+| config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#reporting-disabled-false) | false |
 | config.rpc | RPC address for backup and storage | {} |
-| config.meta | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#meta) | {} |
-| config.data | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#data) | {} |
-| config.coordinator | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#coordinator) | {} |
-| config.retention | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#retention) | {} |
-| config.shard_precreation | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#shard-precreation) | {} |
-| config.monitor | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#monitor) | {} |
-| config.http | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#http) | {} |
-| config.logging | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#logging) | {} |
-| config.subscriber | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#subscriber) | {} |
-| config.graphite | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#graphite) | {} |
-| config.collectd | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#collectd) | {} |
-| config.opentsdb | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#opentsdb) | {} |
-| config.udp | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#udp) | {} |
-| config.continous_queries | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#continuous-queries) | {} |
-| config.tls | [Details](https://docs.influxdata.com/influxdb/v1.7/administration/config/#tls) | {} |
+| config.meta | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#meta) | {} |
+| config.data | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#data) | {} |
+| config.coordinator | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#coordinator) | {} |
+| config.retention | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#retention) | {} |
+| config.shard_precreation | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#shard-precreation) | {} |
+| config.monitor | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#monitor) | {} |
+| config.http | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#http) | {} |
+| config.logging | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#logging) | {} |
+| config.subscriber | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#subscriber) | {} |
+| config.graphite | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#graphite) | {} |
+| config.collectd | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#collectd) | {} |
+| config.opentsdb | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#opentsdb) | {} |
+| config.udp | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#udp) | {} |
+| config.continous_queries | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#continuous-queries) | {} |
+| config.tls | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#tls) | {} |
 | initScripts.enabled | Boolean flag to enable and disable initscripts. If the container finds any files with the extensions .sh or .iql inside of the /docker-entrypoint-initdb.d folder, it will execute them. The order they are executed in is determined by the shell. This is usually alphabetical order. | false |
 | initScripts.scripts | Init scripts | {} |
 | backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false` |
@@ -140,48 +141,6 @@ To configure the chart, do either of the following:
 
 For information about running InfluxDB in Docker, see the [full image documentation](https://hub.docker.com/_/influxdb/).
 
-### InfluxDB Enterprise Helm chart
-
-[InfluxDB Enterprise](https://www.influxdata.com/products/influxdb-enterprise/) includes features designed for production workloads, including high availability and horizontal scaling. InfluxDB Enterprise requires an InfluxDB Enterprise license.
-
-#### Configure the InfluxDB Enterprise chart
-
-To enable InfluxDB Enterprise, set the following keys and values in a values file provided to Helm.
-
-| Key | Description | Recommended value |
-| --- | --- | --- |
-| `livenessProbe.initalDelaySeconds` | Used to allow enough time to join meta nodes to a cluster | `3600` |
-| `image.tag` | Set to a `data` image. See https://hub.docker.com/_/influxdb for details | `data` |
-| `service.ClusterIP` | Use a headless service for StatefulSets | `"None"` |
-| `env.name[_HOSTNAME]` | Used to provide a unique `name.service` for InfluxDB. See [values.yaml]() for an example | `valueFrom.fieldRef.fieldPath: metadata.name` |
-| `enterprise.enabled` | Create StatefulSets for use with `influx-data` and `influx-meta` images | `true` |
-| `enterprise.licensekey` | License for InfluxDB Enterprise |  |
-| `enterprise.clusterSize` | Replicas for `influx` StatefulSet | Dependent on license |
-| `enterprise.meta.image.tag` | Set to an `meta` image. See https://hub.docker.com/_/influxdb for details | `meta` |
-| `enterprise.meta.clusterSize` | Replicas for `influxdb-meta` StatefulSet. | `3` |
-| `enterprise.meta.resources` | Resources requests and limits for meta `influxdb-meta` pods | See `values.yaml` |
-
-#### Join pods to InfluxDB Enterprise cluster
-
-Meta and data pods must be joined using the command `influxd-ctl` found on meta pods.
-We recommend running `influxd-ctl` on one and only one meta pod and joining meta pods together before data pods. For each meta pod, run `influxd-ctl`.
-
-In the following examples, we use the pod names `influxdb-meta-0` and `influxdb-0` and the service name `influxdb`.
-
-For example, using the default settings, your script should look something like this:
-
-```shell script
-kubectl exec influxdb-meta-0 influxd-ctl add-meta influxdb-meta-0.influxdb-meta:8091
-```
-
-From the same meta pod, for each data pod, run `influxd-ctl`. With default settings, your script should look something like this:
-
-```shell script
-kubectl exec influxdb-meta-0 influxd-ctl add-data influxdb-0.influxdb:8088
-```
-
-When using `influxd-ctl`, use the appropriate DNS name for your pods, following the naming scheme of `pod.service`.
-
 ## Persistence
 
 The [InfluxDB](https://hub.docker.com/_/influxdb/) image stores data in the `/var/lib/influxdb` directory in the container.
@@ -192,17 +151,15 @@ If persistence is enabled, a [Persistent Volume](http://kubernetes.io/docs/user-
 
 In `values.yaml`, change `.Values.config.http.auth-enabled` to `true`.
 
-> **Note:** To enforce authentication, InfluxDB requires an admin user to be set up. For details, see [Set up authentication](https://docs.influxdata.com/influxdb/v1.2/query_language/authentication_and_authorization/#set-up-authentication).
+To handle this set up during startup, set `.Values.setDefaultUser.enabled` to `true`.
 
-To handle this set up during startup, enable a job in `values.yaml` by setting `.Values.setDefaultUser.enabled` to `true`.
-
-Make sure to uncomment or configure the job settings after enabling it. If a password is not set, a random password will be generated.
+Make sure to uncomment or configure default user settings after enabling it. If a password is not set, a random password will be generated.
 
 Alternatively, if `.Values.setDefaultUser.user.existingSecret` is set the user and password are obtained from an existing Secret, the expected keys are `influxdb-user` and `influxdb-password`. Use this variable if you need to check in the `values.yaml` in a repository to avoid exposing your secrets.
 
 ## Back up and restore
 
-Before proceeding, please read [Backing up and restoring in InfluxDB OSS](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/). While the chart offers backups by means of the [`backup-cronjob`](./templates/backup-cronjob.yaml), restores do not fall under the chart's scope today but can be achieved by one-off kubernetes jobs.
+Before proceeding, please read [Backing up and restoring in InfluxDB OSS](https://docs.influxdata.com/influxdb/v1.8/administration/backup_and_restore/). While the chart offers backups by means of the [`backup-cronjob`](./templates/backup-cronjob.yaml), restores do not fall under the chart's scope today but can be achieved by one-off kubernetes jobs.
 
 ### Backups
 
@@ -262,7 +219,7 @@ spec:
               memory: 8Gi
       containers:
         - name: influxdb-restore
-          image: influxdb:1.7-alpine
+          image: influxdb:1.8-alpine
           volumeMounts:
             - name: backup
               mountPath: /backup
@@ -287,7 +244,7 @@ spec:
 ```
 
 At which point the data from the new `<db name>_bak` dbs would have to be side loaded into the original dbs.
-Please see [InfluxDB documentation for more restore examples](https://docs.influxdata.com/influxdb/v1.7/administration/backup_and_restore/#restore-examples).
+Please see [InfluxDB documentation for more restore examples](https://docs.influxdata.com/influxdb/v1.8/administration/backup_and_restore/#restore-examples).
 
 ## Mounting Extra Volumes
 

@@ -1,0 +1,126 @@
+## this config requires v2 config templates to render valid configuration (tplVersion, see at the end)
+config:
+  processors:
+    - enum:
+        # this is wrong mapping copied from values.yaml to test compatibility hack in v2 code
+        mapping:
+          field: "status"
+          dest: "status_code"
+          value_mappings:
+            healthy: 1
+            problem: 2
+            critical: 3
+    # issue 119
+    - enum:
+        order: 1
+        mapping:
+          - field: system_location_section
+            dest: system_location_sectionFloorNumber
+            value_mappings:
+              2nd: 2
+              1st: 1
+              Ground: 0
+              Basement: -1
+    - converter:
+        order: 2
+        fields:
+          integer:
+            - system_location_sectionFloorNumber
+    # issue 119
+    - enum:
+        mapping:
+          field: state
+          dest: status_code
+          default: -1
+          value_mappings:
+            RUNNING: 1
+            RUNNABLE: 1
+            SUSPENDED: 2
+            PENDING_CREATE: 3
+            MAINTENANCE: 4
+            UNKNOWN_STATE: 0
+    - converter:
+        fields:
+          integer: ["check_passed", "content_mismatch"]
+          tag: ["error_code", "http_status"]
+  aggregators:
+    # issue 375
+    - basicstats:
+        period: "30s"
+        drop_original: true
+        stats:
+          - "sum"
+        taginclude:
+          - "counter"
+          - "sql_instance"
+        tagpass:
+          counter:
+            - "Blocked tasks"
+            - "CPU usage %"
+            - "Used memory (KB)"
+  inputs:
+    - cpu:
+    # issue 382
+    - statsd:
+        service_address: ":8125"
+        percentiles:
+          - 50
+          - 95
+          - 99
+          - 99.5
+        metric_separator: "_"
+        allowed_pending_messages: 10000
+        percentile_limit: 1000
+    # issue 111
+    - postgresql_extensible:
+        address: "host=localhost user=postgres sslmode=disable"
+        query:
+          - sqlquery: "SELECT count(*) as total_user_count FROM users"
+            version: 801
+          - sqlquery: "SELECT count(*) as total_post_count FROM posts"
+            version: 801
+    # issue 433
+    - mqtt_consumer:
+        qos: 0
+        servers:
+          - "tcp://mqtt.eclipseprojects.io:1883"
+        topics:
+          - "telegraf/host01/cpu"
+          - "telegraf/+/mem"
+          - "sensors/#"
+        topic_parsing:
+          - topic: "telegraf/one/cpu/23"
+            measurement: "_/_/measurement/_"
+            types:
+              test: "int"
+        data_format: "json_v2"
+        json_v2:
+          - measurement_name: ""
+            timestamp_path: ""
+            object:
+              - path: "@this"
+                tags:
+                  - "device"
+                  - "data.type"
+                  - "owner"
+                field:
+                  - path: ""
+                    type: "int"
+    # issue 429
+    - modbus:
+        name: "PS MAIN ENGINE"
+        controller: 'tcp://127.0.0.1:502'
+        slave_id: 1
+        holding_registers:
+          - name: "Coolant Level"
+            byte_order: CDAB
+            data_type: FLOAT32
+            scale: 0.001
+            address: [51410, 51411]
+  outputs:
+    - file:
+        files:
+          - "stdout"
+
+## Use tpl v2 templates
+tplVersion: 2

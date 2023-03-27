@@ -1,0 +1,13 @@
+config:
+  http:
+    auth-enabled: true
+
+setDefaultUser:
+  enabled: true
+
+initScripts:
+  enabled: true
+  scripts:
+    init.iql: |+
+      CREATE DATABASE "telegraf" WITH DURATION 30d REPLICATION 1 NAME "rp_30d"
+      CREATE DATABASE "iot" WITH DURATION 7d REPLICATION 1 NAME "rp_7d"

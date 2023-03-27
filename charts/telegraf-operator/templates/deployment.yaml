@@ -33,6 +33,10 @@ spec:
             {{- if eq .Values.requireAnnotationsForSecret true }}
             - "--require-annotations-for-secret"
             {{- end }}
+            - "--telegraf-requests-cpu={{ .Values.sidecarResources.requests.cpu }}"
+            - "--telegraf-requests-memory={{ .Values.sidecarResources.requests.memory }}"
+            - "--telegraf-limits-cpu={{ .Values.sidecarResources.limits.cpu }}"
+            - "--telegraf-limits-memory={{ .Values.sidecarResources.limits.memory }}"
             {{- if eq .Values.hotReload true }}
             - "--telegraf-watch-config=inotify"
             {{- end }}

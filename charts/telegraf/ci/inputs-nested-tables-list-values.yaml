@@ -1,0 +1,18 @@
+config:
+  inputs:
+    - statsd:
+        service_address: ":8125"
+        percentiles:
+          - 50
+          - 95
+          - 99
+        metric_separator: "_"
+        allowed_pending_messages: 10000
+        percentile_limit: 1000
+    - postgresql_extensible:
+        address: "host=localhost user=postgres sslmode=disable"
+        query:
+          - sqlquery: "SELECT count(*) as total_user_count FROM users"
+            version: 801
+          - sqlquery: "SELECT count(*) as total_post_count FROM posts"
+            version: 801

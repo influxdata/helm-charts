@@ -31,6 +31,10 @@ spec:
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
       containers:
       - name: {{ .Chart.Name }}
+{{- if .Values.containerSecurityContext }}
+        securityContext:
+{{ toYaml .Values.containerSecurityContext | indent 10 }}
+{{- end }}
         image: "{{ .Values.image.repo }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
         resources:
@@ -77,20 +81,20 @@ spec:
         {{ end }}
         {{ end }}
         {{ end }}
-        {{- range $objectKey, $objectValue := .Values.config.outputs }}
-        {{- range $key, $value := . -}}
-        {{- $tp := typeOf $value -}}
-        {{- if eq $key "health" }}
+        {{- $health := include "telegraf.health" . | fromYaml }}
+        {{- with $health }}
+        startupProbe:
+          httpGet:
+            path: /
+            port: {{ trimPrefix "http://:" .service_address | int64 }}
         livenessProbe:
           httpGet:
             path: /
-            port: {{ trimPrefix "http://:" $value.service_address | int64 }}
+            port: {{ trimPrefix "http://:" .service_address | int64 }}
         readinessProbe:
           httpGet:
             path: /
-            port: {{ trimPrefix "http://:" $value.service_address | int64 }}
-        {{- end }}
-        {{- end }}
+            port: {{ trimPrefix "http://:" .service_address | int64 }}
         {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:

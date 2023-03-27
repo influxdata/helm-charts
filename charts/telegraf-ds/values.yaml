@@ -4,9 +4,8 @@
 
 image:
   repo: "telegraf"
-  tag: "1.20-alpine"
+  tag: "1.25-alpine"
   pullPolicy: IfNotPresent
-
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources:
@@ -16,10 +15,18 @@ resources:
   limits:
     memory: 2Gi
     cpu: 1
-
+## Pod annotations
+podAnnotations: {}
+## Pod labels
+podLabels: {}
 ## Configure args passed to Telegraf containers
 args: []
+## The name of a secret in the same kubernetes namespace which contains values to
+## be added to the environment (must be manually created)
+## This can be useful for auth tokens, etc.
+# envFromSecret: "telegraf-tokens"
 
+## Environment
 env:
   # This pulls HOSTNAME from the node, not the pod.
   - name: HOSTNAME
@@ -33,16 +40,30 @@ env:
     valueFrom:
       fieldRef:
         fieldPath: status.hostIP
+  # Mount the host filesystem and set the appropriate env variables.
+  # ref: https://github.com/influxdata/telegraf/blob/master/docs/FAQ.md
+  # HOST_PROC is required by the cpu, disk, diskio, kernel and processes input plugins
   - name: "HOST_PROC"
-    value: "/rootfs/proc"
+    value: "/hostfs/proc"
+  # HOST_SYS is required by the diskio plugin
   - name: "HOST_SYS"
-    value: "/rootfs/sys"
+    value: "/hostfs/sys"
+  - name: "HOST_MOUNT_PREFIX"
+    value: "/hostfs"
+## Add custom volumes and mounts
+# volumes:
+# - name: telegraf-output-influxdb2
+#   configMap:
+#     name: "telegraf-output-influxdb2"
+# mountPoints:
+# - name: telegraf-output-influxdb2
+#   mountPath: /etc/telegraf/conf.d
+#   subPath: influxdb2.conf
 
 ## Tolerations for pod assignment
 ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
 ##
 tolerations: []
-
 ## If the DaemonSet should run on the host's network namespace
 ## hostNetwork: true
 
@@ -50,21 +71,35 @@ tolerations: []
 ## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#
 ## dnsPolicy: ClusterFirstWithHostNet
 
+## If using dnsPolicy=None, set dnsConfig
+## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config
+## dnsConfig:
+##   nameservers:
+##     - 1.2.3.4
+##   searches:
+##     - ns1.svc.cluster-domain.example
+##     - my.dns.search.suffix
+##   options:
+##     - name: ndots
+##       value: "2"
+##     - name: edns0
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
-
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   # name:
-
+  # Annotations for the ServiceAccount
+  annotations: {}
 ## Specify priorityClassName
 ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
 # priorityClassName: system-node-critical
 
+# Specify the pod's SecurityContext, including the OS user and group to run the pod
+podSecurityContext: {}
 override_config:
   toml: ~
   # Provide a literal TOML config
@@ -79,7 +114,6 @@ override_config:
   #     bucket         = "data"
   #     organization   = "OurCompany"
   #     token          = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 ## Exposed telegraf configuration
 ## ref: https://docs.influxdata.com/telegraf/v1.13/administration/configuration/
 config:
@@ -111,3 +145,4 @@ config:
         user_agent: "telegraf"
         insecure_skip_verify: false
   monitor_self: false
+  docker_endpoint: "unix:///var/run/docker.sock"

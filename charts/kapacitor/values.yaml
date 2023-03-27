@@ -3,8 +3,12 @@
 ##
 image:
   repository: "kapacitor"
-  tag: "1.6.2-alpine"
+  tag: "1.6.4-alpine"
   pullPolicy: "IfNotPresent"
+
+## Deployment Strategy type
+# strategy:
+#   type: Recreate
 
 ## Specify a service type, defaults to NodePort
 ## ref: http://kubernetes.io/docs/user-guide/services/
@@ -66,6 +70,20 @@ resources:
 ## `influxdb-user` and `influxdb-password`.
 ##
 # existingSecret: influxdb-auth
+
+## Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+affinity: {}
+
+## Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+# - key: "key"
+#   operator: "Equal|Exists"
+#   value: "value"
+#   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
 ## Role based access control
 rbac:

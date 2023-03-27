@@ -47,8 +47,9 @@ The following table lists configurable parameters, their descriptions, and their
 | Parameter               | Description                           | Default                                                    |
 | ----------------------- | ----------------------------------    | ---------------------------------------------------------- |
 | `image.repository` | image repository url | Kapacitor image | `kapacitor` |
-| `image.tag` | Kapacitor image version | `1.5.2-alpine` |
+| `image.tag` | Kapacitor image version | `1.6.4-alpine` |
 | `image.pullPolicy` | Kapacitor image pull policy |  `IfNotPresent` |
+| `strategy` | Kapacitor deployment strategy config |  |
 | `service.type` | Kapacitor web service type  | `ClusterIP` |
 | `persistence.enabled` | Enable Kapacitor persistence using Persistent Volume Claims | `false` |
 | `persistence.storageClass` | Kapacitor Persistent Volume Storage Class | `default` |
@@ -60,13 +61,13 @@ The following table lists configurable parameters, their descriptions, and their
 | `resources.limits.memory` | Kapacitor memory limit | `2Gi` |
 | `resources.limits.cpu` | Kapacitor cpu limit | `2` |
 | `envVars` | Environment variables to set initial Kapacitor configuration (https://hub.docker.com/_/kapacitor/) | `{}` |
-| `influxURL` | InfluxDB url used to interact with Kapacitor (also can be set with ```envVars.KAPACITOR_INFLUXDB_0_URLS_0```) | `http://influxdb-influxdb.tick:8086` |
+| `influxURL` | InfluxDB url used to interact with Kapacitor | `http://influxdb-influxdb.tick:8086` |
 | `existingSecret` | Name of an existing Secrect used to set the environment variables for the InfluxDB user and password. The expected keys in the secret are `influxdb-user` and `influxdb-password`. |
 | `rbac.create` | Create and use RBAC resources | `true` |
 | `rbac.namespaced` | Creates Role and Rolebinding instead of the default ClusterRole and ClusteRoleBindings for the Kapacitor instance  | `false` |
 | `serviceAccount.annotations` | ServiceAccount annotations | `{}` |
 | `serviceAccount.create` | Create service account | `true` |
-| `serviceAccount.name` | Service account name to use, when empty will be set to created account if `serviceAccount.create` is set else to `default` | `` |
+| `serviceAccount.name` | Service account name to use, when empty will be set to created account if `serviceAccount.create` is set else to `default` |  |
 | `sidecar.image` | Sidecar image | `kiwigrid/k8s-sidecar:0.1.116` |
 | `sidecar.imagePullPolicy` | Sidecar image pull policy | `IfNotPresent` |
 | `sidecar.resources` | Sidecar resources | `{}` |
@@ -86,7 +87,7 @@ To configure the chart, do either of the following:
   --set influxURL=http://myinflux.mytld:8086,persistence.enabled=true \
     influxdata/kapacitor
   ```
-  
+
   This command enables persistence.
 
 - Provide a YAML file that specifies parameter values while installing the chart. For example, use the following command:

@@ -30,10 +30,11 @@ spec:
       port: {{ .Values.service.port }}
       protocol: TCP
       targetPort: {{ .Values.service.targetPort }}
-{{ if (and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePort))) }}
-      nodePort: {{.Values.service.nodePort}}
-{{ end }}
+{{- if (and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePort))) }}
+      nodePort: {{ .Values.service.nodePort }}
+{{- end }}
   {{- if .Values.extraExposePorts }}
   {{- tpl (toYaml .Values.extraExposePorts) . | indent 4 }}
   {{- end }}
-  selector: {{- include "influxdb.selectorLabels" . | nindent 4 }}
+  selector:
+    {{- include "influxdb.selectorLabels" . | nindent 4 }}
