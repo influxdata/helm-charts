@@ -66,6 +66,10 @@ spec:
         {{- if .Values.mountPoints }}
 {{ toYaml .Values.mountPoints | indent 8 }}
         {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
