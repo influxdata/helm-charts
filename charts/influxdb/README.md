@@ -46,78 +46,78 @@ This command removes all the Kubernetes components associated with the chart and
 
 The following table lists configurable parameters, their descriptions, and their default values stored in `values.yaml`.
 
-| Parameter | Description | Default |
-|---|---|---|
-| image.repository | Image repository url | influxdb |
-| image.tag | Image tag | 1.8.0-alpine |
-| image.pullPolicy | Image pull policy | IfNotPresent |
-| image.pullSecrets | It will store the repository's credentials to pull image | nil |
-| serviceAccount.create | It will create service account | true |
-| serviceAccount.name | Service account name | "" |
-| serviceAccount.annotations | Service account annotations | {} |
-| livenessProbe | Health check for pod | {} |
-| readinessProbe | Health check for pod | {} |
-| startupProbe | Health check for pod | {} |
-| service.type | Kubernetes service type | ClusterIP |
-| service.loadBalancerIP | A user-specified IP address for service type LoadBalancer to use as External IP (if supported) | nil |
-| service.externalIPs | A user-specified list of externalIPs to add to the service | nil |
-| service.externalTrafficPolicy | A user specified external traffic policy | nil |
-| service.nodePorts.http | Node port to expose for HTTP API if `service.type=NodePort` or `service.type=LoadBalancer` | Random port from range 30000-32767 |
-| persistence.enabled | Boolean to enable and disable persistance | true |
-| persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil |
-| persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
-| persistence.annotations | Annotations for volumeClaimTemplates | nil |
-| persistence.accessMode | Access mode for the volume | ReadWriteOnce |
-| persistence.size | Storage size | 8Gi |
-| podAnnotations | Annotations for pod | {} |
-| podLabels | Labels for pod | {} |
-| ingress.enabled | Boolean flag to enable or disable ingress | false |
-| ingress.tls | Boolean to enable or disable tls for ingress. If enabled provide a secret in `ingress.secretName` containing TLS private key and certificate. | false |
-| ingress.secretName | Kubernetes secret containing TLS private key and certificate. It is `only` required if `ingress.tls` is enabled. | nil |
-| ingress.hostname | Hostname for the ingress | influxdb.foobar.com |
-| ingress.annotations | ingress annotations | nil |
-| schedulerName | Use an [alternate scheduler](https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/), e.g. "stork". | nil |
-| nodeSelector | Node labels for pod assignment | {} |
-| affinity | [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for pod assignment |  {|
-| tolerations | [Tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) for pod assignment | [] |
-| securityContext | [securityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for pod | {} |
-| env | environment variables for influxdb container | {} |
-| volumes | `volumes` stanza(s) to be used in the main container | nil |
-| mountPoints | `volumeMount` stanza(s) to be used in the main container | nil |
-| extraContainers | Additional containers to be added to the pod | {} |
-| config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#reporting-disabled-false) | false |
-| config.rpc | RPC address for backup and storage | {} |
-| config.meta | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#meta) | {} |
-| config.data | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#data) | {} |
-| config.coordinator | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#coordinator) | {} |
-| config.retention | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#retention) | {} |
-| config.shard_precreation | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#shard-precreation) | {} |
-| config.monitor | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#monitor) | {} |
-| config.http | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#http) | {} |
-| config.logging | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#logging) | {} |
-| config.subscriber | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#subscriber) | {} |
-| config.graphite | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#graphite) | {} |
-| config.collectd | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#collectd) | {} |
-| config.opentsdb | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#opentsdb) | {} |
-| config.udp | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#udp) | {} |
-| config.continous_queries | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#continuous-queries) | {} |
-| config.tls | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#tls) | {} |
-| initScripts.enabled | Boolean flag to enable and disable initscripts. If the container finds any files with the extensions .sh or .iql inside of the /docker-entrypoint-initdb.d folder, it will execute them. The order they are executed in is determined by the shell. This is usually alphabetical order. | false |
-| initScripts.scripts | Init scripts | {} |
-| backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false` |
+| Parameter | Description | Default                                                              |
+|---|---|----------------------------------------------------------------------|
+| image.repository | Image repository url | influxdb                                                             |
+| image.tag | Image tag | 1.8.0-alpine                                                         |
+| image.pullPolicy | Image pull policy | IfNotPresent                                                         |
+| image.pullSecrets | It will store the repository's credentials to pull image | nil                                                                  |
+| serviceAccount.create | It will create service account | true                                                                 |
+| serviceAccount.name | Service account name | ""                                                                   |
+| serviceAccount.annotations | Service account annotations | {}                                                                   |
+| livenessProbe | Health check for pod | {}                                                                   |
+| readinessProbe | Health check for pod | {}                                                                   |
+| startupProbe | Health check for pod | {}                                                                   |
+| service.type | Kubernetes service type | ClusterIP                                                            |
+| service.loadBalancerIP | A user-specified IP address for service type LoadBalancer to use as External IP (if supported) | nil                                                                  |
+| service.externalIPs | A user-specified list of externalIPs to add to the service | nil                                                                  |
+| service.externalTrafficPolicy | A user specified external traffic policy | nil                                                                  |
+| service.nodePorts.http | Node port to expose for HTTP API if `service.type=NodePort` or `service.type=LoadBalancer` | Random port from range 30000-32767                                   |
+| persistence.enabled | Boolean to enable and disable persistance | true                                                                 |
+| persistence.existingClaim | An existing PersistentVolumeClaim, ignored if enterprise.enabled=true | nil                                                                  |
+| persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |                                                                      |
+| persistence.annotations | Annotations for volumeClaimTemplates | nil                                                                  |
+| persistence.accessMode | Access mode for the volume | ReadWriteOnce                                                        |
+| persistence.size | Storage size | 8Gi                                                                  |
+| podAnnotations | Annotations for pod | {}                                                                   |
+| podLabels | Labels for pod | {}                                                                   |
+| ingress.enabled | Boolean flag to enable or disable ingress | false                                                                |
+| ingress.tls | Boolean to enable or disable tls for ingress. If enabled provide a secret in `ingress.secretName` containing TLS private key and certificate. | false                                                                |
+| ingress.secretName | Kubernetes secret containing TLS private key and certificate. It is `only` required if `ingress.tls` is enabled. | nil                                                                  |
+| ingress.hostname | Hostname for the ingress | `""`                                                  |
+| ingress.annotations | ingress annotations | nil                                                                  |
+| schedulerName | Use an [alternate scheduler](https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/), e.g. "stork". | nil                                                                  |
+| nodeSelector | Node labels for pod assignment | {}                                                                   |
+| affinity | [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for pod assignment | {                                                                    |
+| tolerations | [Tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) for pod assignment | []                                                                   |
+| securityContext | [securityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for pod | {}                                                                   |
+| env | environment variables for influxdb container | {}                                                                   |
+| volumes | `volumes` stanza(s) to be used in the main container | nil                                                                  |
+| mountPoints | `volumeMount` stanza(s) to be used in the main container | nil                                                                  |
+| extraContainers | Additional containers to be added to the pod | {}                                                                   |
+| config.reporting_disabled | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#reporting-disabled-false) | false                                                                |
+| config.rpc | RPC address for backup and storage | `bind-address: ":8088"`                                              |
+| config.meta | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#meta) | {}                                                                   |
+| config.data | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#data) | {}                                                                   |
+| config.coordinator | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#coordinator) | {}                                                                   |
+| config.retention | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#retention) | {}                                                                   |
+| config.shard_precreation | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#shard-precreation) | {}                                                                   |
+| config.monitor | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#monitor) | {}                                                                   |
+| config.http | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#http) | `enabled: true`<br/>`bind-address: ":8086"`<br/>`flux-enabled: true` |
+| config.logging | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#logging) | {}                                                                   |
+| config.subscriber | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#subscriber) | {}                                                                   |
+| config.graphite | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#graphite) | {}                                                                   |
+| config.collectd | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#collectd) | {}                                                                   |
+| config.opentsdb | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#opentsdb) | {}                                                                   |
+| config.udp | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#udp) | {}                                                                   |
+| config.continous_queries | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#continuous-queries) | {}                                                                   |
+| config.tls | [Details](https://docs.influxdata.com/influxdb/v1.8/administration/config/#tls) | {}                                                                   |
+| initScripts.enabled | Boolean flag to enable and disable initscripts. If the container finds any files with the extensions .sh or .iql inside of the /docker-entrypoint-initdb.d folder, it will execute them. The order they are executed in is determined by the shell. This is usually alphabetical order. | false                                                                |
+| initScripts.scripts | Init scripts | {}                                                                   |
+| backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false`                                                              |
 | backup.gcs | Google Cloud Storage config | `nil`
 | backup.azure | Azure Blob Storage config | `nil`
 | backup.s3 | Amazon S3 (or compatible) config | `nil`
-| backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
-| backup.startingDeadlineSeconds | Deadline in seconds for starting the job if it misses its scheduled time for any reason | `nil` |
-| backup.annotations | Annotations for backup cronjob | {} |
-| backup.podAnnotations | Annotations for backup cronjob pods | {} |
-| backup.persistence.enabled | Boolean to enable and disable persistance | false |
-| backup.persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
-| backup.persistence.annotations | Annotations for volumeClaimTemplates | nil |
-| backup.persistence.accessMode | Access mode for the volume | ReadWriteOnce |
-| backup.persistence.size | Storage size | 8Gi |
-| backup.resources | Resources requests and limits for `backup` pods | `ephemeral-storage: 8Gi` |
+| backup.schedule | Schedule to run jobs in cron format | `0 0 * * *`                                                          |
+| backup.startingDeadlineSeconds | Deadline in seconds for starting the job if it misses its scheduled time for any reason | `nil`                                                                |
+| backup.annotations | Annotations for backup cronjob | {}                                                                   |
+| backup.podAnnotations | Annotations for backup cronjob pods | {}                                                                   |
+| backup.persistence.enabled | Boolean to enable and disable persistance | false                                                                |
+| backup.persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |                                                                      |
+| backup.persistence.annotations | Annotations for volumeClaimTemplates | {}                                                                   |
+| backup.persistence.accessMode | Access mode for the volume | ReadWriteOnce                                                        |
+| backup.persistence.size | Storage size | 8Gi                                                                  |
+| backup.resources | Resources requests and limits for `backup` pods | `ephemeral-storage: 8Gi`                                             |
 
 To configure the chart, do either of the following:
 

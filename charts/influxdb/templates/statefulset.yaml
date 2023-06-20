@@ -62,30 +62,30 @@ spec:
         {{- end }}
         ports:
         - name: api
-          containerPort: {{ .Values.config.http.bind_address | default 8086 }}
+          containerPort: {{ include "influxdb.httpPortNumber" . }}
         {{- if .Values.config.graphite.enabled }}
         - name: graphite
-          containerPort: {{ .Values.config.graphite.bind_address | default 2003 }}
+          containerPort: {{ include "influxdb.graphitePortNumber" . }}
         {{- end }}
         {{- if .Values.config.collectd.enabled }}
         - name: collectd
-          containerPort: {{ .Values.config.collectd.bind_address |  default 25826 }}
+          containerPort: {{ include "influxdb.collectdPortNumber" . }}
           protocol: UDP
         {{- end }}
         {{- if .Values.config.udp.enabled }}
         - name: udp
-          containerPort: {{ .Values.config.udp.bind_address | default 8089 }}
+          containerPort: {{ include "influxdb.udpPortNumber" . }}
           protocol: UDP
         {{- end }}
         {{- if .Values.config.opentsdb.enabled }}
         - name: opentsdb
-          containerPort: {{ .Values.config.opentsdb.bind_address |  default 4242 }}
+          containerPort: {{ include "influxdb.opentsdbPortNumber" . }}
         {{- end }}
         - name: rpc
-          containerPort: {{ .Values.config.rpc.bind_address | default 8088 }}
+          containerPort: {{ include "influxdb.rpcPortNumber" . }}
         {{- if .Values.enterprise.enabled }}
         - name: meta
-          containerPort: {{ .Values.config.meta.bind_address | default 8091 }}
+          containerPort: {{ include "influxdb.metaPortNumber" . }}
         {{- end }}
         {{- if or .Values.env .Values.setDefaultUser.enabled }}
         env:
@@ -187,9 +187,11 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: {{ include "influxdb.fullname" . }}-data
+        {{- if .Values.persistence.annotations }}
         annotations:
         {{- range $key, $value := .Values.persistence.annotations }}
           {{ $key }}: "{{ $value }}"
+        {{- end }}
         {{- end }}
       spec:
         accessModes:

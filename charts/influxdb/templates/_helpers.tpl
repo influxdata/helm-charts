@@ -56,8 +56,33 @@ Create the name of the service account to use
 */}}
 {{- define "influxdb.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-    {{ default (include "influxdb.fullname" .) .Values.serviceAccount.name }}
+  {{ default (include "influxdb.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
+  {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Define ports for kubernetes.
+*/}}
+{{- define "influxdb.rpcPortNumber" -}}
+  {{ default 8088 (regexReplaceAll ":([0-9]+)" (index .Values "config" "rpc" "bind-address") "${1}") }}
+{{- end -}}
+{{- define "influxdb.metaPortNumber" -}}
+  {{ default 8091 (regexReplaceAll ":([0-9]+)" (index .Values "config" "meta" "bind-address") "${1}") }}
+{{- end -}}
+{{- define "influxdb.httpPortNumber" -}}
+  {{ default 8086 (regexReplaceAll ":([0-9]+)" (index .Values "config" "http" "bind-address") "${1}") }}
+{{- end -}}
+{{- define "influxdb.graphitePortNumber" -}}
+  {{ default 2003 (regexReplaceAll ":([0-9]+)" (index .Values "config" "graphite" "bind-address") "${1}") }}
+{{- end -}}
+{{- define "influxdb.collectdPortNumber" -}}
+  {{ default 25826 (regexReplaceAll ":([0-9]+)" (index .Values "config" "collectd" "bind-address") "${1}") }}
+{{- end -}}
+{{- define "influxdb.opentsdbPortNumber" -}}
+  {{ default 4242 (regexReplaceAll ":([0-9]+)" (index .Values "config" "opentsdb" "bind-address") "${1}") }}
+{{- end -}}
+{{- define "influxdb.udpPortNumber" -}}
+  {{ default 8089 (regexReplaceAll ":([0-9]+)" (index .Values "config" "udp" "bind-address") "${1}") }}
 {{- end -}}
