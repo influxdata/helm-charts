@@ -487,6 +487,32 @@ entries:
   influxdb:
   - apiVersion: v1
     appVersion: 1.8.10
+    created: "2023-06-21T07:31:41.941238255Z"
+    description: Scalable datastore for metrics, events, and real-time analytics.
+    digest: e2ae0839620e9f361b130678f705f54b22099538950a874a1f3f182376af2683
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: rawkode@influxdata.com
+      name: rawkode
+    - email: giacomo@influxdata.com
+      name: gitirabassi
+    - email: urakiny@gmail.com
+      name: aisuko
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: influxdb
+    sources:
+    - https://github.com/influxdata/influxdb
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-4.12.2/influxdb-4.12.2.tgz
+    version: 4.12.2
+  - apiVersion: v1
+    appVersion: 1.8.10
     created: "2023-03-01T14:58:44.217664595Z"
     description: Scalable datastore for metrics, events, and real-time analytics.
     digest: 901e2e02a40103c3890a11d5db9f8695d15fe3d6721c5c5227a42e54aecc7d59
@@ -5552,4 +5578,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2023-05-23T14:54:16.596114535Z"
+generated: "2023-06-21T07:31:41.943188472Z"
