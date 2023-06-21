@@ -67,7 +67,7 @@ spec:
             - '-c'
             - |
               influxd backup \
-                -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.rpc.bind_address | default 8088 }} \
+                -host {{ include "influxdb.fullname" . }}.{{ .Release.Namespace }}.svc:{{ include "influxdb.rpcPortNumber" . }} \
                 -portable /backup/"$(date +%Y%m%d%H%M%S)"
             resources:
               {{- toYaml .Values.backup.resources | nindent 14 }}
