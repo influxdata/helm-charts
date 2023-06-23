@@ -4,28 +4,26 @@ kind: Ingress
 metadata:
   name: {{ include "influxdb.fullname" . }}
   labels:
-    {{- include "influxdb.labels" . | nindent 4 }}
-  {{- if .Values.ingress.annotations }}
+{{- include "influxdb.labels" . | nindent 4 }}
+{{- if .Values.ingress.annotations }}
   annotations:
-  {{ toYaml .Values.ingress.annotations | indent 4 }}
-  {{- end }}
+{{ toYaml .Values.ingress.annotations | indent 4 }}
+{{- end }}
 spec:
 {{- if .Values.ingress.tls }}
   tls:
     - hosts:
         - {{ .Values.ingress.hostname | quote }}
+{{- if .Values.ingress.secretName }}
       secretName: {{ .Values.ingress.secretName }}
+{{- end }}
 {{- end }}
 {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
 {{- end }}
   rules:
-  {{- if .Values.ingress.hostname }}
-    - host: {{ .Values.ingress.hostname }}
+    - host: {{ .Values.ingress.hostname | quote }}
       http:
-  {{- else }}
-    - http:
-  {{- end }}
         paths:
           - path: {{ .Values.ingress.path }}
             pathType: Prefix
@@ -34,4 +32,4 @@ spec:
                 name: {{ include "influxdb.fullname" . }}
                 port:
                   number: {{ include "influxdb.httpPortNumber" . }}
-  {{- end }}
+{{- end }}
