@@ -163,7 +163,7 @@ service:
   annotations: {}
   labels: {}
   portName: http
-
+Update statefulset.yaml
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
@@ -172,6 +172,9 @@ serviceAccount:
   name:
   # Annotations for the ServiceAccount
   annotations: {}
+## Specify priorityClassName
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: system-node-critical
 
 ingress:
   enabled: false
