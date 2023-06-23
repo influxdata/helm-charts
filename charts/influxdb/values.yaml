@@ -140,7 +140,7 @@ ingress:
   enabled: false
   tls: false
   # secretName: my-tls-cert # only needed if tls above is true
-  hostname: ""
+  hostname: "*"
   className: nginx
   annotations: {}
     # nginx.ingress.kubernetes.io/rewrite-target: $1
