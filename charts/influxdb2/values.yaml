@@ -163,7 +163,7 @@ service:
   annotations: {}
   labels: {}
   portName: http
-Update statefulset.yaml
+
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
