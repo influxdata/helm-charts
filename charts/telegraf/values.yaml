@@ -172,3 +172,12 @@ pdb:
   create: true
   minAvailable: 1
   # maxUnavailable: 1
+
+## Integration with prometheus-operator
+##
+serviceMonitor:
+  enabled: false
+  namespace: ""
+  interval: 30s
+  scrapeTimeout: 5s
+  labels: {}
