@@ -1,5 +1,5 @@
 # Telegraf Helm chart
-
+TYPO
 [Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent used for collecting and reporting metrics.
 
 The Telegraf Helm chart uses the [Helm](https://helm.sh) package manager to bootstrap a Telegraf (`telegraf`) deployment on a [Kubernetes](http://kubernetes.io) cluster.
