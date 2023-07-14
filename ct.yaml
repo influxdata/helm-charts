@@ -18,3 +18,7 @@ debug: true
 #helm-extra-args: "--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
 # Remove this excluded chart when the above can be satisfied
 excluded-charts: "influxdb-enterprise"
+
+# Enable automatic generation of release notes using GitHubs release notes generator.
+# see: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+generate-release-notes: true
