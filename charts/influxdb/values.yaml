@@ -71,7 +71,7 @@ persistence:
   ##   GKE, AWS & OpenStack)
   ##
   # storageClass: "-"
-  annotations:
+  annotations: {}
   accessMode: ReadWriteOnce
   size: 8Gi
 
@@ -140,11 +140,10 @@ ingress:
   enabled: false
   tls: false
   # secretName: my-tls-cert # only needed if tls above is true
-  hostname: influxdb.foobar.com
-  className: null
+  hostname:
+  className: nginx
   annotations: {}
-    # kubernetes.io/ingress.class: "nginx"
-    # kubernetes.io/tls-acme: "true"
+    # nginx.ingress.kubernetes.io/rewrite-target: $1
   path: /
 
 
@@ -204,14 +203,18 @@ envFromSecret: {}
 ## ref: https://docs.influxdata.com/influxdb/v1.8/administration/config
 config:
   reporting_disabled: false
-  rpc: {}
+  rpc:
+    bind-address: ":8088"
   meta: {}
   data: {}
   coordinator: {}
   retention: {}
   shard_precreation: {}
   monitor: {}
-  http: {}
+  http:
+    enabled: true
+    bind-address: ":8086"
+    flux-enabled: true
   logging: {}
   subscriber: {}
   graphite: {}

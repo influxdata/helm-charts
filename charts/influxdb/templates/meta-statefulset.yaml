@@ -38,11 +38,11 @@ spec:
 {{ toYaml .Values.enterprise.meta.resources | indent 10 }}
         ports:
         - name: udp
-          containerPort: {{ .Values.config.udp.bind_address |  default 8089 }}
+          containerPort: {{ include "influxdb.udpPortNumber" . }}
         - name: rpc
-          containerPort: {{ .Values.config.rpc.bind_address | default 8088 }}
+          containerPort: {{ include "influxdb.rpcPortNumber" . }}
         - name: meta
-          containerPort: {{ .Values.config.meta.bind_address | default 8091 }}
+          containerPort: {{ include "influxdb.metaPortNumber" . }}
         {{- if .Values.env }}
         env:
 {{ toYaml .Values.env | indent 10 }}

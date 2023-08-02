@@ -6,8 +6,8 @@ metadata:
     {{- include "influxdb.labels" . | nindent 4 }}
 data:
   influxdb.conf: |+
-    reporting-disabled = {{ .Values.config.reporting_disabled | default false }}
-    bind-address = ":{{ .Values.config.rpc.bind_address | default 8088 }}"
+    reporting-disabled = {{ .Values.config.reporting_disabled }}
+    bind-address = "{{ index .Values "config" "rpc" "bind-address"| default (printf ":%s" (include "influxdb.rpcPortNumber" . ))}}"
 
     [meta]
       dir = "/var/lib/influxdb/meta"
