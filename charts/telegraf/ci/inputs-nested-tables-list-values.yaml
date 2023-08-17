@@ -16,3 +16,18 @@ config:
             version: 801
           - sqlquery: "SELECT count(*) as total_post_count FROM posts"
             version: 801
+  secretstores:
+    - http:
+        id: mystore
+        url: 'http://localhost/secrets'
+    - oauth2:
+        id: azure_ad
+        service: azureAD
+        tenant_id: 3da608ee-a0cc-47ec-906a-fe202bd77f8d
+        token_expiry_margin: 10s
+        token:
+          - key: my_token
+            client_id: my_id
+            client_secret: my_secret
+            scopes:
+              - <<CLIENT_ID>>/.default
