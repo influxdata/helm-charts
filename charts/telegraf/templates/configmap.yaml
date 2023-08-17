@@ -12,6 +12,7 @@ data:
     {{ template "processors" (list $tplVersion .Values.config.processors) }}
     {{ template "aggregators" (list $tplVersion .Values.config.aggregators) }}
     {{ template "outputs" (list $tplVersion .Values.config.outputs) }}
+    {{ template "secretstores" (list $tplVersion .Values.config.secretstores) }}
     {{- if .Values.metrics.health.enabled }}
     [[outputs.health]]
       service_address = "{{ .Values.metrics.health.service_address }}"
