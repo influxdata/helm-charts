@@ -539,6 +539,116 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end -}}
 
+{{- define "secretstores.v1" -}}
+{{- range $secretstoresIdx, $configObject := . -}}
+    {{- range $secretstore, $config := . -}}
+
+    [[secretstores.{{- $secretstore }}]]
+    {{- if $config -}}
+    {{- $tp := typeOf $config -}}
+    {{- if eq $tp "map[string]interface {}" -}}
+        {{- range $key, $value := $config -}}
+          {{- $tp := typeOf $value -}}
+          {{- if eq $tp "string" }}
+      {{ $key }} = {{ $value | quote }}
+          {{- end }}
+          {{- if eq $tp "float64" }}
+      {{ $key }} = {{ $value | int64 }}
+          {{- end }}
+          {{- if eq $tp "int" }}
+      {{ $key }} = {{ $value | int64 }}
+          {{- end }}
+          {{- if eq $tp "bool" }}
+      {{ $key }} = {{ $value }}
+          {{- end }}
+          {{- if eq $tp "[]interface {}" }}
+            {{- if eq (index $value 0 | typeOf) "map[string]interface {}" -}}
+              {{- range $b, $val := $value }}
+      [[secretstore.{{- $secretstore }}.{{- $key }}]]
+                {{- range $k, $v := $val }}
+                  {{- $tps := typeOf $v }}
+                  {{- if eq $tps "string" }}
+         {{ $k }} = {{ $v | quote }}
+                  {{- end }}
+                  {{- if eq $tps "float64" }}
+         {{ $k }} = {{ $v | int64 }}
+                  {{- end }}
+                  {{- if eq $tps "bool" }}
+         {{ $k }} = {{ $v }}
+                  {{- end }}
+                {{- end }}
+              {{- end }}
+            {{- else }}
+      {{ $key }} = [
+              {{- $numOut := len $value }}
+              {{- $numOut := sub $numOut 1 }}
+              {{- range $b, $val := $value }}
+                {{- $i := int64 $b }}
+                {{- $tp := typeOf $val }}
+                {{- if eq $tp "string" }}
+        {{ $val | quote }}
+                {{- end }}
+                {{- if eq $tp "float64" }}
+                  {{- if eq $key "percentiles" }}
+                    {{- $xval := float64 (int64 $val) }}
+                    {{- if eq $val $xval }}
+        {{ $val | int64 }}.0
+                    {{- else }}
+        {{ $val | float64 }}
+                    {{- end }}
+                  {{- else }}
+        {{ $val | int64 }}
+                  {{- end }}
+                {{- end }}
+                {{- if ne $i $numOut -}}
+        ,
+                {{- end -}}
+              {{- end }}
+      ]
+            {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- range $key, $value := $config -}}
+          {{- $tp := typeOf $value -}}
+          {{- if eq $tp "map[string]interface {}" }}
+      [secretstore.{{ $secretstore }}.{{ $key }}]
+            {{- range $k, $v := $value }}
+              {{- $tps := typeOf $v }}
+              {{- if eq $tps "string" }}
+        {{ $k }} = {{ $v | quote }}
+              {{- end }}
+              {{- if eq $tps "[]interface {}"}}
+        {{ $k }} = [
+                {{- $numOut := len $v }}
+                {{- $numOut := sub $numOut 1 }}
+                {{- range $b, $val := $v }}
+                  {{- $i := int64 $b }}
+                  {{- if eq $i $numOut }}
+            {{ $val | quote }}
+                  {{- else }}
+            {{ $val | quote }},
+                  {{- end }}
+                {{- end }}
+        ]
+              {{- end }}
+              {{- end }}
+              {{- range $k, $v := $value }}
+              {{- $tps := typeOf $v }}
+              {{- if eq $tps "map[string]interface {}"}}
+          [secretstore.{{ $secretstore }}.{{ $key }}.{{ $k }}]
+                {{- range $foo, $bar := $v }}
+            {{ $foo }} = {{ $bar | quote }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+    {{- end }}
+    {{- end }}
+    {{ end }}
+{{- end }}
+{{- end -}}
+
 {{/*
 Backward compatible version support.
 */}}
@@ -557,6 +667,10 @@ Backward compatible version support.
 
 {{- define "aggregators" -}}
 {{- include "section" (prepend . "aggregators") -}}
+{{- end -}}
+
+{{- define "secretstores" -}}
+{{- include "section" (prepend . "secretstores") -}}
 {{- end -}}
 
 {{- define "detect.version" -}}
@@ -587,6 +701,10 @@ Backward compatible version support.
 
 {{- define "outputs.v2" -}}
   {{ include "section.v2" (list "outputs" .) }}
+{{- end -}}
+
+{{- define "secretstores.v2" -}}
+  {{ include "section.v2" (list "secretstores" .) }}
 {{- end -}}
 
 {{- define "section.v2" -}}
