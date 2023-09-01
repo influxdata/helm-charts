@@ -16,31 +16,10 @@ data:
     {{ template "aggregators" .Values.config.aggregators }}
     {{ template "outputs" .Values.config.outputs }}
     {{ template "monitor_self" .Values.config.monitor_self }}
-
-    [[inputs.diskio]]
-    [[inputs.kernel]]
-    [[inputs.mem]]
-    [[inputs.net]]
-    [[inputs.processes]]
-    [[inputs.swap]]
-    [[inputs.system]]
-
-    [[inputs.cpu]]
-    percpu = true
-    totalcpu = true
-    collect_cpu_time = false
-    report_active = false
-
-    [[inputs.disk]]
-    ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+    {{ template "inputs" .Values.config.inputs }}
 
     {{- if .Values.config.docker_endpoint }}
     [[inputs.docker]]
     endpoint = {{ .Values.config.docker_endpoint | quote }}
     {{- end }}
-
-    [[inputs.kubernetes]]
-    url = "https://$HOSTIP:10250"
-    bearer_token = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-    insecure_skip_verify = true
 {{- end }}
