@@ -58,6 +58,14 @@ tolerations: []
 #   value: "value"
 #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
+## Configure the updateStrategy used to replace Telegraf Pods
+## See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/deployment-v1/
+updateStrategy: {}
+#  type: RollingUpdate|Recreate
+#  rollingUpdate:
+#    maxUnavailable: 1
+#    maxSurge: 1
+
 service:
   enabled: true
   type: ClusterIP
