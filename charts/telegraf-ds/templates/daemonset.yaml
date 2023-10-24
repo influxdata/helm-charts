@@ -40,10 +40,6 @@ spec:
 {{ toYaml .Values.args | indent 8 }}
         {{- end }}
         env:
-        - name: HOSTIP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
 {{ toYaml .Values.env | indent 8 }}
         {{- if .Values.envFromSecret }}
         envFrom:
