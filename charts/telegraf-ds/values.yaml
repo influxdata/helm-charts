@@ -159,6 +159,8 @@ config:
         url: "https://$HOSTIP:10250"
         bearer_token: "/var/run/secrets/kubernetes.io/serviceaccount/token"
         insecure_skip_verify: true
+    - docker:
+        endpoint: "unix:///var/run/docker.sock"
   outputs:
     - influxdb:
         urls:
@@ -171,4 +173,3 @@ config:
         user_agent: "telegraf"
         insecure_skip_verify: false
   monitor_self: false
-  docker_endpoint: "unix:///var/run/docker.sock"
