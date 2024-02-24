@@ -79,6 +79,12 @@ spec:
     name: {{ printf "%s-%s" "socket-listener" (regexFind "[0-9]+$" $value.service_address) }}
     {{- end }}
     {{- end }}
+    {{- if eq $key "cisco_telemetry_mdt" }}
+    - port: {{ trimPrefix ":" $value.service_address | int64 }}
+      targetPort: {{ trimPrefix ":" $value.service_address | int64 }}
+      protocol: "TCP"
+      name: "telemetry-listener"
+    {{- end }}
   {{- end -}}
   {{- end }}
   {{- range $objectKey, $objectValue := .Values.config.outputs }}
