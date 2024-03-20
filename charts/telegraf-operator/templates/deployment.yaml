@@ -28,7 +28,9 @@ spec:
           args:
             - "--telegraf-default-class={{ .Values.classes.default }}"
             - --telegraf-classes-directory=/etc/telegraf-operator
+            {{- if eq .Values.enableDefaultInternalPlugin true }}
             - --enable-default-internal-plugin
+            {{- end }}
             - "--telegraf-image={{ .Values.image.sidecarImage }}"
             {{- if eq .Values.requireAnnotationsForSecret true }}
             - "--require-annotations-for-secret"

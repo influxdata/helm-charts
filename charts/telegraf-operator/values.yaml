@@ -53,6 +53,7 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 requireAnnotationsForSecret: false
+enableDefaultInternalPlugin: true
 # allow hot reload ; disabled by default to support versions of telegraf
 # that do not support hot-reload and --watch-config flag
 hotReload: false
