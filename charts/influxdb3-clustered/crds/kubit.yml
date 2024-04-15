@@ -1,0 +1,101 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: appinstances.kubecfg.dev
+spec:
+  group: kubecfg.dev
+  names:
+    categories: []
+    kind: AppInstance
+    plural: appinstances
+    shortNames: []
+    singular: appinstance
+  scope: Namespaced
+  versions:
+    - additionalPrinterColumns: []
+      name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          description: Auto-generated derived type for AppInstanceSpec via `CustomResource`
+          properties:
+            spec:
+              properties:
+                imagePullSecrets:
+                  items:
+                    description: LocalObjectReference contains enough information to
+                      let you locate the referenced object inside the same namespace.
+                    properties:
+                      name:
+                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                        type: string
+                    type: object
+                  nullable: true
+                  type: array
+                package:
+                  properties:
+                    apiVersion:
+                      type: string
+                    image:
+                      type: string
+                    spec:
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                  required:
+                    - apiVersion
+                    - image
+                    - spec
+                  type: object
+                pause:
+                  description: If true, the controller will not reconcile this application.
+                    You can use this if you need to do some manual changes (either with
+                    kubectl directly or with kubit CLI)
+                  type: boolean
+              required:
+                - package
+              type: object
+            status:
+              nullable: true
+              properties:
+                conditions:
+                  items:
+                    properties:
+                      lastTransitionTime:
+                        description: Time is a wrapper around time.Time which supports
+                          correct marshaling to YAML and JSON.  Wrappers are provided
+                          for many of the factory methods that the time package offers.
+                        format: date-time
+                        type: string
+                      message:
+                        type: string
+                      observedGeneration:
+                        format: int64
+                        nullable: true
+                        type: integer
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                    type: object
+                  type: array
+                lastLogs:
+                  additionalProperties:
+                    type: string
+                  nullable: true
+                  type: object
+              type: object
+          required:
+            - spec
+          title: AppInstance
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
