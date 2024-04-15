@@ -6,7 +6,7 @@ appVersion: "20240326-922145"
 name: influxdb3-clustered
 description: InfluxDB 3.0 Clustered
 maintainers:
-  - name: project-clustered
+  - name: jenniferplusplus
     email: team-clustered@influxdata.com
     url: https://github.com/orgs/influxdata/teams/project-clustered
 keywords:
