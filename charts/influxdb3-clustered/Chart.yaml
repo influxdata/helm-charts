@@ -7,6 +7,7 @@ name: influxdb3-clustered
 description: InfluxDB 3.0 Clustered
 maintainers:
   - name: project-clustered
+    email: team-clustered@influxdata.com
     url: https://github.com/orgs/influxdata/teams/project-clustered
 keywords:
   - influxdb
