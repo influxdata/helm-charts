@@ -112,18 +112,19 @@ ingress:
   hosts:
     # This is the host on which you will access Influxdb 3.0, for both reads and writes
     - ""
-  # (Optional)
-  # The name of the Kubernetes Secret containing a TLS certificate, this should exist in the same namespace as the Clustered installation.
-  # If you are using cert-manager, enter a name for the Secret it should create.
+  # # (Optional)
+  # # The name of the Kubernetes Secret containing a TLS certificate, this should exist in the same namespace as the Clustered installation.
+  # # If you are using cert-manager, enter a name for the Secret it should create.
   # tlsSecretName: ""
-  http:
-    # Usually you have only one ingress controller installed in a given cluster.
-    # In case you have more than one, you have to specify the "class name" of the ingress controller you want to use
-    className: nginx
-  grpc:
-    # Usually you have only one ingress controller installed in a given cluster.
-    # In case you have more than one, you have to specify the "class name" of the ingress controller you want to use
-    className: nginx
+  
+  # # (Optional)
+  # # Usually you have only one ingress controller installed in a given cluster.
+  # # In case you have more than one, you have to specify the "class name" of the ingress controller you want to use
+  # http:
+    # className: nginx
+  # grpc:
+    # className: nginx
+  
   # (Optional)
   # Enables specifying which 'type' of Ingress to use, alongside whether to place additional annotations
   # onto those objects, this is useful for third party software in your environment, such as cert-manager.
