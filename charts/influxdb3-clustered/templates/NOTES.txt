@@ -1,0 +1,5 @@
+Thank you for installing {{ .Chart.Description }}
+Your release is named {{ .Release.Name }}
+You are running build number {{ .Chart.AppVersion }}
+
+Our documentation is available at https://docs.influxdata.com/influxdb/clustered/

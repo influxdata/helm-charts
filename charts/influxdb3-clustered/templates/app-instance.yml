@@ -1,0 +1,68 @@
+apiVersion: kubecfg.dev/v1alpha1
+kind: AppInstance
+metadata:
+  name: {{.Values.nameOverride | default .Release.Name}}
+  namespace: {{.Values.namespaceOverride | default .Release.Namespace}}
+spec:
+  imagePullSecrets: {{.Values.imagePullSecrets | toYaml | nindent 2}}
+  package:
+    image: "{{.Values.fullnameOverride | default "us-docker.pkg.dev/influxdb2-artifacts/clustered/influxdb"}}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+    apiVersion: influxdata.com/v1alpha1
+    spec:
+      {{- if .Values.hostingEnvironment}}
+      hostingEnvironment:
+        {{- if hasKey .Values.hostingEnvironment "eks"}}
+        eks: {{.Values.hostingEnvironment.eks | include "mapTrim" | trim | nindent 10}}
+        {{- else if hasKey .Values.hostingEnvironment "openshift"}}
+        openshift: {{.Values.hostingEnvironment.openshift | include "mapTrim" | trim | nindent 10}}
+        {{- else if hasKey .Values.hostingEnvironment "gke"}}
+        gke: {{.Values.hostingEnvironment.gke | include "mapTrim" | trim | nindent 10}}
+        {{- end }}
+      {{- end}}
+      catalog:
+        dsn:
+          valueFrom:
+            secretKeyRef:
+              name: {{(required "missing catalog.dsn.SecretName" .Values.catalog.dsn.SecretName)}}
+              key: {{required "missing catalog.dsn.SecretKey" .Values.catalog.dsn.SecretKey}}
+      {{- if or .Values.images.overrides .Values.images.registryOverride}}
+      images:
+        {{- if .Values.images.overrides}}
+        overrides: {{.Values.images.overrides}}
+        {{- end}}
+        {{- if .Values.images.registryOverride}}
+        registryOverride: {{.Values.images.registryOverride}}
+        {{- end}}
+      {{- end}}
+      objectStore:
+        bucket: {{required "missing objectStore.bucket" .Values.objectStore.bucket}}
+        {{- if hasKey .Values.objectStore "s3"}}
+        s3: {{- .Values.objectStore.s3 | include "mapTrim" | trim | nindent 10 }}
+        {{- else if hasKey .Values.objectStore "azure"}}
+        azure: {{- .Values.objectStore.azure | include "mapTrim" | trim | nindent 10}}
+        {{- else if hasKey .Values.objectStore "google"}}
+        google: {{- .Values.objectStore.google | include "mapTrim" | trim | nindent 10}}
+        {{- end}}
+      ingesterStorage:{{.Values.ingesterStorage | include "mapTrim" | trim | nindent 8}}
+      monitoringStorage:{{.Values.monitoringStorage | include "mapTrim" | trim | nindent 8}}
+      ingress:{{- .Values.ingress | include "mapTrim" | trim | nindent 8 -}}
+      {{- $components := (.Values.components | include "mapTrim" | fromYaml)}}
+      {{- if $components}}
+      components:{{$components | toYaml | trim | nindent 8}}
+      {{- end}}
+      {{- $resources := (.Values.resources | include "mapTrim" | fromYaml)}}
+      {{- if $resources}}
+      resources:{{$resources | toYaml | trim | nindent 8}}
+      {{- end}}
+      admin:
+        users: {{required "missing admin.users" .Values.admin.users | toYaml | nindent 8}}
+        dsn: {{required "missing admin.dsn" .Values.admin.dsn | toYaml | nindent 10}}
+        identityProvider: {{required "missing admin.identityProvider" .Values.admin.identityProvider}}
+        jwksEndpoint: {{required "missing admin.jwksEndpoint" .Values.admin.jwksEndpoint}}
+      {{- if .Values.useCustomEgress}}
+      egress:
+        customCertificates: {{.Values.egress.customCertificates | toYaml | nindent 12}}
+      {{- end}}
+      {{- if .Values.featureFlags}}
+      featureFlags: {{.Values.featureFlags | toYaml | nindent 6}}
+      {{- end}}

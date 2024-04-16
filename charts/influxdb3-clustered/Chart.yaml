@@ -1,0 +1,20 @@
+apiVersion: v2
+type: application
+
+version: 0.1.0
+appVersion: "20240326-922145"
+name: influxdb3-clustered
+description: InfluxDB 3.0 Clustered
+maintainers:
+  - name: jenniferplusplus
+    email: team-clustered@influxdata.com
+    url: https://github.com/orgs/influxdata/teams/project-clustered
+keywords:
+  - influxdb
+  - influxdb3
+  - database
+  - timeseries
+  - influxdata
+home: https://www.influxdata.com/products/influxdb-clustered/
+sources:
+  - https://github.com/influxdata/influxdb
