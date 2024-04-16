@@ -116,7 +116,7 @@ ingress:
   # # The name of the Kubernetes Secret containing a TLS certificate, this should exist in the same namespace as the Clustered installation.
   # # If you are using cert-manager, enter a name for the Secret it should create.
   # tlsSecretName: ""
-  
+
   # # (Optional)
   # # Usually you have only one ingress controller installed in a given cluster.
   # # In case you have more than one, you have to specify the "class name" of the ingress controller you want to use
@@ -124,7 +124,7 @@ ingress:
     # className: nginx
   # grpc:
     # className: nginx
-  
+
   # (Optional)
   # Enables specifying which 'type' of Ingress to use, alongside whether to place additional annotations
   # onto those objects, this is useful for third party software in your environment, such as cert-manager.
