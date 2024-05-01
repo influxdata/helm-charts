@@ -6,6 +6,7 @@ image:
   repo: "telegraf"
   tag: "1.30-alpine"
   pullPolicy: IfNotPresent
+imagePullSecrets: []
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources:

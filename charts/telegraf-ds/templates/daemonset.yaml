@@ -25,6 +25,10 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
         {{- end }}
     spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
 {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName | quote }}
