@@ -5,7 +5,9 @@ metadata:
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 spec:
+  {{- if .Values.replicaCount }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "telegraf.name" . }}
