@@ -12,34 +12,34 @@ spec:
   type: {{ .Values.service.type }}
   ports:
   - name: api
-    port: {{ .Values.config.http.bind_address | default 8086 }}
+    port: {{ include "influxdb.httpPortNumber" . }}
     targetPort: api
     {{- if (and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.nodePorts.http))) }}
     nodePort: {{ .Values.service.nodePorts.http | int }}
     {{- end }}
   - name: rpc
-    port: {{ .Values.config.rpc.bind_address | default 8088 }}
+    port: {{ include "influxdb.rpcPortNumber" . }}
     targetPort: rpc
   {{- if .Values.config.graphite.enabled }}
   - name: graphite
-    port: {{ .Values.config.graphite.bind_address | default 2003 }}
+    port: {{ include "influxdb.graphitePortNumber" . }}
     targetPort: graphite
   {{- end }}
   {{- if .Values.config.collectd.enabled }}
   - name: collectd
-    port: {{ .Values.config.collectd.bind_address | default 25826 }}
+    port: {{ include "influxdb.collectdPortNumber" . }}
     protocol: UDP
     targetPort: collectd
   {{- end }}
   {{- if .Values.config.udp.enabled }}
   - name: udp
-    port: {{ .Values.config.udp.bind_address | default 8089 }}
+    port: {{ include "influxdb.udpPortNumber" . }}
     protocol: UDP
     targetPort: udp
   {{- end }}
   {{- if .Values.config.opentsdb.enabled }}
   - name: opentsdb
-    port: {{ .Values.config.opentsdb.bind_address | default 4242 }}
+    port: {{ include "influxdb.opentsdbPortNumber" . }}
     targetPort: opentsdb
   {{- end }}
   selector:

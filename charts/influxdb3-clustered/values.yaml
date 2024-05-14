@@ -1,0 +1,223 @@
+image:
+  # Overrides the InfluxDb Clustered OCI image tag
+  tag: ""
+
+imagePullSecrets:
+- name: "gar-docker-secret"
+
+nameOverride: ""
+namespaceOverride: ""
+fullnameOverride: ""
+kubitSingleNamespace: false
+operatorImageVersion: "v0.0.15"
+operatorImageOverride: ""
+
+# set to true if you have previously installed the kubit operator from another source
+skipOperator: false
+
+hostingEnvironment: {}
+#  eks:
+#    eksRoleArn: "" # "arn:aws:iam::111111111111:role/your-influxdb-clustered-role"
+#  # Note: there are currently no OpenShift-specific parameters. The empty object is still required for proper function
+#  openshift: {}
+#  # Note: This setting just enables GKE specific authentication mechanism.
+#  # You still need to select objectStore.objectStoreApi: 'google' below if you want to use GCS.
+#  gke:
+#    workloadIdentity:
+#      serviceAccountEmail: "" # "service-account@project-name.iam.gserviceaccount.com"
+
+catalog:
+  # secret name and key within the secret containing the dsn string to connect to the catalog
+  dsn:
+    # Kubernetes Secret name containing the dsn for the catalog.
+    SecretName: ""
+    # The key within the Secret containing the dsn.
+    SecretKey: ""
+
+images:
+  # This can be used to override a specific image name with its FQIN
+  # (Fully Qualified Image Name) for testing. eg.
+  overrides: []
+    # - name: influxdb2-artifacts/iox/iox
+    #   newFQIN: mycompany/test-iox-build:aninformativetag
+  # Set this variable to the prefix of your internal registry. This will be prefixed to all expected images.
+  # eg. us-docker.pkg.dev/iox:latest => registry.mycompany.io/us-docker.pkg.dev/iox:latest
+  registryOverride:
+
+objectStore:
+  # Bucket that the parquet files will be stored in
+  bucket: ""
+
+  # (Required) Provide one of the following (s3, azure, google)
+  # to configure your object store
+#  s3:
+#    # URL for S3 Compatible object store
+#    endpoint: ""
+#
+#    # Set to true to allow communication over HTTP (instead of HTTPS)
+#    allowHttp: "false"
+#
+#    # S3 Access Key
+#    # This can also be provided as a valueFrom: secretKeyRef:
+#    accessKey:
+#      value: ""
+#
+#    # S3 Secret Key
+#    # This can also be provided as a value:
+#    secretKey:
+#      valueFrom:
+#        secretKeyRef: ""
+#
+#    # This value is required for AWS S3, it may not be required for other providers and can be omitted in that case.
+#    region: ""
+#
+#  azure:
+#    # Azure Blob Storage Access Key
+#    # This can also be provided as a value:
+#    accessKey:
+#      valueFrom:
+#        secretKeyRef: "" # azure-access-key
+#
+#    # Azure Blob Storage Account
+#    # This can also be provided as a valueFrom: secretKeyRef:
+#    account:
+#      value: ""
+#
+#  google:
+#    # This section is not needed if you are using GKE Workload Identity. It is only required to use explicit
+#    # service account secrets (JSON files)
+#    serviceAccountSecret:
+#      # Kubernetes Secret name containing the credentials for a Google IAM Service Account.
+#      name: ""
+#      # The key within the Secret containing the credentials.
+#      key: ""
+
+ingesterStorage:
+  # (Optional) Set the storage class. This will differ based on the K8s environment and desired storage characteristics.
+  # If not set, the default storage class will be used.
+  storageClassName: null
+  # Set the storage size (minimum 2Gi recommended)
+  storage: "2Gi"
+
+monitoringStorage:
+  # Set the storage size (minimum 1Gi recommended)
+  storage: "1Gi"
+  # (Optional) Set the storage class. This will differ based on the K8s environment and desired storage characteristics.
+  # If not set, the default storage class will be used.
+  storageClassName: null
+
+# (Optional)
+# We currently only support the ingress NGINX ingress controller: https://github.com/kubernetes/ingress-nginx
+ingress:
+  hosts:
+    # This is the host on which you will access Influxdb 3.0, for both reads and writes
+    - ""
+  # # (Optional)
+  # # The name of the Kubernetes Secret containing a TLS certificate, this should exist in the same namespace as the Clustered installation.
+  # # If you are using cert-manager, enter a name for the Secret it should create.
+  # tlsSecretName: ""
+
+  # # (Optional)
+  # # Usually you have only one ingress controller installed in a given cluster.
+  # # In case you have more than one, you have to specify the "class name" of the ingress controller you want to use
+  # http:
+    # className: nginx
+  # grpc:
+    # className: nginx
+
+  # (Optional)
+  # Enables specifying which 'type' of Ingress to use, alongside whether to place additional annotations
+  # onto those objects, this is useful for third party software in your environment, such as cert-manager.
+  template:
+
+# Customizations for the InfluxDB component resources
+# Use this to set custom metadata, nodeSelector, tolerations, or modify logging filter levels
+components:
+  router:
+    log:
+    #  #for example
+    #  filters:
+    #  - 'router::gossip=info'
+    #  - 'debug'
+    template:
+    #  #for example
+    #  nodeSelector:
+    #    disktype: ssd
+    #  tolerations:
+    #   - effect: NoSchedule
+    #     key: example
+    #     operator: Exists
+  ingester:
+    log:
+    template:
+  querier:
+    log:
+    template:
+  compactor:
+    log:
+    template:
+  common:
+    log:
+    template:
+    #  #for example
+    #  metadata:
+    #    annotations:
+    #      'example.com/on-call': 'sre-team@example.com'
+
+
+# Tune the cpu/memory/replicas used by InfluxDb components, based on the needs of your workload
+# (see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits)
+resources:
+  # The ingester handles data being written
+  ingester:
+    requests:
+    limits:
+  # The compactor reorganizes old data to improve query and storage efficiency.
+  compactor:
+    requests:
+    limits:
+  # The querier handles querying data.
+  querier:
+    requests:
+    limits:
+  # The router performs some api routing.
+  router:
+    requests:
+    limits:
+
+admin:
+ # The list of users to grant access to Clustered via influxctl
+  users:
+    - firstName: ""
+      lastName: ""
+      email: ""
+      # The ID as given by the OAuth Identity Provider
+      id: ""
+
+  # The dsn for the postgres compatible database (note this is the same as defined above)
+  dsn:
+    valueFrom:
+      secretKeyRef:
+        name: ""
+        key: ""
+  # The identity provider to be used e.g. "keycloak", "auth0", "azure", etc
+  # Note for Azure Active Directory it must be exactly "azure"
+  identityProvider: ""
+  # The JWKS endpoint provided by the Identity Provider
+  jwksEndpoint: ""
+
+# (Optional)
+useCustomEgress: false
+egress:
+#    # If you're using a custom CA you will need to specify the full custom CA bundle here.
+#    #
+#    # NOTE: the custom CA is currently only honoured for outbound requests used to obtain
+#    # the JWT public keys from your identiy provider (see `jwksEndpoint`).
+  customCertificates:
+    valueFrom:
+      configMapKeyRef:
+        key: ""
+        name: ""
+
+# This can be used to enable certain features that are still in testing
+featureFlags: []

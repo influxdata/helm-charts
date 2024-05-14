@@ -25,6 +25,10 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
         {{- end }}
     spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
 {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName | quote }}
@@ -40,10 +44,6 @@ spec:
 {{ toYaml .Values.args | indent 8 }}
         {{- end }}
         env:
-        - name: HOSTIP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
 {{ toYaml .Values.env | indent 8 }}
         {{- if .Values.envFromSecret }}
         envFrom:

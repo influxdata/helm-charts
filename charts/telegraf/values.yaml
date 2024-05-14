@@ -4,8 +4,8 @@
 
 replicaCount: 1
 image:
-  repo: "telegraf"
-  tag: "1.26-alpine"
+  repo: "docker.io/library/telegraf"
+  tag: "1.30-alpine"
   pullPolicy: IfNotPresent
 podAnnotations: {}
 podLabels: {}
@@ -57,6 +57,14 @@ tolerations: []
 #   operator: "Equal|Exists"
 #   value: "value"
 #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+## Configure the updateStrategy used to replace Telegraf Pods
+## See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/deployment-v1/
+updateStrategy: {}
+#  type: RollingUpdate|Recreate
+#  rollingUpdate:
+#    maxUnavailable: 1
+#    maxSurge: 1
 
 service:
   enabled: true

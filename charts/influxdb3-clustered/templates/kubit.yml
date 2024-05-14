@@ -1,0 +1,121 @@
+{{- if not .Values.skipOperator}}
+{{- if not .Values.kubitSingleNamespace}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/instance: kubit
+    app.kubernetes.io/name: namespace
+    app.kubernetes.io/part-of: kubit
+    control-plane: kubit
+  name: kubit
+---
+{{- end}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubit
+  namespace: {{if .Values.kubitSingleNamespace}}{{.Values.namespaceOverride | default .Release.Namespace}}{{else}}kubit{{end}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{if .Values.kubitSingleNamespace}}Role{{else}}ClusterRole{{end}}
+metadata:
+  name: kubit
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - create
+  - update
+  - get
+  - list
+  - patch
+  - watch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{if .Values.kubitSingleNamespace}}RoleBinding{{else}}ClusterRoleBinding{{end}}
+metadata:
+  name: kubit
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: {{if .Values.kubitSingleNamespace}}Role{{else}}ClusterRole{{end}}
+  name: kubit
+subjects:
+- kind: ServiceAccount
+  name: kubit
+  namespace: {{if .Values.kubitSingleNamespace}}{{.Values.namespaceOverride | default .Release.Namespace}}{{else}}kubit{{end}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/instance: kubit
+    app.kubernetes.io/name: deployment
+    app.kubernetes.io/part-of: kubit
+    control-plane: kubit
+  name: kubit
+  namespace: {{if .Values.kubitSingleNamespace}}{{.Values.namespaceOverride | default .Release.Namespace}}{{else}}kubit{{end}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: kubit
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: kubit
+    spec:
+      containers:
+      - env:
+{{- if not .Values.kubitSingleNamespace}}
+        - name: KUBIT_WATCHED_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+{{- end}}
+        - name: KUBIT_CONTROLLER_IMAGE
+          value: "{{.Values.operatorImageOverride | default "ghcr.io/kubecfg/kubit"}}:{{.Values.operatorImageVersion}}"
+        image: "{{.Values.operatorImageOverride | default "ghcr.io/kubecfg/kubit"}}:{{.Values.operatorImageVersion}}"
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: kubit
+      terminationGracePeriodSeconds: 10
+  {{end}}
