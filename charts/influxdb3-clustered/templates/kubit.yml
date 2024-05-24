@@ -79,7 +79,7 @@ spec:
     spec:
       containers:
       - env:
-{{- if not .Values.kubitSingleNamespace}}
+{{- if .Values.kubitSingleNamespace}}
         - name: KUBIT_WATCHED_NAMESPACE
           valueFrom:
             fieldRef:
