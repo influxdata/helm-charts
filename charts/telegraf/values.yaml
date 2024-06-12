@@ -5,7 +5,7 @@
 replicaCount: 1
 image:
   repo: "docker.io/library/telegraf"
-  tag: "1.30-alpine"
+  tag: "1.31-alpine"
   pullPolicy: IfNotPresent
 podAnnotations: {}
 podLabels: {}
