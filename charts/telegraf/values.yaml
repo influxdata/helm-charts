@@ -8,6 +8,8 @@ image:
   tag: "1.31-alpine"
   pullPolicy: IfNotPresent
 podAnnotations: {}
+## override the app label
+# nameOverride: telegraf-poller
 podLabels: {}
 imagePullSecrets: []
 ## Configure args passed to Telegraf containers
@@ -180,3 +182,25 @@ pdb:
   create: true
   minAvailable: 1
   # maxUnavailable: 1
+extraObjects: []
+  # - apiVersion: autoscaling/v1
+  #   kind: HorizontalPodAutoscaler
+  #   metadata:
+  #     name: telegraf
+  #   spec:
+  #     maxReplicas: 8
+  #     minReplicas: 1
+  #     scaleTargetRef:
+  #       apiVersion: apps/v1
+  #       kind: Deployment
+  #       name: telegraf
+  #     targetCPUUtilizationPercentage: 90
+
+initContainers: []
+  # - name: hello
+  #   image: library:busybox
+  #   command: ["/bin/sh", "-c", "echo 'OK'"]
+sideCars: []
+  # - name: hello
+  #   image: library:busybox
+  #   command: ["/bin/sh", "-c", "sleep 30000"]
