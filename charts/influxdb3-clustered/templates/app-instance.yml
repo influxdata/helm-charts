@@ -27,9 +27,9 @@ spec:
               key: {{required "missing catalog.dsn.SecretKey" .Values.catalog.dsn.SecretKey}}
       {{- if or .Values.images.overrides .Values.images.registryOverride}}
       images:
-        {{- if .Values.images.overrides}}
-        overrides: {{.Values.images.overrides}}
-        {{- end}}
+        {{- with .Values.images.overrides }}
+        overrides: {{ . | toYaml | nindent 8 }}
+        {{- end }}
         {{- if .Values.images.registryOverride}}
         registryOverride: {{.Values.images.registryOverride}}
         {{- end}}
