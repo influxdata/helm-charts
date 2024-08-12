@@ -41,6 +41,10 @@ spec:
 {{- end }}
         image: "{{ .Values.image.repo }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
+{{- if .Values.containerPorts }}
+        ports:
+{{ toYaml .Values.containerPorts | indent 10 }}
+{{- end }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         {{- if .Values.args }}
