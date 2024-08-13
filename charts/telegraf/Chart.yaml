@@ -1,6 +1,6 @@
 apiVersion: v2
 name: telegraf
-version: 1.8.51
+version: 1.8.52
 appVersion: 1.31.2
 deprecated: false
 description: Telegraf is an agent written in Go for collecting, processing, aggregating, and writing metrics.
