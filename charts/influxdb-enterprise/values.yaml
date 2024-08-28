@@ -26,10 +26,7 @@ serviceAccount:
 ## Customize liveness, readiness and startup probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe: {}
-  # path: "/ping"
-  # initialDelaySeconds: 30
-  # timeoutSeconds: 5
-  # scheme: HTTP
+  # initialDelaySeconds: 3600
 
 ## The name of a secret in the same kubernetes namespace which contain values
 ## to be added to the environment.

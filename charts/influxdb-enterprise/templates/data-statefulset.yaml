@@ -117,9 +117,8 @@ spec:
               protocol: UDP
           livenessProbe:
             httpGet:
-              path: {{ .Values.livenessProbe.path | default "/ping" }}
+              path: /ping
               port: http
-              {{- if .Values.data.https.enabled }}
               scheme: HTTPS
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 3600 }}
               {{- end }}
