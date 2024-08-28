@@ -23,6 +23,11 @@ serviceAccount:
   name: ''
   annotations: {}
 
+## Customize liveness, readiness and startup probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe: {}
+  # initialDelaySeconds: 3600
+
 ## The name of a secret in the same kubernetes namespace which contain values
 ## to be added to the environment.
 ## This can be used, for example, to set the INFLUXDB_ENTERPRISE_LICENSE_KEY

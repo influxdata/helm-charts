@@ -121,6 +121,7 @@ spec:
               port: http
               {{- if .Values.data.https.enabled }}
               scheme: HTTPS
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 3600 }}
               {{- end }}
           readinessProbe:
             initialDelaySeconds: 30
