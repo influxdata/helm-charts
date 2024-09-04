@@ -1577,6 +1577,28 @@ entries:
   influxdb-enterprise:
   - apiVersion: v1
     appVersion: 1.10.0
+    created: "2024-09-04T15:44:07.984248154Z"
+    description: Run InfluxDB Enterprise on Kubernetes
+    digest: 7938d7dcfcd27e43c2354a36b0690c27ad86fdb1610a09f4a22cb8ebb89c505c
+    home: https://www.influxdata.com/time-series-platform/influxdb/
+    keywords:
+    - influxdb
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: david@rawkode.com
+      name: rawkode
+    - email: chobbs@influxdata.com
+      name: chobbs
+    name: influxdb-enterprise
+    sources:
+    - https://github.com/influxdata/influxdb
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb-enterprise-0.1.24/influxdb-enterprise-0.1.24.tgz
+    version: 0.1.24
+  - apiVersion: v1
+    appVersion: 1.10.0
     created: "2024-08-28T19:59:17.857953532Z"
     description: Run InfluxDB Enterprise on Kubernetes
     digest: 1cd45435dc52e3b0f2883112b4001d6f39568c2fa2a082720794afdb2e0c2568
@@ -7184,4 +7206,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2024-08-28T19:59:17.860065525Z"
+generated: "2024-09-04T15:44:07.98628054Z"
