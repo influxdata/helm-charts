@@ -112,8 +112,8 @@ spec:
               port: http
               {{- if .Values.meta.https.enabled }}
               scheme: HTTPS
-            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 3600 }}
               {{- end }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 3600 }}
           readinessProbe:
             httpGet:
               path: /ping
