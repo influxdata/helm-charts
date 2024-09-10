@@ -4,6 +4,13 @@ metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
+    {{- if .Values.deploymentLabels }}
+{{ toYaml .Values.deploymentLabels | indent 4 }}
+    {{- end }}
+  {{- if .Values.deploymentAnnotations }}
+  annotations:
+{{ toYaml .Values.deploymentAnnotations | indent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:

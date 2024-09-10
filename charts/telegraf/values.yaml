@@ -7,8 +7,15 @@ image:
   repo: "docker.io/library/telegraf"
   tag: "1.31-alpine"
   pullPolicy: IfNotPresent
+
+# Annotations/Labels to be added to Telegraf Pods
 podAnnotations: {}
 podLabels: {}
+
+# Annotations/Labels to be added to Telegraf Deployments
+deploymentAnnotations: {}
+deploymentLabels: {}
+
 imagePullSecrets: []
 ## Configure args passed to Telegraf containers
 args: []
