@@ -145,6 +145,9 @@ spec:
           failureThreshold: {{ .Values.startupProbe.failureThreshold | default 6 }}
           periodSeconds: {{ .Values.startupProbe.periodSeconds | default 5 }}
         {{- end }}
+        {{- with .Values.containerSecurityContext }}
+        securityContext: {{ toYaml . | nindent 10 }}
+        {{- end }}
         volumeMounts:
         - name: {{ include "influxdb.fullname" . }}-data
           mountPath: /var/lib/influxdb
