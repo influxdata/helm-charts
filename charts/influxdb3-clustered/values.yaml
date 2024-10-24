@@ -9,7 +9,7 @@ nameOverride: ""
 namespaceOverride: ""
 fullnameOverride: ""
 kubitSingleNamespace: false
-operatorImageVersion: "v0.0.19"
+operatorImageVersion: "v0.0.20"
 operatorImageOverride: ""
 
 # set to true if you have previously installed the kubit operator from another source
