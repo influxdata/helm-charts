@@ -1,3 +1,4 @@
+{{- define "app-instance.influxdb" -}}
 apiVersion: kubecfg.dev/v1alpha1
 kind: AppInstance
 metadata:
@@ -66,3 +67,18 @@ spec:
       {{- if .Values.featureFlags}}
       featureFlags: {{.Values.featureFlags | toYaml | nindent 6}}
       {{- end}}
+---
+{{- end }}
+
+{{- if .Values.kubitSingleNamespace}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-instance
+  namespace: {{ .Values.NamspaceOverride | default .Release.Namespace }}
+data:
+  app-instance: |
+    {{ include "app-instance.influxdb" . | fromYaml | toJson }}
+{{- else }}
+{{ include "app-instance.influxdb" . }}
+{{- end }}
