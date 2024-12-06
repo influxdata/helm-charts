@@ -7,155 +7,65 @@ image:
   #   - registry-secret
 
 ## Annotations to be added to InfluxDB pods
-##
 podAnnotations: {}
 
 ## Labels to be added to InfluxDB pods
-##
 podLabels: {}
 
 nameOverride: ""
 fullnameOverride: ""
 
 ## Configure resource requests and limits
-## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-##
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
 
 ## Node labels for pod assignment
-## ref: https://kubernetes.io/docs/user-guide/node-selection/
-##
 nodeSelector: {}
 
 ## Tolerations for pod assignment
-## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-##
 tolerations: []
 
 ## Affinity for pod assignment
-## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-##
 affinity: {}
 
 securityContext: {}
 
 ## Customize liveness, readiness and startup probes
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-##
 livenessProbe: {}
-  # path: "/health"
-  # scheme: "HTTP"
-  # initialDelaySeconds: 0
-  # periodSeconds: 10
-  # timeoutSeconds: 1
-  # failureThreshold: 3
 
 readinessProbe: {}
-  # path: "/health"
-  # scheme: "HTTP"
-  # initialDelaySeconds: 0
-  # periodSeconds: 10
-  # timeoutSeconds: 1
-  # successThreshold: 1
-  # failureThreshold: 3
 
 startupProbe:
   enabled: false
-  # path: "/health"
-  # scheme: "HTTP"
-  # initialDelaySeconds: 30
-  # periodSeconds: 5
-  # timeoutSeconds: 1
-  # failureThreshold: 6
 
 ## Extra environment variables to configure influxdb
-## e.g.
-# env:
-#   - name: FOO
-#     value: BAR
-#   - name: BAZ
-#     valueFrom:
-#       secretKeyRef:
-#         name: my-secret
-#         key: my-key
 env: {}
 
 ## Create default user through docker entrypoint
-## Defaults indicated below
-##
 adminUser:
   organization: "influxdata"
   bucket: "default"
   user: "admin"
   retention_policy: "0s"
-  ## Leave empty to generate a random password and token.
-  ## Or fill any of these values to use fixed values.
   password: ""
   token: ""
 
-  ## The password and token are obtained from an existing secret. The expected
-  ## keys are `admin-password` and `admin-token`.
-  ## If set, the password and token values above are ignored.
-  # existingSecret: influxdb-auth
-
 ## Persist data to a persistent volume
-##
 persistence:
   enabled: true
-  ## If true will use an existing PVC instead of creating one
-  # useExisting: false
-  ## Name of existing PVC to be used in the influx deployment
-  # name:
-  ## influxdb data Persistent Volume Storage Class
-  ## If defined, storageClassName: <storageClass>
-  ## If set to "-", storageClassName: "", which disables dynamic provisioning
-  ## If undefined (the default) or set to null, no storageClassName spec is
-  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-  ##   GKE, AWS & OpenStack)
-  ##
-  # storageClass: "-"
   accessMode: ReadWriteOnce
   size: 50Gi
   mountPath: /var/lib/influxdb2
   subPath: ""
 
 ## Add custom volume and volumeMounts
-##
 # volumes:
-#   - name: influxdb2-templates
-#     hostPath:
-#       path: /data/influxdb2-templates
-#       type: Directory
 # mountPoints:
-#   - name: influxdb2-templates
-#     mountPath: /influxdb2-templates
-#     readOnly: true
 
 ## Allow executing custom init scripts
-## If the container finds any files with the .sh extension inside of the
-## /docker-entrypoint-initdb.d folder, it will execute them.
-## When multiple scripts are present, they will be executed in lexical sort order by name.
-## For more details see Custom Initialization Scripts in https://hub.docker.com/_/influxdb
 initScripts:
   enabled: false
-  scripts:
-    init.sh: |+
-      #!/bin/bash
-      influx apply --force yes -u https://raw.githubusercontent.com/influxdata/community-templates/master/influxdb2_operational_monitoring/influxdb2_operational_monitoring.yml
 
 ## Specify a service type
-## ref: http://kubernetes.io/docs/user-guide/services/
-##
 service:
   type: ClusterIP
   port: 80
@@ -165,32 +75,36 @@ service:
   portName: http
 
 serviceAccount:
-  # Specifies whether a ServiceAccount should be created
   create: true
-  # The name of the ServiceAccount to use.
-  # If not set and create is true, a name is generated using the fullname template
   name:
-  # Annotations for the ServiceAccount
   annotations: {}
 
 ingress:
   enabled: false
-  # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
-  # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
-  # className: nginx
   tls: false
-  # secretName: my-tls-cert # only needed if tls above is true or default certificate is not configured for Nginx
+  # secretName: my-tls-cert
   hostname: influxdb.foobar.com
   annotations: {}
-    # kubernetes.io/ingress.class: "nginx"
-    # kubernetes.io/tls-acme: "true"
   path: /
 
 ## Pod disruption budget configuration
-##
 pdb:
-  ## Specifies whether a Pod disruption budget should be created
-  ##
   create: true
   minAvailable: 1
-  # maxUnavailable: 1
+
+# --- Configuration for aggregated buckets and the task that populates data into them---
+createBucketsAndTask:
+  enabled: true  # Toggle to enable or disable bucket and task creation
+  buckets:
+    - name: "default_agg_topic"   # Aggregated bucket for topic
+      retentionPolicy: "0s"     # Retention policy (adjust as needed)
+    - name: "default_agg_stats"   # Aggregated bucket for stats
+      retentionPolicy: "0s"
+    - name: "default_agg_kpi"     # Aggregated bucket for KPI
+      retentionPolicy: "0s"
+  task:
+    name: "aggregate_data"
+    script: |+
+#TODO
+    #add script for the task
+# --- Configuration for aggregated buckets and task ends here ---
