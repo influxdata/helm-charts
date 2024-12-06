@@ -105,6 +105,284 @@ createBucketsAndTask:
   task:
     name: "aggregate_data"
     script: |+
-#TODO
-    #add script for the task
+      import "experimental"
+
+      // Define the task with a cron schedule (runs every 6 hours), with an offset of 2 minutes and retry up to 3 times
+      option task = {name: "aggregate_data", cron: "0 */6 * * *", offset: 2m, retry: 3}
+
+      // Define the bucket from which data is read
+      fromBucket = "default"
+
+      // Get the current time
+      now_time = now()
+
+      // Define the start time for the data aggregation (6 hours before the current time)
+      start_time = experimental.addDuration(d: -6h, to: now_time)
+
+      // Define the stop time for the data aggregation (current time)
+      stop_time = now_time
+
+      // Define the buckets where the aggregated data will be stored
+      toBucket_agg = "default_agg_topic"
+
+      // Bucket for aggregated topic data
+      toBucket_stats = "default_agg_stats"
+
+      // Bucket for aggregated kpi data
+      toBucket_kpi = "default_agg_kpi"
+
+      // Bucket for aggregated stats data
+      // Query the data from the default bucket within the specified time range
+      data =
+          from(bucket: "default")
+              |> range(start: start_time, stop: stop_time)
+              |> filter(
+                  fn: (r) =>
+                      r._measurement == "analytics" and (r._field == "user_hash" or r._field == "prompt_tokens" or r._field
+                              ==
+                              "completion_tokens" or r._field == "price" or r._field == "number_request_messages"),
+              )
+              |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+
+      // Pivot data into columns by field names
+      // Aggregating prompt_tokens and storing the results
+      data
+          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> sum(column: "prompt_tokens")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      deployment: r.deployment,
+                      model: r.model,
+                      project_id: r.project_id,
+                      _field: "prompt_tokens",
+                      _value: int(v: r.prompt_tokens),
+                  }),
+          )
+          |> to(bucket: toBucket_stats, org: "dial")
+
+      // Aggregating completion_tokens and storing the results
+      data
+          // Group by _measurement, title, topic, and use the start of the range as the key for _time
+          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> sum(column: "completion_tokens")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      deployment: r.deployment,
+                      model: r.model,
+                      project_id: r.project_id,
+                      _field: "completion_tokens",
+                      _value: int(v: r.completion_tokens),
+                  }),
+          )
+          |> to(bucket: toBucket_stats, org: "dial")
+
+      // Aggregating price and storing the results
+      data
+          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> sum(column: "price")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      deployment: r.deployment,
+                      model: r.model,
+                      project_id: r.project_id,
+                      _field: "price",
+                      _value: float(v: r.price),
+                  }),
+          )
+          |> to(bucket: toBucket_stats, org: "dial")
+
+      // Aggregating number_request_messages and storing the results
+      data
+          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          // Sum number_request_messages
+          |> sum(column: "number_request_messages")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      deployment: r.deployment,
+                      model: r.model,
+                      project_id: r.project_id,
+                      _field: "number_request_messages",
+                      _value: int(v: r.number_request_messages),
+                  }),
+          )
+          |> to(bucket: toBucket_stats, org: "dial")
+
+      //Aggregating data on the min time over the groupby columns in order to keep all unique user_hash-es
+      data
+          // Floor the _time column to 6-hour intervals before aggregation
+          |> map(fn: (r) => ({r with _floored_time: time(v: int(v: r._time) - int(v: r._time) % 21600000000000)}))
+          // Group the data by the desired columns (_floored_time, _measurement, and other dimensions)
+          |> group(
+              columns: [
+                  "_floored_time",
+                  "_measurement",
+                  "deployment",
+                  "model",
+                  "project_id",
+                  "user_hash",
+              ],
+          )
+          |> min(column: "_time")
+          // Find the minimum time for each group
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: r._time,
+                      _measurement: r._measurement,
+                      deployment: r.deployment,
+                      model: r.model,
+                      project_id: r.project_id,
+                      _field: "user_hash",
+                      _value: string(v: r.user_hash),
+                  }),
+          )
+          |> to(bucket: toBucket_stats, org: "dial")
+
+      // Counting the number of requests (user_hash) for the group
+      data
+          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> count(column: "user_hash")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      deployment: r.deployment,
+                      model: r.model,
+                      project_id: r.project_id,
+                      _field: "request_count",
+                      _value: int(v: r.user_hash),
+                  }),
+          )
+          |> to(bucket: toBucket_stats, org: "dial")
+
+      // Counting the topic using user_hash
+      data
+          |> group(columns: ["_measurement", "title", "topic"])
+          // Sum number_request_messages directly
+          |> count(column: "user_hash")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      title: r.title,
+                      topic: r.topic,
+                      _field: "topic_count",
+                      _value: int(v: r.user_hash),
+                  }),
+          )
+          |> to(bucket: toBucket_agg, org: "dial")
+
+      data
+          |> group(columns: ["_measurement", "title", "topic"])
+          |> sum(column: "number_request_messages")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      title: r.title,
+                      topic: r.topic,
+                      _field: "number_request_messages",
+                      _value: int(v: r.number_request_messages),
+                  }),
+          )
+          |> to(bucket: toBucket_agg, org: "dial")
+
+      //classification of prompt tokens
+      data
+          |> map(fn: (r) => ({r with user_type: if r.user_hash == "undefined" then "project" else "user"}))
+          |> group(columns: ["_measurement", "user_type"])
+          |> map(
+              fn: (r) =>
+                  ({
+                      _measurement: r._measurement,
+                      user_type: r.user_type,
+                      prompt_tokens: r.prompt_tokens,
+                      prompt_token_class:
+                          if r.prompt_tokens >= 50000 then
+                              "class_1"
+                          else if r.prompt_tokens > 10000 then
+                              "class_2"
+                          else if r.prompt_tokens > 5000 then
+                              "class_3"
+                          else if r.prompt_tokens > 1000 then
+                              "class_4"
+                          else if r.prompt_tokens > 100 then
+                              "class_5"
+                          else
+                              "class_6",
+                  }),
+          )
+          |> group(columns: ["_measurement", "user_type", "prompt_token_class"])
+          |> count(column: "prompt_tokens")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      user_type: r.user_type,
+                      _field: r.prompt_token_class,
+                      _value: int(v: r.prompt_tokens),
+                  }),
+          )
+          |> to(bucket: toBucket_agg, org: "dial")
+
+      // processing data for kpi bucket
+      getOrDefault = (f, d) => if exists f then f else d
+
+      kpi_data =
+          data
+              |> map(fn: (r) => ({r with request_count: 1}))
+              |> map(fn: (r) => ({r with _floored_time: time(v: int(v: r._time) - int(v: r._time) % 21600000000000)}))
+              |> group(columns: ["_floored_time", "user_hash", "project_id"])
+              |> reduce(
+                  fn: (r, accumulator) =>
+                      ({
+                          request_count: getOrDefault(f: r.request_count, d: 0) + accumulator.request_count,
+                          price: getOrDefault(f: r.price, d: 0.0) + accumulator.price,
+                      }),
+                  identity: {request_count: 0, price: 0.0},
+              )
+
+      kpi_data
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: r._floored_time,
+                      _measurement: "analytics",
+                      user_hash: r.user_hash,
+                      project_id: r.project_id,
+                      _field: "cost",
+                      _value: r.price,
+                  }),
+          )
+          |> to(bucket: toBucket_kpi, org: "dial")
+
+      kpi_data
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: r._floored_time,
+                      _measurement: "analytics",
+                      user_hash: r.user_hash,
+                      project_id: r.project_id,
+                      _field: "request_count",
+                      _value: r.request_count,
+                  }),
+          )
+          |> to(bucket: toBucket_kpi, org: "dial")
 # --- Configuration for aggregated buckets and task ends here ---
