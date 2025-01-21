@@ -184,6 +184,10 @@ resources:
   router:
     requests:
     limits:
+  # The Catalog stores metadata related to schema information and physical locations of partitions.
+  catalog:
+    requests:
+    limits:
 
 admin:
  # The list of users to grant access to Clustered via influxctl
