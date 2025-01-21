@@ -16,7 +16,7 @@ operatorImageOverride: ""
 skipOperator: false
 
 hostingEnvironment: {}
-#  eks:
+#  aws:
 #    eksRoleArn: "" # "arn:aws:iam::111111111111:role/your-influxdb-clustered-role"
 #  # Note: there are currently no OpenShift-specific parameters. The empty object is still required for proper function
 #  openshift: {}
