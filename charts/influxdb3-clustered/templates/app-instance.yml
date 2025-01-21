@@ -67,6 +67,12 @@ spec:
       {{- if .Values.featureFlags}}
       featureFlags: {{.Values.featureFlags | toYaml | nindent 6}}
       {{- end}}
+      {{- if .Values.observability.serviceMonitor}}
+      observability:
+        serviceMonitor:
+          interval: {{required "missing observability.serviceMonitor.interval" .Values.observability.serviceMonitor.interval}}
+          scrapeTimeout: {{required "missing observability.serviceMonitor.scrapeTimeout" .Values.observability.serviceMonitor.scrapeTimeout}}
+      {{- end}}
 ---
 {{- end }}
 

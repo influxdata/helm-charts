@@ -221,3 +221,9 @@ egress:
 
 # This can be used to enable certain features that are still in testing
 featureFlags: []
+
+# Parameters to tune observability configuration, such as Prometheus ServiceMonitor's.
+observability: {}
+  # serviceMonitor:
+  #  interval: 10s
+  #  scrapeTimeout: 30s
