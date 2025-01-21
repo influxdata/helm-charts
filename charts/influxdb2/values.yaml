@@ -141,6 +141,11 @@ persistence:
 #     mountPath: /influxdb2-templates
 #     readOnly: true
 
+## Additional containers to be added to the pod.
+extraContainers: {}
+#  - name: my-sidecar
+#    image: nginx:latest
+
 ## Allow executing custom init scripts
 ## If the container finds any files with the .sh extension inside of the
 ## /docker-entrypoint-initdb.d folder, it will execute them.
