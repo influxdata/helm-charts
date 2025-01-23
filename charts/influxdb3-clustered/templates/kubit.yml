@@ -87,6 +87,18 @@ spec:
 {{- end}}
         - name: KUBIT_CONTROLLER_IMAGE
           value: "{{.Values.operatorImageOverride | default "ghcr.io/kubecfg/kubit"}}:{{.Values.operatorImageVersion}}"
+{{- if .Values.kubit.apply_step_image}}
+        - name: KUBIT_APPLY_STEP_KUBECTL_IMAGE
+          value: "{{.Values.kubit.apply_step_image}}"
+{{- end}}
+{{- if .Values.kubit.render_step_image}}
+        - name: KUBIT_RENDER_STEP_KUBECTL_IMAGE
+          value: "{{.Values.kubit.render_step_image}}"
+{{- end}}
+{{- if .Values.kubit.kubecfg_image}}
+        - name: KUBIT_KUBECFG_IMAGE
+          value: "{{.Values.kubit.kubecfg_image}}"
+{{- end}}
         image: "{{.Values.operatorImageOverride | default "ghcr.io/kubecfg/kubit"}}:{{.Values.operatorImageVersion}}"
         livenessProbe:
           httpGet:
