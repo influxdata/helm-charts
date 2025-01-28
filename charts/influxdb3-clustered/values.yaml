@@ -231,3 +231,11 @@ observability: {}
   # serviceMonitor:
   #  interval: 10s
   #  scrapeTimeout: 30s
+
+kubit: {}
+  # If your cluster is unable to pull docker images from the internet
+  # (e.g docker.io), you will need to override the docker images that
+  # the kubit operator uses to preform tasks.
+  # apply_step_image: ""
+  # render_step_image: ""
+  # kubecfg_image: ""
