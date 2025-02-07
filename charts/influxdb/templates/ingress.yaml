@@ -30,7 +30,7 @@ spec:
 {{- end }}
         paths:
           - path: {{ .Values.ingress.path }}
-            pathType: Prefix
+            pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
                 name: {{ include "influxdb.fullname" . }}
