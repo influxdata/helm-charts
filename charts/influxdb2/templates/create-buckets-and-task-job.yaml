@@ -1,0 +1,40 @@
+{{- if .Values.createBucketsAndTask.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-create-buckets-and-task
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: create-buckets-and-task
+        image: quay.io/influxdb/influxdb:2.7.4
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          # Create buckets
+          {{- range .Values.createBucketsAndTask.buckets }}
+          influx bucket create --name "{{ .name }}" --retention "{{ .retentionPolicy }}" --org {{ $.Values.adminUser.organization }}
+          {{- end }}
+          # Create task
+          influx task create --name {{ .Values.createBucketsAndTask.task.name }} --org {{ .Values.adminUser.organization }} --file /etc/influxdb/task.flux
+        env:
+        - name: INFLUX_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-auth
+              key: admin-token
+        - name: INFLUX_ORG
+          value: {{ .Values.adminUser.organization }}
+        volumeMounts:
+        - name: task-config
+          mountPath: /etc/influxdb
+      restartPolicy: OnFailure
+      volumes:
+      - name: task-config
+        configMap:
+          name: {{ .Release.Name }}-task-config
+{{- end }}
