@@ -104,4 +104,7 @@ spec:
   {{- end }}
   selector:
     {{- include "telegraf.selectorLabels" . | nindent 4 }}
+    {{- if and (eq .Values.service.type "LoadBalancer") .Values.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
+  {{- end }}
 {{- end -}}

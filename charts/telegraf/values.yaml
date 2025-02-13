@@ -185,3 +185,9 @@ pdb:
 # - name: http
 #   containerPort: 9273
 #   protocol: TCP
+
+serviceMonitor:
+  enabled: false      # Set to true to enable ServiceMonitor
+  interval: 10s       # Scrape interval; adjust as needed
+  labels:             # Optional: add custom labels if desired
+    release: ""
