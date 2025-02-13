@@ -1,0 +1,18 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "telegraf.fullname" . }}
+  labels:
+    app: {{ include "telegraf.name" . }}
+    {{- with .Values.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "telegraf.name" . }}
+  endpoints:
+    - port: prometheus-client
+      interval: {{ .Values.serviceMonitor.interval | default "10s" }}
+{{- end }}
