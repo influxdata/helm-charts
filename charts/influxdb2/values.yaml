@@ -102,10 +102,17 @@ createBucketsAndTask:
       retentionPolicy: "0s"
     - name: "default_agg_kpi"     # Aggregated bucket for KPI
       retentionPolicy: "0s"
-  task:
+    - name: "default_agg_chatid"     # Aggregated bucket for KPI
+      retentionPolicy: "0s"
+    - name: "default_agg_month"     # Aggregated bucket for KPI
+      retentionPolicy: "0s"
+    - name: "default_agg_topic_2"     # Aggregated bucket for KPI
+      retentionPolicy: "0s"
+  tasks:
     name: "aggregate_data"
     script: |+
       import "experimental"
+      import "influxdata/influxdb/schema"
 
       // Define the task with a cron schedule (runs every 6 hours), with an offset of 2 minutes and retry up to 3 times
       option task = {name: "aggregate_data", cron: "0 */6 * * *", offset: 2m, retry: 3}
@@ -120,10 +127,12 @@ createBucketsAndTask:
       start_time = experimental.addDuration(d: -6h, to: now_time)
 
       // Define the stop time for the data aggregation (current time)
-      stop_time = now_time
+      stop_time = experimental.addDuration(d: -1s, to: now_time)
 
       // Define the buckets where the aggregated data will be stored
       toBucket_agg = "default_agg_topic"
+
+      toBucket_agg_2 = "default_agg_topic_2"
 
       // Bucket for aggregated topic data
       toBucket_stats = "default_agg_stats"
@@ -131,23 +140,31 @@ createBucketsAndTask:
       // Bucket for aggregated kpi data
       toBucket_kpi = "default_agg_kpi"
 
+      toBucket_chatid = "default_agg_chatid"
+
       // Bucket for aggregated stats data
       // Query the data from the default bucket within the specified time range
       data =
           from(bucket: "default")
               |> range(start: start_time, stop: stop_time)
-              |> filter(
-                  fn: (r) =>
-                      r._measurement == "analytics" and (r._field == "user_hash" or r._field == "prompt_tokens" or r._field
-                              ==
-                              "completion_tokens" or r._field == "price" or r._field == "number_request_messages"),
-              )
-              |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+              |> filter(fn: (r) => r._measurement == "analytics")
+              //|> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+              |> schema.fieldsAsCols()
+              |> group()
 
       // Pivot data into columns by field names
       // Aggregating prompt_tokens and storing the results
       data
-          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> group(
+              columns: [
+                  "_measurement",
+                  "deployment",
+                  "model",
+                  "project_id",
+                  "parent_deployment",
+                  "language",
+              ],
+          )
           |> sum(column: "prompt_tokens")
           |> map(
               fn: (r) =>
@@ -157,6 +174,8 @@ createBucketsAndTask:
                       deployment: r.deployment,
                       model: r.model,
                       project_id: r.project_id,
+                      parent_deployment: r.parent_deployment,
+                      language: r.language,
                       _field: "prompt_tokens",
                       _value: int(v: r.prompt_tokens),
                   }),
@@ -166,7 +185,16 @@ createBucketsAndTask:
       // Aggregating completion_tokens and storing the results
       data
           // Group by _measurement, title, topic, and use the start of the range as the key for _time
-          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> group(
+              columns: [
+                  "_measurement",
+                  "deployment",
+                  "model",
+                  "project_id",
+                  "parent_deployment",
+                  "language",
+              ],
+          )
           |> sum(column: "completion_tokens")
           |> map(
               fn: (r) =>
@@ -176,6 +204,8 @@ createBucketsAndTask:
                       deployment: r.deployment,
                       model: r.model,
                       project_id: r.project_id,
+                      parent_deployment: r.parent_deployment,
+                      language: r.language,
                       _field: "completion_tokens",
                       _value: int(v: r.completion_tokens),
                   }),
@@ -184,7 +214,16 @@ createBucketsAndTask:
 
       // Aggregating price and storing the results
       data
-          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> group(
+              columns: [
+                  "_measurement",
+                  "deployment",
+                  "model",
+                  "project_id",
+                  "parent_deployment",
+                  "language",
+              ],
+          )
           |> sum(column: "price")
           |> map(
               fn: (r) =>
@@ -194,6 +233,8 @@ createBucketsAndTask:
                       deployment: r.deployment,
                       model: r.model,
                       project_id: r.project_id,
+                      parent_deployment: r.parent_deployment,
+                      language: r.language,
                       _field: "price",
                       _value: float(v: r.price),
                   }),
@@ -202,7 +243,16 @@ createBucketsAndTask:
 
       // Aggregating number_request_messages and storing the results
       data
-          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> group(
+              columns: [
+                  "_measurement",
+                  "deployment",
+                  "model",
+                  "project_id",
+                  "parent_deployment",
+                  "language",
+              ],
+          )
           // Sum number_request_messages
           |> sum(column: "number_request_messages")
           |> map(
@@ -213,8 +263,39 @@ createBucketsAndTask:
                       deployment: r.deployment,
                       model: r.model,
                       project_id: r.project_id,
+                      parent_deployment: r.parent_deployment,
+                      language: r.language,
                       _field: "number_request_messages",
                       _value: int(v: r.number_request_messages),
+                  }),
+          )
+          |> to(bucket: toBucket_stats, org: "dial")
+
+      data
+          |> group(
+              columns: [
+                  "_measurement",
+                  "deployment",
+                  "model",
+                  "project_id",
+                  "parent_deployment",
+                  "language",
+              ],
+          )
+          // Sum number_request_messages
+          |> sum(column: "deployment_price")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      deployment: r.deployment,
+                      model: r.model,
+                      project_id: r.project_id,
+                      parent_deployment: r.parent_deployment,
+                      language: r.language,
+                      _field: "deployment_price",
+                      _value: int(v: r.deployment_price),
                   }),
           )
           |> to(bucket: toBucket_stats, org: "dial")
@@ -231,6 +312,8 @@ createBucketsAndTask:
                   "deployment",
                   "model",
                   "project_id",
+                  "parent_deployment",
+                  "language",
                   "user_hash",
               ],
           )
@@ -244,6 +327,8 @@ createBucketsAndTask:
                       deployment: r.deployment,
                       model: r.model,
                       project_id: r.project_id,
+                      parent_deployment: r.parent_deployment,
+                      language: r.language,
                       _field: "user_hash",
                       _value: string(v: r.user_hash),
                   }),
@@ -252,7 +337,16 @@ createBucketsAndTask:
 
       // Counting the number of requests (user_hash) for the group
       data
-          |> group(columns: ["_measurement", "deployment", "model", "project_id"])
+          |> group(
+              columns: [
+                  "_measurement",
+                  "deployment",
+                  "model",
+                  "project_id",
+                  "parent_deployment",
+                  "language",
+              ],
+          )
           |> count(column: "user_hash")
           |> map(
               fn: (r) =>
@@ -262,6 +356,8 @@ createBucketsAndTask:
                       deployment: r.deployment,
                       model: r.model,
                       project_id: r.project_id,
+                      parent_deployment: r.parent_deployment,
+                      language: r.language,
                       _field: "request_count",
                       _value: int(v: r.user_hash),
                   }),
@@ -270,7 +366,7 @@ createBucketsAndTask:
 
       // Counting the topic using user_hash
       data
-          |> group(columns: ["_measurement", "title", "topic"])
+          |> group(columns: ["_measurement", "title", "topic", "model"])
           // Sum number_request_messages directly
           |> count(column: "user_hash")
           |> map(
@@ -280,14 +376,15 @@ createBucketsAndTask:
                       _measurement: r._measurement,
                       title: r.title,
                       topic: r.topic,
+                      model: r.model,
                       _field: "topic_count",
                       _value: int(v: r.user_hash),
                   }),
           )
-          |> to(bucket: toBucket_agg, org: "dial")
+          |> to(bucket: toBucket_agg_2, org: "dial")
 
       data
-          |> group(columns: ["_measurement", "title", "topic"])
+          |> group(columns: ["_measurement", "title", "topic", "model"])
           |> sum(column: "number_request_messages")
           |> map(
               fn: (r) =>
@@ -296,11 +393,98 @@ createBucketsAndTask:
                       _measurement: r._measurement,
                       title: r.title,
                       topic: r.topic,
+                      model: r.model,
+                      _field: "number_request_messages",
+                      _value: int(v: r.number_request_messages),
+                  }),
+          )
+          |> to(bucket: toBucket_agg_2, org: "dial")
+
+      data
+          |> group(columns: ["_measurement", "title", "topic", "model"])
+          // Sum number_request_messages directly
+          |> count(column: "user_hash")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      title: r.title,
+                      topic: r.topic,
+                      model: r.model,
+                      _field: "topic_count",
+                      _value: int(v: r.user_hash),
+                  }),
+          )
+          |> to(bucket: toBucket_agg, org: "dial")
+
+      data
+          |> group(columns: ["_measurement", "title", "topic", "model"])
+          |> sum(column: "number_request_messages")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      title: r.title,
+                      topic: r.topic,
+                      model: r.model,
                       _field: "number_request_messages",
                       _value: int(v: r.number_request_messages),
                   }),
           )
           |> to(bucket: toBucket_agg, org: "dial")
+
+      data
+          |> group(columns: ["_measurement", "title", "topic", "model"])
+          |> sum(column: "price")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      title: r.title,
+                      topic: r.topic,
+                      model: r.model,
+                      _field: "price",
+                      _value: float(v: r.price),
+                  }),
+          )
+          |> to(bucket: toBucket_agg_2, org: "dial")
+
+      data
+          |> group(columns: ["_measurement", "title", "topic", "model"])
+          |> sum(column: "prompt_tokens")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      title: r.title,
+                      topic: r.topic,
+                      model: r.model,
+                      _field: "prompt_tokens",
+                      _value: int(v: r.prompt_tokens),
+                  }),
+          )
+          |> to(bucket: toBucket_agg_2, org: "dial")
+
+      data
+          |> group(columns: ["_measurement", "title", "topic", "model"])
+          |> sum(column: "completion_tokens")
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: start_time,
+                      _measurement: r._measurement,
+                      title: r.title,
+                      topic: r.topic,
+                      model: r.model,
+                      _field: "completion_tokens",
+                      _value: int(v: r.completion_tokens),
+                  }),
+          )
+          |> to(bucket: toBucket_agg_2, org: "dial")
 
       //classification of prompt tokens
       data
@@ -348,14 +532,25 @@ createBucketsAndTask:
           data
               |> map(fn: (r) => ({r with request_count: 1}))
               |> map(fn: (r) => ({r with _floored_time: time(v: int(v: r._time) - int(v: r._time) % 21600000000000)}))
-              |> group(columns: ["_floored_time", "user_hash", "project_id"])
+              |> group(
+                  columns: [
+                      "_floored_time",
+                      "user_hash",
+                      "project_id",
+                      "title",
+                      // "chat_id",
+                      "parent_deployment",
+                  ],
+              )
               |> reduce(
                   fn: (r, accumulator) =>
                       ({
                           request_count: getOrDefault(f: r.request_count, d: 0) + accumulator.request_count,
+                          completion_tokens: getOrDefault(f: r.completion_tokens, d: 0) + accumulator.completion_tokens,
+                          prompt_tokens: getOrDefault(f: r.prompt_tokens, d: 0) + accumulator.prompt_tokens,
                           price: getOrDefault(f: r.price, d: 0.0) + accumulator.price,
                       }),
-                  identity: {request_count: 0, price: 0.0},
+                  identity: {request_count: 0, price: 0.0, completion_tokens: 0, prompt_tokens: 0},
               )
 
       kpi_data
@@ -366,6 +561,9 @@ createBucketsAndTask:
                       _measurement: "analytics",
                       user_hash: r.user_hash,
                       project_id: r.project_id,
+                      // chat_id: r.chat_id,
+                      parent_deployment: r.parent_deployment,
+                      title: r.title,
                       _field: "cost",
                       _value: r.price,
                   }),
@@ -380,9 +578,367 @@ createBucketsAndTask:
                       _measurement: "analytics",
                       user_hash: r.user_hash,
                       project_id: r.project_id,
+                      // chat_id: r.chat_id,
+                      parent_deployment: r.parent_deployment,
+                      title: r.title,
                       _field: "request_count",
                       _value: r.request_count,
                   }),
           )
           |> to(bucket: toBucket_kpi, org: "dial")
+      kpi_data
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: r._floored_time,
+                      _measurement: "analytics",
+                      user_hash: r.user_hash,
+                      project_id: r.project_id,
+                      //  chat_id: r.chat_id,
+                      parent_deployment: r.parent_deployment,
+                      title: r.title,
+                      _field: "completion_tokens",
+                      _value: r.completion_tokens,
+                  }),
+          )
+          |> to(bucket: toBucket_kpi, org: "dial")
+      kpi_data
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: r._floored_time,
+                      _measurement: "analytics",
+                      user_hash: r.user_hash,
+                      project_id: r.project_id,
+                      // chat_id: r.chat_id,
+                      parent_deployment: r.parent_deployment,
+                      title: r.title,
+                      _field: "prompt_tokens",
+                      _value: r.prompt_tokens,
+                  }),
+          )
+          |> to(bucket: toBucket_kpi, org: "dial")
+
+      chat_id_data =
+          data
+              |> map(fn: (r) => ({r with request_count: 1}))
+              |> map(fn: (r) => ({r with _floored_time: time(v: int(v: r._time) - int(v: r._time) % 21600000000000)}))
+              |> group(columns: ["_floored_time", "chat_id"])
+              |> reduce(
+                  fn: (r, accumulator) =>
+                      ({request_count: getOrDefault(f: r.request_count, d: 0) + accumulator.request_count}),
+                  identity: {request_count: 0},
+              )
+
+      chat_id_data
+          |> map(
+              fn: (r) =>
+                  ({
+                      _time: r._floored_time,
+                      _measurement: "analytics",
+                      chat_id: r.chat_id,
+                      _field: "request_count",
+                      _value: r.request_count,
+                  }),
+          )
+          |> to(bucket: toBucket_chatid, org: "dial")
+
+    name: "monthly_agg"
+    script: |+
+      import "influxdata/influxdb/schema"
+      import "experimental"
+      import "date"
+
+      option task = {name: "monthly_agg", cron: "0 0 1 * *"}
+
+      getOrDefault = (f, d) => if exists f then f else d
+
+      now_time = now()
+
+      first_day_current_month = date.truncate(t: now_time, unit: 1mo)
+
+      start_time = experimental.addDuration(d: -1mo, to: first_day_current_month)
+
+      end_time = experimental.addDuration(d: -1s, to: first_day_current_month)
+
+      toBucket_monthly = "default_agg_month"
+
+      project_api_data =
+          from(bucket: "default_agg_stats")
+              |> range(start: start_time, stop: end_time)
+              |> filter(fn: (r) => r._field == "request_count" or r._field == "price")
+              |> filter(fn: (r) => r["project_id"] != "")
+              |> schema.fieldsAsCols()
+              |> group()
+
+      monthly_api_data =
+          project_api_data
+              |> map(
+                  fn: (r) =>
+                      ({r with month: date.truncate(t: r._time, unit: 1mo),
+                              // Truncate time to the month
+
+                      }),
+              )
+              |> group(columns: ["month", "project_id"])
+              // Group by month and user_hash
+              |> reduce(
+                  fn: (r, accumulator) =>
+                      ({
+                          request_count: getOrDefault(f: r.request_count, d: 0) + accumulator.request_count,
+                          price: getOrDefault(f: r.price, d: 0.0) + accumulator.price,
+                      }),
+                  identity: {request_count: 0, price: 0.0},
+              )
+
+      monthly_model_data =
+          project_api_data
+              |> map(
+                  fn: (r) =>
+                      ({r with month: date.truncate(t: r._time, unit: 1mo),
+                              // Truncate time to the month
+
+                      }),
+              )
+              |> group(columns: ["month", "model"])
+              // Group by month and user_hash
+              |> reduce(
+                  fn: (r, accumulator) =>
+                      ({
+                          request_count: getOrDefault(f: r.request_count, d: 0) + accumulator.request_count,
+                          price: getOrDefault(f: r.price, d: 0.0) + accumulator.price,
+                      }),
+                  identity: {request_count: 0, price: 0.0},
+              )
+
+      total_api_cost =
+          monthly_api_data
+              |> group(columns: ["month"])
+              // Group by month only
+              |> sum(column: "price")
+              // Sum all user costs per month
+              |> rename(columns: {price: "Total_Cost_Per_Api"})
+
+      avg_api_cost =
+          monthly_api_data
+              |> group(columns: ["month"])
+              // Group by month only
+              |> mean(column: "price")
+              // Compute the average cost per user
+              |> rename(columns: {price: "Avg_Cost_Per_Api"})
+
+      unique_api =
+          monthly_api_data
+              |> group(columns: ["month"])
+              // Group by month only
+              |> count(column: "project_id")
+              // Compute the average cost per user
+              |> rename(columns: {project_id: "Active_Apis"})
+
+      total_api_request =
+          monthly_api_data
+              |> group(columns: ["month"])
+              // Group by month only
+              |> sum(column: "request_count")
+              // Compute the average cost per user
+              |> rename(columns: {request_count: "Total_RC_Per_Api"})
+
+      avg_api_request =
+          monthly_api_data
+              |> group(columns: ["month"])
+              // Group by month only
+              |> mean(column: "request_count")
+              // Compute the average cost per user
+              |> rename(columns: {request_count: "Avg_RC_Per_Api"})
+
+      total_model_cost =
+          monthly_model_data
+              |> group(columns: ["month"])
+              // Group by month only
+              |> sum(column: "price")
+              // Sum all user costs per month
+              |> rename(columns: {price: "Total_Cost_Per_Model"})
+
+      avg_model_cost =
+          monthly_model_data
+              |> group(columns: ["month"])
+              // Group by month only
+              |> mean(column: "price")
+              // Compute the average cost per user
+              |> rename(columns: {price: "Avg_Cost_Per_Model"})
+
+      kpi_data =
+          from(bucket: "default_agg_kpi")
+              |> range(start: start_time, stop: end_time)
+              |> filter(fn: (r) => r["_measurement"] == "analytics")
+              |> filter(fn: (r) => r["user_hash"] != "undefined")
+              |> schema.fieldsAsCols()
+              |> group()
+
+      user_cost_per_month =
+          kpi_data
+              |> map(
+                  fn: (r) =>
+                      ({r with month: date.truncate(t: r._time, unit: 1mo),
+                              // Truncate time to the month
+
+                      }),
+              )
+              |> group(columns: ["month", "user_hash"])
+              // Group by month and user_hash
+              |> sum(column: "cost")
+
+      total_user_cost =
+          user_cost_per_month
+              |> group(columns: ["month"])
+              // Group by month only
+              |> sum(column: "cost")
+              // Sum all user costs per month
+              |> rename(columns: {cost: "total_user_cost"})
+
+      avg_per_user_per_month =
+          user_cost_per_month
+              |> group(columns: ["month"])
+              // Group by month only
+              |> mean(column: "cost")
+              // Compute the average cost per user
+              |> rename(columns: {cost: "Avg_Cost_Per_User"})
+
+      unique_user_per_month =
+          user_cost_per_month
+              |> group(columns: ["month"])
+              // Group by month only
+              |> count(column: "user_hash")
+              // Compute the average cost per user
+              |> rename(columns: {user_hash: "Unique_Users"})
+
+      final_transformed =
+          union(
+              tables: [
+                  total_user_cost
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "total_user_cost",
+                                  _value: float(v: r.total_user_cost),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  avg_per_user_per_month
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Avg_Cost_Per_User",
+                                  _value: float(v: r.Avg_Cost_Per_User),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  unique_user_per_month
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Unique_Users",
+                                  _value: float(v: r.Unique_Users),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  total_api_cost
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Total_Cost_Per_Api",
+                                  _value: float(v: r.Total_Cost_Per_Api),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  avg_api_cost
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Avg_Cost_Per_Api",
+                                  _value: float(v: r.Avg_Cost_Per_Api),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  unique_api
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Active_Apis",
+                                  _value: float(v: r.Active_Apis),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  total_api_request
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Total_RC_Per_Api",
+                                  _value: float(v: r.Total_RC_Per_Api),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  avg_api_request
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Avg_RC_Per_Api",
+                                  _value: float(v: r.Avg_RC_Per_Api),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  total_model_cost
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Total_Cost_Per_Model",
+                                  _value: float(v: r.Total_Cost_Per_Model),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+                  avg_model_cost
+                      |> rename(columns: {month: "_time"})
+                      |> map(
+                          fn: (r) =>
+                              ({
+                                  _time: r._time,
+                                  _measurement: "analytics",
+                                  _field: "Avg_Cost_Per_Model",
+                                  _value: float(v: r.Avg_Cost_Per_Model),
+                              }),
+                      )
+                      |> keep(columns: ["_time", "_measurement", "_field", "_value"]),
+              ],
+          )
+
+      final_transformed
+          |> group()
+          |> to(bucket: toBucket_monthly, org: "dial")
 # --- Configuration for aggregated buckets and task ends here ---

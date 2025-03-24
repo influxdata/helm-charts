@@ -19,8 +19,11 @@ spec:
           {{- range .Values.createBucketsAndTask.buckets }}
           influx bucket create --name "{{ .name }}" --retention "{{ .retentionPolicy }}" --org {{ $.Values.adminUser.organization }}
           {{- end }}
-          # Create task
-          influx task create --name {{ .Values.createBucketsAndTask.task.name }} --org {{ .Values.adminUser.organization }} --file /etc/influxdb/task.flux
+
+          # Create tasks
+          {{- range .Values.createBucketsAndTask.tasks }}
+          influx task create --name "{{ .name }}" --org {{ $.Values.adminUser.organization }} --file /etc/influxdb/{{ .name }}.flux
+          {{- end }}
         env:
         - name: INFLUX_TOKEN
           valueFrom:
