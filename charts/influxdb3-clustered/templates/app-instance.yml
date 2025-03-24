@@ -12,8 +12,8 @@ spec:
     spec:
       {{- if .Values.hostingEnvironment}}
       hostingEnvironment:
-        {{- if hasKey .Values.hostingEnvironment "eks"}}
-        eks: {{.Values.hostingEnvironment.eks | include "mapTrim" | trim | nindent 10}}
+        {{- if hasKey .Values.hostingEnvironment "aws"}}
+        aws: {{.Values.hostingEnvironment.aws | include "mapTrim" | trim | nindent 10}}
         {{- else if hasKey .Values.hostingEnvironment "openshift"}}
         openshift: {{.Values.hostingEnvironment.openshift | include "mapTrim" | trim | nindent 10}}
         {{- else if hasKey .Values.hostingEnvironment "gke"}}
@@ -66,6 +66,12 @@ spec:
       {{- end}}
       {{- if .Values.featureFlags}}
       featureFlags: {{.Values.featureFlags | toYaml | nindent 6}}
+      {{- end}}
+      {{- if .Values.observability.serviceMonitor}}
+      observability:
+        serviceMonitor:
+          interval: {{required "missing observability.serviceMonitor.interval" .Values.observability.serviceMonitor.interval}}
+          scrapeTimeout: {{required "missing observability.serviceMonitor.scrapeTimeout" .Values.observability.serviceMonitor.scrapeTimeout}}
       {{- end}}
 ---
 {{- end }}

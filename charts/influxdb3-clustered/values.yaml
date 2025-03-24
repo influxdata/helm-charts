@@ -16,7 +16,7 @@ operatorImageOverride: ""
 skipOperator: false
 
 hostingEnvironment: {}
-#  eks:
+#  aws:
 #    eksRoleArn: "" # "arn:aws:iam::111111111111:role/your-influxdb-clustered-role"
 #  # Note: there are currently no OpenShift-specific parameters. The empty object is still required for proper function
 #  openshift: {}
@@ -184,6 +184,10 @@ resources:
   router:
     requests:
     limits:
+  # The Catalog stores metadata related to schema information and physical locations of partitions.
+  catalog:
+    requests:
+    limits:
 
 admin:
  # The list of users to grant access to Clustered via influxctl
@@ -221,3 +225,17 @@ egress:
 
 # This can be used to enable certain features that are still in testing
 featureFlags: []
+
+# Parameters to tune observability configuration, such as Prometheus ServiceMonitor's.
+observability: {}
+  # serviceMonitor:
+  #  interval: 10s
+  #  scrapeTimeout: 30s
+
+kubit: {}
+  # If your cluster is unable to pull docker images from the internet
+  # (e.g docker.io), you will need to override the docker images that
+  # the kubit operator uses to preform tasks.
+  # apply_step_image: ""
+  # render_step_image: ""
+  # kubecfg_image: ""
