@@ -1,6 +1,7 @@
 replicaCount: 3
 image:
   repository: quay.io/influxdb/telegraf-operator
+  tag: v1.3.11
   pullPolicy: IfNotPresent
   sidecarImage: "docker.io/library/telegraf:1.22"
 
@@ -52,6 +53,7 @@ sidecarResources:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+podLabels: {}
 requireAnnotationsForSecret: false
 enableDefaultInternalPlugin: true
 # allow hot reload ; disabled by default to support versions of telegraf
