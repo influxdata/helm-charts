@@ -12,6 +12,9 @@ kubitSingleNamespace: false
 operatorImageVersion: "v0.0.20"
 operatorImageOverride: ""
 
+# Pause kubit operator for backup and restore
+pause: false
+
 # set to true if you have previously installed the kubit operator from another source
 skipOperator: false
 
