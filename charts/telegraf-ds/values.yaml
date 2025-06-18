@@ -4,7 +4,7 @@
 
 image:
   repo: "telegraf"
-  tag: "1.34-alpine"
+  tag: "1.35-alpine"
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 ## Configure resource requests and limits
