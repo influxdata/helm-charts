@@ -60,7 +60,9 @@ spec:
 {{- end }}
         volumeMounts:
         - name: config
-          mountPath: /etc/telegraf
+          mountPath: /etc/telegraf/telegraf.conf
+          subPath: telegraf.conf
+          readOnly: true
         {{- range .Values.volumeMounts }}
         - name: {{ .name }}
           mountPath: {{ .mountPath }}
