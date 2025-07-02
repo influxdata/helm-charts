@@ -32,6 +32,12 @@ env:
 #   mountPath: /etc/telegraf/conf.d
 #   subPath: influxdb2.conf
 
+
+# Init containers for the pod
+initContainers: []
+# - name: ubuntu
+#   image: ubuntu 
+
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources: {}

@@ -33,6 +33,10 @@ spec:
 {{ toYaml .Values.securityContext | indent 8 }}
 {{- end }}
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
+      {{- with.Values.initContainers }}
+      initContainers:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       containers:
       - name: {{ .Chart.Name }}
 {{- if .Values.containerSecurityContext }}
