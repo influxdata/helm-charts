@@ -10,7 +10,6 @@ spec:
     image: "{{.Values.fullnameOverride | default "us-docker.pkg.dev/influxdb2-artifacts/clustered/influxdb"}}:{{ .Values.image.tag | default .Chart.AppVersion }}"
     apiVersion: influxdata.com/v1alpha1
     spec:
-      pause: {{.Values.pause }}
       {{- if .Values.hostingEnvironment}}
       hostingEnvironment:
         {{- if hasKey .Values.hostingEnvironment "aws"}}
