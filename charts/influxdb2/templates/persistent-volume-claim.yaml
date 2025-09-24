@@ -3,6 +3,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: "{{- if not (empty .Values.persistence.name) }}{{ .Values.persistence.name }}{{- else }}{{ template "influxdb.fullname" . }}{{- end }}"
+  namespace: {{ include "influxdb.namespaceName" . }}
   labels:
     {{- include "influxdb.labels" . | nindent 4 }}
   annotations:
