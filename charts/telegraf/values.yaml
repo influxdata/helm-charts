@@ -16,6 +16,9 @@ args: []
 # be added to the environment (must be manually created)
 # This can be useful for auth tokens, etc.
 
+## Additional initContainers to initialize the pod
+initContainers: []
+
 # envFromSecret: "telegraf-tokens"
 env:
   - name: HOSTNAME
@@ -180,7 +183,6 @@ pdb:
   create: true
   minAvailable: 1
   # maxUnavailable: 1
-
 # containerPorts:
 # - name: http
 #   containerPort: 9273
