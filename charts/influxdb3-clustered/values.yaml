@@ -9,7 +9,7 @@ nameOverride: ""
 namespaceOverride: ""
 fullnameOverride: ""
 kubitSingleNamespace: false
-operatorImageVersion: "v0.0.20"
+operatorImageVersion: "v0.0.22"
 operatorImageOverride: ""
 
 # Pause kubit operator for backup and restore
