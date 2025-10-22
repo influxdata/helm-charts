@@ -16,7 +16,13 @@ args: []
 # be added to the environment (must be manually created)
 # This can be useful for auth tokens, etc.
 
-## Additional initContainers to initialize the pod
+## Init containers to run before Telegraf starts
+## Useful for waiting on dependencies, preparing configs, or setting permissions
+## Example:
+# initContainers:
+#   - name: wait-for-service
+#     image: busybox:1.36
+#     command: ['sh', '-c', 'until nc -z myservice 8086; do sleep 1; done']
 initContainers: []
 
 # envFromSecret: "telegraf-tokens"
