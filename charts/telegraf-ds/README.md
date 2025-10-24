@@ -80,3 +80,12 @@ This chart deploys the following by default:
 The following plugin can be enable through the configuration:
 
 - [`internal`](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/internal)
+
+## Docker metrics
+
+To enable Docker monitoring (if Docker runtime is available):
+
+```yaml
+config:
+  docker_endpoint: "unix:///var/run/docker.sock"
+```
