@@ -172,4 +172,7 @@ config:
         user_agent: "telegraf"
         insecure_skip_verify: false
   monitor_self: false
-  docker_endpoint: "unix:///var/run/docker.sock"
+# Docker socket endpoint for Docker input plugin
+# Empty by default as Docker (dockershim) was removed in K8s 1.24+
+# Set to "unix:///var/run/docker.sock" only if using Docker runtime
+  docker_endpoint: ""
