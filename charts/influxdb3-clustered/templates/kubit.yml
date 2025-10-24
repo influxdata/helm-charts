@@ -113,13 +113,11 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 10
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 10m
-            memory: 64Mi
+        {{- $default_kubit_resources := dict
+              "requests" (dict "cpu" "50m" "memory" "64Mi")
+              "limits"   (dict "cpu" "100m" "memory" "128Mi") -}}
+        {{- $kubit_resources := mergeOverwrite $default_kubit_resources (.Values.kubit.resources | default dict) -}}
+        resources: {{ $kubit_resources | include "mapTrim" | trim | nindent 10 }}
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
