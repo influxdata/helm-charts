@@ -2604,6 +2604,29 @@ entries:
   influxdb3-clustered:
   - apiVersion: v2
     appVersion: 20250925-1878107
+    created: "2025-10-29T14:15:26.012721715Z"
+    description: InfluxDB 3.0 Clustered
+    digest: 9efdece3f78336149942bb5233f00657a149733b978a8e80d198d72f0781170f
+    home: https://www.influxdata.com/products/influxdb-clustered/
+    keywords:
+    - influxdb
+    - influxdb3
+    - database
+    - timeseries
+    - influxdata
+    maintainers:
+    - email: team-clustered@influxdata.com
+      name: jenniferplusplus
+      url: https://github.com/orgs/influxdata/teams/project-clustered
+    name: influxdb3-clustered
+    sources:
+    - https://github.com/influxdata/influxdb
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb3-clustered-0.1.23/influxdb3-clustered-0.1.23.tgz
+    version: 0.1.23
+  - apiVersion: v2
+    appVersion: 20250925-1878107
     created: "2025-10-22T23:36:19.885414528Z"
     description: InfluxDB 3.0 Clustered
     digest: 2935a5da3f940f0c67a56dd2d61cf30c4a23eb5745088b6a143f92d11b0bb0f5
@@ -8092,4 +8115,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2025-10-23T20:14:46.548142752Z"
+generated: "2025-10-29T14:15:26.01334998Z"
