@@ -77,6 +77,12 @@ spec:
       labels:
         control-plane: kubit
     spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.imagePullSecrets }}
+      - name: {{ .name }}
+      {{- end }}
+      {{- end }}
       containers:
       - env:
 {{- if .Values.kubitSingleNamespace}}
