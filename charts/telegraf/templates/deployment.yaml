@@ -33,6 +33,9 @@ spec:
 {{ toYaml .Values.securityContext | indent 8 }}
 {{- end }}
       serviceAccountName: {{ template "telegraf.serviceAccountName" . }}
+{{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+{{- end }}
 {{- if .Values.initContainers }}
       initContainers:
 {{ toYaml .Values.initContainers | indent 6 }}
