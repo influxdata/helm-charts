@@ -24,7 +24,6 @@ args: []
 #     image: busybox:1.36
 #     command: ['sh', '-c', 'until nc -z myservice 8086; do sleep 1; done']
 initContainers: []
-
 # envFromSecret: "telegraf-tokens"
 env:
   - name: HOSTNAME
@@ -126,7 +125,6 @@ serviceAccount:
   name:
   # Annotations for the ServiceAccount
   annotations: {}
-
 ## Specify priorityClassName
 ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
 # priorityClassName: system-node-critical
