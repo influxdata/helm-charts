@@ -1,0 +1,185 @@
+# Production Configuration
+# - Full resource allocation
+# - AWS S3 with multiple availability zones
+# - High availability with multiple replicas
+# - Full monitoring and network policies
+# - TLS enabled
+
+cluster:
+  id: "production-cluster"
+
+objectStorage:
+  type: s3
+  bucket: "influxdb3-production"
+  s3:
+    enabled: true
+    region: "us-east-1"
+    accessKeyId: "PROD_ACCESS_KEY"
+    secretAccessKey: "PROD_SECRET_KEY"
+
+license:
+  type: "commercial"
+  email: "production@example.com"
+
+# Production ingester configuration
+ingester:
+  enabled: true
+  replicas: 3
+  resources:
+    requests:
+      cpu: "4000m"
+      memory: "8Gi"
+    limits:
+      cpu: "8000m"
+      memory: "16Gi"
+  threads:
+    io: 12
+    datafusion: 20
+    memPoolBytes: "60%"
+  persistence:
+    enabled: true
+    storageClass: "fast-ssd"
+    size: "100Gi"
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: ingester
+            topologyKey: kubernetes.io/hostname
+
+# Production querier configuration
+querier:
+  enabled: true
+  replicas: 3
+  resources:
+    requests:
+      cpu: "4000m"
+      memory: "8Gi"
+    limits:
+      cpu: "8000m"
+      memory: "16Gi"
+  threads:
+    io: 4
+    datafusion: 28
+    memPoolBytes: "80%"
+  cache:
+    parquetSize: "8GB"
+    queryPathDuration: "5h"
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: querier
+            topologyKey: kubernetes.io/hostname
+
+# Production compactor configuration
+compactor:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: "4000m"
+      memory: "8Gi"
+    limits:
+      cpu: "8000m"
+      memory: "16Gi"
+  threads:
+    io: 2
+    datafusion: 30
+  compaction:
+    gen1Duration: "10m"
+    gen2Duration: "20m"
+    checkInterval: "5s"
+
+# Processing Engine disabled by default
+processingEngine:
+  enabled: false
+  replicas: 2
+  resources:
+    requests:
+      cpu: "2000m"
+      memory: "4Gi"
+    limits:
+      cpu: "4000m"
+      memory: "8Gi"
+  persistence:
+    enabled: true
+    size: "10Gi"
+
+# Production ingress with TLS
+ingress:
+  write:
+    enabled: true
+    className: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+      nginx.ingress.kubernetes.io/rate-limit: "1000"
+    hosts:
+      - host: writes.influxdb.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: influxdb-write-tls
+        hosts:
+          - writes.influxdb.example.com
+
+  query:
+    enabled: true
+    className: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    hosts:
+      - host: query.influxdb.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: influxdb-query-tls
+        hosts:
+          - query.influxdb.example.com
+
+# Enable network policies
+networkPolicy:
+  enabled: true
+  ingress:
+    fromIngressController: true
+    fromComponents: true
+  egress:
+    toDns: true
+    toObjectStorage: true
+    toKubeApi: true
+
+# Enable monitoring
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  additionalLabels:
+    prometheus: kube-prometheus
+
+# Advanced configuration
+cache:
+  parquetMemCacheSize: "20%"
+  lastValueCacheDisableFromHistory: false
+  distinctValueCacheDisableFromHistory: false
+
+dataLifecycle:
+  retentionCheckInterval: "15m"
+  deleteGracePeriod: "24h"
+
+logging:
+  filter: "info"
+  queryLogSize: 10000
+
+telemetry:
+  disableUpload: false

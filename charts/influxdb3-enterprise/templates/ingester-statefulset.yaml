@@ -1,0 +1,151 @@
+{{- if .Values.ingester.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-ingester
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingester
+spec:
+  serviceName: {{ include "influxdb3-enterprise.fullname" . }}-ingester
+  replicas: {{ .Values.ingester.replicas }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ingester
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
+        {{- with .Values.ingester.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "influxdb3-enterprise.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ingester
+        {{- with .Values.ingester.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "influxdb3-enterprise.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.ingester.podSecurityContext | nindent 8 }}
+      containers:
+        - name: influxdb3
+          image: {{ include "influxdb3-enterprise.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              exec influxdb3 \
+                --num-io-threads={{ .Values.ingester.threads.io }} \
+                serve \
+                --node-id=$(hostname) \
+                --cluster-id={{ .Values.cluster.id }} \
+                --mode={{ .Values.ingester.mode }} \
+                --datafusion-num-threads={{ .Values.ingester.threads.datafusion }} \
+                --exec-mem-pool-bytes={{ .Values.ingester.threads.memPoolBytes }} \
+                --object-store={{ .Values.objectStorage.type }} \
+              {{- if eq .Values.objectStorage.type "s3" }}
+                --bucket={{ .Values.objectStorage.bucket }} \
+                --aws-default-region={{ .Values.objectStorage.s3.region }} \
+              {{- if .Values.objectStorage.s3.endpoint }}
+                --aws-endpoint={{ .Values.objectStorage.s3.endpoint }} \
+              {{- end }}
+                --aws-allow-http={{ .Values.objectStorage.s3.allowHttp }} \
+              {{- else if eq .Values.objectStorage.type "azure" }}
+                --bucket={{ .Values.objectStorage.bucket }} \
+              {{- else if eq .Values.objectStorage.type "google" }}
+                --bucket={{ .Values.objectStorage.bucket }} \
+              {{- else if eq .Values.objectStorage.type "file" }}
+                --data-dir=/var/lib/influxdb3 \
+              {{- end }}
+                --http-bind={{ .Values.http.bind }} \
+                --replication-interval={{ .Values.cluster.replicationInterval }} \
+                --catalog-sync-interval={{ .Values.cluster.catalogSyncInterval }}
+          env:
+            - name: INFLUXDB3_ENTERPRISE_CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influxdb3-enterprise.fullname" . }}-config
+                  key: cluster-id
+        {{- if eq .Values.objectStorage.type "s3" }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+                  key: access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+                  key: secret-access-key
+        {{- end }}
+        {{- if .Values.license.email }}
+            - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+                  key: license-email
+        {{- end }}
+            - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
+              value: {{ .Values.license.type | quote }}
+        {{- with .Values.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+          ports:
+            - name: http
+              containerPort: 8181
+              protocol: TCP
+          livenessProbe:
+          {{- toYaml .Values.ingester.livenessProbe | nindent 10 }}
+          readinessProbe:
+          {{- toYaml .Values.ingester.readinessProbe | nindent 10 }}
+          resources:
+          {{- toYaml .Values.ingester.resources | nindent 10 }}
+          volumeMounts:
+        {{- if .Values.ingester.persistence.enabled }}
+            - name: data
+              mountPath: /var/lib/influxdb3
+        {{- end }}
+        {{- with .Values.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.ingester.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ingester.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ingester.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      {{- with .Values.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+  {{- if .Values.ingester.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - {{ .Values.ingester.persistence.accessMode }}
+      {{- if .Values.ingester.persistence.storageClass }}
+        storageClassName: {{ .Values.ingester.persistence.storageClass | quote }}
+      {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.ingester.persistence.size }}
+  {{- end }}
+{{- end }}

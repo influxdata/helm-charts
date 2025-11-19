@@ -1,0 +1,123 @@
+# ServiceMonitor for Prometheus Operator
+#
+# To enable: set serviceMonitor.enabled: true in values.yaml
+#
+# IMPORTANT: Requires Prometheus Operator to be installed in the cluster
+# See: https://github.com/prometheus-operator/prometheus-operator
+{{- if .Values.serviceMonitor.enabled }}
+{{- if .Values.ingester.enabled }}
+---
+# ServiceMonitor for Ingester
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-ingester
+  namespace: {{ .Values.serviceMonitor.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingester
+    {{- with .Values.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ingester
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+{{- end }}
+
+{{- if .Values.querier.enabled }}
+---
+# ServiceMonitor for Querier
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-querier
+  namespace: {{ .Values.serviceMonitor.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: querier
+    {{- with .Values.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: querier
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+{{- end }}
+
+{{- if .Values.compactor.enabled }}
+---
+# ServiceMonitor for Compactor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-compactor
+  namespace: {{ .Values.serviceMonitor.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: compactor
+    {{- with .Values.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: compactor
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+{{- end }}
+
+{{- if .Values.processingEngine.enabled }}
+---
+# ServiceMonitor for Processor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-processor
+  namespace: {{ .Values.serviceMonitor.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: processor
+    {{- with .Values.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: processor
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+{{- end }}
+{{- end }}

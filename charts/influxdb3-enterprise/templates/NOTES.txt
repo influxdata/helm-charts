@@ -1,0 +1,54 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your InfluxDB 3 Enterprise cluster has been deployed to namespace {{ .Release.Namespace }}.
+
+Components deployed:
+{{- if .Values.ingester.enabled }}
+  ✓ Ingesters: {{ .Values.ingester.replicas }} replica(s)
+{{- end }}
+{{- if .Values.querier.enabled }}
+  ✓ Queriers: {{ .Values.querier.replicas }} replica(s)
+{{- end }}
+{{- if .Values.compactor.enabled }}
+  ✓ Compactor: 1 replica
+{{- end }}
+{{- if .Values.processingEngine.enabled }}
+  ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
+{{- end }}
+
+Access endpoints:
+{{- if .Values.ingress.write.enabled }}
+  Write endpoint: http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ (index .Values.ingress.write.hosts 0).host }}
+{{- else }}
+  Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
+{{- end }}
+
+{{- if .Values.ingress.query.enabled }}
+  Query endpoint: http{{ if .Values.ingress.query.tls }}s{{ end }}://{{ (index .Values.ingress.query.hosts 0).host }}
+{{- else }}
+  Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
+{{- end }}
+
+Getting started:
+  1. Create an admin token:
+     kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- influxdb3 create token --admin
+
+  2. Create a database:
+     export INFLUXDB_TOKEN="<your-admin-token>"
+     influxdb3 create database mydb --token $INFLUXDB_TOKEN
+
+  3. Write data:
+     influxdb3 write mydb "measurement field=value" --token $INFLUXDB_TOKEN
+
+  4. Query data:
+     influxdb3 query mydb "SELECT * FROM measurement" --token $INFLUXDB_TOKEN
+
+Documentation: https://docs.influxdata.com/influxdb3/enterprise/
+
+{{- if not .Values.license.email }}
+{{- if not .Values.license.existingSecret }}
+
+⚠️  WARNING: No license configured!
+    Set .Values.license.email or .Values.license.existingSecret to activate your license.
+{{- end }}
+{{- end }}

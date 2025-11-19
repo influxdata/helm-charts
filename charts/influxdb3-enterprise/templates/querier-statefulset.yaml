@@ -1,0 +1,134 @@
+{{- if .Values.querier.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-querier
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: querier
+spec:
+  serviceName: {{ include "influxdb3-enterprise.fullname" . }}-querier
+  replicas: {{ .Values.querier.replicas }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: querier
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
+        {{- with .Values.querier.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "influxdb3-enterprise.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: querier
+        {{- with .Values.querier.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "influxdb3-enterprise.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.querier.podSecurityContext | nindent 8 }}
+      containers:
+        - name: influxdb3
+          image: {{ include "influxdb3-enterprise.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              exec influxdb3 \
+                --num-io-threads={{ .Values.querier.threads.io }} \
+                serve \
+                --node-id=$(hostname) \
+                --cluster-id={{ .Values.cluster.id }} \
+                --mode={{ .Values.querier.mode }} \
+                --datafusion-num-threads={{ .Values.querier.threads.datafusion }} \
+                --exec-mem-pool-bytes={{ .Values.querier.threads.memPoolBytes }} \
+                --parquet-mem-cache-size={{ .Values.querier.cache.parquetSize }} \
+                --parquet-mem-cache-query-path-duration={{ .Values.querier.cache.queryPathDuration }} \
+                --object-store={{ .Values.objectStorage.type }} \
+              {{- if eq .Values.objectStorage.type "s3" }}
+                --bucket={{ .Values.objectStorage.bucket }} \
+                --aws-default-region={{ .Values.objectStorage.s3.region }} \
+              {{- if .Values.objectStorage.s3.endpoint }}
+                --aws-endpoint={{ .Values.objectStorage.s3.endpoint }} \
+              {{- end }}
+                --aws-allow-http={{ .Values.objectStorage.s3.allowHttp }} \
+              {{- else if eq .Values.objectStorage.type "azure" }}
+                --bucket={{ .Values.objectStorage.bucket }} \
+              {{- else if eq .Values.objectStorage.type "google" }}
+                --bucket={{ .Values.objectStorage.bucket }} \
+              {{- else if eq .Values.objectStorage.type "file" }}
+                --data-dir=/var/lib/influxdb3 \
+              {{- end }}
+                --http-bind={{ .Values.http.bind }} \
+                --catalog-sync-interval={{ .Values.cluster.catalogSyncInterval }}
+          env:
+            - name: INFLUXDB3_ENTERPRISE_CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influxdb3-enterprise.fullname" . }}-config
+                  key: cluster-id
+        {{- if eq .Values.objectStorage.type "s3" }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+                  key: access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+                  key: secret-access-key
+        {{- end }}
+        {{- if .Values.license.email }}
+            - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+                  key: license-email
+        {{- end }}
+            - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
+              value: {{ .Values.license.type | quote }}
+        {{- with .Values.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+          ports:
+            - name: http
+              containerPort: 8181
+              protocol: TCP
+          livenessProbe:
+          {{- toYaml .Values.querier.livenessProbe | nindent 10 }}
+          readinessProbe:
+          {{- toYaml .Values.querier.readinessProbe | nindent 10 }}
+          resources:
+          {{- toYaml .Values.querier.resources | nindent 10 }}
+        {{- with .Values.extraVolumeMounts }}
+          volumeMounts:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.querier.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.querier.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.querier.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.extraVolumes }}
+      volumes:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

@@ -1,0 +1,43 @@
+{{- if and .Values.processingEngine.enabled .Values.ingress.processor.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-processor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingress-processor
+  {{- with .Values.ingress.processor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.processor.className }}
+  ingressClassName: {{ .Values.ingress.processor.className }}
+  {{- end }}
+  {{- if .Values.ingress.processor.tls }}
+  tls:
+    {{- range .Values.ingress.processor.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.processor.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" $ }}-processor
+                port:
+                  number: {{ $.Values.processingEngine.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

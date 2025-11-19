@@ -1,0 +1,43 @@
+{{- if .Values.ingress.write.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-write
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingress-write
+  {{- with .Values.ingress.write.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.write.className }}
+  ingressClassName: {{ .Values.ingress.write.className }}
+  {{- end }}
+  {{- if .Values.ingress.write.tls }}
+  tls:
+    {{- range .Values.ingress.write.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.write.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" $ }}-ingester
+                port:
+                  number: {{ $.Values.ingester.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

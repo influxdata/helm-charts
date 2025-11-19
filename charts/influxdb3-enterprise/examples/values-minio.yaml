@@ -1,0 +1,131 @@
+# MinIO AIStor Configuration
+# - Uses MinIO deployed in the same Kubernetes cluster
+# - S3-compatible object storage
+# - No external cloud costs
+# - Suitable for on-premises or air-gapped deployments
+
+# Prerequisites:
+# 1. Deploy MinIO AIStor in your cluster:
+#    helm install primary-object-store minio/aistor-objectstore \
+#      -n primary-object-store --create-namespace \
+#      -f minio-values.yaml
+#
+# 2. Create bucket in MinIO:
+#    kubectl run -it --rm mc --image=minio/mc --restart=Never -- \
+#      alias set myminio http://primary-object-store-minio.primary-object-store.svc.cluster.local:9000 minioadmin minioadmin
+#    kubectl run -it --rm mc --image=minio/mc --restart=Never -- \
+#      mb myminio/influxdb3-data
+
+cluster:
+  id: "minio-cluster"
+
+# MinIO object storage configuration
+objectStorage:
+  type: s3
+  bucket: "influxdb3-data"
+
+  s3:
+    enabled: true
+    # MinIO service endpoint (ClusterIP within Kubernetes)
+    # Format: http://<service-name>.<namespace>.svc.cluster.local:<port>
+    endpoint: "http://primary-object-store-minio.primary-object-store.svc.cluster.local:9000"
+
+    # MinIO requires a region, but it's not used for routing
+    region: "us-east-1"
+
+    # Allow HTTP connections (MinIO internal traffic)
+    allowHttp: true
+
+    # MinIO credentials (default, change in production)
+    accessKeyId: "minioadmin"
+    secretAccessKey: "minioadmin"
+
+    # For production, use existing secret:
+    # existingSecret: "minio-credentials"
+
+license:
+  type: "trial"
+  email: "minio@example.com"
+
+# Standard configuration for MinIO deployment
+ingester:
+  enabled: true
+  replicas: 2
+  resources:
+    requests:
+      cpu: "2000m"
+      memory: "4Gi"
+    limits:
+      cpu: "4000m"
+      memory: "8Gi"
+  threads:
+    io: 8
+    datafusion: 16
+  persistence:
+    enabled: true
+    size: "20Gi"
+
+querier:
+  enabled: true
+  replicas: 2
+  resources:
+    requests:
+      cpu: "2000m"
+      memory: "4Gi"
+    limits:
+      cpu: "4000m"
+      memory: "8Gi"
+  threads:
+    io: 4
+    datafusion: 20
+  cache:
+    parquetSize: "4GB"
+
+compactor:
+  enabled: true
+  resources:
+    requests:
+      cpu: "2000m"
+      memory: "2Gi"
+    limits:
+      cpu: "4000m"
+      memory: "4Gi"
+  threads:
+    io: 2
+    datafusion: 24
+
+processingEngine:
+  enabled: false
+
+ingress:
+  write:
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: writes-minio.influxdb.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+  query:
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: query-minio.influxdb.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+
+networkPolicy:
+  enabled: true
+  egress:
+    # Allow access to MinIO service
+    toObjectStorage: true
+
+serviceMonitor:
+  enabled: false
+
+# Notes:
+# - MinIO service must be accessible from InfluxDB pods
+# - For production, create dedicated MinIO users with restricted permissions
+# - Consider MinIO distributed mode for high availability
+# - Monitor MinIO storage capacity

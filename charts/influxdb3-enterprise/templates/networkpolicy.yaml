@@ -1,0 +1,361 @@
+# Network Policies to secure communication between components
+#
+# To enable: set networkPolicy.enabled: true in values.yaml
+#
+# IMPORTANT: Requires a CNI plugin that supports NetworkPolicy
+# (e.g., Calico, Cilium, Weave Net, or Antrea)
+#
+# If your cluster doesn't support NetworkPolicy, keep this disabled
+{{- if .Values.networkPolicy.enabled }}
+---
+# NetworkPolicy for Ingester nodes
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-ingester
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingester
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ingester
+  policyTypes:
+    {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
+  ingress:
+    # Allow traffic from ingress controller
+    {{- if .Values.networkPolicy.ingress.fromIngressController }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+    # Allow traffic from other components (for metrics, health checks)
+    {{- if .Values.networkPolicy.ingress.fromComponents }}
+    - from:
+        - podSelector:
+            matchLabels:
+            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+  egress:
+    # Allow DNS resolution
+    {{- if .Values.networkPolicy.egress.toDns }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    {{- end }}
+    # Allow access to object storage (all destinations on HTTPS)
+    {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 9000  # MinIO
+    {{- end }}
+    # Allow access to Kubernetes API
+    {{- if .Values.networkPolicy.egress.toKubeApi }}
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443
+    {{- end }}
+    # Allow inter-component communication
+    - to:
+        - podSelector:
+            matchLabels:
+            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: 8181
+
+---
+# NetworkPolicy for Querier nodes
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-querier
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: querier
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: querier
+  policyTypes:
+    {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
+  ingress:
+    # Allow traffic from ingress controller
+    {{- if .Values.networkPolicy.ingress.fromIngressController }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+    # Allow traffic from other components
+    {{- if .Values.networkPolicy.ingress.fromComponents }}
+    - from:
+        - podSelector:
+            matchLabels:
+            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+  egress:
+    # Allow DNS resolution
+    {{- if .Values.networkPolicy.egress.toDns }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    {{- end }}
+    # Allow access to object storage
+    {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 9000
+    {{- end }}
+    # Allow access to Kubernetes API
+    {{- if .Values.networkPolicy.egress.toKubeApi }}
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443
+    {{- end }}
+    # Allow inter-component communication
+    - to:
+        - podSelector:
+            matchLabels:
+            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: 8181
+
+---
+# NetworkPolicy for Compactor node
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-compactor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: compactor
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: compactor
+  policyTypes:
+    {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
+  ingress:
+    # Allow traffic from other components (for metrics, health checks)
+    {{- if .Values.networkPolicy.ingress.fromComponents }}
+    - from:
+        - podSelector:
+            matchLabels:
+            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+  egress:
+    # Allow DNS resolution
+    {{- if .Values.networkPolicy.egress.toDns }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    {{- end }}
+    # Allow access to object storage
+    {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 9000
+    {{- end }}
+    # Allow access to Kubernetes API
+    {{- if .Values.networkPolicy.egress.toKubeApi }}
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443
+    {{- end }}
+
+{{- if .Values.processingEngine.enabled }}
+---
+# NetworkPolicy for Processor nodes
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-processor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: processor
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: processor
+  policyTypes:
+    {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
+  ingress:
+    # Allow traffic from ingress controller (for HTTP-triggered plugins)
+    {{- if .Values.networkPolicy.ingress.fromIngressController }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+    # Allow traffic from other components
+    {{- if .Values.networkPolicy.ingress.fromComponents }}
+    - from:
+        - podSelector:
+            matchLabels:
+            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+  egress:
+    # Allow DNS resolution
+    {{- if .Values.networkPolicy.egress.toDns }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    {{- end }}
+    # Allow access to object storage
+    {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 9000
+    {{- end }}
+    # Allow access to Kubernetes API
+    {{- if .Values.networkPolicy.egress.toKubeApi }}
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443
+    {{- end }}
+    # Allow inter-component communication
+    - to:
+        - podSelector:
+            matchLabels:
+            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    # Allow outbound HTTP/HTTPS for plugin operations (webhooks, notifications, etc.)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+{{- end }}
+{{- end }}

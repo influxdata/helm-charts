@@ -1,0 +1,24 @@
+{{- if .Values.ingester.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-ingester
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingester
+  {{- with .Values.ingester.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.ingester.service.type }}
+  ports:
+    - port: {{ .Values.ingester.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "influxdb3-enterprise.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ingester
+{{- end }}

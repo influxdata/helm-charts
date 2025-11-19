@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+data:
+  # Cluster configuration
+  cluster-id: {{ .Values.cluster.id | quote }}
+  replication-interval: {{ .Values.cluster.replicationInterval | quote }}
+  catalog-sync-interval: {{ .Values.cluster.catalogSyncInterval | quote }}
+  wait-for-running-ingestor: {{ .Values.cluster.waitForRunningIngestor | quote }}
+
+  # Object storage configuration
+  object-store-type: {{ .Values.objectStorage.type | quote }}
+  bucket: {{ .Values.objectStorage.bucket | quote }}
+  {{- if .Values.objectStorage.s3.enabled }}
+  aws-region: {{ .Values.objectStorage.s3.region | quote }}
+  {{- if .Values.objectStorage.s3.endpoint }}
+  aws-endpoint: {{ .Values.objectStorage.s3.endpoint | quote }}
+  {{- end }}
+  aws-allow-http: {{ .Values.objectStorage.s3.allowHttp | quote }}
+  {{- end }}
+
+  # HTTP configuration
+  http-bind: {{ .Values.http.bind | quote }}
+  max-http-request-size: {{ .Values.http.maxRequestSize | quote }}
+
+  # WAL configuration
+  wal-flush-interval: {{ .Values.wal.flushInterval | quote }}
+  wal-snapshot-size: {{ .Values.wal.snapshotSize | quote }}
+  wal-max-write-buffer-size: {{ .Values.wal.maxWriteBufferSize | quote }}
+  snapshotted-wal-files-to-keep: {{ .Values.wal.snapshotFilesToKeep | quote }}
+
+  # Caching configuration
+  parquet-mem-cache-size: {{ .Values.cache.parquetMemCacheSize | quote }}
+  parquet-mem-cache-query-path-duration: {{ .Values.cache.parquetMemCacheQueryPathDuration | quote }}
+  preemptive-cache-age: {{ .Values.cache.preemptiveCacheAge | quote }}
+
+  # Resource limits
+  num-database-limit: {{ .Values.limits.numDatabases | quote }}
+  num-table-limit: {{ .Values.limits.numTables | quote }}
+  num-total-columns-per-table-limit: {{ .Values.limits.numColumnsPerTable | quote }}
+
+  # Data lifecycle
+  gen1-lookback-duration: {{ .Values.dataLifecycle.gen1LookbackDuration | quote }}
+  retention-check-interval: {{ .Values.dataLifecycle.retentionCheckInterval | quote }}
+  delete-grace-period: {{ .Values.dataLifecycle.deleteGracePeriod | quote }}
+  hard-delete-default-duration: {{ .Values.dataLifecycle.hardDeleteDefaultDuration | quote }}
+
+  # Logging
+  log-filter: {{ .Values.logging.filter | quote }}
+  log-destination: {{ .Values.logging.destination | quote }}
+  log-format: {{ .Values.logging.format | quote }}
+  query-log-size: {{ .Values.logging.queryLogSize | quote }}
+
+  # Telemetry
+  telemetry-disable-upload: {{ .Values.telemetry.disableUpload | quote }}

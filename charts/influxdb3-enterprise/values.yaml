@@ -1,0 +1,664 @@
+# ============================================================================
+# FILE: values.yaml
+# LOCATION: influxdb3-enterprise/values.yaml
+# ============================================================================
+
+# ============================================================================
+# Global Configuration
+# ============================================================================
+
+# Cluster configuration - all nodes must share the same cluster ID
+cluster:
+  # Unique identifier for the cluster (must be different from any node-id)
+  id: "cluster-01"
+
+  # Cluster management settings for multi-node coordination
+  replicationInterval: "250ms"      # Data replication interval between nodes
+  catalogSyncInterval: "10s"        # Catalog synchronization interval
+  waitForRunningIngestor: "10s"    # Startup wait time for ingestor
+
+# Naming overrides
+nameOverride: ""
+fullnameOverride: ""
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: influxdb
+  tag: "3-enterprise"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+# - name: registry-secret
+
+# ============================================================================
+# Object Storage Configuration
+# ============================================================================
+# InfluxDB 3 Enterprise requires object storage for persisting Parquet files.
+# All nodes in the cluster must connect to the same object store.
+
+objectStorage:
+  # Object store type: s3, azure, google, file, memory, memory-throttled
+  # Default: s3 (recommended for production)
+  type: s3
+
+  # Bucket/container name for storing data
+  bucket: "influxdb3-enterprise-data"
+
+  # Connection settings
+  connectionLimit: 16               # Max connections to object store
+  http2Only: false                  # Force HTTP/2 connections
+  maxRetries: null                  # Max retry attempts (null = default)
+  retryTimeout: null                # Max retry duration (null = default)
+
+  # S3 and S3-compatible storage (MinIO, etc.)
+  s3:
+    enabled: true
+    # AWS region (required for AWS S3)
+    region: "us-east-1"
+    # S3 endpoint URL (leave empty for AWS, set for S3-compatible like MinIO)
+    # Examples:
+    #   AWS: "" (uses default regional endpoint)
+    #   MinIO: "http://minio.minio.svc.cluster.local:9000"
+    endpoint: ""
+    # Access credentials
+    accessKeyId: ""
+    secretAccessKey: ""
+    sessionToken: ""                # Optional, for federated/SSO
+    # Connection options
+    allowHttp: false                # Set true for HTTP (non-TLS) connections
+    skipSignature: false            # Skip request signing (not recommended)
+    # Credentials file (alternative to accessKeyId/secretAccessKey)
+    credentialsFile: ""             # Path to JSON credentials file
+
+    # Existing secret (alternative to specifying credentials here)
+    # If specified, the chart will use this secret instead of creating one
+    # Secret should contain keys: access-key-id, secret-access-key
+    existingSecret: ""
+
+  # Azure Blob Storage
+  # Uncomment to use Azure instead of S3
+  azure:
+    enabled: false
+  #   storageAccount: ""
+  #   accessKey: ""
+  #   endpoint: ""                  # Optional, Azure Blob Storage endpoint
+  #   allowHttp: false
+  #   # Existing secret (alternative)
+  #   existingSecret: ""
+
+  # Google Cloud Storage
+  # Uncomment to use GCS instead of S3
+  google:
+    enabled: false
+  #   # Service account JSON content or path
+  #   serviceAccountJson: ""
+  #   # Or provide as existing secret
+  #   existingSecret: ""
+  #   secretKey: "service-account.json"
+
+  # Local filesystem (for development/testing only)
+  # NOT RECOMMENDED for production - use cloud object storage
+  # Uncomment to use local filesystem for quick testing:
+  # file:
+  #   enabled: false
+  #   dataDir: "/var/lib/influxdb3"
+  #   # Persistent volume for file storage
+  #   persistence:
+  #     enabled: true
+  #     storageClass: ""
+  #     size: 100Gi
+
+  # In-memory storage (for testing only, no persistence)
+  # memory:
+  #   enabled: false
+  #   throttled: false              # Set true to simulate cloud latency
+
+# ============================================================================
+# License Configuration
+# ============================================================================
+# InfluxDB 3 Enterprise requires a license. Three types available:
+# - trial: 30-day trial with full features
+# - home: For at-home hobbyist use (limited to 2 cores)
+# - commercial: Full commercial license
+
+license:
+  # License type: trial, home, or commercial
+  type: "trial"
+
+  # Email address for trial/home licenses
+  # Required for trial and home licenses
+  email: ""
+
+  # License file path (for commercial licenses)
+  # Mutually exclusive with email
+  file: ""
+
+  # Existing secret containing license information
+  # If specified, email and file are ignored
+  # Secret should contain key: license-email or license-file
+  existingSecret: ""
+
+# ============================================================================
+# Component Deployment Configuration
+# ============================================================================
+# InfluxDB 3 Enterprise supports specialized nodes for different workloads.
+# Each component can be scaled independently based on your requirements.
+
+# Ingester nodes - Handle data writes
+ingester:
+  enabled: true
+  replicas: 2                       # Number of ingester nodes
+
+  # Server mode
+  mode: "ingest"
+
+  # Resource allocation
+  resources:
+    requests:
+      cpu: "4000m"                  # 4 cores
+      memory: "8Gi"
+    limits:
+      cpu: "8000m"                  # 8 cores max
+      memory: "16Gi"
+
+  # Thread configuration for ingest workload
+  threads:
+    io: 12                          # For line protocol parsing
+    datafusion: 20                  # For WAL snapshots
+    memPoolBytes: "60%"             # Memory pool allocation
+
+  # Persistent storage for Write-Ahead Log (WAL)
+  persistence:
+    enabled: true
+    storageClass: ""                # Use default storage class
+    size: "10Gi"                    # Minimum 2Gi recommended
+    accessMode: ReadWriteOnce
+
+  # Pod affinity/anti-affinity, node selectors, tolerations
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+
+  # Additional pod annotations and labels
+  podAnnotations: {}
+  podLabels: {}
+
+  # Security context
+  podSecurityContext: {}
+
+  # Liveness and readiness probes
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 8181
+    annotations: {}
+
+# Querier nodes - Handle query requests
+querier:
+  enabled: true
+  replicas: 2                       # Number of querier nodes
+
+  # Server mode
+  mode: "query"
+
+  # Resource allocation
+  resources:
+    requests:
+      cpu: "4000m"
+      memory: "8Gi"
+    limits:
+      cpu: "8000m"
+      memory: "16Gi"
+
+  # Thread configuration for query workload
+  threads:
+    io: 4                           # Minimal for HTTP requests
+    datafusion: 28                  # Maximum for query processing
+    memPoolBytes: "80%"             # More memory for aggregations
+
+  # Parquet cache configuration
+  cache:
+    parquetSize: "4GB"              # In-memory cache size
+    queryPathDuration: "5h"         # Time window for caching
+
+  # No persistent storage needed for queriers
+
+  # Pod configuration
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+
+  # Probes
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 8181
+    annotations: {}
+
+# Compactor node - Background data optimization (single node only)
+compactor:
+  enabled: true
+  # NOTE: Only 1 compactor allowed per cluster (cannot scale horizontally)
+  replicas: 1
+
+  # Server mode
+  mode: "compact"
+
+  # Resource allocation (CPU-intensive)
+  resources:
+    requests:
+      cpu: "4000m"
+      memory: "4Gi"
+    limits:
+      cpu: "8000m"
+      memory: "8Gi"
+
+  # Thread configuration for compaction workload
+  threads:
+    io: 2                           # Minimal IO threads
+    datafusion: 30                  # Maximum for sort/merge operations
+
+  # Compaction settings
+  compaction:
+    gen1Duration: "10m"             # 1m, 5m, or 10m
+    gen2Duration: "20m"
+    multipliers: "3,4,6,5"          # Compaction level multipliers
+    maxNumFilesPerPlan: 500
+    cleanupWait: "10m"
+    checkInterval: "10s"
+
+  # No persistent storage needed for compactor
+
+  # Pod configuration
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+
+  # Probes
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Service configuration (for metrics only)
+  service:
+    type: ClusterIP
+    port: 8181
+    annotations: {}
+
+# Processing Engine nodes - Custom data processing (optional)
+processingEngine:
+  enabled: false
+  replicas: 1
+
+  # Server mode
+  mode: "process"
+
+  # Resource allocation
+  resources:
+    requests:
+      cpu: "2000m"
+      memory: "4Gi"
+    limits:
+      cpu: "4000m"
+      memory: "8Gi"
+
+  # Thread configuration
+  threads:
+    io: 4
+    datafusion: 12
+
+  # Plugin configuration
+  pluginDir: "/plugins"
+  pluginRepo: ""                    # Custom plugin repository URL (optional)
+  packageManager: "discover"        # discover, pip, uv, or disabled
+
+  # Persistent storage for plugins
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: "5Gi"
+    accessMode: ReadWriteOnce
+
+  # Pre-install plugins via initContainer (optional)
+  initPlugins: []
+    # - name: system-metrics
+  #   source: "gh:influxdata/system_metrics/system_metrics.py"
+
+  # Pod configuration
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+
+  # Probes
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 8181
+    annotations: {}
+
+# ============================================================================
+# Advanced Configuration
+# ============================================================================
+
+# TLS/SSL Configuration
+tls:
+  enabled: false
+  # Paths to certificate and key files (mounted via secrets)
+  certPath: "/etc/influxdb/tls/tls.crt"
+  keyPath: "/etc/influxdb/tls/tls.key"
+  minVersion: "tls-1.2"             # tls-1.2 or tls-1.3
+  # Existing secret containing TLS cert/key
+  # Secret should contain keys: tls.crt, tls.key
+  existingSecret: ""
+
+# Authentication configuration
+auth:
+  # Disable authentication (dev/testing only - NOT RECOMMENDED)
+  enabled: true
+  # Disable authorization for specific endpoints (health, ping, metrics)
+  disableAuthzFor: []
+  # Offline token files (for automated deployments)
+  adminTokenFile: ""
+  permissionTokensFile: ""
+
+# HTTP server configuration
+http:
+  bind: "0.0.0.0:8181"
+  maxRequestSize: 10485760          # 10MB default
+
+# Write-Ahead Log (WAL) configuration
+wal:
+  flushInterval: "1s"               # How often to flush WAL
+  snapshotSize: 600                 # WAL files per snapshot
+  maxWriteBufferSize: 100000        # Max buffered writes before flush
+  snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
+  replayFailOnError: false
+  replayConcurrencyLimit: null      # null = auto (max(num_cpus, 10))
+
+# Caching configuration
+cache:
+  # Parquet file caching
+  parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
+  parquetMemCacheQueryPathDuration: "5h"
+  parquetMemCachePrunePercentage: 0.1
+  parquetMemCachePruneInterval: "1s"
+  disableParquetMemCache: false
+  preemptiveCacheAge: "3d"
+
+  # Last value cache
+  lastValueCacheDisableFromHistory: false
+  lastCacheEvictionInterval: "10s"
+
+  # Distinct value cache
+  distinctValueCacheDisableFromHistory: false
+  distinctCacheEvictionInterval: "10s"
+
+  # Table index cache
+  tableIndexCacheMaxEntries: 1000
+  tableIndexCacheConcurrencyLimit: 8
+
+# Resource limits
+limits:
+  numDatabases: 100                 # Max databases
+  numTables: 10000                  # Max tables across all databases
+  numColumnsPerTable: 500           # Max columns per table
+  queryFileLimit: null              # Limit Parquet files per query (null = unlimited)
+
+# Data lifecycle management
+dataLifecycle:
+  gen1LookbackDuration: "24h"       # Lookback for gen1 Parquet files
+  retentionCheckInterval: "30m"     # How often to check retention policies
+  deleteGracePeriod: "24h"          # Grace period before permanent deletion
+  hardDeleteDefaultDuration: "90d"  # Default hard delete duration
+
+# Logging configuration
+logging:
+  filter: "info"                    # trace, debug, info, warn, error
+  destination: "stdout"             # stdout or stderr
+  format: "full"
+  queryLogSize: 1000                # Query log size
+
+# Tracing configuration (optional)
+tracing:
+  enabled: false
+  exporter: "jaeger"                # jaeger or none
+  jaeger:
+    agentHost: "jaeger-agent"
+    agentPort: 6831
+    serviceName: "influxdb3-enterprise"
+    traceContextHeaderName: "uber-trace-id"
+    debugName: "jaeger-debug-id"
+    tags: ""
+    maxMsgsPerSecond: 1000
+
+# DataFusion advanced configuration
+datafusion:
+  maxParquetFanout: 1000
+  useCachedParquetLoader: false
+  config: ""                        # Custom key:value pairs
+
+# Telemetry
+telemetry:
+  disableUpload: false              # Set true to opt-out of InfluxData telemetry
+  endpoint: ""                      # Custom telemetry endpoint
+
+# ============================================================================
+# Ingress Configuration
+# ============================================================================
+# Separate ingresses for write and query traffic
+
+ingress:
+  # Ingress for write traffic (to ingesters)
+  write:
+    enabled: true
+    className: "nginx"
+    annotations: {}
+      # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      # nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    hosts:
+      - host: writes.influxdb.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+      # - secretName: influxdb-write-tls
+      #   hosts:
+    #     - writes.influxdb.example.com
+
+  # Ingress for query traffic (to queriers)
+  query:
+    enabled: true
+    className: "nginx"
+    annotations: {}
+      # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    hosts:
+      - host: query.influxdb.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+      # - secretName: influxdb-query-tls
+      #   hosts:
+    #     - query.influxdb.example.com
+
+  # Ingress for HTTP-triggered plugins (optional, only if processingEngine.enabled)
+  processor:
+    enabled: false
+    className: "nginx"
+    annotations: {}
+    hosts:
+      - host: processor.influxdb.example.com
+        paths:
+          - path: /api/v3/engine
+            pathType: Prefix
+    tls: []
+
+# ============================================================================
+# Network Policies (optional, disabled by default)
+# ============================================================================
+# Secure communication between components
+#
+# To enable network policies, set networkPolicy.enabled: true
+# NOTE: Requires a CNI plugin that supports NetworkPolicy (e.g., Calico, Cilium)
+
+networkPolicy:
+  enabled: false
+  # Policy type
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # Ingress rules
+  ingress:
+    # Allow ingress controller to reach ingesters and queriers
+    fromIngressController: true
+    # Allow inter-component communication
+    fromComponents: true
+
+  # Egress rules
+  egress:
+    # Allow DNS resolution
+    toDns: true
+    # Allow access to object storage
+    toObjectStorage: true
+    # Allow access to Kubernetes API
+    toKubeApi: true
+
+# ============================================================================
+# Monitoring (optional, disabled by default)
+# ============================================================================
+
+serviceMonitor:
+  enabled: false
+  # Namespace where ServiceMonitor will be created (defaults to release namespace)
+  namespace: ""
+  # Scrape interval
+  interval: 30s
+  # Scrape timeout
+  scrapeTimeout: 10s
+  # Additional labels for ServiceMonitor (for Prometheus operator selector)
+  additionalLabels: {}
+  # prometheus: kube-prometheus
+
+# ============================================================================
+# Service Account
+# ============================================================================
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# ============================================================================
+# Additional Configuration
+# ============================================================================
+
+# Extra environment variables for all pods
+extraEnv: []
+  # - name: CUSTOM_VAR
+#   value: "custom-value"
+
+# Extra volumes for all pods
+extraVolumes: []
+  # - name: custom-config
+  #   configMap:
+#     name: custom-config
+
+# Extra volume mounts for all pods
+extraVolumeMounts: []
+  # - name: custom-config
+#   mountPath: /etc/custom
+
+# Priority class name
+priorityClassName: ""
+
+# Pod disruption budget (optional)
+# Uncomment to enable PodDisruptionBudget
+# podDisruptionBudget:
+#   enabled: false
+#   minAvailable: 1
+#   # maxUnavailable: 1
