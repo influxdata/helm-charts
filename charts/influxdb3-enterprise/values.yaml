@@ -180,10 +180,12 @@ ingester:
   podLabels: {}
 
   # Security context
+  # InfluxDB3 runs as uid=1500(influxdb3) gid=1500(influxdb3)
   podSecurityContext:
-    fsGroup: 1000
-    runAsUser: 1000
-    runAsNonRoot: true
+    fsGroup: 1500              # Ensures volumes are owned by influxdb3 group
+    runAsNonRoot: true         # Security best practice
+    runAsUser: 1500            # Run as influxdb3 user
+    runAsGroup: 1500           # Run as influxdb3 group
 
   # Liveness and readiness probes
   livenessProbe:
@@ -235,13 +237,22 @@ querier:
 
   # No persistent storage needed for queriers
 
-  # Pod configuration
+  # Pod affinity/anti-affinity, node selectors, tolerations
   affinity: {}
   nodeSelector: {}
   tolerations: []
+
+  # Additional pod annotations and labels
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
+
+  # Security context
+  # InfluxDB3 runs as uid=1500(influxdb3) gid=1500(influxdb3)
+  podSecurityContext:
+    fsGroup: 1500              # Ensures volumes are owned by influxdb3 group
+    runAsNonRoot: true         # Security best practice
+    runAsUser: 1500            # Run as influxdb3 user
+    runAsGroup: 1500           # Run as influxdb3 group
 
   # Probes
   livenessProbe:
@@ -302,13 +313,22 @@ compactor:
 
   # No persistent storage needed for compactor
 
-  # Pod configuration
+  # Pod affinity/anti-affinity, node selectors, tolerations
   affinity: {}
   nodeSelector: {}
   tolerations: []
+
+  # Additional pod annotations and labels
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
+
+  # Security context
+  # InfluxDB3 runs as uid=1500(influxdb3) gid=1500(influxdb3)
+  podSecurityContext:
+    fsGroup: 1500              # Ensures volumes are owned by influxdb3 group
+    runAsNonRoot: true         # Security best practice
+    runAsUser: 1500            # Run as influxdb3 user
+    runAsGroup: 1500           # Run as influxdb3 group
 
   # Probes
   livenessProbe:
@@ -374,13 +394,25 @@ processingEngine:
     # - name: system-metrics
   #   source: "gh:influxdata/system_metrics/system_metrics.py"
 
-  # Pod configuration
+  # Pod affinity/anti-affinity, node selectors, tolerations
   affinity: {}
   nodeSelector: {}
   tolerations: []
+
+  # Additional pod annotations and labels
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
+
+  # Security context
+  # InfluxDB3 runs as uid=1500(influxdb3) gid=1500(influxdb3)
+  podSecurityContext:
+    fsGroup: 1500              # Ensures volumes are owned by influxdb3 group
+    runAsNonRoot: true         # Security best practice
+    runAsUser: 1500            # Run as influxdb3 user
+    runAsGroup: 1500           # Run as influxdb3 group
+
+  # Container-level security context (optional override)
+  securityContext: {}
 
   # Probes
   livenessProbe:
