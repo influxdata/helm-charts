@@ -10,6 +10,9 @@ metadata:
   labels:
   {{- include "telegraf.labels" . | nindent 4 }}
 spec:
+  {{- if .Values.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ .Values.pdb.unhealthyPodEvictionPolicy }}
+  {{- end }}
   {{- if .Values.pdb.minAvailable }}
   minAvailable: {{ .Values.pdb.minAvailable }}
   {{- end }}
