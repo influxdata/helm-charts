@@ -1,4 +1,4 @@
-# MinIO AIStor Configuration
+# MinIO Configuration
 # - Uses MinIO deployed in the same Kubernetes cluster
 # - S3-compatible object storage
 # - No external cloud costs
@@ -15,6 +15,45 @@
 #      alias set myminio http://primary-object-store-minio.primary-object-store.svc.cluster.local:9000 minioadmin minioadmin
 #    kubectl run -it --rm mc --image=minio/mc --restart=Never -- \
 #      mb myminio/influxdb3-data
+#
+# 3. (RECOMMENDED) Create dedicated MinIO user with restricted permissions:
+#    a. Create a user for InfluxDB:
+#       kubectl run -it --rm mc --image=minio/mc --restart=Never -- \
+#         admin user add myminio influxdb3-user YOUR_SECURE_PASSWORD
+#
+#    b. Create policy file (influxdb3-policy.json):
+#       {
+#         "Version": "2012-10-17",
+#         "Statement": [
+#           {
+#             "Effect": "Allow",
+#             "Action": [
+#               "s3:GetBucketLocation",
+#               "s3:ListBucket"
+#             ],
+#             "Resource": "arn:aws:s3:::influxdb3-data"
+#           },
+#           {
+#             "Effect": "Allow",
+#             "Action": [
+#               "s3:PutObject",
+#               "s3:GetObject",
+#               "s3:DeleteObject"
+#             ],
+#             "Resource": "arn:aws:s3:::influxdb3-data/*"
+#           }
+#         ]
+#       }
+#
+#    c. Apply policy to MinIO:
+#       kubectl cp influxdb3-policy.json mc-pod:/tmp/influxdb3-policy.json
+#       kubectl exec -it mc-pod -- mc admin policy create myminio influxdb3-policy /tmp/influxdb3-policy.json
+#
+#    d. Attach policy to user:
+#       kubectl run -it --rm mc --image=minio/mc --restart=Never -- \
+#         admin policy attach myminio influxdb3-policy --user influxdb3-user
+#
+#    e. Update credentials below with the new user credentials
 
 cluster:
   id: "minio-cluster"
