@@ -117,8 +117,6 @@ querier:
   threads:
     io: 4
     datafusion: 20
-  cache:
-    parquetSize: "4GB"
 
 compactor:
   enabled: true

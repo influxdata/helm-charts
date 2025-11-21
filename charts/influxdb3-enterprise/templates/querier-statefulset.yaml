@@ -52,8 +52,6 @@ spec:
                 --mode={{ .Values.querier.mode }} \
                 --datafusion-num-threads={{ .Values.querier.threads.datafusion }} \
                 --exec-mem-pool-bytes={{ .Values.querier.threads.memPoolBytes }} \
-                --parquet-mem-cache-size={{ .Values.querier.cache.parquetSize }} \
-                --parquet-mem-cache-query-path-duration={{ .Values.querier.cache.queryPathDuration }} \
                 --object-store={{ .Values.objectStorage.type }} \
               {{- if eq .Values.objectStorage.type "s3" }}
                 --bucket={{ .Values.objectStorage.bucket }} \
@@ -106,11 +104,11 @@ spec:
               containerPort: 8181
               protocol: TCP
           livenessProbe:
-          {{- toYaml .Values.querier.livenessProbe | nindent 10 }}
+            {{- toYaml .Values.querier.livenessProbe | nindent 12 }}
           readinessProbe:
-          {{- toYaml .Values.querier.readinessProbe | nindent 10 }}
+            {{- toYaml .Values.querier.readinessProbe | nindent 12 }}
           resources:
-          {{- toYaml .Values.querier.resources | nindent 10 }}
+            {{- toYaml .Values.querier.resources | nindent 12 }}
           {{- if eq .Values.objectStorage.type "file" }}
           volumeMounts:
             - name: object-storage

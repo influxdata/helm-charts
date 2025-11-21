@@ -65,9 +65,6 @@ querier:
     io: 4
     datafusion: 28
     memPoolBytes: "80%"
-  cache:
-    parquetSize: "8GB"
-    queryPathDuration: "5h"
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:

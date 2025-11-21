@@ -105,11 +105,11 @@ spec:
               containerPort: 8181
               protocol: TCP
           livenessProbe:
-          {{- toYaml .Values.ingester.livenessProbe | nindent 10 }}
+            {{- toYaml .Values.ingester.livenessProbe | nindent 12 }}
           readinessProbe:
-          {{- toYaml .Values.ingester.readinessProbe | nindent 10 }}
+            {{- toYaml .Values.ingester.readinessProbe | nindent 12 }}
           resources:
-          {{- toYaml .Values.ingester.resources | nindent 10 }}
+            {{- toYaml .Values.ingester.resources | nindent 12 }}
           volumeMounts:
           {{- if .Values.ingester.persistence.enabled }}
             - name: wal

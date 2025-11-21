@@ -109,11 +109,11 @@ spec:
               containerPort: 8181
               protocol: TCP
           livenessProbe:
-          {{- toYaml .Values.compactor.livenessProbe | nindent 10 }}
+            {{- toYaml .Values.compactor.livenessProbe | nindent 12 }}
           readinessProbe:
-          {{- toYaml .Values.compactor.readinessProbe | nindent 10 }}
+            {{- toYaml .Values.compactor.readinessProbe | nindent 12 }}
           resources:
-          {{- toYaml .Values.compactor.resources | nindent 10 }}
+            {{- toYaml .Values.compactor.resources | nindent 12 }}
           {{- if eq .Values.objectStorage.type "file" }}
           volumeMounts:
             - name: object-storage

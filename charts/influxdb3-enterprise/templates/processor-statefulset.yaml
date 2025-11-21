@@ -110,11 +110,11 @@ spec:
               containerPort: 8181
               protocol: TCP
           livenessProbe:
-          {{- toYaml .Values.processingEngine.livenessProbe | nindent 10 }}
+            {{- toYaml .Values.processingEngine.livenessProbe | nindent 12 }}
           readinessProbe:
-          {{- toYaml .Values.processingEngine.readinessProbe | nindent 10 }}
+            {{- toYaml .Values.processingEngine.readinessProbe | nindent 12 }}
           resources:
-          {{- toYaml .Values.processingEngine.resources | nindent 10 }}
+            {{- toYaml .Values.processingEngine.resources | nindent 12 }}
           volumeMounts:
           {{- if .Values.processingEngine.persistence.enabled }}
             - name: plugins
