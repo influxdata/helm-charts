@@ -145,9 +145,6 @@ ingester:
   enabled: true
   replicas: 2                       # Number of ingester nodes
 
-  # Server mode
-  mode: "ingest"
-
   # Resource allocation
   resources:
     requests:
@@ -217,9 +214,6 @@ querier:
   enabled: true
   replicas: 2                       # Number of querier nodes
 
-  # Server mode
-  mode: "query"
-
   # Resource allocation
   resources:
     requests:
@@ -284,9 +278,6 @@ compactor:
   enabled: true
   # NOTE: Only 1 compactor allowed per cluster (cannot scale horizontally)
   replicas: 1
-
-  # Server mode
-  mode: "compact"
 
   # Resource allocation (CPU-intensive)
   resources:
@@ -359,9 +350,6 @@ compactor:
 processingEngine:
   enabled: false
   replicas: 1
-
-  # Server mode
-  mode: "process"
 
   # Resource allocation
   resources:

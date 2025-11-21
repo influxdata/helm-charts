@@ -44,12 +44,11 @@ spec:
             - /bin/sh
             - -c
             - |
-              exec influxdb3 \
-                --num-io-threads={{ .Values.ingester.threads.io }} \
-                serve \
+              exec influxdb3 serve \
+                --mode=ingest \
                 --node-id=$(hostname) \
                 --cluster-id={{ .Values.cluster.id }} \
-                --mode={{ .Values.ingester.mode }} \
+                --num-io-threads={{ .Values.ingester.threads.io }} \
                 --datafusion-num-threads={{ .Values.ingester.threads.datafusion }} \
                 --exec-mem-pool-bytes={{ .Values.ingester.threads.memPoolBytes }} \
                 --object-store={{ .Values.objectStorage.type }} \

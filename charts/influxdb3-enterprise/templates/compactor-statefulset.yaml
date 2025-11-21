@@ -44,12 +44,11 @@ spec:
             - /bin/sh
             - -c
             - |
-              exec influxdb3 \
-                --num-io-threads={{ .Values.compactor.threads.io }} \
-                serve \
+              exec influxdb3 serve \
+                --mode=compact \
                 --node-id=$(hostname) \
                 --cluster-id={{ .Values.cluster.id }} \
-                --mode={{ .Values.compactor.mode }} \
+                --num-io-threads={{ .Values.compactor.threads.io }} \
                 --datafusion-num-threads={{ .Values.compactor.threads.datafusion }} \
                 --compaction-gen2-duration={{ .Values.compactor.compaction.gen2Duration }} \
                 --compaction-multipliers={{ .Values.compactor.compaction.multipliers }} \

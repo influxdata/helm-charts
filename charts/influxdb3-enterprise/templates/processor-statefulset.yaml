@@ -48,12 +48,11 @@ spec:
             - /bin/sh
             - -c
             - |
-              exec influxdb3 \
-                --num-io-threads={{ .Values.processingEngine.threads.io }} \
-                serve \
+              exec influxdb3 serve \
+                --mode=process \
                 --node-id=$(hostname) \
                 --cluster-id={{ .Values.cluster.id }} \
-                --mode={{ .Values.processingEngine.mode }} \
+                --num-io-threads={{ .Values.processingEngine.threads.io }} \
                 --datafusion-num-threads={{ .Values.processingEngine.threads.datafusion }} \
                 --plugin-dir={{ .Values.processingEngine.pluginDir }} \
               {{- if .Values.processingEngine.pluginRepo }}
