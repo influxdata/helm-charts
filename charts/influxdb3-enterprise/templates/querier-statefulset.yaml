@@ -67,7 +67,7 @@ spec:
               {{- else if eq .Values.objectStorage.type "google" }}
                 --bucket={{ .Values.objectStorage.bucket }} \
               {{- else if eq .Values.objectStorage.type "file" }}
-                --data-dir=/var/lib/influxdb3 \
+                --data-dir={{ .Values.objectStorage.file.dataDir }} \
               {{- end }}
                 --http-bind={{ .Values.http.bind }} \
                 --catalog-sync-interval={{ .Values.cluster.catalogSyncInterval }}
