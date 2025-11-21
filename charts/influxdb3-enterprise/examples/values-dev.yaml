@@ -9,7 +9,7 @@ cluster:
 
 image:
   tag: "3-enterprise"
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 # Local filesystem for development
 objectStorage:
@@ -20,7 +20,7 @@ objectStorage:
     persistence:
       enabled: true
       storageClass: ""
-      size: 50Gi
+      size: 10Gi
 
 license:
   type: "trial"
