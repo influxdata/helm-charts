@@ -180,7 +180,10 @@ ingester:
   podLabels: {}
 
   # Security context
-  podSecurityContext: {}
+  podSecurityContext:
+    fsGroup: 1000
+    runAsUser: 1000
+    runAsNonRoot: true
 
   # Liveness and readiness probes
   livenessProbe:
@@ -229,11 +232,6 @@ querier:
     io: 4                           # Minimal for HTTP requests
     datafusion: 28                  # Maximum for query processing
     memPoolBytes: "80%"             # More memory for aggregations
-
-  # Parquet cache configuration
-  cache:
-    parquetSize: "4GB"              # In-memory cache size
-    queryPathDuration: "5h"         # Time window for caching
 
   # No persistent storage needed for queriers
 
