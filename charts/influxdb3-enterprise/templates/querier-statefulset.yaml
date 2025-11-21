@@ -111,10 +111,14 @@ spec:
           {{- toYaml .Values.querier.readinessProbe | nindent 10 }}
           resources:
           {{- toYaml .Values.querier.resources | nindent 10 }}
-        {{- with .Values.extraVolumeMounts }}
+          {{- if eq .Values.objectStorage.type "file" }}
           volumeMounts:
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+            - name: object-storage
+              mountPath: {{ .Values.objectStorage.file.dataDir }}
+          {{- end }}
+          {{- with .Values.extraVolumeMounts }}
+          {{- toYaml . | nindent 8 }}
+          {{- end }}
       {{- with .Values.querier.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -127,8 +131,13 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.extraVolumes }}
+      {{- if eq .Values.objectStorage.type "file" }}
       volumes:
+        - name: object-storage
+          persistentVolumeClaim:
+            claimName: {{ include "influxdb3-enterprise.fullname" . }}-object-storage
+      {{- end }}
+      {{- with .Values.extraVolumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
 {{- end }}

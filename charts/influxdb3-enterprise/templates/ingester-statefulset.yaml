@@ -111,13 +111,17 @@ spec:
           resources:
           {{- toYaml .Values.ingester.resources | nindent 10 }}
           volumeMounts:
-        {{- if .Values.ingester.persistence.enabled }}
+          {{- if .Values.ingester.persistence.enabled }}
             - name: data
               mountPath: /var/lib/influxdb3
-        {{- end }}
-        {{- with .Values.extraVolumeMounts }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+          {{- end }}
+          {{- if eq .Values.objectStorage.type "file" }}
+            - name: object-storage
+              mountPath: {{ .Values.objectStorage.file.dataDir }}
+          {{- end }}
+          {{- with .Values.extraVolumeMounts }}
+          {{- toYaml . | nindent 8 }}
+          {{- end }}
       {{- with .Values.ingester.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -131,6 +135,11 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+      {{- if eq .Values.objectStorage.type "file" }}
+        - name: object-storage
+          persistentVolumeClaim:
+            claimName: {{ include "influxdb3-enterprise.fullname" . }}-object-storage
+      {{- end }}
       {{- with .Values.extraVolumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
