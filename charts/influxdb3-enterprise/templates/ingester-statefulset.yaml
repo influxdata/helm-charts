@@ -112,8 +112,12 @@ spec:
           {{- toYaml .Values.ingester.resources | nindent 10 }}
           volumeMounts:
           {{- if .Values.ingester.persistence.enabled }}
-            - name: data
-              mountPath: /var/lib/influxdb3
+            - name: wal
+              {{- if eq .Values.objectStorage.type "file" }}
+              mountPath: {{ .Values.objectStorage.file.dataDir }}/.wal
+              {{- else }}
+              mountPath: /var/lib/influxdb3/.wall
+              {{- end }}
           {{- end }}
           {{- if eq .Values.objectStorage.type "file" }}
             - name: object-storage
@@ -146,7 +150,7 @@ spec:
   {{- if .Values.ingester.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
-        name: data
+        name: wal
       spec:
         accessModes:
           - {{ .Values.ingester.persistence.accessMode }}
