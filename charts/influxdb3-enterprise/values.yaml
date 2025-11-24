@@ -540,39 +540,41 @@ telemetry:
 
 ingress:
   # Ingress for write traffic (to ingesters)
+  # Routes: /api/v3/write_lp, /api/v2/write, /write → Ingester
   write:
     enabled: true
     className: "nginx"
-    annotations: {}
-      # cert-manager.io/cluster-issuer: "letsencrypt-prod"
-      # nginx.ingress.kubernetes.io/proxy-body-size: "0"
-    # nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     hosts:
-      - host: writes.influxdb.example.com
+      - host: ""  # Empty host = accepts any hostname
         paths:
-          - path: /
+          - path: /api/v3/write_lp
+            pathType: Prefix
+          - path: /api/v2/write
+            pathType: Prefix
+          - path: /write
             pathType: Prefix
     tls: []
-      # - secretName: influxdb-write-tls
-      #   hosts:
-    #     - writes.influxdb.example.com
 
   # Ingress for query traffic (to queriers)
+  # Routes: /api/v3/query*, /query, / (default) → Querier
   query:
     enabled: true
     className: "nginx"
-    annotations: {}
-      # cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    # nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     hosts:
-      - host: query.influxdb.example.com
+      - host: ""  # Empty host = accepts any hostname
         paths:
+          - path: /api/v3/query
+            pathType: Prefix
+          - path: /query
+            pathType: Prefix
           - path: /
             pathType: Prefix
     tls: []
-      # - secretName: influxdb-query-tls
-      #   hosts:
-    #     - query.influxdb.example.com
 
   # Ingress for HTTP-triggered plugins (optional, only if processingEngine.enabled)
   processor:

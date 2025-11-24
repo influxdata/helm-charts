@@ -55,30 +55,19 @@
 #
 #    e. Update credentials below with the new user credentials
 
-cluster:
-  id: "minio-cluster"
-
 # MinIO object storage configuration
 objectStorage:
   type: s3
-  bucket: "influxdb3-data"
-
+  bucket: "influxdb3"
   s3:
-    enabled: true
     # MinIO service endpoint (ClusterIP within Kubernetes)
     # Format: http://<service-name>.<namespace>.svc.cluster.local:<port>
     endpoint: "http://primary-object-store-minio.primary-object-store.svc.cluster.local:9000"
-
-    # MinIO requires a region, but it's not used for routing
-    region: "us-east-1"
-
     # Allow HTTP connections (MinIO internal traffic)
     allowHttp: true
-
     # MinIO credentials (default, change in production)
     accessKeyId: "minioadmin"
     secretAccessKey: "minioadmin"
-
     # For production, use existing secret:
     # existingSecret: "minio-credentials"
 
@@ -86,10 +75,7 @@ license:
   type: "trial"
   email: "minio@example.com"
 
-# Standard configuration for MinIO deployment
 ingester:
-  enabled: true
-  replicas: 2
   resources:
     requests:
       cpu: "2000m"
@@ -101,12 +87,9 @@ ingester:
     io: 8
     datafusion: 16
   persistence:
-    enabled: true
     size: "20Gi"
 
 querier:
-  enabled: true
-  replicas: 2
   resources:
     requests:
       cpu: "2000m"
@@ -119,7 +102,6 @@ querier:
     datafusion: 20
 
 compactor:
-  enabled: true
   resources:
     requests:
       cpu: "2000m"
@@ -131,35 +113,11 @@ compactor:
     io: 2
     datafusion: 24
 
-processingEngine:
-  enabled: false
-
-ingress:
-  write:
-    enabled: true
-    className: "nginx"
-    hosts:
-      - host: writes-minio.influxdb.example.com
-        paths:
-          - path: /
-            pathType: Prefix
-  query:
-    enabled: true
-    className: "nginx"
-    hosts:
-      - host: query-minio.influxdb.example.com
-        paths:
-          - path: /
-            pathType: Prefix
-
 networkPolicy:
   enabled: true
   egress:
     # Allow access to MinIO service
     toObjectStorage: true
-
-serviceMonitor:
-  enabled: false
 
 # Notes:
 # - MinIO service must be accessible from InfluxDB pods

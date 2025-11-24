@@ -5,12 +5,9 @@
 # - Full monitoring and network policies
 # - TLS enabled
 
-cluster:
-  id: "production-cluster"
-
 objectStorage:
   type: s3
-  bucket: "influxdb3-production"
+  bucket: "influxdb3"
   s3:
     enabled: true
     region: "us-east-1"
@@ -23,21 +20,8 @@ license:
 
 # Production ingester configuration
 ingester:
-  enabled: true
   replicas: 3
-  resources:
-    requests:
-      cpu: "4000m"
-      memory: "8Gi"
-    limits:
-      cpu: "8000m"
-      memory: "16Gi"
-  threads:
-    io: 12
-    datafusion: 20
-    memPoolBytes: "60%"
   persistence:
-    enabled: true
     storageClass: "fast-ssd"
     size: "100Gi"
   affinity:
@@ -52,19 +36,7 @@ ingester:
 
 # Production querier configuration
 querier:
-  enabled: true
   replicas: 3
-  resources:
-    requests:
-      cpu: "4000m"
-      memory: "8Gi"
-    limits:
-      cpu: "8000m"
-      memory: "16Gi"
-  threads:
-    io: 4
-    datafusion: 28
-    memPoolBytes: "80%"
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -77,73 +49,45 @@ querier:
 
 # Production compactor configuration
 compactor:
-  enabled: true
-  replicas: 1
   resources:
     requests:
-      cpu: "4000m"
       memory: "8Gi"
     limits:
-      cpu: "8000m"
       memory: "16Gi"
   threads:
-    io: 2
     datafusion: 30
   compaction:
-    gen1Duration: "10m"
-    gen2Duration: "20m"
     checkInterval: "5s"
 
-# Processing Engine disabled by default
+# Processing Engine enabled for production
 processingEngine:
-  enabled: false
+  enabled: true
   replicas: 2
-  resources:
-    requests:
-      cpu: "2000m"
-      memory: "4Gi"
-    limits:
-      cpu: "4000m"
-      memory: "8Gi"
-  persistence:
-    enabled: true
-    size: "10Gi"
 
-# Production ingress with TLS
+# Production ingress with TLS - overrides default values.yaml config
 ingress:
   write:
-    enabled: true
-    className: "nginx"
     annotations:
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
       nginx.ingress.kubernetes.io/rate-limit: "1000"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
     hosts:
-      - host: writes.influxdb.example.com
-        paths:
-          - path: /
-            pathType: Prefix
+      - host: "influxdb-api.example.com"
     tls:
-      - secretName: influxdb-write-tls
+      - secretName: influxdb-api-tls
         hosts:
-          - writes.influxdb.example.com
+          - influxdb-api.example.com
 
   query:
-    enabled: true
-    className: "nginx"
     annotations:
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
     hosts:
-      - host: query.influxdb.example.com
-        paths:
-          - path: /
-            pathType: Prefix
+      - host: "influxdb-api.example.com"
     tls:
-      - secretName: influxdb-query-tls
+      - secretName: influxdb-api-tls
         hosts:
-          - query.influxdb.example.com
+          - influxdb-api.example.com
 
 # Enable network policies
 networkPolicy:

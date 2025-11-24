@@ -4,22 +4,12 @@
 # - Single replica for most components
 # - Suitable for local testing and development
 
-cluster:
-  id: "dev-cluster"
-
-image:
-  tag: "3-enterprise"
-  pullPolicy: IfNotPresent
-
 # Local filesystem for development
 objectStorage:
   type: file
   file:
-    enabled: true
     dataDir: "/var/lib/influxdb3"
     persistence:
-      enabled: true
-      storageClass: ""
       size: 10Gi
 
 license:
@@ -28,7 +18,6 @@ license:
 
 # Reduced resources for development
 ingester:
-  enabled: true
   replicas: 1
   resources:
     requests:
@@ -38,11 +27,9 @@ ingester:
       cpu: "2000m"
       memory: "4Gi"
   persistence:
-    enabled: true
     size: "5Gi"
 
 querier:
-  enabled: true
   replicas: 1
   resources:
     requests:
@@ -53,7 +40,6 @@ querier:
       memory: "4Gi"
 
 compactor:
-  enabled: true
   resources:
     requests:
       cpu: "500m"
@@ -61,15 +47,3 @@ compactor:
     limits:
       cpu: "1000m"
       memory: "2Gi"
-
-processingEngine:
-  enabled: false
-
-ingress:
-  write:
-    enabled: false
-  query:
-    enabled: false
-
-# Use port-forward for access in development
-# kubectl port-forward svc/influxdb3-enterprise-ingester 8181:8181
