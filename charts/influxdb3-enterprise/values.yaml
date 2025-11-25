@@ -148,16 +148,16 @@ ingester:
   # Resource allocation
   resources:
     requests:
-      cpu: "4000m"                  # 4 cores
-      memory: "8Gi"
+      cpu: "2000m"                  # 2 cores
+      memory: "4Gi"
     limits:
-      cpu: "8000m"                  # 8 cores max
-      memory: "16Gi"
+      cpu: "4000m"                  # 4 cores max
+      memory: "8Gi"
 
   # Thread configuration for ingest workload
   threads:
-    io: 12                          # For line protocol parsing
-    datafusion: 20                  # For WAL snapshots
+    io: 8                           # For line protocol parsing
+    datafusion: 16                  # For WAL snapshots
     memPoolBytes: "60%"             # Memory pool allocation
 
   # Persistent storage for Write-Ahead Log (WAL)
@@ -186,22 +186,22 @@ ingester:
 
   # Liveness and readiness probes
   livenessProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+#    httpGet:
+#      path: /health
+#      port: http
+#    initialDelaySeconds: 30
+#    periodSeconds: 10
+#    timeoutSeconds: 5
+#    failureThreshold: 3
 
   readinessProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
+#    httpGet:
+#      path: /health
+#      port: http
+#    initialDelaySeconds: 10
+#    periodSeconds: 5
+#    timeoutSeconds: 3
+#    failureThreshold: 3
 
   # Service configuration
   service:
@@ -217,16 +217,16 @@ querier:
   # Resource allocation
   resources:
     requests:
+      cpu: "2000m"
+      memory: "4Gi"
+    limits:
       cpu: "4000m"
       memory: "8Gi"
-    limits:
-      cpu: "8000m"
-      memory: "16Gi"
 
   # Thread configuration for query workload
   threads:
     io: 4                           # Minimal for HTTP requests
-    datafusion: 28                  # Maximum for query processing
+    datafusion: 20                  # Maximum for query processing
     memPoolBytes: "80%"             # More memory for aggregations
 
   # No persistent storage needed for queriers
@@ -250,22 +250,22 @@ querier:
 
   # Probes
   livenessProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+#    httpGet:
+#      path: /health
+#      port: http
+#    initialDelaySeconds: 30
+#    periodSeconds: 10
+#    timeoutSeconds: 5
+#    failureThreshold: 3
 
   readinessProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
+#    httpGet:
+#      path: /health
+#      port: http
+#    initialDelaySeconds: 10
+#    periodSeconds: 5
+#    timeoutSeconds: 3
+#    failureThreshold: 3
 
   # Service configuration
   service:
@@ -282,16 +282,16 @@ compactor:
   # Resource allocation (CPU-intensive)
   resources:
     requests:
+      cpu: "2000m"
+      memory: "2Gi"
+    limits:
       cpu: "4000m"
       memory: "4Gi"
-    limits:
-      cpu: "8000m"
-      memory: "8Gi"
 
   # Thread configuration for compaction workload
   threads:
     io: 2                           # Minimal IO threads
-    datafusion: 30                  # Maximum for sort/merge operations
+    datafusion: 24                  # Maximum for sort/merge operations
 
   # Compaction settings
   compaction:
@@ -323,22 +323,22 @@ compactor:
 
   # Probes
   livenessProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+#    httpGet:
+#      path: /health
+#      port: http
+#    initialDelaySeconds: 30
+#    periodSeconds: 10
+#    timeoutSeconds: 5
+#    failureThreshold: 3
 
   readinessProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
+#    httpGet:
+#      path: /health
+#      port: http
+#    initialDelaySeconds: 10
+#    periodSeconds: 5
+#    timeoutSeconds: 3
+#    failureThreshold: 3
 
   # Service configuration (for metrics only)
   service:
@@ -404,22 +404,22 @@ processingEngine:
 
   # Probes
   livenessProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+#    httpGet:
+#      path: /health
+#      port: http
+#    initialDelaySeconds: 30
+#    periodSeconds: 10
+#    timeoutSeconds: 5
+#    failureThreshold: 3
 
   readinessProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
+#    httpGet:
+#      path: /health
+#      port: http
+#    initialDelaySeconds: 10
+#    periodSeconds: 5
+#    timeoutSeconds: 3
+#    failureThreshold: 3
 
   # Service configuration
   service:
@@ -548,7 +548,7 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-body-size: "100m"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     hosts:
-      - host: ""  # Empty host = accepts any hostname
+      - host: ""
         paths:
           - path: /api/v3/write_lp
             pathType: Prefix
@@ -566,7 +566,7 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     hosts:
-      - host: ""  # Empty host = accepts any hostname
+      - host: ""
         paths:
           - path: /api/v3/query
             pathType: Prefix

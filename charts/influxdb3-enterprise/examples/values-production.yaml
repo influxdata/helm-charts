@@ -21,6 +21,16 @@ license:
 # Production ingester configuration
 ingester:
   replicas: 3
+  resources:
+    requests:
+      cpu: "4000m"
+      memory: "8Gi"
+    limits:
+      cpu: "8000m"
+      memory: "16Gi"
+  threads:
+    io: 12
+    datafusion: 20
   persistence:
     storageClass: "fast-ssd"
     size: "100Gi"
@@ -37,6 +47,15 @@ ingester:
 # Production querier configuration
 querier:
   replicas: 3
+  resources:
+    requests:
+      cpu: "4000m"
+      memory: "8Gi"
+    limits:
+      cpu: "8000m"
+      memory: "16Gi"
+  threads:
+    datafusion: 28
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -47,12 +66,14 @@ querier:
                 app.kubernetes.io/component: querier
             topologyKey: kubernetes.io/hostname
 
-# Production compactor configuration
+# Production compactor configuration - 2x resources for intensive operations
 compactor:
   resources:
     requests:
+      cpu: "4000m"
       memory: "8Gi"
     limits:
+      cpu: "8000m"
       memory: "16Gi"
   threads:
     datafusion: 30

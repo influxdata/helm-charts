@@ -8,8 +8,11 @@
 objectStorage:
   type: file
   file:
+    enabled: true
     dataDir: "/var/lib/influxdb3"
     persistence:
+      enabled: true
+      storageClass: ""
       size: 10Gi
 
 license:
