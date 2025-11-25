@@ -135,6 +135,41 @@ license:
   existingSecret: ""
 
 # ============================================================================
+# Probes Configuration (Shared across all components)
+# ============================================================================
+probes:
+  # Enable or disable health probes globally
+  enabled: false
+
+  # Token for Authorization header in health check requests
+  # REQUIRED when probes are enabled. Must specify either:
+  #   - token: explicit token value (not recommended for production)
+  #   - tokenSecret: reference to a Kubernetes secret (recommended)
+  token: ""
+
+  # Read token from a Kubernetes secret (recommended for production)
+  # If tokenSecret.name is specified, this takes precedence over the token field above
+  tokenSecret:
+    # Name of the secret containing the probe token
+    name: ""
+    # Key in the secret that contains the token value
+    key: "token"
+
+  # Liveness probe settings
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  # Readiness probe settings
+  readiness:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# ============================================================================
 # Component Deployment Configuration
 # ============================================================================
 # InfluxDB 3 Enterprise supports specialized nodes for different workloads.
@@ -184,27 +219,6 @@ ingester:
     runAsUser: 1500            # Run as influxdb3 user
     runAsGroup: 1500           # Run as influxdb3 group
 
-  # Liveness and readiness probes
-  livenessProbe:
-    enabled: true
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
-
-  readinessProbe:
-    enabled: true
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
-
   # Service configuration
   service:
     type: ClusterIP
@@ -249,27 +263,6 @@ querier:
     runAsNonRoot: true         # Security best practice
     runAsUser: 1500            # Run as influxdb3 user
     runAsGroup: 1500           # Run as influxdb3 group
-
-  # Probes
-  livenessProbe:
-    enabled: true
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
-
-  readinessProbe:
-    enabled: true
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
 
   # Service configuration
   service:
@@ -324,27 +317,6 @@ compactor:
     runAsNonRoot: true         # Security best practice
     runAsUser: 1500            # Run as influxdb3 user
     runAsGroup: 1500           # Run as influxdb3 group
-
-  # Probes
-  livenessProbe:
-    enabled: true
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
-
-  readinessProbe:
-    enabled: true
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
 
   # Service configuration (for metrics only)
   service:
@@ -407,27 +379,6 @@ processingEngine:
 
   # Container-level security context (optional override)
   securityContext: {}
-
-  # Probes
-  livenessProbe:
-    enabled: true
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
-
-  readinessProbe:
-    enabled: true
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
 
   # Service configuration
   service:

@@ -30,18 +30,54 @@ Access endpoints:
 {{- end }}
 
 Getting started:
+
   1. Create an admin token:
+
      kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- influxdb3 create token --admin
 
-  2. Create a database:
-     export INFLUXDB_TOKEN="<your-admin-token>"
-     influxdb3 create database mydb --token $INFLUXDB_TOKEN
+  2. Create a health probe token (required if probes.enabled=true):
 
-  3. Write data:
-     influxdb3 write mydb "measurement field=value" --token $INFLUXDB_TOKEN
+     export INFLUXDB3_AUTH_TOKEN="<your-admin-token>"
+     kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- influxdb3 create token --permission "system:health:read"
 
-  4. Query data:
-     influxdb3 query mydb "SELECT * FROM measurement" --token $INFLUXDB_TOKEN
+     Then configure the probe token:
+
+     Option A - Set in values.yaml (not recommended for production):
+       probes:
+         enabled: true
+         token: "<your-probe-token>"
+
+     Option B - Create a Kubernetes secret (recommended):
+       kubectl create secret generic influxdb3-probe-token \
+         --from-literal=token="<your-probe-token>" \
+         -n {{ .Release.Namespace }}
+
+       Then set in values.yaml:
+       probes:
+         enabled: true
+         tokenSecret:
+           name: "influxdb3-probe-token"
+           key: "token"
+
+     After configuring the probe token, redeploy the chart to enable probes:
+       helm upgrade {{ .Release.Name }} influxdata/{{ .Chart.Name }} -f values.yaml -n {{ .Release.Namespace }}
+
+  3. Create a database:
+
+{{- if and .Values.ingress.write.enabled (index .Values.ingress.write.hosts 0).host }}
+     export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ (index .Values.ingress.write.hosts 0).host }}
+{{- else }}
+     export INFLUXDB3_HOST_URL=http://localhost:8181
+{{- end }}
+     influxdb3 create database mydb
+
+  4. Write data:
+
+     influxdb3 write mydb "measurement field=value"
+
+  5. Query data:
+
+     influxdb3 query mydb "SELECT * FROM measurement"
 
 Documentation: https://docs.influxdata.com/influxdb3/enterprise/
 

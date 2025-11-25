@@ -98,6 +98,13 @@ spec:
         {{- end }}
             - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
               value: {{ .Values.license.type | quote }}
+        {{- if .Values.probes.tokenSecret.name }}
+            - name: INFLUXDB3_PROBE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.probes.tokenSecret.name }}
+                  key: {{ .Values.probes.tokenSecret.key }}
+        {{- end }}
         {{- with .Values.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -105,13 +112,29 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
-          {{- if .Values.ingester.livenessProbe.enabled }}
+          {{- if .Values.probes.enabled }}
           livenessProbe:
-            {{- toYaml (omit .Values.ingester.livenessProbe "enabled") | nindent 12 }}
-          {{- end }}
-          {{- if .Values.ingester.readinessProbe.enabled }}
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Authorization
+                  value: "Bearer {{- if .Values.probes.tokenSecret.name }} $(INFLUXDB3_PROBE_TOKEN){{- else }} {{ .Values.probes.token }}{{- end }}"
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
           readinessProbe:
-            {{- toYaml (omit .Values.ingester.readinessProbe "enabled") | nindent 12 }}
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Authorization
+                  value: "Bearer {{- if .Values.probes.tokenSecret.name }} $(INFLUXDB3_PROBE_TOKEN){{- else }} {{ .Values.probes.token }}{{- end }}"
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
           {{- end }}
           resources:
             {{- toYaml .Values.ingester.resources | nindent 12 }}
