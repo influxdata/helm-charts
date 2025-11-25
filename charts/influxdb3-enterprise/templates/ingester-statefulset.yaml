@@ -105,10 +105,14 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
+          {{- if .Values.ingester.livenessProbe.enabled }}
           livenessProbe:
-            {{- toYaml .Values.ingester.livenessProbe | nindent 12 }}
+            {{- toYaml (omit .Values.ingester.livenessProbe "enabled") | nindent 12 }}
+          {{- end }}
+          {{- if .Values.ingester.readinessProbe.enabled }}
           readinessProbe:
-            {{- toYaml .Values.ingester.readinessProbe | nindent 12 }}
+            {{- toYaml (omit .Values.ingester.readinessProbe "enabled") | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.ingester.resources | nindent 12 }}
           volumeMounts:

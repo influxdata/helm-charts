@@ -186,22 +186,24 @@ ingester:
 
   # Liveness and readiness probes
   livenessProbe:
-#    httpGet:
-#      path: /health
-#      port: http
-#    initialDelaySeconds: 30
-#    periodSeconds: 10
-#    timeoutSeconds: 5
-#    failureThreshold: 3
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
 
   readinessProbe:
-#    httpGet:
-#      path: /health
-#      port: http
-#    initialDelaySeconds: 10
-#    periodSeconds: 5
-#    timeoutSeconds: 3
-#    failureThreshold: 3
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
 
   # Service configuration
   service:
@@ -250,22 +252,24 @@ querier:
 
   # Probes
   livenessProbe:
-#    httpGet:
-#      path: /health
-#      port: http
-#    initialDelaySeconds: 30
-#    periodSeconds: 10
-#    timeoutSeconds: 5
-#    failureThreshold: 3
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
 
   readinessProbe:
-#    httpGet:
-#      path: /health
-#      port: http
-#    initialDelaySeconds: 10
-#    periodSeconds: 5
-#    timeoutSeconds: 3
-#    failureThreshold: 3
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
 
   # Service configuration
   service:
@@ -323,22 +327,24 @@ compactor:
 
   # Probes
   livenessProbe:
-#    httpGet:
-#      path: /health
-#      port: http
-#    initialDelaySeconds: 30
-#    periodSeconds: 10
-#    timeoutSeconds: 5
-#    failureThreshold: 3
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
 
   readinessProbe:
-#    httpGet:
-#      path: /health
-#      port: http
-#    initialDelaySeconds: 10
-#    periodSeconds: 5
-#    timeoutSeconds: 3
-#    failureThreshold: 3
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
 
   # Service configuration (for metrics only)
   service:
@@ -404,22 +410,24 @@ processingEngine:
 
   # Probes
   livenessProbe:
-#    httpGet:
-#      path: /health
-#      port: http
-#    initialDelaySeconds: 30
-#    periodSeconds: 10
-#    timeoutSeconds: 5
-#    failureThreshold: 3
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
 
   readinessProbe:
-#    httpGet:
-#      path: /health
-#      port: http
-#    initialDelaySeconds: 10
-#    periodSeconds: 5
-#    timeoutSeconds: 3
-#    failureThreshold: 3
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
 
   # Service configuration
   service:

@@ -112,10 +112,14 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
+          {{- if .Values.processingEngine.livenessProbe.enabled }}
           livenessProbe:
-            {{- toYaml .Values.processingEngine.livenessProbe | nindent 12 }}
+            {{- toYaml (omit .Values.processingEngine.livenessProbe "enabled") | nindent 12 }}
+          {{- end }}
+          {{- if .Values.processingEngine.readinessProbe.enabled }}
           readinessProbe:
-            {{- toYaml .Values.processingEngine.readinessProbe | nindent 12 }}
+            {{- toYaml (omit .Values.processingEngine.readinessProbe "enabled") | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.processingEngine.resources | nindent 12 }}
           volumeMounts:

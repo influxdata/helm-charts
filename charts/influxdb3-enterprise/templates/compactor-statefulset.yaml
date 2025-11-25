@@ -109,10 +109,14 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
+          {{- if .Values.compactor.livenessProbe.enabled }}
           livenessProbe:
-            {{- toYaml .Values.compactor.livenessProbe | nindent 12 }}
+            {{- toYaml (omit .Values.compactor.livenessProbe "enabled") | nindent 12 }}
+          {{- end }}
+          {{- if .Values.compactor.readinessProbe.enabled }}
           readinessProbe:
-            {{- toYaml .Values.compactor.readinessProbe | nindent 12 }}
+            {{- toYaml (omit .Values.compactor.readinessProbe "enabled") | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.compactor.resources | nindent 12 }}
           {{- if eq .Values.objectStorage.type "file" }}
