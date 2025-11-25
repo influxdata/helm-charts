@@ -18,7 +18,6 @@ license:
   type: "commercial"
   email: "production@example.com"
 
-# Production ingester configuration
 ingester:
   replicas: 3
   resources:
@@ -44,7 +43,6 @@ ingester:
                 app.kubernetes.io/component: ingester
             topologyKey: kubernetes.io/hostname
 
-# Production querier configuration
 querier:
   replicas: 3
   resources:
@@ -66,7 +64,6 @@ querier:
                 app.kubernetes.io/component: querier
             topologyKey: kubernetes.io/hostname
 
-# Production compactor configuration - 2x resources for intensive operations
 compactor:
   resources:
     requests:
@@ -80,12 +77,10 @@ compactor:
   compaction:
     checkInterval: "5s"
 
-# Processing Engine enabled for production
 processingEngine:
   enabled: true
   replicas: 2
 
-# Production ingress with TLS - overrides default values.yaml config
 ingress:
   write:
     annotations:

@@ -128,7 +128,6 @@ license:
 #   labels:
 #     azure.workload.identity/use: "true"
 
-# Standard configuration for Azure deployment
 ingester:
   persistence:
     # Azure Kubernetes storage classes:
