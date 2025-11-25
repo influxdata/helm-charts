@@ -31,10 +31,17 @@ InfluxDB 3 Enterprise is a high-performance time series database designed for pr
 - Object storage (S3, Azure Blob Storage, or Google Cloud Storage)
 - PersistentVolume provisioner support (for ingester WAL storage)
 - InfluxDB 3 Enterprise license (trial, home, or commercial)
+- **NGINX Ingress Controller** (required if using ingress, which is enabled by default)
+
+To install NGINX Ingress Controller:
+```bash
+helm upgrade --install ingress-nginx ingress-nginx \
+  --repo https://kubernetes.github.io/ingress-nginx \
+  --namespace ingress-nginx --create-namespace
+```
 
 ### Optional Components
 
-- **Ingress Controller**: NGINX Ingress Controller (tested)
 - **Network Policies**: CNI plugin supporting NetworkPolicy (Calico, Cilium, Weave Net)
 - **Monitoring**: Prometheus Operator for ServiceMonitor support
 
