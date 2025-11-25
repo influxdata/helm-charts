@@ -1,0 +1,150 @@
+# Google Cloud Storage (GCS) Configuration
+# - Uses GCS for object storage
+# - Production-ready cloud storage
+# - Suitable for GKE (Google Kubernetes Engine) deployments
+# - Supports service account authentication and Workload Identity
+
+# Prerequisites:
+# 1. Create GCS bucket in your GCP project:
+#    gsutil mb -p YOUR_PROJECT_ID -c STANDARD -l us-central1 gs://influxdb3-data
+#
+# 2. (Option A) Use service account with JSON key:
+#    a. Create service account:
+#       gcloud iam service-accounts create influxdb3-gcs \
+#         --description="InfluxDB3 Enterprise GCS access" \
+#         --display-name="InfluxDB3 GCS Service Account"
+#
+#    b. Create custom IAM role with minimal permissions (influxdb3-gcs-role.yaml):
+#       title: "InfluxDB3 GCS Access"
+#       description: "Minimal permissions for InfluxDB3 to access GCS bucket"
+#       stage: "GA"
+#       includedPermissions:
+#       - storage.buckets.get
+#       - storage.objects.create
+#       - storage.objects.delete
+#       - storage.objects.get
+#       - storage.objects.list
+#
+#    c. Create the custom role:
+#       gcloud iam roles create influxdb3GcsAccess \
+#         --project=YOUR_PROJECT_ID \
+#         --file=influxdb3-gcs-role.yaml
+#
+#    d. Grant custom role to service account on the bucket:
+#       gsutil iam ch serviceAccount:influxdb3-gcs@YOUR_PROJECT_ID.iam.gserviceaccount.com:projects/YOUR_PROJECT_ID/roles/influxdb3GcsAccess \
+#         gs://influxdb3-data
+#
+#    e. Create and download service account key:
+#       gcloud iam service-accounts keys create influxdb3-sa-key.json \
+#         --iam-account=influxdb3-gcs@YOUR_PROJECT_ID.iam.gserviceaccount.com
+#
+#    f. Create Kubernetes secret:
+#       kubectl create secret generic influxdb3-gcs-credentials \
+#         --from-file=service-account.json=influxdb3-sa-key.json \
+#         -n influxdb3
+#
+# 3. (Option B - RECOMMENDED for GKE) Use Workload Identity:
+#    a. Enable Workload Identity on your GKE cluster (if not already enabled):
+#       gcloud container clusters update YOUR_CLUSTER_NAME \
+#         --workload-pool=YOUR_PROJECT_ID.svc.id.goog \
+#         --region=us-central1
+#
+#    b. Create service account (if not already created):
+#       gcloud iam service-accounts create influxdb3-gcs \
+#         --project=YOUR_PROJECT_ID
+#
+#    c. Grant permissions on bucket (use custom role from step 2c-2d):
+#       gsutil iam ch serviceAccount:influxdb3-gcs@YOUR_PROJECT_ID.iam.gserviceaccount.com:projects/YOUR_PROJECT_ID/roles/influxdb3GcsAccess \
+#         gs://influxdb3-data
+#
+#    d. Create Kubernetes service account:
+#       kubectl create serviceaccount influxdb3-enterprise -n influxdb3
+#
+#    e. Bind Kubernetes SA to GCP SA:
+#       gcloud iam service-accounts add-iam-policy-binding \
+#         influxdb3-gcs@YOUR_PROJECT_ID.iam.gserviceaccount.com \
+#         --role roles/iam.workloadIdentityUser \
+#         --member "serviceAccount:YOUR_PROJECT_ID.svc.id.goog[influxdb3/influxdb3-enterprise]"
+#
+#    f. Annotate Kubernetes service account:
+#       kubectl annotate serviceaccount influxdb3-enterprise \
+#         iam.gke.io/gcp-service-account=influxdb3-gcs@YOUR_PROJECT_ID.iam.gserviceaccount.com \
+#         -n influxdb3
+#
+#    g. Use serviceAccount configuration below (Option B)
+#
+# 4. (Optional) Configure bucket lifecycle rules for cost optimization:
+#    - Transition to Nearline storage after 30 days
+#    - Transition to Coldline storage after 90 days
+#    - Transition to Archive storage after 365 days
+#
+# 5. (Optional) Enable Object Versioning for data protection:
+#    gsutil versioning set on gs://influxdb3-data
+#
+# 6. (Optional) Enable uniform bucket-level access:
+#    gsutil uniformbucketlevelaccess set on gs://influxdb3-data
+
+# Google Cloud Storage configuration
+objectStorage:
+  type: google
+  bucket: "influxdb3"
+  google:
+    # Option A: Use service account JSON from Kubernetes secret
+    # Uncomment if using service account key instead of Workload Identity:
+    # existingSecret: "influxdb3-gcs-credentials"
+    # secretKey: "service-account.json"
+
+    # Option B: Leave credentials empty if using Workload Identity (recommended for GKE)
+    # Configure serviceAccount below with proper annotations
+    serviceAccountJson: ""
+
+license:
+  type: "trial"
+  email: "gcp@example.com"
+
+# Option B: Service Account for Workload Identity (recommended for GKE)
+# Uncomment if using Workload Identity instead of service account keys
+# serviceAccount:
+#   create: true
+#   annotations:
+#     iam.gke.io/gcp-service-account: influxdb3-gcs@YOUR_PROJECT_ID.iam.gserviceaccount.com
+#   name: "influxdb3-enterprise"
+
+ingester:
+  persistence:
+    # Use pd-ssd or pd-balanced for better performance
+    # pd-standard: Standard persistent disk (HDD)
+    # pd-balanced: Balanced persistent disk (SSD) - good cost/performance
+    # pd-ssd: SSD persistent disk - highest performance
+    storageClass: "pd-balanced"
+    size: "20Gi"
+
+querier: {}
+
+compactor: {}
+
+# Enable network policies for security
+networkPolicy:
+  enabled: true
+  egress:
+    # Allow access to GCS endpoints
+    toObjectStorage: true
+
+# Notes:
+# - GCS provides 99.999999999% (11 9's) durability for Standard storage
+# - GCS Standard storage class recommended for frequently accessed data
+# - Consider using Nearline (30-day), Coldline (90-day), or Archive (365-day) for infrequent access
+# - Workload Identity is more secure than service account keys (no credential rotation needed)
+# - Enable Object Versioning for additional data protection and compliance
+# - Use uniform bucket-level access for simplified IAM management
+# - Monitor GCS costs using Cloud Billing reports and set up budget alerts
+# - Enable Cloud Audit Logs for security and compliance
+# - Use Cloud Monitoring for GCS metrics and alerting
+# - Consider using dual-region or multi-region buckets for high availability
+# - GCS automatically encrypts data at rest (Google-managed or customer-managed keys)
+# - For high throughput, GCS automatically scales without configuration
+# - Use lifecycle management to automatically transition or delete old data
+# - Enable requester pays for cost allocation to data consumers
+# - Consider using Customer-Managed Encryption Keys (CMEK) for additional control
+# - GKE nodes in same region as bucket minimize egress costs
+# - Use VPC Service Controls to restrict data exfiltration
