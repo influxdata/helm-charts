@@ -33,12 +33,13 @@ Getting started:
 
   1. Create an admin token:
 
-     kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- influxdb3 create token --admin
+     kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- \
+        influxdb3 create token --admin
 
   2. Create a health probe token (required if probes.enabled=true):
 
-     export INFLUXDB3_AUTH_TOKEN="<your-admin-token>"
-     kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- influxdb3 create token --permission "system:health:read"
+     kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- \
+        influxdb3 create token --permission "system:health:read" --token <your-admin-token>
 
      Then configure the probe token:
 
@@ -64,6 +65,7 @@ Getting started:
 
   3. Create a database:
 
+     export INFLUXDB3_AUTH_TOKEN=<your-admin-token>
 {{- if and .Values.ingress.write.enabled (index .Values.ingress.write.hosts 0).host }}
      export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ (index .Values.ingress.write.hosts 0).host }}
 {{- else }}
