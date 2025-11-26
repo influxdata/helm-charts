@@ -155,17 +155,28 @@ probes:
     # Key in the secret that contains the token value
     key: "token"
 
+  # Startup probe settings
+  # Protects container during initialization. Once successful, never runs again.
+  # For ~15s startup: 10s initial + (12 × 5s) = 70s total (4-5x safety buffer)
+  startup:
+    initialDelaySeconds: 10           # Wait ~50% of expected startup time
+    periodSeconds: 5                  # Check every 5 seconds
+    timeoutSeconds: 5
+    failureThreshold: 12              # 10s + (12 × 5s) = 70s total
+
   # Liveness probe settings
+  # Only starts checking AFTER startup probe succeeds
   liveness:
-    initialDelaySeconds: 30
+    initialDelaySeconds: 0            # No delay needed - startup probe protects
     periodSeconds: 10
     timeoutSeconds: 5
-    failureThreshold: 3
+    failureThreshold: 3               # 3 × 10s = 30s before restart
 
   # Readiness probe settings
+  # Only starts checking AFTER startup probe succeeds
   readiness:
-    initialDelaySeconds: 10
-    periodSeconds: 5
+    initialDelaySeconds: 0            # No delay needed - startup probe protects
+    periodSeconds: 5                  # Check frequently
     timeoutSeconds: 3
     failureThreshold: 3
 
@@ -225,6 +236,21 @@ ingester:
     port: 8181
     annotations: {}
 
+  # Pod disruption budget for high availability
+  # Ensures minimum number of ingester pods remain available during voluntary disruptions
+  podDisruptionBudget:
+    enabled: false
+    # Minimum available pods (use this OR maxUnavailable, not both)
+    minAvailable: 1
+    # Maximum unavailable pods (use this OR minAvailable, not both)
+    maxUnavailable: null
+
+  # Update strategy for rolling updates
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0                  # Start updating from pod 0
+
 # Querier nodes - Handle query requests
 querier:
   enabled: true
@@ -269,6 +295,21 @@ querier:
     type: ClusterIP
     port: 8181
     annotations: {}
+
+  # Pod disruption budget for high availability
+  # Ensures minimum number of querier pods remain available during voluntary disruptions
+  podDisruptionBudget:
+    enabled: false
+    # Minimum available pods (use this OR maxUnavailable, not both)
+    minAvailable: 1
+    # Maximum unavailable pods (use this OR minAvailable, not both)
+    maxUnavailable: null
+
+  # Update strategy for rolling updates
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0                  # Start updating from pod 0
 
 # Compactor node - Background data optimization (single node only)
 compactor:
@@ -323,6 +364,10 @@ compactor:
     type: ClusterIP
     port: 8181
     annotations: {}
+
+  # Update strategy for rolling updates
+  updateStrategy:
+    type: RollingUpdate
 
 # Processing Engine nodes - Custom data processing (optional)
 processingEngine:
@@ -385,6 +430,12 @@ processingEngine:
     type: ClusterIP
     port: 8181
     annotations: {}
+
+  # Update strategy for rolling updates
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0                  # Start updating from pod 0
 
 # ============================================================================
 # Advanced Configuration
@@ -629,10 +680,3 @@ extraVolumeMounts: []
 
 # Priority class name
 priorityClassName: ""
-
-# Pod disruption budget (optional)
-# Uncomment to enable PodDisruptionBudget
-# podDisruptionBudget:
-#   enabled: false
-#   minAvailable: 1
-#   # maxUnavailable: 1

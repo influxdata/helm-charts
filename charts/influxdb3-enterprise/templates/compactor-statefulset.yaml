@@ -10,6 +10,10 @@ metadata:
 spec:
   serviceName: {{ include "influxdb3-enterprise.fullname" . }}-compactor
   replicas: 1
+  {{- if .Values.compactor.updateStrategy }}
+  updateStrategy:
+    {{- toYaml .Values.compactor.updateStrategy | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
@@ -139,6 +143,17 @@ spec:
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
             timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Authorization
+                  value: "Bearer {{- if .Values.probes.tokenSecret.name }} $(INFLUXDB3_PROBE_TOKEN){{- else }} {{ .Values.probes.token }}{{- end }}"
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
           {{- end }}
           resources:
             {{- toYaml .Values.compactor.resources | nindent 12 }}
