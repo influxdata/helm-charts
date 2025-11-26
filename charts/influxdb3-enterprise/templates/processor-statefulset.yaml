@@ -84,6 +84,9 @@ spec:
                 --data-dir={{ .Values.objectStorage.file.dataDir }} \
               {{- end }}
                 --http-bind={{ .Values.http.bind }} \
+              {{- if .Values.auth.disableAuthz }}
+                --disable-authz={{ join "," .Values.auth.disableAuthz }} \
+              {{- end }}
                 --catalog-sync-interval={{ .Values.cluster.catalogSyncInterval }}
           env:
             - name: INFLUXDB3_ENTERPRISE_CLUSTER_ID
@@ -112,13 +115,6 @@ spec:
         {{- end }}
             - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
               value: {{ .Values.license.type | quote }}
-        {{- if .Values.probes.tokenSecret.name }}
-            - name: INFLUXDB3_PROBE_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.probes.tokenSecret.name }}
-                  key: {{ .Values.probes.tokenSecret.key }}
-        {{- end }}
         {{- with .Values.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -131,9 +127,6 @@ spec:
             httpGet:
               path: /health
               port: http
-              httpHeaders:
-                - name: Authorization
-                  value: "Bearer {{- if .Values.probes.tokenSecret.name }} $(INFLUXDB3_PROBE_TOKEN){{- else }} {{ .Values.probes.token }}{{- end }}"
             initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
             periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
             timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
@@ -142,9 +135,6 @@ spec:
             httpGet:
               path: /health
               port: http
-              httpHeaders:
-                - name: Authorization
-                  value: "Bearer {{- if .Values.probes.tokenSecret.name }} $(INFLUXDB3_PROBE_TOKEN){{- else }} {{ .Values.probes.token }}{{- end }}"
             initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
             timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
@@ -153,9 +143,6 @@ spec:
             httpGet:
               path: /health
               port: http
-              httpHeaders:
-                - name: Authorization
-                  value: "Bearer {{- if .Values.probes.tokenSecret.name }} $(INFLUXDB3_PROBE_TOKEN){{- else }} {{ .Values.probes.token }}{{- end }}"
             initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
             periodSeconds: {{ .Values.probes.startup.periodSeconds }}
             timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}

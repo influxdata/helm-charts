@@ -20,16 +20,9 @@ license:
   type: "commercial"
   email: "production@example.com"
 
-# Enable health probes with token from secret
-# Create the probe token secret first:
-#   1. Create admin token: kubectl exec -it influxdb3-ingester-0 -- influxdb3 create token --admin
-#   2. Create probe token: kubectl exec -it influxdb3-ingester-0 -- influxdb3 create token --permission "system:health:read"
-#   3. Create secret: kubectl create secret generic influxdb3-probe-token --from-literal=token="<your-probe-token>"
+# Enable health probes (no token required - /health endpoint auth is disabled by default)
 probes:
   enabled: true
-  tokenSecret:
-    name: "influxdb3-probe-token"
-    key: "token"
 
 ingester:
   replicas: 3

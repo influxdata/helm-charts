@@ -137,23 +137,11 @@ license:
 # ============================================================================
 # Probes Configuration (Shared across all components)
 # ============================================================================
+# Note: /health endpoint authentication is disabled by default (auth.disableAuthz: ["health"])
+# so probes work without requiring tokens
 probes:
   # Enable or disable health probes globally
-  enabled: false
-
-  # Token for Authorization header in health check requests
-  # REQUIRED when probes are enabled. Must specify either:
-  #   - token: explicit token value (not recommended for production)
-  #   - tokenSecret: reference to a Kubernetes secret (recommended)
-  token: ""
-
-  # Read token from a Kubernetes secret (recommended for production)
-  # If tokenSecret.name is specified, this takes precedence over the token field above
-  tokenSecret:
-    # Name of the secret containing the probe token
-    name: ""
-    # Key in the secret that contains the token value
-    key: "token"
+  enabled: true
 
   # Startup probe settings
   # Protects container during initialization. Once successful, never runs again.
@@ -476,8 +464,11 @@ tls:
 auth:
   # Disable authentication (dev/testing only - NOT RECOMMENDED)
   enabled: true
-  # Disable authorization for specific endpoints (health, ping, metrics)
-  disableAuthzFor: []
+  # Disable authorization for specific endpoints
+  # Default: ["health"] - allows Kubernetes probes without authentication
+  # Available endpoints: health, ping, metrics
+  # Set to [] to require authentication for all endpoints
+  disableAuthz: ["health"]
   # Offline token files (for automated deployments)
   adminTokenFile: ""
   permissionTokensFile: ""
