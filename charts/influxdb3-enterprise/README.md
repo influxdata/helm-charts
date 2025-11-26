@@ -335,10 +335,10 @@ kubectl delete namespace influxdb3
 See the `examples/` directory for complete configuration examples:
 
 - **values-dev.yaml**: Development setup with local filesystem
-- **values-staging.yaml**: Staging environment with S3
-- **values-production.yaml**: Production setup with full HA
-- **values-minimal.yaml**: Minimal single-node deployment
-- **values-minio.yaml**: Using MinIO AIStor in-cluster
+- **values-production.yaml**: Production setup with full HA using AWS S3 storage
+- **values-minio.yaml**: Using MinIO AIStor S3-compatible storage
+- **values-google.yaml**: Using Google Cloud Storage
+- **values-azure.yaml**: Using Microsoft Azure blob storage
 
 ### Example: Production Deployment
 
