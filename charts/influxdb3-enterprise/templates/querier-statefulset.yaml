@@ -87,6 +87,7 @@ spec:
                   name: {{ include "influxdb3-enterprise.fullname" . }}-config
                   key: cluster-id
         {{- if eq .Values.objectStorage.type "s3" }}
+          {{- if or .Values.objectStorage.s3.existingSecret (and .Values.objectStorage.s3.accessKeyId .Values.objectStorage.s3.secretAccessKey) }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -97,6 +98,7 @@ spec:
                 secretKeyRef:
                   name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
                   key: secret-access-key
+          {{- end }}
         {{- end }}
         {{- if .Values.license.email }}
             - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL

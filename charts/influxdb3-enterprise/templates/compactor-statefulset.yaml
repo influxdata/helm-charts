@@ -1,4 +1,7 @@
 {{- if .Values.compactor.enabled }}
+{{- if gt (int .Values.compactor.replicas) 1 }}
+{{- fail "ERROR: compactor.replicas must be 1. InfluxDB3 Enterprise does not support multiple compactor replicas. Multiple compactors will cause data corruption." }}
+{{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -9,7 +12,9 @@ metadata:
     app.kubernetes.io/component: compactor
 spec:
   serviceName: {{ include "influxdb3-enterprise.fullname" . }}-compactor
-  replicas: 1
+  # NOTE: InfluxDB3 Enterprise supports only 1 compactor per cluster
+  # Multiple compactors may cause conflicts in compaction operations
+  replicas: {{ .Values.compactor.replicas }}
   {{- if .Values.compactor.updateStrategy }}
   updateStrategy:
     {{- toYaml .Values.compactor.updateStrategy | nindent 4 }}
@@ -92,6 +97,7 @@ spec:
                   name: {{ include "influxdb3-enterprise.fullname" . }}-config
                   key: cluster-id
         {{- if eq .Values.objectStorage.type "s3" }}
+          {{- if or .Values.objectStorage.s3.existingSecret (and .Values.objectStorage.s3.accessKeyId .Values.objectStorage.s3.secretAccessKey) }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -102,6 +108,7 @@ spec:
                 secretKeyRef:
                   name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
                   key: secret-access-key
+          {{- end }}
         {{- end }}
         {{- if .Values.license.email }}
             - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL

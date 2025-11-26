@@ -324,7 +324,10 @@ querier:
 # Compactor node - Background data optimization (single node only)
 compactor:
   enabled: true
-  # NOTE: Only 1 compactor allowed per cluster (cannot scale horizontally)
+  # IMPORTANT: Must be set to 1
+  # InfluxDB3 Enterprise supports only ONE compactor per cluster
+  # Multiple compactors will cause data corruption and conflicts
+  # DO NOT change this value unless explicitly advised by InfluxData
   replicas: 1
 
   # Resource allocation (CPU-intensive)
