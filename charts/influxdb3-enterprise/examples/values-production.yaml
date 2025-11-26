@@ -39,19 +39,16 @@ ingester:
   persistence:
     storageClass: "fast-ssd"
     size: "100Gi"
-  # Pod anti-affinity to spread pods across nodes
-  # Note: Using "preferred" allows scheduling even if constraint can't be met
-  # For stricter HA, use "requiredDuringSchedulingIgnoredDuringExecution" to guarantee
-  # pods never colocate on the same node (requires sufficient nodes)
+  # Pod anti-affinity to guarantee pods spread across nodes
+  # Note: Using "required" ensures pods never colocate on the same node
+  # This requires having at least as many nodes as replicas
   affinity:
     podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: ingester
-            topologyKey: kubernetes.io/hostname
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/component: ingester
+          topologyKey: kubernetes.io/hostname
   # Enable Pod Disruption Budget for HA
   podDisruptionBudget:
     enabled: true
@@ -68,19 +65,16 @@ querier:
       memory: "16Gi"
   threads:
     datafusion: 28
-  # Pod anti-affinity to spread pods across nodes
-  # Note: Using "preferred" allows scheduling even if constraint can't be met
-  # For stricter HA, use "requiredDuringSchedulingIgnoredDuringExecution" to guarantee
-  # pods never colocate on the same node (requires sufficient nodes)
+  # Pod anti-affinity to guarantee pods spread across nodes
+  # Note: Using "required" ensures pods never colocate on the same node
+  # This requires having at least as many nodes as replicas
   affinity:
     podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: querier
-            topologyKey: kubernetes.io/hostname
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/component: querier
+          topologyKey: kubernetes.io/hostname
   # Enable Pod Disruption Budget for HA
   podDisruptionBudget:
     enabled: true
@@ -102,19 +96,16 @@ compactor:
 processingEngine:
   enabled: true
   replicas: 2
-  # Pod anti-affinity to spread pods across nodes
-  # Note: Using "preferred" allows scheduling even if constraint can't be met
-  # For stricter HA, use "requiredDuringSchedulingIgnoredDuringExecution" to guarantee
-  # pods never colocate on the same node (requires sufficient nodes)
+  # Pod anti-affinity to guarantee pods spread across nodes
+  # Note: Using "required" ensures pods never colocate on the same node
+  # This requires having at least as many nodes as replicas
   affinity:
     podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: processor
-            topologyKey: kubernetes.io/hostname
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/component: processor
+          topologyKey: kubernetes.io/hostname
   # Enable Pod Disruption Budget for HA
   podDisruptionBudget:
     enabled: true

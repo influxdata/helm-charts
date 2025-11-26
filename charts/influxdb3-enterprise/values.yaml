@@ -202,7 +202,16 @@ ingester:
     accessMode: ReadWriteOnce
 
   # Pod affinity/anti-affinity, node selectors, tolerations
-  affinity: {}
+  # Default: soft anti-affinity to spread pods across nodes when possible
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: ingester
+            topologyKey: kubernetes.io/hostname
   nodeSelector: {}
   tolerations: []
 
@@ -264,7 +273,16 @@ querier:
   # No persistent storage needed for queriers
 
   # Pod affinity/anti-affinity, node selectors, tolerations
-  affinity: {}
+  # Default: soft anti-affinity to spread pods across nodes when possible
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: querier
+            topologyKey: kubernetes.io/hostname
   nodeSelector: {}
   tolerations: []
 
@@ -403,7 +421,16 @@ processingEngine:
   #   source: "gh:influxdata/system_metrics/system_metrics.py"
 
   # Pod affinity/anti-affinity, node selectors, tolerations
-  affinity: {}
+  # Default: soft anti-affinity to spread pods across nodes when possible
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: processor
+            topologyKey: kubernetes.io/hostname
   nodeSelector: {}
   tolerations: []
 
