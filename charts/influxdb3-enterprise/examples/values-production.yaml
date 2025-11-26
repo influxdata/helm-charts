@@ -2,6 +2,8 @@
 # - Full resource allocation
 # - AWS S3 with multiple availability zones
 # - High availability with multiple replicas
+# - Pod Disruption Budgets for zero-downtime maintenance
+# - Health probes enabled
 # - Full monitoring and network policies
 # - TLS enabled
 
@@ -18,6 +20,17 @@ license:
   type: "commercial"
   email: "production@example.com"
 
+# Enable health probes with token from secret
+# Create the probe token secret first:
+#   1. Create admin token: kubectl exec -it influxdb3-ingester-0 -- influxdb3 create token --admin
+#   2. Create probe token: kubectl exec -it influxdb3-ingester-0 -- influxdb3 create token --permission "system:health:read"
+#   3. Create secret: kubectl create secret generic influxdb3-probe-token --from-literal=token="<your-probe-token>"
+probes:
+  enabled: true
+  tokenSecret:
+    name: "influxdb3-probe-token"
+    key: "token"
+
 ingester:
   replicas: 3
   resources:
@@ -33,6 +46,10 @@ ingester:
   persistence:
     storageClass: "fast-ssd"
     size: "100Gi"
+  # Pod anti-affinity to spread pods across nodes
+  # Note: Using "preferred" allows scheduling even if constraint can't be met
+  # For stricter HA, use "requiredDuringSchedulingIgnoredDuringExecution" to guarantee
+  # pods never colocate on the same node (requires sufficient nodes)
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -42,6 +59,10 @@ ingester:
               matchLabels:
                 app.kubernetes.io/component: ingester
             topologyKey: kubernetes.io/hostname
+  # Enable Pod Disruption Budget for HA
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2              # Keep at least 2 of 3 pods available
 
 querier:
   replicas: 3
@@ -54,6 +75,10 @@ querier:
       memory: "16Gi"
   threads:
     datafusion: 28
+  # Pod anti-affinity to spread pods across nodes
+  # Note: Using "preferred" allows scheduling even if constraint can't be met
+  # For stricter HA, use "requiredDuringSchedulingIgnoredDuringExecution" to guarantee
+  # pods never colocate on the same node (requires sufficient nodes)
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -63,6 +88,10 @@ querier:
               matchLabels:
                 app.kubernetes.io/component: querier
             topologyKey: kubernetes.io/hostname
+  # Enable Pod Disruption Budget for HA
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2              # Keep at least 2 of 3 pods available
 
 compactor:
   resources:
@@ -80,6 +109,23 @@ compactor:
 processingEngine:
   enabled: true
   replicas: 2
+  # Pod anti-affinity to spread pods across nodes
+  # Note: Using "preferred" allows scheduling even if constraint can't be met
+  # For stricter HA, use "requiredDuringSchedulingIgnoredDuringExecution" to guarantee
+  # pods never colocate on the same node (requires sufficient nodes)
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: processor
+            topologyKey: kubernetes.io/hostname
+  # Enable Pod Disruption Budget for HA
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1              # Keep at least 1 of 2 pods available
 
 ingress:
   write:
