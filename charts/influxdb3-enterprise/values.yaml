@@ -240,10 +240,7 @@ ingester:
   # Ensures minimum number of ingester pods remain available during voluntary disruptions
   podDisruptionBudget:
     enabled: false
-    # Minimum available pods (use this OR maxUnavailable, not both)
     minAvailable: 1
-    # Maximum unavailable pods (use this OR minAvailable, not both)
-    maxUnavailable: null
 
   # Update strategy for rolling updates
   updateStrategy:
@@ -300,10 +297,7 @@ querier:
   # Ensures minimum number of querier pods remain available during voluntary disruptions
   podDisruptionBudget:
     enabled: false
-    # Minimum available pods (use this OR maxUnavailable, not both)
     minAvailable: 1
-    # Maximum unavailable pods (use this OR minAvailable, not both)
-    maxUnavailable: null
 
   # Update strategy for rolling updates
   updateStrategy:
@@ -436,6 +430,12 @@ processingEngine:
     type: RollingUpdate
     rollingUpdate:
       partition: 0                  # Start updating from pod 0
+
+  # Pod disruption budget for high availability
+  # Ensures minimum number of processor pods remain available during voluntary disruptions
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
 
 # ============================================================================
 # Advanced Configuration

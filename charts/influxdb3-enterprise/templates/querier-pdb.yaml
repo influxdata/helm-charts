@@ -8,12 +8,7 @@ metadata:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
     app.kubernetes.io/component: querier
 spec:
-  {{- if .Values.querier.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.querier.podDisruptionBudget.minAvailable }}
-  {{- end }}
-  {{- if .Values.querier.podDisruptionBudget.maxUnavailable }}
-  maxUnavailable: {{ .Values.querier.podDisruptionBudget.maxUnavailable }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}

@@ -8,12 +8,7 @@ metadata:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
     app.kubernetes.io/component: ingester
 spec:
-  {{- if .Values.ingester.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.ingester.podDisruptionBudget.minAvailable }}
-  {{- end }}
-  {{- if .Values.ingester.podDisruptionBudget.maxUnavailable }}
-  maxUnavailable: {{ .Values.ingester.podDisruptionBudget.maxUnavailable }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}

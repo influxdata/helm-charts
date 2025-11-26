@@ -1,0 +1,16 @@
+{{- if and .Values.processingEngine.podDisruptionBudget.enabled .Values.processingEngine.enabled (gt (int .Values.processingEngine.replicas) 1) }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-processor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: processor
+spec:
+  minAvailable: {{ .Values.processingEngine.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: processor
+{{- end }}
