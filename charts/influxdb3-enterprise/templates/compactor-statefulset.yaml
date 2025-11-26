@@ -38,6 +38,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "influxdb3-enterprise.serviceAccountName" . }}
+      {{- if .Values.compactor.priorityClassName }}
+      priorityClassName: {{ .Values.compactor.priorityClassName }}
+      {{- end }}
       securityContext:
         {{- toYaml .Values.compactor.podSecurityContext | nindent 8 }}
       containers:

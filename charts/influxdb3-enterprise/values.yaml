@@ -242,6 +242,11 @@ ingester:
     enabled: false
     minAvailable: 1
 
+  # Priority class for pod scheduling priority
+  # Higher priority pods are scheduled before lower priority pods
+  # Use "system-cluster-critical" or "system-node-critical" for critical workloads
+  priorityClassName: ""
+
   # Update strategy for rolling updates
   updateStrategy:
     type: RollingUpdate
@@ -298,6 +303,11 @@ querier:
   podDisruptionBudget:
     enabled: false
     minAvailable: 1
+
+  # Priority class for pod scheduling priority
+  # Higher priority pods are scheduled before lower priority pods
+  # Use "system-cluster-critical" or "system-node-critical" for critical workloads
+  priorityClassName: ""
 
   # Update strategy for rolling updates
   updateStrategy:
@@ -358,6 +368,11 @@ compactor:
     type: ClusterIP
     port: 8181
     annotations: {}
+
+  # Priority class for pod scheduling priority
+  # Higher priority pods are scheduled before lower priority pods
+  # Use "system-cluster-critical" or "system-node-critical" for critical workloads
+  priorityClassName: ""
 
   # Update strategy for rolling updates
   updateStrategy:
@@ -436,6 +451,11 @@ processingEngine:
   podDisruptionBudget:
     enabled: false
     minAvailable: 1
+
+  # Priority class for pod scheduling priority
+  # Higher priority pods are scheduled before lower priority pods
+  # Use "system-cluster-critical" or "system-node-critical" for critical workloads
+  priorityClassName: ""
 
 # ============================================================================
 # Advanced Configuration
@@ -677,6 +697,3 @@ extraVolumes: []
 extraVolumeMounts: []
   # - name: custom-config
 #   mountPath: /etc/custom
-
-# Priority class name
-priorityClassName: ""
