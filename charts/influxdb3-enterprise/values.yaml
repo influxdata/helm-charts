@@ -655,17 +655,75 @@ networkPolicy:
   ingress:
     # Allow ingress controller to reach ingesters and queriers
     fromIngressController: true
+    # Ingress controller configuration (cluster-specific)
+    ingressController:
+      # Namespace where ingress controller runs
+      namespace: ingress-nginx
+      # Namespace label selector (use kubernetes.io/metadata.name for standard k8s namespaces)
+      namespaceLabel: kubernetes.io/metadata.name
+      # Pod label selector for ingress controller pods
+      podLabelKey: app.kubernetes.io/name
+      podLabelValue: ingress-nginx
+      # Common alternatives:
+      #   NGINX Ingress: app.kubernetes.io/name: ingress-nginx (default)
+      #   Traefik: app.kubernetes.io/name: traefik
+      #   HAProxy: app.kubernetes.io/name: haproxy-ingress
     # Allow inter-component communication
     fromComponents: true
+    # Allow Prometheus to scrape metrics (for cross-namespace monitoring)
+    fromPrometheus: false
+    # Prometheus configuration (cluster-specific)
+    prometheus:
+      # Namespace where Prometheus runs
+      namespace: monitoring
+      # Namespace label selector (use kubernetes.io/metadata.name for standard k8s namespaces)
+      namespaceLabel: kubernetes.io/metadata.name
+      # Pod label selector for Prometheus pods
+      podLabelKey: app.kubernetes.io/name
+      podLabelValue: prometheus
+      # Common alternatives:
+      #   Prometheus Operator: app.kubernetes.io/name: prometheus
+      #   kube-prometheus-stack: app: prometheus
+      #   Custom: app: my-prometheus
 
   # Egress rules
   egress:
     # Allow DNS resolution
     toDns: true
+    # DNS configuration (cluster-specific)
+    dns:
+      # Namespace where DNS service runs
+      namespace: kube-system
+      # Namespace label selector (use kubernetes.io/metadata.name for standard k8s namespaces)
+      namespaceLabel: kubernetes.io/metadata.name
+      # Pod label selector for DNS pods
+      podLabelKey: k8s-app
+      podLabelValue: kube-dns
+      # Common alternatives:
+      #   CoreDNS: k8s-app: kube-dns (default in most clusters)
+      #   kube-dns: k8s-app: kube-dns
+      #   Custom: app: coredns
+
     # Allow access to object storage
     toObjectStorage: true
-    # Allow access to Kubernetes API
-    toKubeApi: true
+    # Optional: Specify CIDR blocks for object storage endpoints (recommended for production)
+    # If not set, allows egress to any destination on ports 443/80/9000 (permissive)
+    # Examples:
+    #   AWS S3 (us-east-1): 52.216.0.0/15, 54.231.0.0/16
+    #   Azure Storage: Varies by region, see https://www.microsoft.com/en-us/download/details.aspx?id=56519
+    #   GCS: 142.250.0.0/15, 172.217.0.0/16
+    #   MinIO in-cluster: Use namespace/pod selectors instead
+    objectStorageCidrs: []
+    # - "52.216.0.0/15"
+    # - "54.231.0.0/16"
+
+    # Allow outbound HTTP/HTTPS for plugin operations (processor only)
+    # Enables plugins to call external webhooks, APIs, notification services, etc.
+    toPluginEndpoints: true
+    # Optional: Specify CIDR blocks for plugin endpoints (recommended for production)
+    # If not set, allows egress to any destination on ports 443/80 (permissive)
+    pluginEndpointCidrs: []
+    # - "192.0.2.0/24"
 
 # ============================================================================
 # Monitoring (optional, disabled by default)

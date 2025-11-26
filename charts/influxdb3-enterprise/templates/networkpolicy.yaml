@@ -30,7 +30,10 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: ingress-nginx
+              {{ .Values.networkPolicy.ingress.ingressController.namespaceLabel }}: {{ .Values.networkPolicy.ingress.ingressController.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.podLabelKey }}: {{ .Values.networkPolicy.ingress.ingressController.podLabelValue }}
       ports:
         - protocol: TCP
           port: 8181
@@ -45,48 +48,60 @@ spec:
         - protocol: TCP
           port: 8181
     {{- end }}
+    # Allow Prometheus to scrape metrics
+    {{- if .Values.networkPolicy.ingress.fromPrometheus }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.namespaceLabel }}: {{ .Values.networkPolicy.ingress.prometheus.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.podLabelKey }}: {{ .Values.networkPolicy.ingress.prometheus.podLabelValue }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
   egress:
     # Allow DNS resolution
     {{- if .Values.networkPolicy.egress.toDns }}
     - to:
         - namespaceSelector:
             matchLabels:
-              name: kube-system
-        - podSelector:
+              {{ .Values.networkPolicy.egress.dns.namespaceLabel }}: {{ .Values.networkPolicy.egress.dns.namespace }}
+          podSelector:
             matchLabels:
-              k8s-app: kube-dns
+              {{ .Values.networkPolicy.egress.dns.podLabelKey }}: {{ .Values.networkPolicy.egress.dns.podLabelValue }}
       ports:
         - protocol: UDP
           port: 53
+        - protocol: TCP
+          port: 53
     {{- end }}
-    # Allow access to object storage (all destinations on HTTPS)
+    # Allow access to object storage
     {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    {{- if .Values.networkPolicy.egress.objectStorageCidrs }}
+    # Egress to specific object storage CIDRs (AWS S3, Azure, GCS endpoints)
+    {{- range .Values.networkPolicy.egress.objectStorageCidrs }}
     - to:
-        - podSelector: {}
+        - ipBlock:
+            cidr: {{ . }}
       ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
           port: 80
-    - to:
-        - namespaceSelector: {}
-      ports:
-        - protocol: TCP
-          port: 443
-        - protocol: TCP
-          port: 80
-        - protocol: TCP
-          port: 9000  # MinIO
     {{- end }}
-    # Allow access to Kubernetes API
-    {{- if .Values.networkPolicy.egress.toKubeApi }}
-    - to:
-        - namespaceSelector: {}
-      ports:
+    {{- else }}
+    # Default: Allow egress to any destination for object storage
+    # WARNING: This is permissive. Configure objectStorageCidrs for production.
+    - ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
-          port: 6443
+          port: 80
+        - protocol: TCP
+          port: 9000  # MinIO default
+    {{- end }}
     {{- end }}
     # Allow inter-component communication
     - to:
@@ -120,7 +135,10 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: ingress-nginx
+              {{ .Values.networkPolicy.ingress.ingressController.namespaceLabel }}: {{ .Values.networkPolicy.ingress.ingressController.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.podLabelKey }}: {{ .Values.networkPolicy.ingress.ingressController.podLabelValue }}
       ports:
         - protocol: TCP
           port: 8181
@@ -135,48 +153,60 @@ spec:
         - protocol: TCP
           port: 8181
     {{- end }}
+    # Allow Prometheus to scrape metrics
+    {{- if .Values.networkPolicy.ingress.fromPrometheus }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.namespaceLabel }}: {{ .Values.networkPolicy.ingress.prometheus.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.podLabelKey }}: {{ .Values.networkPolicy.ingress.prometheus.podLabelValue }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
   egress:
     # Allow DNS resolution
     {{- if .Values.networkPolicy.egress.toDns }}
     - to:
         - namespaceSelector:
             matchLabels:
-              name: kube-system
-        - podSelector:
+              {{ .Values.networkPolicy.egress.dns.namespaceLabel }}: {{ .Values.networkPolicy.egress.dns.namespace }}
+          podSelector:
             matchLabels:
-              k8s-app: kube-dns
+              {{ .Values.networkPolicy.egress.dns.podLabelKey }}: {{ .Values.networkPolicy.egress.dns.podLabelValue }}
       ports:
         - protocol: UDP
+          port: 53
+        - protocol: TCP
           port: 53
     {{- end }}
     # Allow access to object storage
     {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    {{- if .Values.networkPolicy.egress.objectStorageCidrs }}
+    # Egress to specific object storage CIDRs (AWS S3, Azure, GCS endpoints)
+    {{- range .Values.networkPolicy.egress.objectStorageCidrs }}
     - to:
-        - podSelector: {}
+        - ipBlock:
+            cidr: {{ . }}
       ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
           port: 80
-    - to:
-        - namespaceSelector: {}
-      ports:
-        - protocol: TCP
-          port: 443
-        - protocol: TCP
-          port: 80
-        - protocol: TCP
-          port: 9000
     {{- end }}
-    # Allow access to Kubernetes API
-    {{- if .Values.networkPolicy.egress.toKubeApi }}
-    - to:
-        - namespaceSelector: {}
-      ports:
+    {{- else }}
+    # Default: Allow egress to any destination for object storage
+    # WARNING: This is permissive. Configure objectStorageCidrs for production.
+    - ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
-          port: 6443
+          port: 80
+        - protocol: TCP
+          port: 9000  # MinIO default
+    {{- end }}
     {{- end }}
     # Allow inter-component communication
     - to:
@@ -215,49 +245,69 @@ spec:
         - protocol: TCP
           port: 8181
     {{- end }}
+    # Allow Prometheus to scrape metrics
+    {{- if .Values.networkPolicy.ingress.fromPrometheus }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.namespaceLabel }}: {{ .Values.networkPolicy.ingress.prometheus.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.podLabelKey }}: {{ .Values.networkPolicy.ingress.prometheus.podLabelValue }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
   egress:
     # Allow DNS resolution
     {{- if .Values.networkPolicy.egress.toDns }}
     - to:
         - namespaceSelector:
             matchLabels:
-              name: kube-system
-        - podSelector:
+              {{ .Values.networkPolicy.egress.dns.namespaceLabel }}: {{ .Values.networkPolicy.egress.dns.namespace }}
+          podSelector:
             matchLabels:
-              k8s-app: kube-dns
+              {{ .Values.networkPolicy.egress.dns.podLabelKey }}: {{ .Values.networkPolicy.egress.dns.podLabelValue }}
       ports:
         - protocol: UDP
+          port: 53
+        - protocol: TCP
           port: 53
     {{- end }}
     # Allow access to object storage
     {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    {{- if .Values.networkPolicy.egress.objectStorageCidrs }}
+    # Egress to specific object storage CIDRs (AWS S3, Azure, GCS endpoints)
+    {{- range .Values.networkPolicy.egress.objectStorageCidrs }}
     - to:
-        - podSelector: {}
+        - ipBlock:
+            cidr: {{ . }}
       ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
           port: 80
-    - to:
-        - namespaceSelector: {}
-      ports:
+    {{- end }}
+    {{- else }}
+    # Default: Allow egress to any destination for object storage
+    # WARNING: This is permissive. Configure objectStorageCidrs for production.
+    - ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
           port: 80
         - protocol: TCP
-          port: 9000
+          port: 9000  # MinIO default
     {{- end }}
-    # Allow access to Kubernetes API
-    {{- if .Values.networkPolicy.egress.toKubeApi }}
+    {{- end }}
+    # Allow inter-component communication
     - to:
-        - namespaceSelector: {}
+        - podSelector:
+            matchLabels:
+            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
       ports:
         - protocol: TCP
-          port: 443
-        - protocol: TCP
-          port: 6443
-    {{- end }}
+          port: 8181
 
 {{- if .Values.processingEngine.enabled }}
 ---
@@ -283,7 +333,10 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: ingress-nginx
+              {{ .Values.networkPolicy.ingress.ingressController.namespaceLabel }}: {{ .Values.networkPolicy.ingress.ingressController.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.podLabelKey }}: {{ .Values.networkPolicy.ingress.ingressController.podLabelValue }}
       ports:
         - protocol: TCP
           port: 8181
@@ -298,48 +351,60 @@ spec:
         - protocol: TCP
           port: 8181
     {{- end }}
+    # Allow Prometheus to scrape metrics
+    {{- if .Values.networkPolicy.ingress.fromPrometheus }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.namespaceLabel }}: {{ .Values.networkPolicy.ingress.prometheus.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.podLabelKey }}: {{ .Values.networkPolicy.ingress.prometheus.podLabelValue }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
   egress:
     # Allow DNS resolution
     {{- if .Values.networkPolicy.egress.toDns }}
     - to:
         - namespaceSelector:
             matchLabels:
-              name: kube-system
-        - podSelector:
+              {{ .Values.networkPolicy.egress.dns.namespaceLabel }}: {{ .Values.networkPolicy.egress.dns.namespace }}
+          podSelector:
             matchLabels:
-              k8s-app: kube-dns
+              {{ .Values.networkPolicy.egress.dns.podLabelKey }}: {{ .Values.networkPolicy.egress.dns.podLabelValue }}
       ports:
         - protocol: UDP
+          port: 53
+        - protocol: TCP
           port: 53
     {{- end }}
     # Allow access to object storage
     {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    {{- if .Values.networkPolicy.egress.objectStorageCidrs }}
+    # Egress to specific object storage CIDRs (AWS S3, Azure, GCS endpoints)
+    {{- range .Values.networkPolicy.egress.objectStorageCidrs }}
     - to:
-        - podSelector: {}
+        - ipBlock:
+            cidr: {{ . }}
       ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
           port: 80
-    - to:
-        - namespaceSelector: {}
-      ports:
-        - protocol: TCP
-          port: 443
-        - protocol: TCP
-          port: 80
-        - protocol: TCP
-          port: 9000
     {{- end }}
-    # Allow access to Kubernetes API
-    {{- if .Values.networkPolicy.egress.toKubeApi }}
-    - to:
-        - namespaceSelector: {}
-      ports:
+    {{- else }}
+    # Default: Allow egress to any destination for object storage
+    # WARNING: This is permissive. Configure objectStorageCidrs for production.
+    - ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
-          port: 6443
+          port: 80
+        - protocol: TCP
+          port: 9000  # MinIO default
+    {{- end }}
     {{- end }}
     # Allow inter-component communication
     - to:
@@ -350,12 +415,28 @@ spec:
         - protocol: TCP
           port: 8181
     # Allow outbound HTTP/HTTPS for plugin operations (webhooks, notifications, etc.)
+    {{- if .Values.networkPolicy.egress.toPluginEndpoints }}
+    {{- if .Values.networkPolicy.egress.pluginEndpointCidrs }}
+    # Egress to specific plugin endpoint CIDRs
+    {{- range .Values.networkPolicy.egress.pluginEndpointCidrs }}
     - to:
-        - namespaceSelector: {}
+        - ipBlock:
+            cidr: {{ . }}
       ports:
         - protocol: TCP
           port: 443
         - protocol: TCP
           port: 80
+    {{- end }}
+    {{- else }}
+    # Default: Allow egress to any destination for plugin operations
+    # WARNING: This is permissive. Configure pluginEndpointCidrs for production.
+    - ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+    {{- end }}
+    {{- end }}
 {{- end }}
 {{- end }}

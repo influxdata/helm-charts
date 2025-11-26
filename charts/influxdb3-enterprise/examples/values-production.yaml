@@ -141,10 +141,10 @@ networkPolicy:
   ingress:
     fromIngressController: true
     fromComponents: true
+    fromPrometheus: true  # Allow Prometheus to scrape metrics
   egress:
     toDns: true
     toObjectStorage: true
-    toKubeApi: true
 
 # Enable monitoring
 serviceMonitor:

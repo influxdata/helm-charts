@@ -209,7 +209,6 @@ networkPolicy:
   egress:
     toDns: true
     toObjectStorage: true
-    toKubeApi: true
 ```
 
 **Note**: Requires CNI plugin supporting NetworkPolicy.
