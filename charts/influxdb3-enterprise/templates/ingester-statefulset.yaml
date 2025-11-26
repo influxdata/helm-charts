@@ -149,7 +149,7 @@ spec:
               {{- if eq .Values.objectStorage.type "file" }}
               mountPath: {{ .Values.objectStorage.file.dataDir }}/.wal
               {{- else }}
-              mountPath: /var/lib/influxdb3/.wall
+              mountPath: /var/lib/influxdb3/.wal
               {{- end }}
           {{- end }}
           {{- if eq .Values.objectStorage.type "file" }}
