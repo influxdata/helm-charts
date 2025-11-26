@@ -336,7 +336,7 @@ See the `examples/` directory for complete configuration examples:
 
 - **values-dev.yaml**: Development setup with local filesystem
 - **values-production.yaml**: Production setup with full HA using AWS S3 storage
-- **values-minio.yaml**: Using MinIO AIStor S3-compatible storage
+- **values-minio.yaml**: Using MinIO AIStor storage
 - **values-google.yaml**: Using Google Cloud Storage
 - **values-azure.yaml**: Using Microsoft Azure blob storage
 
