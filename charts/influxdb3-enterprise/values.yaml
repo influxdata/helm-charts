@@ -464,12 +464,6 @@ processingEngine:
     port: 8181
     annotations: {}
 
-  # Update strategy for rolling updates
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      partition: 0                  # Start updating from pod 0
-
   # Pod disruption budget for high availability
   # Ensures minimum number of processor pods remain available during voluntary disruptions
   podDisruptionBudget:
@@ -480,6 +474,12 @@ processingEngine:
   # Higher priority pods are scheduled before lower priority pods
   # Use "system-cluster-critical" or "system-node-critical" for critical workloads
   priorityClassName: ""
+
+  # Update strategy for rolling updates
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0                  # Start updating from pod 0
 
 # ============================================================================
 # Advanced Configuration
