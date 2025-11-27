@@ -99,13 +99,11 @@ objectStorage:
 
   # Local filesystem (for development/testing only)
   # NOT RECOMMENDED for production - use cloud object storage
-  # Uncomment to use local filesystem for quick testing:
+  # Requires RWX storage; PVC is always created when type=file
   # file:
-  #   enabled: false
   #   dataDir: "/var/lib/influxdb3"
   #   # Persistent volume for file storage
   #   persistence:
-  #     enabled: true
   #     storageClass: ""
   #     size: 100Gi
 

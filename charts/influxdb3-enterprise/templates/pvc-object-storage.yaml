@@ -14,7 +14,6 @@
 # For local testing without RWX support, consider using MinIO instead
 # ============================================================================
 {{- if eq .Values.objectStorage.type "file" }}
-{{- if .Values.objectStorage.file.persistence.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -36,5 +35,4 @@ spec:
   resources:
     requests:
       storage: {{ .Values.objectStorage.file.persistence.size }}
-{{- end }}
 {{- end }}
