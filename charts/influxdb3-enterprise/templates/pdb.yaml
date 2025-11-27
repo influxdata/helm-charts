@@ -8,7 +8,7 @@ metadata:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
     app.kubernetes.io/component: ingester
 spec:
-  minAvailable: {{ .Values.ingester.podDisruptionBudget.minAvailable }}
+  maxUnavailable: {{ .Values.ingester.podDisruptionBudget.maxUnavailable | default 1 }}
   selector:
     matchLabels:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
@@ -25,7 +25,7 @@ metadata:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
     app.kubernetes.io/component: querier
 spec:
-  minAvailable: {{ .Values.querier.podDisruptionBudget.minAvailable }}
+  maxUnavailable: {{ .Values.querier.podDisruptionBudget.maxUnavailable | default 1 }}
   selector:
     matchLabels:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
@@ -42,9 +42,26 @@ metadata:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
     app.kubernetes.io/component: processor
 spec:
-  minAvailable: {{ .Values.processingEngine.podDisruptionBudget.minAvailable }}
+  maxUnavailable: {{ .Values.processingEngine.podDisruptionBudget.maxUnavailable | default 1 }}
   selector:
     matchLabels:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: processor
+{{- end }}
+---
+{{- if and .Values.compactor.podDisruptionBudget.enabled .Values.compactor.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-compactor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: compactor
+spec:
+  maxUnavailable: {{ .Values.compactor.podDisruptionBudget.maxUnavailable | default 0 }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: compactor
 {{- end }}

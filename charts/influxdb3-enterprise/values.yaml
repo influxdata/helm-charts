@@ -244,16 +244,16 @@ ingester:
     port: 8181
     annotations: {}
 
-  # Pod disruption budget for high availability
-  # Ensures minimum number of ingester pods remain available during voluntary disruptions
-  podDisruptionBudget:
-    enabled: false
-    minAvailable: 1
-
   # Priority class for pod scheduling priority
   # Higher priority pods are scheduled before lower priority pods
   # Use "system-cluster-critical" or "system-node-critical" for critical workloads
   priorityClassName: ""
+
+  # Pod disruption budget for high availability
+  # Protect the single compactor from voluntary disruptions (node drains/maintenance)
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 0
 
   # Update strategy for rolling updates
   updateStrategy:
@@ -319,7 +319,7 @@ querier:
   # Ensures minimum number of querier pods remain available during voluntary disruptions
   podDisruptionBudget:
     enabled: false
-    minAvailable: 1
+    maxUnavailable: 1
 
   # Priority class for pod scheduling priority
   # Higher priority pods are scheduled before lower priority pods
@@ -388,6 +388,12 @@ compactor:
     type: ClusterIP
     port: 8181
     annotations: {}
+
+  # Pod disruption budget for high availability
+  # Protect the single compactor from voluntary disruptions (node drains/maintenance)
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 0
 
   # Priority class for pod scheduling priority
   # Higher priority pods are scheduled before lower priority pods
@@ -473,7 +479,7 @@ processingEngine:
   # Ensures minimum number of processor pods remain available during voluntary disruptions
   podDisruptionBudget:
     enabled: false
-    minAvailable: 1
+    maxUnavailable: 1
 
   # Priority class for pod scheduling priority
   # Higher priority pods are scheduled before lower priority pods
