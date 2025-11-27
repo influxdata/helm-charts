@@ -88,6 +88,7 @@ At minimum, you must configure:
    license:
      type: "trial"
      email: "your-email@example.com"
+     # For commercial licenses use `file: /path/to/license` or `existingSecret`
    ```
 
 3. **Ingress Hosts**:
@@ -120,6 +121,28 @@ The chart deploys four main components:
 
 Supports multiple backends:
 
+**Azure Blob Storage:**
+```yaml
+objectStorage:
+  type: azure
+  bucket: "my-container"
+  azure:
+    storageAccount: "myaccount"
+    accessKey: "..."
+    existingSecret: ""     # optional: secret with storage-account/access-key
+```
+
+**Google Cloud Storage:**
+```yaml
+objectStorage:
+  type: google
+  bucket: "my-bucket"
+  google:
+    serviceAccountJson: |
+      { "type": "service_account", ... }
+    existingSecret: ""     # optional: secret with service-account.json
+```
+
 **AWS S3:**
 ```yaml
 objectStorage:
@@ -129,6 +152,9 @@ objectStorage:
     region: "us-east-1"
     accessKeyId: "..."
     secretAccessKey: "..."
+    sessionToken: ""       # optional
+    credentialsFile: ""    # optional
+    existingSecret: ""     # optional: secret with access-key-id/secret-access-key
 ```
 
 **MinIO (in-cluster):**
@@ -142,18 +168,18 @@ objectStorage:
     allowHttp: true
     accessKeyId: "minioadmin"
     secretAccessKey: "minioadmin"
+    existingSecret: ""
 ```
 
 **Local Filesystem (dev only):**
 ```yaml
 objectStorage:
   type: file
-  file:
-    enabled: true
-    dataDir: "/var/lib/influxdb3"
-    persistence:
-      enabled: true
-      size: 100Gi
+  # PVC is always created for file storage
+  # file:
+  #   dataDir: "/var/lib/influxdb3"
+  #   persistence:
+  #     size: 100Gi
 ```
 
 #### Resource Configuration
@@ -174,6 +200,25 @@ ingester:
     datafusion: 20      # For WAL snapshots
 ```
 
+#### TLS
+
+Enable TLS with inline cert/key or an existing secret:
+
+```yaml
+tls:
+  enabled: true
+  cert: |-
+    -----BEGIN CERTIFICATE-----
+    ...
+    -----END CERTIFICATE-----
+  key: |-
+    -----BEGIN PRIVATE KEY-----
+    ...
+    -----END PRIVATE KEY-----
+  # Or reference an existing secret containing tls.crt and tls.key
+  existingSecret: influxdb3-tls
+```
+
 #### Ingress Configuration
 
 Separate ingresses for write and query traffic:
@@ -188,7 +233,11 @@ ingress:
     hosts:
       - host: writes.influxdb.example.com
         paths:
-          - path: /
+          - path: /api/v3/write_lp
+            pathType: Prefix
+          - path: /api/v2/write
+            pathType: Prefix
+          - path: /write
             pathType: Prefix
     tls:
       - secretName: influxdb-write-tls
@@ -206,12 +255,16 @@ networkPolicy:
   ingress:
     fromIngressController: true
     fromComponents: true
-  egress:
-    toDns: true
-    toObjectStorage: true
+      egress:
+        toDns: true
+        toObjectStorage: true
 ```
 
 **Note**: Requires CNI plugin supporting NetworkPolicy.
+
+#### Pod Disruption Budgets
+
+Each component has an optional PDB controlled by `podDisruptionBudget.enabled` and `maxUnavailable` in `values.yaml`. Defaults are disabled; enable per component or via the command line (e.g., `--set ingester.podDisruptionBudget.enabled=true`).
 
 #### Monitoring
 
