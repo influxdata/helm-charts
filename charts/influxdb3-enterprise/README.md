@@ -511,6 +511,25 @@ logging:
 | `tls.cert` / `tls.key` | Inline cert/key (used if no existingSecret) | `""` |
 | `tls.existingSecret` | Secret with `tls.crt`/`tls.key` | `""` |
 
+### Ingress Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `ingress.write.enabled` / `query.enabled` | Enable write/query ingress | `true` |
+| `ingress.*.className` | Ingress class | `nginx` |
+| `ingress.*.hosts[0].paths` | Default paths (write: `/api/v3/write_lp`, `/api/v2/write`, `/write`; query: `/api/v3/query`, `/query`, `/`) | as shown |
+| `ingress.*.tls` | TLS host/secret list | `[]` |
+
+### Network Policy Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `networkPolicy.enabled` | Enable NetworkPolicies | `false` |
+| `networkPolicy.ingress.fromIngressController` | Allow ingress controller | `true` |
+| `networkPolicy.ingress.fromComponents` | Allow inter-component traffic | `true` |
+| `networkPolicy.egress.toDns` | Allow DNS | `true` |
+| `networkPolicy.egress.toObjectStorage` | Allow object storage | `true` |
+
 See `values.yaml` for complete parameter list.
 
 ## License
