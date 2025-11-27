@@ -51,7 +51,7 @@ ingester:
   # Enable Pod Disruption Budget for HA
   podDisruptionBudget:
     enabled: true
-    minAvailable: 2              # Keep at least 2 of 3 pods available
+    maxUnavailable: 1              # Allow 1 of 3 pods to be disrupted
 
 querier:
   replicas: 3
@@ -77,7 +77,7 @@ querier:
   # Enable Pod Disruption Budget for HA
   podDisruptionBudget:
     enabled: true
-    minAvailable: 2              # Keep at least 2 of 3 pods available
+    maxUnavailable: 1              # Allow 1 of 3 pods to be disrupted
 
 compactor:
   resources:
@@ -108,7 +108,7 @@ processingEngine:
   # Enable Pod Disruption Budget for HA
   podDisruptionBudget:
     enabled: true
-    minAvailable: 1              # Keep at least 1 of 2 pods available
+    maxUnavailable: 1              # Allow 1 of 2 pods to be disrupted
 
 ingress:
   write:
