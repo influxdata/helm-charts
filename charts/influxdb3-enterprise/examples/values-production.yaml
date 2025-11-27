@@ -11,7 +11,6 @@ objectStorage:
   type: s3
   bucket: "influxdb3"
   s3:
-    enabled: true
     region: "us-east-1"
     accessKeyId: "PROD_ACCESS_KEY"
     secretAccessKey: "PROD_SECRET_KEY"

@@ -48,7 +48,6 @@ objectStorage:
 
   # S3 and S3-compatible storage (MinIO, etc.)
   s3:
-    enabled: true
     # AWS region (required for AWS S3)
     region: "us-east-1"
     # S3 endpoint URL (leave empty for AWS, set for S3-compatible like MinIO)
@@ -488,6 +487,9 @@ processingEngine:
 # TLS/SSL Configuration
 tls:
   enabled: false
+  # Inline cert/key (used only when existingSecret is not set)
+  cert: ""
+  key: ""
   # Paths to certificate and key files (mounted via secrets)
   certPath: "/etc/influxdb/tls/tls.crt"
   keyPath: "/etc/influxdb/tls/tls.key"

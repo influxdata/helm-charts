@@ -94,6 +94,18 @@ License secret name
 {{- end }}
 
 {{/*
+License checksum (handles existingSecret via lookup)
+*/}}
+{{- define "influxdb3-enterprise.licenseChecksum" -}}
+{{- if .Values.license.existingSecret -}}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace .Values.license.existingSecret) -}}
+{{- if $secret -}}{{ toYaml $secret.data | sha256sum }}{{- else -}}""{{- end -}}
+{{- else -}}
+{{ include (print $.Template.BasePath "/secret-license.yaml") . | sha256sum }}
+{{- end -}}
+{{- end }}
+
+{{/*
 TLS secret name
 */}}
 {{- define "influxdb3-enterprise.tlsSecretName" -}}

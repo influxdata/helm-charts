@@ -28,6 +28,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
+        checksum/license: {{ include "influxdb3-enterprise.licenseChecksum" . }}
         {{- with .Values.compactor.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -93,6 +94,11 @@ spec:
                 --data-dir={{ .Values.objectStorage.file.dataDir }} \
               {{- end }}
                 --http-bind={{ .Values.http.bind }} \
+              {{- if .Values.tls.enabled }}
+                --tls-cert-path={{ .Values.tls.certPath }} \
+                --tls-key-path={{ .Values.tls.keyPath }} \
+                --tls-min-version={{ .Values.tls.minVersion }} \
+              {{- end }}
               {{- if .Values.auth.disableAuthz }}
                 --disable-authz={{ join "," .Values.auth.disableAuthz }} \
               {{- end }}
@@ -115,6 +121,12 @@ spec:
                 secretKeyRef:
                   name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
                   key: secret-access-key
+            - name: AWS_SESSION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+                  key: session-token
+                  optional: true
           {{- end }}
         {{- else if eq .Values.objectStorage.type "azure" }}
           {{- if or .Values.objectStorage.azure.existingSecret (and .Values.objectStorage.azure.storageAccount .Values.objectStorage.azure.accessKey) }}
@@ -130,13 +142,18 @@ spec:
                   key: access-key
           {{- end }}
         {{- end }}
-        {{- if .Values.license.email }}
             - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
                   key: license-email
-        {{- end }}
+                  optional: true
+            - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+                  key: license-file
+                  optional: true
             - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
               value: {{ .Values.license.type | quote }}
         {{- with .Values.extraEnv }}
@@ -175,18 +192,31 @@ spec:
           resources:
             {{- toYaml .Values.compactor.resources | nindent 12 }}
           {{- if eq .Values.objectStorage.type "file" }}
+          {{- end }}
+          {{- if or (eq .Values.objectStorage.type "file") (eq .Values.objectStorage.type "google") (or .Values.license.file .Values.license.existingSecret) .Values.tls.enabled .Values.extraVolumeMounts }}
           volumeMounts:
+            {{- if eq .Values.objectStorage.type "file" }}
             - name: object-storage
               mountPath: {{ .Values.objectStorage.file.dataDir }}
-          {{- end }}
-          {{- if eq .Values.objectStorage.type "google" }}
-          volumeMounts:
+            {{- end }}
+            {{- if eq .Values.objectStorage.type "google" }}
             - name: google-service-account
               mountPath: /var/secrets/google
               readOnly: true
-          {{- end }}
-          {{- with .Values.extraVolumeMounts }}
-          {{- toYaml . | nindent 8 }}
+            {{- end }}
+            {{- if or .Values.license.file .Values.license.existingSecret }}
+            - name: license
+              mountPath: /etc/influxdb/license
+              readOnly: true
+            {{- end }}
+            {{- if .Values.tls.enabled }}
+            - name: tls
+              mountPath: /etc/influxdb/tls
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- end }}
       {{- with .Values.compactor.nodeSelector }}
       nodeSelector:
@@ -200,22 +230,38 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if eq .Values.objectStorage.type "file" }}
+      {{- if or (eq .Values.objectStorage.type "file") (eq .Values.objectStorage.type "google") (or .Values.license.file .Values.license.existingSecret) .Values.tls.enabled .Values.extraVolumes }}
       volumes:
+        {{- if eq .Values.objectStorage.type "file" }}
         - name: object-storage
           persistentVolumeClaim:
             claimName: {{ include "influxdb3-enterprise.fullname" . }}-object-storage
-      {{- end }}
-      {{- if eq .Values.objectStorage.type "google" }}
-      volumes:
+        {{- end }}
+        {{- if eq .Values.objectStorage.type "google" }}
         - name: google-service-account
           secret:
             secretName: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
             items:
               - key: service-account.json
                 path: service-account.json
+        {{- end }}
+        {{- if or .Values.license.file .Values.license.existingSecret }}
+        - name: license
+          secret:
+            secretName: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+            optional: true
+            items:
+              - key: license-file
+                path: license
+        {{- end }}
+        {{- if .Values.tls.enabled }}
+        - name: tls
+          secret:
+            secretName: {{ include "influxdb3-enterprise.tlsSecretName" . }}
+            optional: true
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
-      {{- with .Values.extraVolumes }}
-      {{- toYaml . | nindent 6 }}
-      {{- end }}
-{{- end }}
+  {{- end }}

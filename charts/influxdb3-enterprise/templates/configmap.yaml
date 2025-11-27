@@ -15,7 +15,7 @@ data:
   # Object storage configuration
   object-store-type: {{ .Values.objectStorage.type | quote }}
   bucket: {{ .Values.objectStorage.bucket | quote }}
-  {{- if .Values.objectStorage.s3.enabled }}
+  {{- if eq .Values.objectStorage.type "s3" }}
   aws-region: {{ .Values.objectStorage.s3.region | quote }}
   {{- if .Values.objectStorage.s3.endpoint }}
   aws-endpoint: {{ .Values.objectStorage.s3.endpoint | quote }}
