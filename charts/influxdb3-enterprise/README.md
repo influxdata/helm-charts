@@ -469,6 +469,10 @@ logging:
 | `image.registry` | Image registry | `docker.io` |
 | `image.repository` | Image repository | `influxdb` |
 | `image.tag` | Image tag | `3-enterprise` |
+| `license.type` | trial, home, or commercial | `trial` |
+| `license.email` | Email for trial/home | `""` |
+| `license.file` | Path to license file (commercial) | `""` |
+| `license.existingSecret` | Secret with `license-email` or `license-file` | `""` |
 
 ### Object Storage Parameters
 
@@ -478,6 +482,15 @@ logging:
 | `objectStorage.bucket` | Bucket/container name | `influxdb3-enterprise-data` |
 | `objectStorage.s3.region` | AWS region | `us-east-1` |
 | `objectStorage.s3.endpoint` | S3 endpoint (for S3-compatible) | `""` |
+| `objectStorage.s3.accessKeyId` / `secretAccessKey` | S3 credentials | `""` |
+| `objectStorage.s3.sessionToken` | Optional session token | `""` |
+| `objectStorage.s3.credentialsFile` | Path to credentials file | `""` |
+| `objectStorage.s3.existingSecret` | Secret with `access-key-id`/`secret-access-key` | `""` |
+| `objectStorage.azure.storageAccount` | Azure storage account | `""` |
+| `objectStorage.azure.accessKey` | Azure access key | `""` |
+| `objectStorage.azure.existingSecret` | Secret with `storage-account`/`access-key` | `""` |
+| `objectStorage.google.serviceAccountJson` | GCS service account JSON (string) | `""` |
+| `objectStorage.google.existingSecret` | Secret with `service-account.json` | `""` |
 
 ### Component Parameters
 
@@ -487,6 +500,16 @@ logging:
 | `querier.replicas` | Number of querier replicas | `2` |
 | `compactor.replicas` | Number of compactor replicas | `1` (fixed) |
 | `processingEngine.enabled` | Enable Processing Engine | `false` |
+| `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
+| `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
+
+### TLS Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `tls.enabled` | Enable TLS for services | `false` |
+| `tls.cert` / `tls.key` | Inline cert/key (used if no existingSecret) | `""` |
+| `tls.existingSecret` | Secret with `tls.crt`/`tls.key` | `""` |
 
 See `values.yaml` for complete parameter list.
 
