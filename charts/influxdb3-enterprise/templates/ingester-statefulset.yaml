@@ -70,8 +70,15 @@ spec:
               {{- end }}
               {{- else if eq .Values.objectStorage.type "azure" }}
                 --bucket={{ .Values.objectStorage.bucket }} \
+              {{- if .Values.objectStorage.azure.endpoint }}
+                --azure-endpoint={{ .Values.objectStorage.azure.endpoint }} \
+              {{- end }}
+              {{- if .Values.objectStorage.azure.allowHttp }}
+                --azure-allow-http \
+              {{- end }}
               {{- else if eq .Values.objectStorage.type "google" }}
                 --bucket={{ .Values.objectStorage.bucket }} \
+                --google-service-account=/var/secrets/google/service-account.json \
               {{- else if eq .Values.objectStorage.type "file" }}
                 --data-dir={{ .Values.objectStorage.file.dataDir }} \
               {{- end }}
@@ -99,6 +106,19 @@ spec:
                 secretKeyRef:
                   name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
                   key: secret-access-key
+          {{- end }}
+        {{- else if eq .Values.objectStorage.type "azure" }}
+          {{- if or .Values.objectStorage.azure.existingSecret (and .Values.objectStorage.azure.storageAccount .Values.objectStorage.azure.accessKey) }}
+            - name: AZURE_STORAGE_ACCOUNT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+                  key: storage-account
+            - name: AZURE_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+                  key: access-key
           {{- end }}
         {{- end }}
         {{- if .Values.license.email }}
@@ -158,6 +178,11 @@ spec:
             - name: object-storage
               mountPath: {{ .Values.objectStorage.file.dataDir }}
           {{- end }}
+          {{- if eq .Values.objectStorage.type "google" }}
+            - name: google-service-account
+              mountPath: /var/secrets/google
+              readOnly: true
+          {{- end }}
           {{- with .Values.extraVolumeMounts }}
           {{- toYaml . | nindent 8 }}
           {{- end }}
@@ -178,6 +203,14 @@ spec:
         - name: object-storage
           persistentVolumeClaim:
             claimName: {{ include "influxdb3-enterprise.fullname" . }}-object-storage
+      {{- end }}
+      {{- if eq .Values.objectStorage.type "google" }}
+        - name: google-service-account
+          secret:
+            secretName: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+            items:
+              - key: service-account.json
+                path: service-account.json
       {{- end }}
       {{- with .Values.extraVolumes }}
       {{- toYaml . | nindent 6 }}

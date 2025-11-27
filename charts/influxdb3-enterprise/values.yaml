@@ -72,25 +72,31 @@ objectStorage:
     existingSecret: ""
 
   # Azure Blob Storage
-  # Uncomment to use Azure instead of S3
+  # To use Azure, set objectStorage.type: azure
   azure:
-    enabled: false
-  #   storageAccount: ""
-  #   accessKey: ""
-  #   endpoint: ""                  # Optional, Azure Blob Storage endpoint
-  #   allowHttp: false
-  #   # Existing secret (alternative)
-  #   existingSecret: ""
+    # Storage account name (visible in Azure portal under "All Services > Storage accounts")
+    storageAccount: ""
+    # Access key (from Storage account's "Settings > Access keys")
+    accessKey: ""
+    # Optional: Azure Blob Storage endpoint URL (auto-determined if not set)
+    endpoint: ""
+    # Optional: Allow HTTP (non-TLS) connections
+    allowHttp: false
+    # Existing secret (alternative to specifying credentials here)
+    # If specified, the chart will use this secret instead of creating one
+    # Secret should contain keys: storage-account, access-key
+    existingSecret: ""
 
   # Google Cloud Storage
-  # Uncomment to use GCS instead of S3
+  # To use GCS, set objectStorage.type: google
   google:
-    enabled: false
-  #   # Service account JSON content or path
-  #   serviceAccountJson: ""
-  #   # Or provide as existing secret
-  #   existingSecret: ""
-  #   secretKey: "service-account.json"
+    # Service account JSON credentials (full JSON content as string)
+    # This will be mounted as a file at /var/secrets/google/service-account.json
+    serviceAccountJson: ""
+    # Existing secret (alternative to specifying credentials here)
+    # If specified, the chart will use this secret instead of creating one
+    # Secret should contain key: service-account.json
+    existingSecret: ""
 
   # Local filesystem (for development/testing only)
   # NOT RECOMMENDED for production - use cloud object storage
