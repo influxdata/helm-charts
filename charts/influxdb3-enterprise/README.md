@@ -530,6 +530,23 @@ logging:
 | `networkPolicy.egress.toDns` | Allow DNS | `true` |
 | `networkPolicy.egress.toObjectStorage` | Allow object storage | `true` |
 
+### Persistence Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `ingester.persistence.enabled` | Enable WAL PVC | `true` |
+| `ingester.persistence.size` | WAL PVC size | `10Gi` |
+| `processingEngine.persistence.enabled` | Enable plugins PVC | `true` |
+| `objectStorage.type` `file` | Always creates PVC for file storage | — |
+
+### Monitoring Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `serviceMonitor.enabled` | Create ServiceMonitor | `false` |
+| `serviceMonitor.namespace` | ServiceMonitor namespace | `""` (release ns) |
+| `serviceMonitor.interval` | Scrape interval | `30s` |
+
 See `values.yaml` for complete parameter list.
 
 ## License
