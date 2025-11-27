@@ -117,6 +117,137 @@ TLS secret name
 {{- end }}
 
 {{/*
+HTTP/TLS/Auth environment (shared across components)
+*/}}
+{{- define "influxdb3-enterprise.httpEnv" -}}
+- name: INFLUXDB3_HTTP_BIND_ADDR
+  value: {{ .Values.http.bind | quote }}
+{{- if .Values.tls.enabled }}
+- name: INFLUXDB3_TLS_CERT_PATH
+  value: {{ .Values.tls.certPath | quote }}
+- name: INFLUXDB3_TLS_KEY_PATH
+  value: {{ .Values.tls.keyPath | quote }}
+- name: INFLUXDB3_TLS_MIN_VERSION
+  value: {{ .Values.tls.minVersion | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Cluster environment (shared across components)
+*/}}
+{{- define "influxdb3-enterprise.clusterEnv" -}}
+{{- if .Values.cluster.replicationInterval }}
+- name: INFLUXDB3_ENTERPRISE_REPLICATION_INTERVAL
+  value: {{ .Values.cluster.replicationInterval | quote }}
+{{- end }}
+{{- if .Values.cluster.catalogSyncInterval }}
+- name: INFLUXDB3_ENTERPRISE_CATALOG_SYNC_INTERVAL
+  value: {{ .Values.cluster.catalogSyncInterval | quote }}
+{{- end }}
+{{- if .Values.auth.disableAuthz }}
+- name: INFLUXDB3_DISABLE_AUTHZ
+  value: {{ join "," .Values.auth.disableAuthz | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Object storage environment (shared across components)
+*/}}
+{{- define "influxdb3-enterprise.objectStoreEnv" -}}
+- name: INFLUXDB3_OBJECT_STORE
+  value: {{ .Values.objectStorage.type | quote }}
+{{- if eq .Values.objectStorage.type "file" }}
+- name: INFLUXDB3_DB_DIR
+  value: {{ .Values.objectStorage.file.dataDir | quote }}
+{{- else }}
+- name: INFLUXDB3_BUCKET
+  value: {{ .Values.objectStorage.bucket | quote }}
+{{- if .Values.objectStorage.connectionLimit }}
+- name: OBJECT_STORE_CONNECTION_LIMIT
+  value: {{ .Values.objectStorage.connectionLimit | quote }}
+{{- end }}
+{{- if hasKey .Values.objectStorage "http2Only" }}
+- name: OBJECT_STORE_HTTP2_ONLY
+  value: {{ ternary "true" "false" .Values.objectStorage.http2Only | quote }}
+{{- end }}
+{{- if eq .Values.objectStorage.type "s3" }}
+- name: AWS_DEFAULT_REGION
+  value: {{ .Values.objectStorage.s3.region | quote }}
+{{- if .Values.objectStorage.s3.endpoint }}
+- name: AWS_ENDPOINT
+  value: {{ .Values.objectStorage.s3.endpoint | quote }}
+{{- end }}
+{{- if .Values.objectStorage.s3.allowHttp }}
+- name: AWS_ALLOW_HTTP
+  value: "true"
+{{- end }}
+  {{- if or .Values.objectStorage.s3.existingSecret (and .Values.objectStorage.s3.accessKeyId .Values.objectStorage.s3.secretAccessKey) }}
+- name: AWS_ACCESS_KEY_ID
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      key: access-key-id
+- name: AWS_SECRET_ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      key: secret-access-key
+- name: AWS_SESSION_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      key: session-token
+      optional: true
+  {{- end }}
+{{- else if eq .Values.objectStorage.type "azure" }}
+{{- if .Values.objectStorage.azure.endpoint }}
+- name: AZURE_ENDPOINT
+  value: {{ .Values.objectStorage.azure.endpoint | quote }}
+{{- end }}
+{{- if .Values.objectStorage.azure.allowHttp }}
+- name: AZURE_ALLOW_HTTP
+  value: "true"
+{{- end }}
+  {{- if or .Values.objectStorage.azure.existingSecret (and .Values.objectStorage.azure.storageAccount .Values.objectStorage.azure.accessKey) }}
+- name: AZURE_STORAGE_ACCOUNT
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      key: storage-account
+- name: AZURE_STORAGE_ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      key: access-key
+  {{- end }}
+{{- else if eq .Values.objectStorage.type "google" }}
+- name: GOOGLE_SERVICE_ACCOUNT
+  value: "/var/secrets/google/service-account.json"
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+License environment (shared across components)
+*/}}
+{{- define "influxdb3-enterprise.licenseEnv" -}}
+- name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+      key: license-email
+      optional: true
+- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+      key: license-file
+      optional: true
+- name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
+  value: {{ .Values.license.type | quote }}
+{{- end }}
+
+{{/*
 Image reference
 */}}
 {{- define "influxdb3-enterprise.image" -}}

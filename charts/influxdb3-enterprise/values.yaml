@@ -8,9 +8,9 @@ cluster:
   id: "cluster-01"
 
   # Cluster management settings for multi-node coordination
-  replicationInterval: "250ms"      # Data replication interval between nodes
-  catalogSyncInterval: "10s"        # Catalog synchronization interval
-  waitForRunningIngestor: "10s"    # Startup wait time for ingestor
+#  replicationInterval: "250ms"      # Data replication interval between nodes
+#  catalogSyncInterval: "10s"        # Catalog synchronization interval
+#  waitForRunningIngestor: "10s"    # Startup wait time for ingestor
 
 # Naming overrides
 nameOverride: ""
@@ -41,10 +41,8 @@ objectStorage:
   bucket: "influxdb3-enterprise-data"
 
   # Connection settings
-  connectionLimit: 16               # Max connections to object store
-  http2Only: false                  # Force HTTP/2 connections
-  maxRetries: null                  # Max retry attempts (null = default)
-  retryTimeout: null                # Max retry duration (null = default)
+  # connectionLimit: 16             # Max connections to object store (optional)
+  # http2Only: false                # Force HTTP/2 connections (optional)
 
   # S3 and S3-compatible storage (MinIO, etc.)
   s3:
@@ -117,7 +115,6 @@ objectStorage:
 
   # In-memory storage (for testing only, no persistence)
   # memory:
-  #   enabled: false
   #   throttled: false              # Set true to simulate cloud latency
 
 # ============================================================================

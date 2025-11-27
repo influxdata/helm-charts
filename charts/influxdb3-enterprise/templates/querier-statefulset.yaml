@@ -55,97 +55,19 @@ spec:
               exec influxdb3 serve \
                 --mode=query \
                 --node-id=$(hostname) \
-                --cluster-id={{ .Values.cluster.id }} \
                 --num-io-threads={{ .Values.querier.threads.io }} \
                 --datafusion-num-threads={{ .Values.querier.threads.datafusion }} \
-                --exec-mem-pool-bytes={{ .Values.querier.threads.memPoolBytes }} \
-                --object-store={{ .Values.objectStorage.type }} \
-              {{- if eq .Values.objectStorage.type "s3" }}
-                --bucket={{ .Values.objectStorage.bucket }} \
-                --aws-default-region={{ .Values.objectStorage.s3.region }} \
-              {{- if .Values.objectStorage.s3.endpoint }}
-                --aws-endpoint={{ .Values.objectStorage.s3.endpoint }} \
-              {{- end }}
-              {{- if .Values.objectStorage.s3.allowHttp }}
-                --aws-allow-http \
-              {{- end }}
-              {{- else if eq .Values.objectStorage.type "azure" }}
-                --bucket={{ .Values.objectStorage.bucket }} \
-              {{- if .Values.objectStorage.azure.endpoint }}
-                --azure-endpoint={{ .Values.objectStorage.azure.endpoint }} \
-              {{- end }}
-              {{- if .Values.objectStorage.azure.allowHttp }}
-                --azure-allow-http \
-              {{- end }}
-              {{- else if eq .Values.objectStorage.type "google" }}
-                --bucket={{ .Values.objectStorage.bucket }} \
-                --google-service-account=/var/secrets/google/service-account.json \
-              {{- else if eq .Values.objectStorage.type "file" }}
-                --data-dir={{ .Values.objectStorage.file.dataDir }} \
-              {{- end }}
-                --http-bind={{ .Values.http.bind }} \
-              {{- if .Values.tls.enabled }}
-                --tls-cert-path={{ .Values.tls.certPath }} \
-                --tls-key-path={{ .Values.tls.keyPath }} \
-                --tls-min-version={{ .Values.tls.minVersion }} \
-              {{- end }}
-              {{- if .Values.auth.disableAuthz }}
-                --disable-authz={{ join "," .Values.auth.disableAuthz }} \
-              {{- end }}
-                --catalog-sync-interval={{ .Values.cluster.catalogSyncInterval }}
+                --exec-mem-pool-bytes={{ .Values.querier.threads.memPoolBytes }}
           env:
             - name: INFLUXDB3_ENTERPRISE_CLUSTER_ID
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "influxdb3-enterprise.fullname" . }}-config
                   key: cluster-id
-        {{- if eq .Values.objectStorage.type "s3" }}
-          {{- if or .Values.objectStorage.s3.existingSecret (and .Values.objectStorage.s3.accessKeyId .Values.objectStorage.s3.secretAccessKey) }}
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
-                  key: access-key-id
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
-                  key: secret-access-key
-            - name: AWS_SESSION_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
-                  key: session-token
-                  optional: true
-          {{- end }}
-        {{- else if eq .Values.objectStorage.type "azure" }}
-          {{- if or .Values.objectStorage.azure.existingSecret (and .Values.objectStorage.azure.storageAccount .Values.objectStorage.azure.accessKey) }}
-            - name: AZURE_STORAGE_ACCOUNT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
-                  key: storage-account
-            - name: AZURE_STORAGE_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
-                  key: access-key
-          {{- end }}
-        {{- end }}
-            - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
-                  key: license-email
-                  optional: true
-            - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
-                  key: license-file
-                  optional: true
-            - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
-              value: {{ .Values.license.type | quote }}
+            {{- include "influxdb3-enterprise.clusterEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.httpEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.objectStoreEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
         {{- with .Values.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
