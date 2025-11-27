@@ -27,12 +27,13 @@ spec:
   {{- end }}
   rules:
     {{- range .Values.ingress.write.hosts }}
+    {{- $paths := .paths | default (list (dict "path" "/api/v3/write_lp" "pathType" "Prefix") (dict "path" "/api/v2/write" "pathType" "Prefix") (dict "path" "/write" "pathType" "Prefix")) }}
     - host: {{ .host | quote }}
       http:
         paths:
-          {{- range .paths }}
+          {{- range $paths }}
           - path: {{ .path }}
-            pathType: {{ .pathType }}
+            pathType: {{ .pathType | default "Prefix" }}
             backend:
               service:
                 name: {{ include "influxdb3-enterprise.fullname" $ }}-ingester

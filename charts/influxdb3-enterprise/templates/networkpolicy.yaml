@@ -43,7 +43,9 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: compactor
+              app.kubernetes.io/component: ingester
       ports:
         - protocol: TCP
           port: 8181
@@ -107,7 +109,9 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: querier
+              app.kubernetes.io/component: ingester
       ports:
         - protocol: TCP
           port: 8181
@@ -148,7 +152,8 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: querier
       ports:
         - protocol: TCP
           port: 8181
@@ -212,7 +217,7 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
       ports:
         - protocol: TCP
           port: 8181
@@ -240,7 +245,8 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: querier
       ports:
         - protocol: TCP
           port: 8181
@@ -304,7 +310,8 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: querier
       ports:
         - protocol: TCP
           port: 8181
@@ -346,7 +353,8 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: processor
       ports:
         - protocol: TCP
           port: 8181
@@ -410,7 +418,8 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-            {{- include "influxdb3-enterprise.selectorLabels" . | nindent 12 }}
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: processor
       ports:
         - protocol: TCP
           port: 8181
