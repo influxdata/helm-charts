@@ -60,19 +60,39 @@ spec:
               exec influxdb3 --num-io-threads={{ .Values.compactor.threads.io }} serve \
                 --mode=compact \
                 --node-id=$(hostname) \
-                --datafusion-num-threads={{ .Values.compactor.threads.datafusion }} \
-                --compaction-gen2-duration={{ .Values.compactor.compaction.gen2Duration }} \
-                --compaction-multipliers={{ .Values.compactor.compaction.multipliers }} \
-                --compaction-max-num-files-per-plan={{ .Values.compactor.compaction.maxNumFilesPerPlan }} \
-                --compaction-cleanup-wait={{ .Values.compactor.compaction.cleanupWait }} \
-                --compaction-check-interval={{ .Values.compactor.compaction.checkInterval }} \
-                --gen1-duration={{ .Values.compactor.compaction.gen1Duration }}
+                --datafusion-num-threads={{ .Values.compactor.threads.datafusion }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
           env:
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
+            {{- with .Values.compactor.compaction }}
+            {{- if .gen2Duration }}
+            - name: INFLUXDB3_ENTERPRISE_COMPACTION_GEN2_DURATION
+              value: {{ .gen2Duration | quote }}
+            {{- end }}
+            {{- if .multipliers }}
+            - name: INFLUXDB3_ENTERPRISE_COMPACTION_MULTIPLIERS
+              value: {{ .multipliers | quote }}
+            {{- end }}
+            {{- if .maxNumFilesPerPlan }}
+            - name: INFLUXDB3_ENTERPRISE_COMPACTION_MAX_NUM_FILES_PER_PLAN
+              value: {{ .maxNumFilesPerPlan | quote }}
+            {{- end }}
+            {{- if .cleanupWait }}
+            - name: INFLUXDB3_ENTERPRISE_COMPACTION_CLEANUP_WAIT
+              value: {{ .cleanupWait | quote }}
+            {{- end }}
+            {{- if .checkInterval }}
+            - name: INFLUXDB3_ENTERPRISE_COMPACTION_CHECK_INTERVAL
+              value: {{ .checkInterval | quote }}
+            {{- end }}
+            {{- if .gen1Duration }}
+            - name: INFLUXDB3_GEN1_DURATION
+              value: {{ .gen1Duration | quote }}
+            {{- end }}
+            {{- end }}
             {{- with .Values.compactor.memory }}
             {{- if .execMemPoolBytes }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES

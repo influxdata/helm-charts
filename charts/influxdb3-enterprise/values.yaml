@@ -381,13 +381,13 @@ compactor:
   #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # Compaction settings
-  compaction:
-    gen1Duration: "10m"             # 1m, 5m, or 10m
-    gen2Duration: "20m"
-    multipliers: "3,4,6,5"          # Compaction level multipliers
-    maxNumFilesPerPlan: 500
-    cleanupWait: "10m"
-    checkInterval: "10s"
+  # compaction:
+  #   gen1Duration: "10m"             # 1m, 5m, or 10m
+  #   gen2Duration: "20m"
+  #   multipliers: "3,4,6,5"          # Compaction level multipliers
+  #   maxNumFilesPerPlan: 500
+  #   cleanupWait: "10m"
+  #   checkInterval: "10s"
 
   # No persistent storage needed for compactor
 

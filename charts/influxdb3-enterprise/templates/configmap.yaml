@@ -18,17 +18,17 @@ data:
   INFLUXDB3_ENTERPRISE_WAIT_FOR_RUNNING_INGESTOR: {{ .Values.cluster.waitForRunningIngestor | quote }}
   {{- end }}
 
-  # move to Security
-  {{- if .Values.security.auth.disableAuthz }}
-  INFLUXDB3_DISABLE_AUTHZ: {{ join "," .Values.security.auth.disableAuthz | quote }}
+  # Security
+  {{- if .Values.security.tls.enabled }}
+  INFLUXDB3_TLS_CERT: {{ .Values.security.tls.certPath | quote }}
+  INFLUXDB3_TLS_KEY: {{ .Values.security.tls.keyPath | quote }}
+  INFLUXDB3_TLS_MINIMUM_VERSION: {{ .Values.security.tls.minVersion | quote }}
   {{- end }}
   {{- if .Values.security.auth.disabled }}
   INFLUXDB3_START_WITHOUT_AUTH: {{ ternary "true" "false" .Values.security.auth.disabled | quote }}
   {{- end }}
-  {{- with .Values.security.auth.adminTokenRecovery }}
-  {{- if .httpBind }}
-  INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND: {{ .httpBind | quote }}
-  {{- end }}
+  {{- if .Values.security.auth.disableAuthz }}
+  INFLUXDB3_DISABLE_AUTHZ: {{ join "," .Values.security.auth.disableAuthz | quote }}
   {{- end }}
 
   # HTTP
@@ -40,11 +40,6 @@ data:
   INFLUXDB3_MAX_HTTP_REQUEST_SIZE: {{ .maxRequestSize | int | quote }}
   {{- end }}
   {{- end }}
-
-  # TLS configuration TODO move to Security
-  INFLUXDB3_TLS_CERT: {{ .Values.security.tls.certPath | quote }}
-  INFLUXDB3_TLS_KEY: {{ .Values.security.tls.keyPath | quote }}
-  INFLUXDB3_TLS_MINIMUM_VERSION: {{ .Values.security.tls.minVersion | quote }}
 
   # Object storage (non-secret)
   INFLUXDB3_OBJECT_STORE: {{ .Values.objectStorage.type | quote }}

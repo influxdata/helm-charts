@@ -298,24 +298,28 @@ Object storage environment (shared across components)
 {{- end }}
 {{- end }}
 
-{{/*
+{{/*  
 License environment (shared across components)
 */}}
 {{- define "influxdb3-enterprise.licenseEnv" -}}
+{{- if or .Values.license.existingSecret (or .Values.license.email .Values.license.file) }}
+{{- if .Values.license.email }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
   valueFrom:
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
-      optional: true
+{{- end }}
+{{- if .Values.license.file }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
   valueFrom:
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-file
-      optional: true
+{{- end }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
   value: {{ .Values.license.type | quote }}
+{{- end }}
 {{- end }}
 
 {{/*

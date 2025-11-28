@@ -63,11 +63,25 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
-            - configMapRef:
-                name: {{ include "influxdb3-enterprise.fullname" . }}-processor-config
           env:
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
+            {{- with .Values.processingEngine.pluginDir }}
+            - name: INFLUXDB3_PLUGIN_DIR
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.processingEngine.pluginRepo }}
+            - name: INFLUXDB3_PLUGIN_REPO
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.processingEngine.virtualEnvLocation }}
+            - name: VIRTUAL_ENV
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.processingEngine.packageManager }}
+            - name: INFLUXDB3_PACKAGE_MANAGER
+              value: {{ . | quote }}
+            {{- end }}
             {{- with .Values.processingEngine.memory }}
             {{- if .execMemPoolBytes }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
