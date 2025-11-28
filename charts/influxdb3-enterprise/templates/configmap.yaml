@@ -34,9 +34,11 @@ data:
   snapshotted-wal-files-to-keep: {{ .Values.wal.snapshotFilesToKeep | quote }}
 
   # Caching configuration
-  parquet-mem-cache-size: {{ .Values.caching.parquetMemCacheSize | quote }}
-  parquet-mem-cache-query-path-duration: {{ .Values.caching.parquetMemCacheQueryPathDuration | quote }}
-  preemptive-cache-age: {{ .Values.caching.preemptiveCacheAge | quote }}
+  {{- with .Values.caching }}
+  {{- if .parquetMemCacheSize }}parquet-mem-cache-size: {{ .parquetMemCacheSize | quote }}{{ end }}
+  {{- if .parquetMemCacheQueryPathDuration }}parquet-mem-cache-query-path-duration: {{ .parquetMemCacheQueryPathDuration | quote }}{{ end }}
+  {{- if .preemptiveCacheAge }}preemptive-cache-age: {{ .preemptiveCacheAge | quote }}{{ end }}
+  {{- end }}
 
   # Resource limits
   num-database-limit: {{ .Values.resourceLimits.numDatabases | quote }}

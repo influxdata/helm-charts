@@ -544,7 +544,7 @@ wal:
   replayFailOnError: false
 
 # Caching configuration
-caching: {}
+# caching:
   # Parquet file caching
   # parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
   # parquetMemCacheQueryPathDuration: "5h"
