@@ -68,6 +68,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
+            - configMapRef:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-processor-config
           env:
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}

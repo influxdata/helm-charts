@@ -437,8 +437,8 @@ processingEngine:
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
 
   # Plugin configuration
-  pluginDir: "/plugins"
-  pluginRepo: ""                    # Custom plugin repository URL (default: https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/)
+  pluginDir: ""                     # Local directory that contains Python plugins and their test files.
+  pluginRepo: "https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/"  # URL of remote plugin repository
   packageManager: "discover"        # discover, pip, uv, or disabled
 
   # Persistent storage for plugins
