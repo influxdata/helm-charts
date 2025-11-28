@@ -17,6 +17,8 @@ data:
   {{- if .Values.cluster.waitForRunningIngestor }}
   INFLUXDB3_ENTERPRISE_WAIT_FOR_RUNNING_INGESTOR: {{ .Values.cluster.waitForRunningIngestor | quote }}
   {{- end }}
+
+  # move to Security
   {{- if .Values.security.auth.disableAuthz }}
   INFLUXDB3_DISABLE_AUTHZ: {{ join "," .Values.security.auth.disableAuthz | quote }}
   {{- end }}

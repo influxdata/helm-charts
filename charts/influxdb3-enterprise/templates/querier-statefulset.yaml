@@ -55,14 +55,23 @@ spec:
               exec influxdb3 --num-io-threads={{ .Values.querier.threads.io }} serve \
                 --mode=query \
                 --node-id=$(hostname) \
-                --datafusion-num-threads={{ .Values.querier.threads.datafusion }} \
-                --exec-mem-pool-bytes={{ .Values.querier.threads.memPoolBytes }}
+                --datafusion-num-threads={{ .Values.querier.threads.datafusion }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
           env:
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
+            {{- with .Values.querier.memory }}
+            {{- if .execMemPoolBytes }}
+            - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
+              value: {{ .execMemPoolBytes | quote }}
+            {{- end }}
+            {{- if .forceSnapshotMemThreshold }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
+              value: {{ .forceSnapshotMemThreshold | quote }}
+            {{- end }}
+            {{- end }}
         {{- with .Values.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

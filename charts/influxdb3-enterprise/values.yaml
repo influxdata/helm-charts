@@ -204,8 +204,12 @@ ingester:
   threads:
     io: 8                           # For line protocol parsing
     datafusion: 16                  # For WAL snapshots
-    memPoolBytes: "60%"             # Memory pool allocation
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+
+  # Memory tuning (per-component)
+  # memory:
+  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
+  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # Write-Ahead Log (WAL) configuration
   #wal:
@@ -289,8 +293,12 @@ querier:
   threads:
     io: 4                           # Minimal for HTTP requests
     datafusion: 20                  # Maximum for query processing
-    memPoolBytes: "80%"             # More memory for aggregations
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+
+  # Memory tuning (per-component)
+  # memory:
+  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
+  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # No persistent storage needed for queriers
 
@@ -367,6 +375,11 @@ compactor:
     datafusion: 24                  # Maximum for sort/merge operations
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
 
+  # Memory tuning (per-component)
+  # memory:
+  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
+  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+
   # Compaction settings
   compaction:
     gen1Duration: "10m"             # 1m, 5m, or 10m
@@ -435,6 +448,11 @@ processingEngine:
     io: 4
     datafusion: 12
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+
+  # Memory tuning (per-component)
+  # memory:
+  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
+  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # Plugin configuration
   # pluginDir: ""                     # Local directory that contains Python plugins and their test files.
