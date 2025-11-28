@@ -544,26 +544,26 @@ wal:
   replayFailOnError: false
 
 # Caching configuration
-caching:
+caching: {}
   # Parquet file caching
-  parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
-  parquetMemCacheQueryPathDuration: "5h"
-  parquetMemCachePrunePercentage: 0.1
-  parquetMemCachePruneInterval: "1s"
-  disableParquetMemCache: false
-  preemptiveCacheAge: "3d"
+  # parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
+  # parquetMemCacheQueryPathDuration: "5h"
+  # parquetMemCachePrunePercentage: 0.1
+  # parquetMemCachePruneInterval: "1s"
+  # disableParquetMemCache: false
+  # preemptiveCacheAge: "3d"
 
   # Last value cache
-  lastValueCacheDisableFromHistory: false
-  lastCacheEvictionInterval: "10s"
+  # lastValueCacheDisableFromHistory: false
+  # lastCacheEvictionInterval: "10s"
 
   # Distinct value cache
-  distinctValueCacheDisableFromHistory: false
-  distinctCacheEvictionInterval: "10s"
+  # distinctValueCacheDisableFromHistory: false
+  # distinctCacheEvictionInterval: "10s"
 
   # Table index cache
-  tableIndexCacheMaxEntries: 1000
-  tableIndexCacheConcurrencyLimit: 8
+  # tableIndexCacheMaxEntries: 1000
+  # tableIndexCacheConcurrencyLimit: 8
 
 # Resource limits
 resourceLimits:

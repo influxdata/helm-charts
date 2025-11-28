@@ -162,6 +162,62 @@ Cluster environment (shared across components)
 {{- end }}
 
 {{/*
+Caching environment (shared across components)
+*/}}
+{{- define "influxdb3-enterprise.cachingEnv" -}}
+{{- with .Values.caching }}
+  {{- if .parquetMemCacheSize }}
+- name: INFLUXDB3_PARQUET_MEM_CACHE_SIZE
+  value: {{ .parquetMemCacheSize | quote }}
+  {{- end }}
+  {{- if .parquetMemCacheQueryPathDuration }}
+- name: INFLUXDB3_PARQUET_MEM_CACHE_QUERY_PATH_DURATION
+  value: {{ .parquetMemCacheQueryPathDuration | quote }}
+  {{- end }}
+  {{- if .parquetMemCachePrunePercentage }}
+- name: INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE
+  value: {{ .parquetMemCachePrunePercentage | quote }}
+  {{- end }}
+  {{- if .parquetMemCachePruneInterval }}
+- name: INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_INTERVAL
+  value: {{ .parquetMemCachePruneInterval | quote }}
+  {{- end }}
+  {{- if hasKey . "disableParquetMemCache" }}
+- name: INFLUXDB3_DISABLE_PARQUET_MEM_CACHE
+  value: {{ ternary "true" "false" .disableParquetMemCache | quote }}
+  {{- end }}
+  {{- if .preemptiveCacheAge }}
+- name: INFLUXDB3_PREEMPTIVE_CACHE_AGE
+  value: {{ .preemptiveCacheAge | quote }}
+  {{- end }}
+  {{- if hasKey . "lastValueCacheDisableFromHistory" }}
+- name: INFLUXDB3_ENTERPRISE_LAST_VALUE_CACHE_DISABLE_FROM_HISTORY
+  value: {{ ternary "true" "false" .lastValueCacheDisableFromHistory | quote }}
+  {{- end }}
+  {{- if .lastCacheEvictionInterval }}
+- name: INFLUXDB3_LAST_CACHE_EVICTION_INTERVAL
+  value: {{ .lastCacheEvictionInterval | quote }}
+  {{- end }}
+  {{- if hasKey . "distinctValueCacheDisableFromHistory" }}
+- name: INFLUXDB3_ENTERPRISE_DISTINCT_VALUE_CACHE_DISABLE_FROM_HISTORY
+  value: {{ ternary "true" "false" .distinctValueCacheDisableFromHistory | quote }}
+  {{- end }}
+  {{- if .distinctCacheEvictionInterval }}
+- name: INFLUXDB3_DISTINCT_CACHE_EVICTION_INTERVAL
+  value: {{ .distinctCacheEvictionInterval | quote }}
+  {{- end }}
+  {{- if .tableIndexCacheMaxEntries }}
+- name: INFLUXDB3_TABLE_INDEX_CACHE_MAX_ENTRIES
+  value: {{ .tableIndexCacheMaxEntries | quote }}
+  {{- end }}
+  {{- if .tableIndexCacheConcurrencyLimit }}
+- name: INFLUXDB3_TABLE_INDEX_CACHE_CONCURRENCY_LIMIT
+  value: {{ .tableIndexCacheConcurrencyLimit | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Object storage environment (shared across components)
 */}}
 {{- define "influxdb3-enterprise.objectStoreEnv" -}}
