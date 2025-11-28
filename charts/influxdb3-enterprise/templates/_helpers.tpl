@@ -119,47 +119,12 @@ TLS secret name
 {{/*
 HTTP/TLS/Auth environment (shared across components)
 */}}
-{{- define "influxdb3-enterprise.httpEnv" -}}
-- name: INFLUXDB3_HTTP_BIND_ADDR
-  value: {{ .Values.http.bind | quote }}
-{{- if .Values.security.tls.enabled }}
-- name: INFLUXDB3_TLS_CERT
-  value: {{ .Values.security.tls.certPath | quote }}
-- name: INFLUXDB3_TLS_KEY
-  value: {{ .Values.security.tls.keyPath | quote }}
-- name: INFLUXDB3_TLS_MINIMUM_VERSION
-  value: {{ .Values.security.tls.minVersion | quote }}
-{{- end }}
-{{- with .Values.security.auth.adminTokenRecovery }}
-{{- if .httpBind }}
-- name: INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND
-  value: {{ .httpBind | quote }}
-{{- end }}
-{{- end }}
-{{- end }}
+{{- define "influxdb3-enterprise.httpEnv" -}}{{- end }}
 
 {{/*
 Cluster environment (shared across components)
 */}}
-{{- define "influxdb3-enterprise.clusterEnv" -}}
-- name: INFLUXDB3_ENTERPRISE_CLUSTER_ID
-  valueFrom:
-    configMapKeyRef:
-      name: {{ include "influxdb3-enterprise.fullname" . }}-config
-      key: cluster-id
-{{- if .Values.cluster.replicationInterval }}
-- name: INFLUXDB3_ENTERPRISE_REPLICATION_INTERVAL
-  value: {{ .Values.cluster.replicationInterval | quote }}
-{{- end }}
-{{- if .Values.cluster.catalogSyncInterval }}
-- name: INFLUXDB3_ENTERPRISE_CATALOG_SYNC_INTERVAL
-  value: {{ .Values.cluster.catalogSyncInterval | quote }}
-{{- end }}
-{{- if .Values.security.auth.disableAuthz }}
-- name: INFLUXDB3_DISABLE_AUTHZ
-  value: {{ join "," .Values.security.auth.disableAuthz | quote }}
-{{- end }}
-{{- end }}
+{{- define "influxdb3-enterprise.clusterEnv" -}}{{- end }}
 
 {{/*
 Caching environment (shared across components)
@@ -218,6 +183,23 @@ Caching environment (shared across components)
 {{- end }}
 
 {{/*
+Logs environment (shared across components)
+*/}}
+{{- define "influxdb3-enterprise.logsEnv" -}}
+{{- $logs := default (dict) .Values.logs }}
+- name: LOG_DESTINATION
+  value: {{ default "stdout" (default ($logs.logDestination) ($logs.destination)) | quote }}
+- name: LOG_FORMAT
+  value: {{ default "full" (default ($logs.logFormat) ($logs.format)) | quote }}
+{{- if $logs.logFilter }}
+- name: LOG_FILTER
+  value: {{ $logs.logFilter | quote }}
+{{- end }}
+- name: INFLUXDB3_QUERY_LOG_SIZE
+  value: {{ default 1000 ($logs.queryLogSize) | quote }}
+{{- end }}
+
+{{/*
 Object storage environment (shared across components)
 */}}
 {{- define "influxdb3-enterprise.objectStoreEnv" -}}
@@ -264,6 +246,24 @@ Object storage environment (shared across components)
 - name: AWS_ALLOW_HTTP
   value: "true"
 {{- end }}
+{{- else if eq .Values.objectStorage.type "azure" }}
+{{- if .Values.objectStorage.azure.endpoint }}
+- name: AZURE_ENDPOINT
+  value: {{ .Values.objectStorage.azure.endpoint | quote }}
+{{- end }}
+{{- if .Values.objectStorage.azure.allowHttp }}
+- name: AZURE_ALLOW_HTTP
+  value: "true"
+{{- end }}
+{{- else if eq .Values.objectStorage.type "google" }}
+- name: GOOGLE_SERVICE_ACCOUNT
+  value: "/var/secrets/google/service-account.json"
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "influxdb3-enterprise.objectStoreSecretEnv" -}}
+{{- if eq .Values.objectStorage.type "s3" }}
   {{- if or .Values.objectStorage.s3.existingSecret (and .Values.objectStorage.s3.accessKeyId .Values.objectStorage.s3.secretAccessKey) }}
 - name: AWS_ACCESS_KEY_ID
   valueFrom:
@@ -283,14 +283,6 @@ Object storage environment (shared across components)
       optional: true
   {{- end }}
 {{- else if eq .Values.objectStorage.type "azure" }}
-{{- if .Values.objectStorage.azure.endpoint }}
-- name: AZURE_ENDPOINT
-  value: {{ .Values.objectStorage.azure.endpoint | quote }}
-{{- end }}
-{{- if .Values.objectStorage.azure.allowHttp }}
-- name: AZURE_ALLOW_HTTP
-  value: "true"
-{{- end }}
   {{- if or .Values.objectStorage.azure.existingSecret (and .Values.objectStorage.azure.storageAccount .Values.objectStorage.azure.accessKey) }}
 - name: AZURE_STORAGE_ACCOUNT
   valueFrom:
@@ -303,10 +295,6 @@ Object storage environment (shared across components)
       name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
       key: access-key
   {{- end }}
-{{- else if eq .Values.objectStorage.type "google" }}
-- name: GOOGLE_SERVICE_ACCOUNT
-  value: "/var/secrets/google/service-account.json"
-{{- end }}
 {{- end }}
 {{- end }}
 

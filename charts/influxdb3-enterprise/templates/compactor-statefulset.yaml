@@ -57,10 +57,9 @@ spec:
             - /bin/sh
             - -c
             - |
-              exec influxdb3 serve \
+              exec influxdb3 --num-io-threads={{ .Values.compactor.threads.io }} serve \
                 --mode=compact \
                 --node-id=$(hostname) \
-                --num-io-threads={{ .Values.compactor.threads.io }} \
                 --datafusion-num-threads={{ .Values.compactor.threads.datafusion }} \
                 --compaction-gen2-duration={{ .Values.compactor.compaction.gen2Duration }} \
                 --compaction-multipliers={{ .Values.compactor.compaction.multipliers }} \
@@ -68,12 +67,12 @@ spec:
                 --compaction-cleanup-wait={{ .Values.compactor.compaction.cleanupWait }} \
                 --compaction-check-interval={{ .Values.compactor.compaction.checkInterval }} \
                 --gen1-duration={{ .Values.compactor.compaction.gen1Duration }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-config
           env:
-            {{- include "influxdb3-enterprise.clusterEnv" . | nindent 12 }}
-            {{- include "influxdb3-enterprise.objectStoreEnv" . | nindent 12 }}
-            {{- include "influxdb3-enterprise.httpEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
-            {{- include "influxdb3-enterprise.cachingEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
         {{- with .Values.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

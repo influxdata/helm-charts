@@ -518,7 +518,7 @@ security:
 
   auth:
     # Disable authentication (dev/testing only - NOT RECOMMENDED)
-    enabled: true
+    disabled: false
     # Disable authorization for specific endpoints
     # Default: ["health"] - allows Kubernetes probes without authentication
     # Available endpoints: health, ping, metrics
@@ -531,9 +531,9 @@ security:
     #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
 
 # HTTP server configuration
-http:
-  bind: "0.0.0.0:8181"
-  maxRequestSize: 10485760          # 10MB default
+#http:
+#  bind: "0.0.0.0:8181"
+#  maxRequestSize: 10485760          # 10MB default
 
 # Write-Ahead Log (WAL) configuration
 wal:
@@ -566,10 +566,10 @@ wal:
   # tableIndexCacheConcurrencyLimit: 8
 
 # Resource limits
-resourceLimits:
-  numDatabases: 100                 # Max databases
-  numTables: 10000                  # Max tables across all databases
-  numColumnsPerTable: 500           # Max columns per table
+#resourceLimits:
+#  numDatabases: 100                 # Max databases
+#  numTables: 10000                  # Max tables across all databases
+#  numColumnsPerTable: 500           # Max columns per table
 
 # Data lifecycle management
 dataLifecycle:
@@ -578,25 +578,24 @@ dataLifecycle:
   deleteGracePeriod: "24h"          # Grace period before permanent deletion
   hardDeleteDefaultDuration: "90d"  # Default hard delete duration
 
-# Logging configuration
-logging:
-  filter: "info"                    # trace, debug, info, warn, error
-  destination: "stdout"             # stdout or stderr
-  format: "full"
-  queryLogSize: 1000                # Query log size
+# Logs configuration
+#logs:
+#   logFilter: ""                     # Override log filter (--log-filter)
+#   logDestination: "stdout"          # Override log destination (--log-destination)
+#   logFormat: "full"                 # Override log format (--log-format)
+#   queryLogSize: 1000                # Query log size (--query-log-size)
 
-# Tracing configuration (optional)
-tracing:
-  enabled: false
-  exporter: "jaeger"                # jaeger or none
-  jaeger:
-    agentHost: "jaeger-agent"
-    agentPort: 6831
-    serviceName: "influxdb3-enterprise"
-    traceContextHeaderName: "uber-trace-id"
-    debugName: "jaeger-debug-id"
-    tags: ""
-    maxMsgsPerSecond: 1000
+# Traces configuration (optional)
+#traces:
+#  exporter: "none"                # jaeger or none
+#  jaeger:
+#    agentHost: "0.0.0.0"
+#    agentPort: 6831
+#    serviceName: "influxdb3-enterprise"
+#    traceContextHeaderName: "uber-trace-id"
+#    debugName: "jaeger-debug-id"
+#    tags: ""
+#    maxMsgsPerSecond: 1000
 
 # DataFusion advanced configuration
 datafusion:
@@ -605,9 +604,10 @@ datafusion:
   config: ""                        # Custom key:value pairs
 
 # Telemetry
-telemetry:
-  disableUpload: false              # Set true to opt-out of InfluxData telemetry
-  endpoint: ""                      # Custom telemetry endpoint
+# Telemetry
+#telemetry:
+#  disableUpload: false              # Set true to opt-out of InfluxData telemetry
+#  endpoint: ""                      # Custom telemetry endpoint
 
 # ============================================================================
 # Ingress Configuration

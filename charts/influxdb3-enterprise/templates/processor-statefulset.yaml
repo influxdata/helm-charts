@@ -56,22 +56,21 @@ spec:
             - /bin/sh
             - -c
             - |
-              exec influxdb3 serve \
+              exec influxdb3 --num-io-threads={{ .Values.processingEngine.threads.io }} serve \
                 --mode=process \
                 --node-id=$(hostname) \
-                --num-io-threads={{ .Values.processingEngine.threads.io }} \
                 --datafusion-num-threads={{ .Values.processingEngine.threads.datafusion }} \
                 --plugin-dir={{ .Values.processingEngine.pluginDir }} \
               {{- if .Values.processingEngine.pluginRepo }}
                 --plugin-repo={{ .Values.processingEngine.pluginRepo }} \
               {{- end }}
                 --package-manager={{ .Values.processingEngine.packageManager }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-config
           env:
-            {{- include "influxdb3-enterprise.clusterEnv" . | nindent 12 }}
-            {{- include "influxdb3-enterprise.objectStoreEnv" . | nindent 12 }}
-            {{- include "influxdb3-enterprise.httpEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
-            {{- include "influxdb3-enterprise.cachingEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
         {{- with .Values.extraEnv }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
