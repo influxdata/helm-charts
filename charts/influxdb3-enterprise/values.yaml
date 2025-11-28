@@ -41,8 +41,12 @@ objectStorage:
   bucket: "influxdb3-enterprise-data"
 
   # Connection settings
-  # connectionLimit: 16             # Max connections to object store (optional)
+  # connectionLimit: 16             # Max connections to object store (doc default 16)
   # http2Only: false                # Force HTTP/2 connections (optional)
+  # http2MaxFrameSize: ""           # HTTP/2 max frame size (optional)
+  # maxRetries: ""                  # Object store retry attempts (optional)
+  # retryTimeout: ""                # Object store retry timeout (optional)
+  # cacheEndpoint: ""               # Object store cache endpoint (optional)
 
   # S3 and S3-compatible storage (MinIO, etc.)
   s3:
@@ -201,6 +205,7 @@ ingester:
     io: 8                           # For line protocol parsing
     datafusion: 16                  # For WAL snapshots
     memPoolBytes: "60%"             # Memory pool allocation
+    # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
 
   # Persistent storage for Write-Ahead Log (WAL)
   persistence:
@@ -277,6 +282,7 @@ querier:
     io: 4                           # Minimal for HTTP requests
     datafusion: 20                  # Maximum for query processing
     memPoolBytes: "80%"             # More memory for aggregations
+    # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
 
   # No persistent storage needed for queriers
 
@@ -351,6 +357,7 @@ compactor:
   threads:
     io: 2                           # Minimal IO threads
     datafusion: 24                  # Maximum for sort/merge operations
+    # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
 
   # Compaction settings
   compaction:
@@ -419,10 +426,11 @@ processingEngine:
   threads:
     io: 4
     datafusion: 12
+    # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
 
   # Plugin configuration
   pluginDir: "/plugins"
-  pluginRepo: ""                    # Custom plugin repository URL (optional)
+  pluginRepo: ""                    # Custom plugin repository URL (default: https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/)
   packageManager: "discover"        # discover, pip, uv, or disabled
 
   # Persistent storage for plugins
@@ -519,6 +527,8 @@ auth:
   # Offline token files (for automated deployments)
   adminTokenFile: ""
   permissionTokensFile: ""
+  # adminTokenRecovery:
+  #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
 
 # HTTP server configuration
 http:

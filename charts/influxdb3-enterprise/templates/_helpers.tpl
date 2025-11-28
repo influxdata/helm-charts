@@ -130,6 +130,12 @@ HTTP/TLS/Auth environment (shared across components)
 - name: INFLUXDB3_TLS_MINIMUM_VERSION
   value: {{ .Values.tls.minVersion | quote }}
 {{- end }}
+{{- with .Values.auth.adminTokenRecovery }}
+{{- if .httpBind }}
+- name: INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND
+  value: {{ .httpBind | quote }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -174,6 +180,22 @@ Object storage environment (shared across components)
 {{- if hasKey .Values.objectStorage "http2Only" }}
 - name: OBJECT_STORE_HTTP2_ONLY
   value: {{ ternary "true" "false" .Values.objectStorage.http2Only | quote }}
+{{- end }}
+{{- if .Values.objectStorage.http2MaxFrameSize }}
+- name: OBJECT_STORE_HTTP2_MAX_FRAME_SIZE
+  value: {{ .Values.objectStorage.http2MaxFrameSize | quote }}
+{{- end }}
+{{- if .Values.objectStorage.maxRetries }}
+- name: OBJECT_STORE_MAX_RETRIES
+  value: {{ .Values.objectStorage.maxRetries | quote }}
+{{- end }}
+{{- if .Values.objectStorage.retryTimeout }}
+- name: OBJECT_STORE_RETRY_TIMEOUT
+  value: {{ .Values.objectStorage.retryTimeout | quote }}
+{{- end }}
+{{- if .Values.objectStorage.cacheEndpoint }}
+- name: OBJECT_STORE_CACHE_ENDPOINT
+  value: {{ .Values.objectStorage.cacheEndpoint | quote }}
 {{- end }}
 {{- if eq .Values.objectStorage.type "s3" }}
 - name: AWS_DEFAULT_REGION
