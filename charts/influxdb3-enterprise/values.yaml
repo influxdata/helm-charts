@@ -207,6 +207,14 @@ ingester:
     memPoolBytes: "60%"             # Memory pool allocation
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
 
+  # Write-Ahead Log (WAL) configuration
+  #wal:
+  #  flushInterval: "1s"               # How often to flush WAL
+  #  snapshotSize: 600                 # WAL files per snapshot
+  #  maxWriteBufferSize: 100000        # Max buffered writes before flush
+  #  snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
+  #  replayFailOnError: false
+
   # Persistent storage for Write-Ahead Log (WAL)
   persistence:
     enabled: true
@@ -536,12 +544,6 @@ security:
 #  maxRequestSize: 10485760          # 10MB default
 
 # Write-Ahead Log (WAL) configuration
-wal:
-  flushInterval: "1s"               # How often to flush WAL
-  snapshotSize: 600                 # WAL files per snapshot
-  maxWriteBufferSize: 100000        # Max buffered writes before flush
-  snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
-  replayFailOnError: false
 
 # Caching configuration
 # caching:

@@ -1,0 +1,26 @@
+{{- if .Values.ingester.wal }}
+{{- $wal := .Values.ingester.wal }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-ingester-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+data:
+  {{- if $wal.flushInterval }}
+  INFLUXDB3_WAL_FLUSH_INTERVAL: {{ $wal.flushInterval | quote }}
+  {{- end }}
+  {{- if $wal.snapshotSize }}
+  INFLUXDB3_WAL_SNAPSHOT_SIZE: {{ $wal.snapshotSize | quote }}
+  {{- end }}
+  {{- if $wal.maxWriteBufferSize }}
+  INFLUXDB3_WAL_MAX_WRITE_BUFFER_SIZE: {{ $wal.maxWriteBufferSize | quote }}
+  {{- end }}
+  {{- if $wal.snapshotFilesToKeep }}
+  INFLUXDB3_NUM_WAL_FILES_TO_KEEP: {{ $wal.snapshotFilesToKeep | quote }}
+  {{- end }}
+  {{- if hasKey $wal "replayFailOnError" }}
+  INFLUXDB3_WAL_REPLAY_FAIL_ON_ERROR: {{ ternary "true" "false" $wal.replayFailOnError | quote }}
+  {{- end }}
+{{- end }}

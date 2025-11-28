@@ -60,6 +60,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
+            {{- if .Values.ingester.wal }}
+            - configMapRef:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-ingester-config
+            {{- end }}
           env:
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}

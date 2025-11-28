@@ -90,13 +90,6 @@ data:
   GOOGLE_SERVICE_ACCOUNT: "/var/secrets/google/service-account.json"
   {{- end }}
 
-  # WAL configuration
-  INFLUXDB3_WAL_FLUSH_INTERVAL: {{ .Values.wal.flushInterval | quote }}
-  INFLUXDB3_WAL_SNAPSHOT_SIZE: {{ .Values.wal.snapshotSize | quote }}
-  INFLUXDB3_WAL_MAX_WRITE_BUFFER_SIZE: {{ .Values.wal.maxWriteBufferSize | quote }}
-  INFLUXDB3_NUM_WAL_FILES_TO_KEEP: {{ .Values.wal.snapshotFilesToKeep | quote }}
-  INFLUXDB3_WAL_REPLAY_FAIL_ON_ERROR: {{ .Values.wal.replayFailOnError | quote }}
-
   # Caching configuration
   {{- with .Values.caching }}
   {{- if .parquetMemCacheSize }}
