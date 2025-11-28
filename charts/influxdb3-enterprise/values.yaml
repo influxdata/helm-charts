@@ -203,8 +203,13 @@ ingester:
   # Thread configuration for ingest workload
   threads:
     io: 8                           # For line protocol parsing
-    datafusion: 16                  # For WAL snapshots
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+
+  # DataFusion configuration
+  datafusion:
+    numThreads: 16                  # --datafusion-num-threads
+    maxParquetFanout: 1000          # --datafusion-max-parquet-fanout
+    config: ""                      # --datafusion-config (key:value pairs)
 
   # Memory tuning (per-component)
   # memory:
@@ -292,8 +297,13 @@ querier:
   # Thread configuration for query workload
   threads:
     io: 4                           # Minimal for HTTP requests
-    datafusion: 20                  # Maximum for query processing
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+
+  # DataFusion configuration
+  datafusion:
+    numThreads: 20                  # --datafusion-num-threads
+    maxParquetFanout: 1000          # --datafusion-max-parquet-fanout
+    config: ""                      # --datafusion-config (key:value pairs)
 
   # Memory tuning (per-component)
   # memory:
@@ -372,8 +382,13 @@ compactor:
   # Thread configuration for compaction workload
   threads:
     io: 2                           # Minimal IO threads
-    datafusion: 24                  # Maximum for sort/merge operations
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+
+  # DataFusion configuration
+  datafusion:
+    numThreads: 24                  # --datafusion-num-threads
+    maxParquetFanout: 1000          # --datafusion-max-parquet-fanout
+    config: ""                      # --datafusion-config (key:value pairs)
 
   # Memory tuning (per-component)
   # memory:
@@ -446,8 +461,13 @@ processingEngine:
   # Thread configuration
   threads:
     io: 4
-    datafusion: 12
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+
+  # DataFusion configuration
+  datafusion:
+    numThreads: 12                  # --datafusion-num-threads
+    maxParquetFanout: 1000          # --datafusion-max-parquet-fanout
+    config: ""                      # --datafusion-config (key:value pairs)
 
   # Memory tuning (per-component)
   # memory:
@@ -592,11 +612,11 @@ security:
 #  numColumnsPerTable: 500           # Max columns per table
 
 # Data lifecycle management
-dataLifecycle:
-  gen1LookbackDuration: "24h"       # Lookback for gen1 Parquet files
-  retentionCheckInterval: "30m"     # How often to check retention policies
-  deleteGracePeriod: "24h"          # Grace period before permanent deletion
-  hardDeleteDefaultDuration: "90d"  # Default hard delete duration
+#dataLifecycle:
+#  gen1LookbackDuration: "24h"       # Lookback for gen1 Parquet files
+#  retentionCheckInterval: "30m"     # How often to check retention policies
+#  deleteGracePeriod: "24h"          # Grace period before permanent deletion
+#  hardDeleteDefaultDuration: "90d"  # Default hard delete duration
 
 # Logs configuration
 #logs:
@@ -616,12 +636,6 @@ dataLifecycle:
 #    debugName: "jaeger-debug-id"
 #    tags: ""
 #    maxMsgsPerSecond: 1000
-
-# DataFusion advanced configuration
-datafusion:
-  maxParquetFanout: 1000
-  useCachedParquetLoader: false
-  config: ""                        # Custom key:value pairs
 
 # Telemetry
 # Telemetry

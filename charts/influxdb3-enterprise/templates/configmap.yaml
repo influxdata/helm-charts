@@ -141,17 +141,19 @@ data:
   {{- end }}
 
   # Data lifecycle
-  {{- if .Values.dataLifecycle.gen1LookbackDuration }}
-  INFLUXDB3_GEN1_LOOKBACK_DURATION: {{ .Values.dataLifecycle.gen1LookbackDuration | quote }}
+  {{- with .Values.dataLifecycle }}
+  {{- if .gen1LookbackDuration }}
+  INFLUXDB3_GEN1_LOOKBACK_DURATION: {{ .gen1LookbackDuration | quote }}
   {{- end }}
-  {{- if .Values.dataLifecycle.retentionCheckInterval }}
-  INFLUXDB3_RETENTION_CHECK_INTERVAL: {{ .Values.dataLifecycle.retentionCheckInterval | quote }}
+  {{- if .retentionCheckInterval }}
+  INFLUXDB3_RETENTION_CHECK_INTERVAL: {{ .retentionCheckInterval | quote }}
   {{- end }}
-  {{- if .Values.dataLifecycle.deleteGracePeriod }}
-  INFLUXDB3_DELETE_GRACE_PERIOD: {{ .Values.dataLifecycle.deleteGracePeriod | quote }}
+  {{- if .deleteGracePeriod }}
+  INFLUXDB3_DELETE_GRACE_PERIOD: {{ .deleteGracePeriod | quote }}
   {{- end }}
-  {{- if .Values.dataLifecycle.hardDeleteDefaultDuration }}
-  INFLUXDB3_HARD_DELETE_DEFAULT_DURATION: {{ .Values.dataLifecycle.hardDeleteDefaultDuration | quote }}
+  {{- if .hardDeleteDefaultDuration }}
+  INFLUXDB3_HARD_DELETE_DEFAULT_DURATION: {{ .hardDeleteDefaultDuration | quote }}
+  {{- end }}
   {{- end }}
 
   # Logs

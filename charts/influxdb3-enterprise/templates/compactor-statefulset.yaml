@@ -60,7 +60,7 @@ spec:
               exec influxdb3 --num-io-threads={{ .Values.compactor.threads.io }} serve \
                 --mode=compact \
                 --node-id=$(hostname) \
-                --datafusion-num-threads={{ .Values.compactor.threads.datafusion }}
+                --datafusion-num-threads={{ .Values.compactor.datafusion.numThreads }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
@@ -101,6 +101,16 @@ spec:
             {{- if .forceSnapshotMemThreshold }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
               value: {{ .forceSnapshotMemThreshold | quote }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.compactor.datafusion }}
+            {{- if .maxParquetFanout }}
+            - name: INFLUXDB3_DATAFUSION_MAX_PARQUET_FANOUT
+              value: {{ .maxParquetFanout | quote }}
+            {{- end }}
+            {{- if .config }}
+            - name: INFLUXDB3_DATAFUSION_CONFIG
+              value: {{ .config | quote }}
             {{- end }}
             {{- end }}
         {{- with .Values.extraEnv }}
