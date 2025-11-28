@@ -109,8 +109,8 @@ License checksum (handles existingSecret via lookup)
 TLS secret name
 */}}
 {{- define "influxdb3-enterprise.tlsSecretName" -}}
-{{- if .Values.tls.existingSecret }}
-{{- .Values.tls.existingSecret }}
+{{- if .Values.security.tls.existingSecret }}
+{{- .Values.security.tls.existingSecret }}
 {{- else }}
 {{- include "influxdb3-enterprise.fullname" . }}-tls
 {{- end }}
@@ -122,15 +122,15 @@ HTTP/TLS/Auth environment (shared across components)
 {{- define "influxdb3-enterprise.httpEnv" -}}
 - name: INFLUXDB3_HTTP_BIND_ADDR
   value: {{ .Values.http.bind | quote }}
-{{- if .Values.tls.enabled }}
+{{- if .Values.security.tls.enabled }}
 - name: INFLUXDB3_TLS_CERT
-  value: {{ .Values.tls.certPath | quote }}
+  value: {{ .Values.security.tls.certPath | quote }}
 - name: INFLUXDB3_TLS_KEY
-  value: {{ .Values.tls.keyPath | quote }}
+  value: {{ .Values.security.tls.keyPath | quote }}
 - name: INFLUXDB3_TLS_MINIMUM_VERSION
-  value: {{ .Values.tls.minVersion | quote }}
+  value: {{ .Values.security.tls.minVersion | quote }}
 {{- end }}
-{{- with .Values.auth.adminTokenRecovery }}
+{{- with .Values.security.auth.adminTokenRecovery }}
 {{- if .httpBind }}
 - name: INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND
   value: {{ .httpBind | quote }}
@@ -155,9 +155,9 @@ Cluster environment (shared across components)
 - name: INFLUXDB3_ENTERPRISE_CATALOG_SYNC_INTERVAL
   value: {{ .Values.cluster.catalogSyncInterval | quote }}
 {{- end }}
-{{- if .Values.auth.disableAuthz }}
+{{- if .Values.security.auth.disableAuthz }}
 - name: INFLUXDB3_DISABLE_AUTHZ
-  value: {{ join "," .Values.auth.disableAuthz | quote }}
+  value: {{ join "," .Values.security.auth.disableAuthz | quote }}
 {{- end }}
 {{- end }}
 
@@ -330,7 +330,7 @@ Shared volume mounts (license/TLS/GCS and user extras)
   mountPath: /etc/influxdb/license
   readOnly: true
 {{- end }}
-{{- if .Values.tls.enabled }}
+{{- if .Values.security.tls.enabled }}
 - name: tls
   mountPath: /etc/influxdb/tls
   readOnly: true
@@ -366,7 +366,7 @@ Shared volumes (license/TLS/GCS and user extras)
       - key: license-file
         path: license
 {{- end }}
-{{- if .Values.tls.enabled }}
+{{- if .Values.security.tls.enabled }}
 - name: tls
   secret:
     secretName: {{ include "influxdb3-enterprise.tlsSecretName" . }}

@@ -34,14 +34,14 @@ data:
   snapshotted-wal-files-to-keep: {{ .Values.wal.snapshotFilesToKeep | quote }}
 
   # Caching configuration
-  parquet-mem-cache-size: {{ .Values.cache.parquetMemCacheSize | quote }}
-  parquet-mem-cache-query-path-duration: {{ .Values.cache.parquetMemCacheQueryPathDuration | quote }}
-  preemptive-cache-age: {{ .Values.cache.preemptiveCacheAge | quote }}
+  parquet-mem-cache-size: {{ .Values.caching.parquetMemCacheSize | quote }}
+  parquet-mem-cache-query-path-duration: {{ .Values.caching.parquetMemCacheQueryPathDuration | quote }}
+  preemptive-cache-age: {{ .Values.caching.preemptiveCacheAge | quote }}
 
   # Resource limits
-  num-database-limit: {{ .Values.limits.numDatabases | quote }}
-  num-table-limit: {{ .Values.limits.numTables | quote }}
-  num-total-columns-per-table-limit: {{ .Values.limits.numColumnsPerTable | quote }}
+  num-database-limit: {{ .Values.resourceLimits.numDatabases | quote }}
+  num-table-limit: {{ .Values.resourceLimits.numTables | quote }}
+  num-total-columns-per-table-limit: {{ .Values.resourceLimits.numColumnsPerTable | quote }}
 
   # Data lifecycle
   gen1-lookback-duration: {{ .Values.dataLifecycle.gen1LookbackDuration | quote }}

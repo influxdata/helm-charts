@@ -501,34 +501,34 @@ processingEngine:
 # Advanced Configuration
 # ============================================================================
 
-# TLS/SSL Configuration
-tls:
-  enabled: false
-  # Inline cert/key (used only when existingSecret is not set)
-  cert: ""
-  key: ""
-  # Paths to certificate and key files (mounted via secrets)
-  certPath: "/etc/influxdb/tls/tls.crt"
-  keyPath: "/etc/influxdb/tls/tls.key"
-  minVersion: "tls-1.2"             # tls-1.2 or tls-1.3
-  # Existing secret containing TLS cert/key
-  # Secret should contain keys: tls.crt, tls.key
-  existingSecret: ""
+# Security configuration (TLS and auth)
+security:
+  tls:
+    enabled: false
+    # Inline cert/key (used only when existingSecret is not set)
+    cert: ""
+    key: ""
+    # Paths to certificate and key files (mounted via secrets)
+    certPath: "/etc/influxdb/tls/tls.crt"
+    keyPath: "/etc/influxdb/tls/tls.key"
+    minVersion: "tls-1.2"             # tls-1.2 or tls-1.3
+    # Existing secret containing TLS cert/key
+    # Secret should contain keys: tls.crt, tls.key
+    existingSecret: ""
 
-# Authentication configuration
-auth:
-  # Disable authentication (dev/testing only - NOT RECOMMENDED)
-  enabled: true
-  # Disable authorization for specific endpoints
-  # Default: ["health"] - allows Kubernetes probes without authentication
-  # Available endpoints: health, ping, metrics
-  # Set to [] to require authentication for all endpoints
-  disableAuthz: ["health"]
-  # Offline token files (for automated deployments)
-  adminTokenFile: ""
-  permissionTokensFile: ""
-  # adminTokenRecovery:
-  #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
+  auth:
+    # Disable authentication (dev/testing only - NOT RECOMMENDED)
+    enabled: true
+    # Disable authorization for specific endpoints
+    # Default: ["health"] - allows Kubernetes probes without authentication
+    # Available endpoints: health, ping, metrics
+    # Set to [] to require authentication for all endpoints
+    disableAuthz: ["health"]
+    # Offline token files (for automated deployments)
+    adminTokenFile: ""
+    permissionTokensFile: ""
+    # adminTokenRecovery:
+    #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
 
 # HTTP server configuration
 http:
@@ -542,10 +542,9 @@ wal:
   maxWriteBufferSize: 100000        # Max buffered writes before flush
   snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
   replayFailOnError: false
-  replayConcurrencyLimit: null      # null = auto (max(num_cpus, 10))
 
 # Caching configuration
-cache:
+caching:
   # Parquet file caching
   parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
   parquetMemCacheQueryPathDuration: "5h"
@@ -567,11 +566,10 @@ cache:
   tableIndexCacheConcurrencyLimit: 8
 
 # Resource limits
-limits:
+resourceLimits:
   numDatabases: 100                 # Max databases
   numTables: 10000                  # Max tables across all databases
   numColumnsPerTable: 500           # Max columns per table
-  queryFileLimit: null              # Limit Parquet files per query (null = unlimited)
 
 # Data lifecycle management
 dataLifecycle:
