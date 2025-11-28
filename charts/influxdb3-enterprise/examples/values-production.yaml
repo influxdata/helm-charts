@@ -3,7 +3,6 @@
 # - AWS S3 with multiple availability zones
 # - High availability with multiple replicas
 # - Pod Disruption Budgets for zero-downtime maintenance
-# - Health probes enabled
 # - Full monitoring and network policies
 # - TLS enabled
 
@@ -18,10 +17,6 @@ objectStorage:
 license:
   type: "commercial"
   email: "production@example.com"
-
-# Enable health probes (no token required - /health endpoint auth is disabled by default)
-probes:
-  enabled: true
 
 ingester:
   replicas: 3
@@ -162,10 +157,3 @@ cache:
 dataLifecycle:
   retentionCheckInterval: "15m"
   deleteGracePeriod: "24h"
-
-logging:
-  filter: "info"
-  queryLogSize: 10000
-
-telemetry:
-  disableUpload: false

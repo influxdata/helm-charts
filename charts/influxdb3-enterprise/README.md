@@ -446,9 +446,9 @@ kubectl logs -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i wal
 
 ### Debug Mode
 
-Enable verbose logging:
+Enable verbose logs:
 ```yaml
-logging:
+logs:
   filter: "debug"
 ```
 
