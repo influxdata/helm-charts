@@ -136,6 +136,11 @@ HTTP/TLS/Auth environment (shared across components)
 Cluster environment (shared across components)
 */}}
 {{- define "influxdb3-enterprise.clusterEnv" -}}
+- name: INFLUXDB3_ENTERPRISE_CLUSTER_ID
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "influxdb3-enterprise.fullname" . }}-config
+      key: cluster-id
 {{- if .Values.cluster.replicationInterval }}
 - name: INFLUXDB3_ENTERPRISE_REPLICATION_INTERVAL
   value: {{ .Values.cluster.replicationInterval | quote }}
@@ -248,6 +253,38 @@ License environment (shared across components)
 {{- end }}
 
 {{/*
+Probe configuration (shared across components)
+*/}}
+{{- define "influxdb3-enterprise.probes" -}}
+{{- if .Values.probes.enabled }}
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+  periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+  timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+  failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+  periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+  timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+  failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+  periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+  timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+  failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+{{- end }}
+{{- end }}
+
+{{/*
 Image reference
 */}}
 {{- define "influxdb3-enterprise.image" -}}
@@ -255,4 +292,64 @@ Image reference
 {{- $repository := .Values.image.repository }}
 {{- $tag := .Values.image.tag | default .Chart.AppVersion }}
 {{- printf "%s/%s:%s" $registry $repository $tag }}
+{{- end }}
+
+{{/*
+Shared volume mounts (license/TLS/GCS and user extras)
+*/}}
+{{- define "influxdb3-enterprise.sharedVolumeMounts" -}}
+{{- if eq .Values.objectStorage.type "google" }}
+- name: google-service-account
+  mountPath: /var/secrets/google
+  readOnly: true
+{{- end }}
+{{- if or .Values.license.file .Values.license.existingSecret }}
+- name: license
+  mountPath: /etc/influxdb/license
+  readOnly: true
+{{- end }}
+{{- if .Values.tls.enabled }}
+- name: tls
+  mountPath: /etc/influxdb/tls
+  readOnly: true
+{{- end }}
+{{- with .Values.extraVolumeMounts }}
+{{ toYaml . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Shared volumes (license/TLS/GCS and user extras)
+*/}}
+{{- define "influxdb3-enterprise.sharedVolumes" -}}
+{{- if eq .Values.objectStorage.type "file" }}
+- name: object-storage
+  persistentVolumeClaim:
+    claimName: {{ include "influxdb3-enterprise.fullname" . }}-object-storage
+{{- end }}
+{{- if eq .Values.objectStorage.type "google" }}
+- name: google-service-account
+  secret:
+    secretName: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+    items:
+      - key: service-account.json
+        path: service-account.json
+{{- end }}
+{{- if or .Values.license.file .Values.license.existingSecret }}
+- name: license
+  secret:
+    secretName: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+    optional: true
+    items:
+      - key: license-file
+        path: license
+{{- end }}
+{{- if .Values.tls.enabled }}
+- name: tls
+  secret:
+    secretName: {{ include "influxdb3-enterprise.tlsSecretName" . }}
+{{- end }}
+{{- with .Values.extraVolumes }}
+{{ toYaml . }}
+{{- end }}
 {{- end }}

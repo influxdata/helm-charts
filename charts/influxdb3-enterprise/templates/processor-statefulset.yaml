@@ -67,14 +67,9 @@ spec:
               {{- end }}
                 --package-manager={{ .Values.processingEngine.packageManager }}
           env:
-            - name: INFLUXDB3_ENTERPRISE_CLUSTER_ID
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "influxdb3-enterprise.fullname" . }}-config
-                  key: cluster-id
             {{- include "influxdb3-enterprise.clusterEnv" . | nindent 12 }}
-            {{- include "influxdb3-enterprise.httpEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.httpEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
         {{- with .Values.extraEnv }}
         {{- toYaml . | nindent 8 }}
@@ -83,32 +78,7 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
-          {{- if .Values.probes.enabled }}
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: http
-            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
-            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
-            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: http
-            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
-            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
-            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
-          startupProbe:
-            httpGet:
-              path: /health
-              port: http
-            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
-            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
-            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
-            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
-          {{- end }}
+          {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.processingEngine.resources | nindent 12 }}
           volumeMounts:
@@ -116,28 +86,7 @@ spec:
             - name: plugins
               mountPath: {{ .Values.processingEngine.pluginDir }}
           {{- end }}
-          {{- if eq .Values.objectStorage.type "file" }}
-            - name: object-storage
-              mountPath: {{ .Values.objectStorage.file.dataDir }}
-          {{- end }}
-          {{- if eq .Values.objectStorage.type "google" }}
-            - name: google-service-account
-              mountPath: /var/secrets/google
-              readOnly: true
-          {{- end }}
-          {{- if or .Values.license.file .Values.license.existingSecret }}
-            - name: license
-              mountPath: /etc/influxdb/license
-              readOnly: true
-          {{- end }}
-          {{- if .Values.tls.enabled }}
-            - name: tls
-              mountPath: /etc/influxdb/tls
-              readOnly: true
-          {{- end }}
-          {{- with .Values.extraVolumeMounts }}
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
       {{- with .Values.processingEngine.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -150,40 +99,8 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or (eq .Values.objectStorage.type "file") (eq .Values.objectStorage.type "google") (or .Values.license.file .Values.license.existingSecret) .Values.tls.enabled .Values.extraVolumes }}
       volumes:
-        {{- if eq .Values.objectStorage.type "file" }}
-        - name: object-storage
-          persistentVolumeClaim:
-            claimName: {{ include "influxdb3-enterprise.fullname" . }}-object-storage
-        {{- end }}
-        {{- if eq .Values.objectStorage.type "google" }}
-        - name: google-service-account
-          secret:
-            secretName: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
-            items:
-              - key: service-account.json
-                path: service-account.json
-        {{- end }}
-        {{- if or .Values.license.file .Values.license.existingSecret }}
-        - name: license
-          secret:
-            secretName: {{ include "influxdb3-enterprise.licenseSecretName" . }}
-            optional: true
-            items:
-              - key: license-file
-                path: license
-        {{- end }}
-        {{- if .Values.tls.enabled }}
-        - name: tls
-          secret:
-            secretName: {{ include "influxdb3-enterprise.tlsSecretName" . }}
-            optional: true
-        {{- end }}
-        {{- with .Values.extraVolumes }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      {{- end }}
+        {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
   {{- if .Values.processingEngine.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
