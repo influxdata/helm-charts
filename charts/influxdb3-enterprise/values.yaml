@@ -10,7 +10,7 @@ cluster:
   # Cluster management settings for multi-node coordination
 #  replicationInterval: "250ms"      # Data replication interval between nodes
 #  catalogSyncInterval: "10s"        # Catalog synchronization interval
-#  waitForRunningIngestor: "10s"    # Startup wait time for ingestor
+#  waitForRunningIngestor: "10s"     # Startup wait time for ingestor
 
 # Naming overrides
 nameOverride: ""
@@ -437,9 +437,9 @@ processingEngine:
     # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
 
   # Plugin configuration
-  pluginDir: ""                     # Local directory that contains Python plugins and their test files.
-  pluginRepo: "https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/"  # URL of remote plugin repository
-  packageManager: "discover"        # discover, pip, uv, or disabled
+  # pluginDir: ""                     # Local directory that contains Python plugins and their test files.
+  # pluginRepo: "https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/"  # URL of remote plugin repository
+  # packageManager: "discover"        # discover, pip, uv, or disabled
 
   # Persistent storage for plugins
   persistence:
