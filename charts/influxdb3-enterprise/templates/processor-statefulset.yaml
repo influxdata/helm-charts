@@ -59,12 +59,7 @@ spec:
               exec influxdb3 --num-io-threads={{ .Values.processingEngine.threads.io }} serve \
                 --mode=process \
                 --node-id=$(hostname) \
-                --datafusion-num-threads={{ .Values.processingEngine.threads.datafusion }} \
-                --plugin-dir={{ .Values.processingEngine.pluginDir }} \
-              {{- if .Values.processingEngine.pluginRepo }}
-                --plugin-repo={{ .Values.processingEngine.pluginRepo }} \
-              {{- end }}
-                --package-manager={{ .Values.processingEngine.packageManager }}
+                --datafusion-num-threads={{ .Values.processingEngine.threads.datafusion }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
