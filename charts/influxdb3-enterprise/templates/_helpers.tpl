@@ -123,11 +123,11 @@ HTTP/TLS/Auth environment (shared across components)
 - name: INFLUXDB3_HTTP_BIND_ADDR
   value: {{ .Values.http.bind | quote }}
 {{- if .Values.tls.enabled }}
-- name: INFLUXDB3_TLS_CERT_PATH
+- name: INFLUXDB3_TLS_CERT
   value: {{ .Values.tls.certPath | quote }}
-- name: INFLUXDB3_TLS_KEY_PATH
+- name: INFLUXDB3_TLS_KEY
   value: {{ .Values.tls.keyPath | quote }}
-- name: INFLUXDB3_TLS_MIN_VERSION
+- name: INFLUXDB3_TLS_MINIMUM_VERSION
   value: {{ .Values.tls.minVersion | quote }}
 {{- end }}
 {{- end }}
