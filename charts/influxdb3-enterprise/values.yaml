@@ -1,16 +1,6 @@
 # ============================================================================
-# Global Configuration
+# Kubernetes Configuration (Shared across all components)
 # ============================================================================
-
-# Cluster configuration - all nodes must share the same cluster ID
-cluster:
-  # Unique identifier for the cluster (must be different from any node-id)
-  id: "cluster-01"
-
-  # Cluster management settings for multi-node coordination
-#  replicationInterval: "250ms"      # Data replication interval between nodes
-#  catalogSyncInterval: "10s"        # Catalog synchronization interval
-#  waitForRunningIngestor: "10s"     # Startup wait time for ingestor
 
 # Naming overrides
 nameOverride: ""
@@ -25,6 +15,20 @@ image:
 
 imagePullSecrets: []
 # - name: registry-secret
+
+# ============================================================================
+# Global Cluster Configuration
+# ============================================================================
+
+# Cluster configuration - all nodes must share the same cluster ID
+cluster:
+  # Unique identifier for the cluster (must be different from any node-id)
+  id: "cluster-01"
+
+  # Cluster management settings for multi-node coordination
+#  replicationInterval: "250ms"      # Data replication interval between nodes
+#  catalogSyncInterval: "10s"        # Catalog synchronization interval
+#  waitForRunningIngestor: "10s"     # Startup wait time for ingestor
 
 # ============================================================================
 # Object Storage Configuration
@@ -121,7 +125,7 @@ objectStorage:
   #   throttled: false              # Set true to simulate cloud latency
 
 # ============================================================================
-# License Configuration
+# License Configuration (Shared across all components)
 # ============================================================================
 # InfluxDB 3 Enterprise requires a license. Three types available:
 # - trial: 30-day trial with full features
@@ -144,40 +148,6 @@ license:
   # If specified, email and file are ignored
   # Secret should contain key: license-email or license-file
   existingSecret: ""
-
-# ============================================================================
-# Probes Configuration (Shared across all components)
-# ============================================================================
-# Note: /health endpoint authentication is disabled by default (auth.disableAuthz: ["health"])
-# so probes work without requiring tokens
-probes:
-  # Enable or disable health probes globally
-  enabled: true
-
-  # Startup probe settings
-  # Protects container during initialization. Once successful, never runs again.
-  # For ~15s startup: 10s initial + (12 × 5s) = 70s total (4-5x safety buffer)
-  startup:
-    initialDelaySeconds: 10           # Wait ~50% of expected startup time
-    periodSeconds: 5                  # Check every 5 seconds
-    timeoutSeconds: 5
-    failureThreshold: 12              # 10s + (12 × 5s) = 70s total
-
-  # Liveness probe settings
-  # Only starts checking AFTER startup probe succeeds
-  liveness:
-    initialDelaySeconds: 0            # No delay needed - startup probe protects
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3               # 3 × 10s = 30s before restart
-
-  # Readiness probe settings
-  # Only starts checking AFTER startup probe succeeds
-  readiness:
-    initialDelaySeconds: 0            # No delay needed - startup probe protects
-    periodSeconds: 5                  # Check frequently
-    timeoutSeconds: 3
-    failureThreshold: 3
 
 # ============================================================================
 # Component Deployment Configuration
@@ -535,7 +505,7 @@ processingEngine:
       partition: 0                  # Start updating from pod 0
 
 # ============================================================================
-# Advanced Configuration
+# Advanced Configuration (Shared across all components)
 # ============================================================================
 
 # Security configuration (TLS and auth)
@@ -633,6 +603,40 @@ security:
 #telemetry:
 #  disableUpload: false              # Set true to opt-out of InfluxData telemetry
 #  endpoint: ""                      # Custom telemetry endpoint
+
+# ============================================================================
+# Probes Configuration
+# ============================================================================
+# Note: /health endpoint authentication is disabled by default (auth.disableAuthz: ["health"])
+# so probes work without requiring tokens
+probes:
+  # Enable or disable health probes globally
+  enabled: true
+
+  # Startup probe settings
+  # Protects container during initialization. Once successful, never runs again.
+  # For ~15s startup: 10s initial + (12 × 5s) = 70s total (4-5x safety buffer)
+  startup:
+    initialDelaySeconds: 10           # Wait ~50% of expected startup time
+    periodSeconds: 5                  # Check every 5 seconds
+    timeoutSeconds: 5
+    failureThreshold: 12              # 10s + (12 × 5s) = 70s total
+
+  # Liveness probe settings
+  # Only starts checking AFTER startup probe succeeds
+  liveness:
+    initialDelaySeconds: 0            # No delay needed - startup probe protects
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3               # 3 × 10s = 30s before restart
+
+  # Readiness probe settings
+  # Only starts checking AFTER startup probe succeeds
+  readiness:
+    initialDelaySeconds: 0            # No delay needed - startup probe protects
+    periodSeconds: 5                  # Check frequently
+    timeoutSeconds: 3
+    failureThreshold: 3
 
 # ============================================================================
 # Ingress Configuration
