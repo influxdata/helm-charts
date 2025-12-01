@@ -515,10 +515,13 @@ logs:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `ingress.write.enabled` / `query.enabled` | Enable write/query ingress | `true` |
-| `ingress.*.className` | Ingress class | `nginx` |
-| `ingress.*.hosts[0].paths` | Default paths (write: `/api/v3/write_lp`, `/api/v2/write`, `/write`; query: `/api/v3/query`, `/query`, `/`) | as shown |
-| `ingress.*.tls` | TLS host/secret list | `[]` |
+| `ingress.enabled` | Enable ingress | `true` |
+| `ingress.host` | Hostname for all ingresses (set to your domain) | `influxdb.example.com` |
+| `ingress.className` | Ingress class | `nginx` |
+| `ingress.port` | Host port referenced in NOTES | `8181` |
+| `ingress.tls` | TLS host/secret list | `[]` |
+
+Ingress paths are fixed in the templates: write ingress exposes `/api/v3/write_lp`, `/api/v2/write`, `/write`; query ingress exposes `/api/v3/query`, `/query`, and `/`.
 
 ### Network Policy Parameters
 
