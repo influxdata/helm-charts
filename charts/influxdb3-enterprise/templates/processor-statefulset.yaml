@@ -62,12 +62,7 @@ spec:
                 {{- end }}
                 serve \
                 --mode=process \
-                --node-id=$(hostname) \
-                {{- with .Values.processingEngine.datafusion }}
-                {{- with .numThreads }}
-                --datafusion-num-threads={{ . }} \
-                {{- end }}
-                {{- end }}
+                --node-id=$(hostname)
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
@@ -101,6 +96,10 @@ spec:
             {{- end }}
             {{- end }}
             {{- with .Values.processingEngine.datafusion }}
+            {{- if .numThreads }}
+            - name: INFLUXDB3_DATAFUSION_NUM_THREADS
+              value: {{ .numThreads | quote }}
+            {{- end }}
             {{- if .maxParquetFanout }}
             - name: INFLUXDB3_DATAFUSION_MAX_PARQUET_FANOUT
               value: {{ .maxParquetFanout | quote }}
