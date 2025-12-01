@@ -657,7 +657,7 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-body-size: "100m"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     hosts:
-      - host: ""
+      - host: "influxdb.example.com"  # Replace with your domain
         paths:
           - path: /api/v3/write_lp
             pathType: Prefix
@@ -675,7 +675,7 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     hosts:
-      - host: ""
+      - host: "influxdb.example.com"  # Replace with your domain
         paths:
           - path: /api/v3/query
             pathType: Prefix
