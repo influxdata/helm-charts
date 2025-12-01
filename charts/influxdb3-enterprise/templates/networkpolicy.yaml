@@ -44,8 +44,12 @@ spec:
         - podSelector:
             matchLabels:
               {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
-              app.kubernetes.io/component: compactor
-              app.kubernetes.io/component: ingester
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - compactor
+                  - ingester
       ports:
         - protocol: TCP
           port: 8181
@@ -110,8 +114,12 @@ spec:
         - podSelector:
             matchLabels:
               {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
-              app.kubernetes.io/component: querier
-              app.kubernetes.io/component: ingester
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - querier
+                  - ingester
       ports:
         - protocol: TCP
           port: 8181
