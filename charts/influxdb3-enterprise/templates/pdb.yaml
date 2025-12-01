@@ -1,4 +1,5 @@
 {{- if and .Values.ingester.podDisruptionBudget.enabled .Values.ingester.enabled (gt (int .Values.ingester.replicas) 1) }}
+---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -14,8 +15,8 @@ spec:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: ingester
 {{- end }}
----
 {{- if and .Values.querier.podDisruptionBudget.enabled .Values.querier.enabled (gt (int .Values.querier.replicas) 1) }}
+---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -31,8 +32,8 @@ spec:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: querier
 {{- end }}
----
 {{- if and .Values.processingEngine.podDisruptionBudget.enabled .Values.processingEngine.enabled (gt (int .Values.processingEngine.replicas) 1) }}
+---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -48,8 +49,8 @@ spec:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: processor
 {{- end }}
----
 {{- if and .Values.compactor.podDisruptionBudget.enabled .Values.compactor.enabled }}
+---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
