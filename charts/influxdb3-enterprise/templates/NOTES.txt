@@ -16,6 +16,42 @@ Components deployed:
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
 {{- end }}
 
+{{- /* Calculate total resource requests */ -}}
+{{- $totalCpuMillis := 0 }}
+{{- $totalMemoryGi := 0 }}
+{{- if .Values.ingester.enabled }}
+  {{- $cpu := .Values.ingester.resources.requests.cpu | toString | trimSuffix "m" | int }}
+  {{- $mem := .Values.ingester.resources.requests.memory | toString | trimSuffix "Gi" | int }}
+  {{- $totalCpuMillis = add $totalCpuMillis (mul .Values.ingester.replicas $cpu) }}
+  {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.ingester.replicas $mem) }}
+{{- end }}
+{{- if .Values.querier.enabled }}
+  {{- $cpu := .Values.querier.resources.requests.cpu | toString | trimSuffix "m" | int }}
+  {{- $mem := .Values.querier.resources.requests.memory | toString | trimSuffix "Gi" | int }}
+  {{- $totalCpuMillis = add $totalCpuMillis (mul .Values.querier.replicas $cpu) }}
+  {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.querier.replicas $mem) }}
+{{- end }}
+{{- if .Values.compactor.enabled }}
+  {{- $cpu := .Values.compactor.resources.requests.cpu | toString | trimSuffix "m" | int }}
+  {{- $mem := .Values.compactor.resources.requests.memory | toString | trimSuffix "Gi" | int }}
+  {{- $totalCpuMillis = add $totalCpuMillis (mul .Values.compactor.replicas $cpu) }}
+  {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.compactor.replicas $mem) }}
+{{- end }}
+{{- if .Values.processingEngine.enabled }}
+  {{- $cpu := .Values.processingEngine.resources.requests.cpu | toString | trimSuffix "m" | int }}
+  {{- $mem := .Values.processingEngine.resources.requests.memory | toString | trimSuffix "Gi" | int }}
+  {{- $totalCpuMillis = add $totalCpuMillis (mul .Values.processingEngine.replicas $cpu) }}
+  {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.processingEngine.replicas $mem) }}
+{{- end }}
+
+Resource requests (total):
+  CPU:    {{ divf $totalCpuMillis 1000 }} cores ({{ $totalCpuMillis }}m)
+  Memory: {{ $totalMemoryGi }}Gi
+
+To verify cluster capacity:
+  kubectl top nodes
+  kubectl describe nodes | grep -A 5 "Allocated resources"
+
 {{- if .Values.ingress.enabled }}
 Note: Ingress is enabled by default. Override `ingress.host` with your domain; leaving it as "{{ .Values.ingress.host }}" may cause 404s when sending write or query requests through the ingress.
 {{- end }}
