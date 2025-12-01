@@ -102,9 +102,9 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
-        {{- with .Values.extraEnv }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8181
