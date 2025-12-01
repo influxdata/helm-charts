@@ -129,14 +129,14 @@ data:
 
   # Resource limits
   {{- with .Values.resourceLimits }}
-  {{- if .Values.resourceLimits.numDatabases }}
-  INFLUXDB3_ENTERPRISE_NUM_DATABASE_LIMIT: {{ .Values.resourceLimits.numDatabases }}
+  {{- if .numDatabases }}
+  INFLUXDB3_ENTERPRISE_NUM_DATABASE_LIMIT: {{ .numDatabases }}
   {{- end }}
-  {{- if .Values.resourceLimits.numTables }}
-  INFLUXDB3_ENTERPRISE_NUM_TABLE_LIMIT: {{ .Values.resourceLimits.numTables }}
+  {{- if .numTables }}
+  INFLUXDB3_ENTERPRISE_NUM_TABLE_LIMIT: {{ .numTables }}
   {{- end }}
-  {{- if .Values.resourceLimits.numColumnsPerTable }}
-  INFLUXDB3_ENTERPRISE_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .Values.resourceLimits.numColumnsPerTable }}
+  {{- if .numColumnsPerTable }}
+  INFLUXDB3_ENTERPRISE_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .numColumnsPerTable }}
   {{- end }}
   {{- end }}
 
