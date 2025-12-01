@@ -199,10 +199,8 @@ ingester:
       cpu: "4000m"                  # 4 cores max
       memory: "8Gi"
 
-  # Thread configuration for ingest workload
-  threads:
-    io: 8                           # For line protocol parsing
-    # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+  # Thread configuration
+  numIOThreads: 2               # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
   datafusion:
@@ -293,10 +291,8 @@ querier:
       cpu: "4000m"
       memory: "8Gi"
 
-  # Thread configuration for query workload
-  threads:
-    io: 4                           # Minimal for HTTP requests
-    # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+  # Thread configuration
+  numIOThreads: 2               # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
   datafusion:
@@ -378,10 +374,8 @@ compactor:
       cpu: "4000m"
       memory: "4Gi"
 
-  # Thread configuration for compaction workload
-  threads:
-    io: 2                           # Minimal IO threads
-    # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+  # Thread configuration
+  numIOThreads: 2               # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
   datafusion:
@@ -458,9 +452,7 @@ processingEngine:
       memory: "8Gi"
 
   # Thread configuration
-  threads:
-    io: 4
-    # numIOThreads: 2               # Global IO threads (--num-io-threads), set per component if needed
+  numIOThreads: 2               # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
   datafusion:

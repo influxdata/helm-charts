@@ -57,7 +57,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              exec influxdb3 --num-io-threads={{ .Values.compactor.threads.io }} serve \
+              exec influxdb3 --num-io-threads={{ .Values.compactor.numIOThreads }} serve \
                 --mode=compact \
                 --node-id=$(hostname) \
                 --datafusion-num-threads={{ .Values.compactor.datafusion.numThreads }}

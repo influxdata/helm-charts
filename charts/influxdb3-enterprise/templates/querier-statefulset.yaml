@@ -52,7 +52,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              exec influxdb3 --num-io-threads={{ .Values.querier.threads.io }} serve \
+              exec influxdb3 --num-io-threads={{ .Values.querier.numIOThreads }} serve \
                 --mode=query \
                 --node-id=$(hostname) \
                 --datafusion-num-threads={{ .Values.querier.datafusion.numThreads }}
