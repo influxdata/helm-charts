@@ -200,7 +200,7 @@ ingester:
       memory: "8Gi"
 
   # Thread configuration
-  numIOThreads: 2               # Global IO threads (--num-io-threads)
+  # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
   datafusion:
@@ -292,7 +292,7 @@ querier:
       memory: "8Gi"
 
   # Thread configuration
-  numIOThreads: 2               # Global IO threads (--num-io-threads)
+  # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
   datafusion:
@@ -375,7 +375,7 @@ compactor:
       memory: "4Gi"
 
   # Thread configuration
-  numIOThreads: 2               # Global IO threads (--num-io-threads)
+  # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
   datafusion:
@@ -452,7 +452,7 @@ processingEngine:
       memory: "8Gi"
 
   # Thread configuration
-  numIOThreads: 2               # Global IO threads (--num-io-threads)
+  # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
   datafusion:
