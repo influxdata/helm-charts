@@ -323,8 +323,7 @@ kubectl describe networkpolicy -n influxdb3
 1. **Increase IO threads:**
    ```yaml
    ingester:
-     threads:
-       io: 16  # Increase from 12
+     numIOThreads: 16  # Increase from default
    ```
 
 2. **Scale ingesters horizontally:**
@@ -365,15 +364,14 @@ kubectl describe networkpolicy -n influxdb3
 1. **Increase DataFusion threads:**
    ```yaml
    querier:
-     threads:
-       datafusion: 32  # Increase from 28
+     datafusion:
+       numThreads: 32  # Increase from default
    ```
 
 2. **Increase Parquet cache:**
    ```yaml
-   querier:
-     cache:
-       parquetSize: "8GB"  # Increase from 4GB
+   caching:
+     parquetMemCacheSize: "30%"  # Increase from default
    ```
 
 3. **Scale queriers:**
@@ -404,8 +402,8 @@ kubectl exec -n influxdb3 influxdb3-enterprise-querier-0 -- \
      resources:
        requests:
          cpu: "8000m"
-     threads:
-       datafusion: 40
+     datafusion:
+       numThreads: 40
    ```
 
 2. **Adjust compaction intervals:**

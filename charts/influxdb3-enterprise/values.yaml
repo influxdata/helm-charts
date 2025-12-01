@@ -184,12 +184,12 @@ ingester:
   #   config: ""                    # --datafusion-config (key:value pairs)
 
   # Write-Ahead Log (WAL) configuration
-  #wal:
-  #  flushInterval: "1s"               # How often to flush WAL
-  #  snapshotSize: 600                 # WAL files per snapshot
-  #  maxWriteBufferSize: 100000        # Max buffered writes before flush
-  #  snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
-  #  replayFailOnError: false
+  # wal:
+  #   flushInterval: "1s"               # How often to flush WAL
+  #   snapshotSize: 600                 # WAL files per snapshot
+  #   maxWriteBufferSize: 100000        # Max buffered writes before flush
+  #   snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
+  #   replayFailOnError: false
 
   # Persistent storage for Write-Ahead Log (WAL)
   persistence:
@@ -538,9 +538,9 @@ security:
     #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
 
 # HTTP server configuration
-#http:
-#  bind: "0.0.0.0:8181"
-#  maxRequestSize: 10485760          # 10MB default
+# http:
+#   bind: "0.0.0.0:8181"
+#   maxRequestSize: 10485760          # 10MB default
 
 # Write-Ahead Log (WAL) configuration
 
@@ -567,27 +567,27 @@ security:
   # tableIndexCacheConcurrencyLimit: 8
 
 # Resource limits
-#resourceLimits:
-#  numDatabases: 100                 # Max databases
-#  numTables: 10000                  # Max tables across all databases
-#  numColumnsPerTable: 500           # Max columns per table
+# resourceLimits:
+#   numDatabases: 100                 # Max databases
+#   numTables: 10000                  # Max tables across all databases
+#   numColumnsPerTable: 500           # Max columns per table
 
 # Data lifecycle management
-#dataLifecycle:
-#  gen1LookbackDuration: "24h"       # Lookback for gen1 Parquet files
-#  retentionCheckInterval: "30m"     # How often to check retention policies
-#  deleteGracePeriod: "24h"          # Grace period before permanent deletion
-#  hardDeleteDefaultDuration: "90d"  # Default hard delete duration
+# dataLifecycle:
+#   gen1LookbackDuration: "24h"       # Lookback for gen1 Parquet files
+#   retentionCheckInterval: "30m"     # How often to check retention policies
+#   deleteGracePeriod: "24h"          # Grace period before permanent deletion
+#   hardDeleteDefaultDuration: "90d"  # Default hard delete duration
 
 # Logs configuration
-#logs:
+# logs:
 #   logFilter: ""                     # Override log filter (--log-filter)
 #   logDestination: "stdout"          # Override log destination (--log-destination)
 #   logFormat: "full"                 # Override log format (--log-format)
 #   queryLogSize: 1000                # Query log size (--query-log-size)
 
 # Traces configuration (optional)
-#traces:
+# traces:
 #  exporter: "none"                # jaeger or none
 #  jaeger:
 #    agentHost: "0.0.0.0"
@@ -599,10 +599,9 @@ security:
 #    maxMsgsPerSecond: 1000
 
 # Telemetry
-# Telemetry
-#telemetry:
-#  disableUpload: false              # Set true to opt-out of InfluxData telemetry
-#  endpoint: ""                      # Custom telemetry endpoint
+# telemetry:
+#   disableUpload: false              # Set true to opt-out of InfluxData telemetry
+#   endpoint: ""                      # Custom telemetry endpoint
 
 # ============================================================================
 # Probes Configuration
