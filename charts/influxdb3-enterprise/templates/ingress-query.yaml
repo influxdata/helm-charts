@@ -26,19 +26,28 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    {{- range .Values.ingress.query.hosts }}
-    {{- $paths := .paths | default (list (dict "path" "/api/v3/query" "pathType" "Prefix") (dict "path" "/query" "pathType" "Prefix") (dict "path" "/" "pathType" "Prefix")) }}
-    - host: {{ .host | quote }}
+    - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
-          {{- range $paths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType | default "Prefix" }}
+          - path: /api/v3/query
+            pathType: Prefix
             backend:
               service:
-                name: {{ include "influxdb3-enterprise.fullname" $ }}-querier
+                name: {{ include "influxdb3-enterprise.fullname" . }}-querier
                 port:
-                  number: {{ $.Values.querier.service.port }}
-          {{- end }}
-    {{- end }}
+                  number: {{ .Values.querier.service.port }}
+          - path: /query
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-querier
+                port:
+                  number: {{ .Values.querier.service.port }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-querier
+                port:
+                  number: {{ .Values.querier.service.port }}
 {{- end }}

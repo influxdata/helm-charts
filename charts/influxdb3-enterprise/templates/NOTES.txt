@@ -18,13 +18,13 @@ Components deployed:
 
 Access endpoints:
 {{- if .Values.ingress.write.enabled }}
-  Write endpoint: http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ (index .Values.ingress.write.hosts 0).host }}
+  Write endpoint: http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ .Values.ingress.host }}
 {{- else }}
   Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
 {{- end }}
 
 {{- if .Values.ingress.query.enabled }}
-  Query endpoint: http{{ if .Values.ingress.query.tls }}s{{ end }}://{{ (index .Values.ingress.query.hosts 0).host }}
+  Query endpoint: http{{ if .Values.ingress.query.tls }}s{{ end }}://{{ .Values.ingress.host }}
 {{- else }}
   Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
 {{- end }}
@@ -39,8 +39,8 @@ Getting started:
   2. Create a database:
 
      export INFLUXDB3_AUTH_TOKEN=<your-admin-token>
-{{- if and .Values.ingress.write.enabled (index .Values.ingress.write.hosts 0).host }}
-     export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ (index .Values.ingress.write.hosts 0).host }}
+{{- if .Values.ingress.write.enabled }}
+     export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ .Values.ingress.host }}
 {{- else }}
      export INFLUXDB3_HOST_URL=http://localhost:8181
 {{- end }}

@@ -644,6 +644,9 @@ probes:
 # Separate ingresses for write and query traffic
 
 ingress:
+  # Host for all ingresses
+  host: "influxdb.example.com"
+
   # Ingress for write traffic (to ingesters)
   # Routes: /api/v3/write_lp, /api/v2/write, /write → Ingester
   write:
@@ -652,15 +655,6 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: "100m"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    hosts:
-      - host: "influxdb.example.com"  # Replace with your domain
-        paths:
-          - path: /api/v3/write_lp
-            pathType: Prefix
-          - path: /api/v2/write
-            pathType: Prefix
-          - path: /write
-            pathType: Prefix
     tls: []
 
   # Ingress for query traffic (to queriers)
@@ -670,15 +664,6 @@ ingress:
     className: "nginx"
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    hosts:
-      - host: "influxdb.example.com"  # Replace with your domain
-        paths:
-          - path: /api/v3/query
-            pathType: Prefix
-          - path: /query
-            pathType: Prefix
-          - path: /
-            pathType: Prefix
     tls: []
 
   # Ingress for HTTP-triggered plugins (optional, only if processingEngine.enabled)
@@ -686,11 +671,6 @@ ingress:
     enabled: false
     className: "nginx"
     annotations: {}
-    hosts:
-      - host: processor.influxdb.example.com
-        paths:
-          - path: /api/v3/engine
-            pathType: Prefix
     tls: []
 
 # ============================================================================

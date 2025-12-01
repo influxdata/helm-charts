@@ -26,18 +26,14 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    {{- range .Values.ingress.processor.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType }}
+          - path: /api/v3/engine
+            pathType: Prefix
             backend:
               service:
-                name: {{ include "influxdb3-enterprise.fullname" $ }}-processor
+                name: {{ include "influxdb3-enterprise.fullname" . }}-processor
                 port:
-                  number: {{ $.Values.processingEngine.service.port }}
-          {{- end }}
-    {{- end }}
+                  number: {{ .Values.processingEngine.service.port }}
 {{- end }}

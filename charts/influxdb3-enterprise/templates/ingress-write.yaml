@@ -26,19 +26,28 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    {{- range .Values.ingress.write.hosts }}
-    {{- $paths := .paths | default (list (dict "path" "/api/v3/write_lp" "pathType" "Prefix") (dict "path" "/api/v2/write" "pathType" "Prefix") (dict "path" "/write" "pathType" "Prefix")) }}
-    - host: {{ .host | quote }}
+    - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
-          {{- range $paths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType | default "Prefix" }}
+          - path: /api/v3/write_lp
+            pathType: Prefix
             backend:
               service:
-                name: {{ include "influxdb3-enterprise.fullname" $ }}-ingester
+                name: {{ include "influxdb3-enterprise.fullname" . }}-ingester
                 port:
-                  number: {{ $.Values.ingester.service.port }}
-          {{- end }}
-    {{- end }}
+                  number: {{ .Values.ingester.service.port }}
+          - path: /api/v2/write
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-ingester
+                port:
+                  number: {{ .Values.ingester.service.port }}
+          - path: /write
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-ingester
+                port:
+                  number: {{ .Values.ingester.service.port }}
 {{- end }}
