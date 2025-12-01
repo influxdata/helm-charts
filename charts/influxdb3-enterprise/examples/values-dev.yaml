@@ -50,3 +50,6 @@ compactor:
     limits:
       cpu: "1000m"
       memory: "2Gi"
+
+ingress:
+  host: "localhost"

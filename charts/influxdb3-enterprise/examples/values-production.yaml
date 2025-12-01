@@ -27,9 +27,9 @@ ingester:
     limits:
       cpu: "8000m"
       memory: "16Gi"
-  threads:
-    io: 12
-    datafusion: 20
+  numIOThreads: 12
+  datafusion:
+    numThreads: 20
   persistence:
     storageClass: "fast-ssd"
     size: "100Gi"
@@ -57,8 +57,8 @@ querier:
     limits:
       cpu: "8000m"
       memory: "16Gi"
-  threads:
-    datafusion: 28
+  datafusion:
+    numThreads: 28
   # Pod anti-affinity to guarantee pods spread across nodes
   # Note: Using "required" ensures pods never colocate on the same node
   # This requires having at least as many nodes as replicas
@@ -82,8 +82,8 @@ compactor:
     limits:
       cpu: "8000m"
       memory: "16Gi"
-  threads:
-    datafusion: 30
+  datafusion:
+    numThreads: 30
   compaction:
     checkInterval: "5s"
 
@@ -106,24 +106,20 @@ processingEngine:
     maxUnavailable: 1              # Allow 1 of 2 pods to be disrupted
 
 ingress:
+  host: "influxdb-api.example.com"
   write:
     annotations:
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
       nginx.ingress.kubernetes.io/rate-limit: "1000"
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    hosts:
-      - host: "influxdb-api.example.com"
     tls:
       - secretName: influxdb-api-tls
         hosts:
           - influxdb-api.example.com
-
   query:
     annotations:
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    hosts:
-      - host: "influxdb-api.example.com"
     tls:
       - secretName: influxdb-api-tls
         hosts:
@@ -147,13 +143,3 @@ serviceMonitor:
   scrapeTimeout: 10s
   additionalLabels:
     prometheus: kube-prometheus
-
-# Advanced configuration
-cache:
-  parquetMemCacheSize: "20%"
-  lastValueCacheDisableFromHistory: false
-  distinctValueCacheDisableFromHistory: false
-
-dataLifecycle:
-  retentionCheckInterval: "15m"
-  deleteGracePeriod: "24h"
