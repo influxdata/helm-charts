@@ -22,8 +22,8 @@ Note: Ingress is enabled by default. Override `ingress.host` with your domain; l
 
 Access endpoints:
 {{- if .Values.ingress.enabled }}
-  Write endpoint: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}
-  Query endpoint: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}
+  Write endpoint: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
+  Query endpoint: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
 {{- else }}
   Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
   Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
@@ -40,7 +40,7 @@ Getting started:
 
      export INFLUXDB3_AUTH_TOKEN=<your-admin-token>
 {{- if .Values.ingress.enabled }}
-     export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ .Values.ingress.host }}
+     export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
 {{- else }}
      export INFLUXDB3_HOST_URL=http://localhost:8181
 {{- end }}

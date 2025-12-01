@@ -649,6 +649,9 @@ ingress:
   # Host for all ingresses
   host: "influxdb.example.com"
 
+  # External port for ingress controller
+  port: 8181
+
   # Ingress class name
   className: "nginx"
 
