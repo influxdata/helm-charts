@@ -16,16 +16,16 @@ Components deployed:
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
 {{- end }}
 
-Access endpoints:
-{{- if .Values.ingress.write.enabled }}
-  Write endpoint: http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ .Values.ingress.host }}
-{{- else }}
-  Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
+{{- if .Values.ingress.enabled }}
+Note: Ingress is enabled by default. Override `ingress.host` with your domain; leaving it as "{{ .Values.ingress.host }}" may cause 404s when sending write or query requests through the ingress.
 {{- end }}
 
-{{- if .Values.ingress.query.enabled }}
-  Query endpoint: http{{ if .Values.ingress.query.tls }}s{{ end }}://{{ .Values.ingress.host }}
+Access endpoints:
+{{- if .Values.ingress.enabled }}
+  Write endpoint: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}
+  Query endpoint: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}
 {{- else }}
+  Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
   Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
 {{- end }}
 
@@ -39,7 +39,7 @@ Getting started:
   2. Create a database:
 
      export INFLUXDB3_AUTH_TOKEN=<your-admin-token>
-{{- if .Values.ingress.write.enabled }}
+{{- if .Values.ingress.enabled }}
      export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.write.tls }}s{{ end }}://{{ .Values.ingress.host }}
 {{- else }}
      export INFLUXDB3_HOST_URL=http://localhost:8181

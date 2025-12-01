@@ -107,23 +107,19 @@ processingEngine:
 
 ingress:
   host: "influxdb-api.example.com"
+  tls:
+    - secretName: influxdb-api-tls
+      hosts:
+        - influxdb-api.example.com
   write:
     annotations:
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
       nginx.ingress.kubernetes.io/rate-limit: "1000"
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    tls:
-      - secretName: influxdb-api-tls
-        hosts:
-          - influxdb-api.example.com
   query:
     annotations:
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    tls:
-      - secretName: influxdb-api-tls
-        hosts:
-          - influxdb-api.example.com
 
 # Enable network policies
 networkPolicy:

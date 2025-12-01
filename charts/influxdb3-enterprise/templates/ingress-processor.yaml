@@ -1,4 +1,4 @@
-{{- if and .Values.processingEngine.enabled .Values.ingress.processor.enabled }}
+{{- if and .Values.ingress.enabled .Values.processingEngine.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -12,12 +12,12 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if .Values.ingress.processor.className }}
-  ingressClassName: {{ .Values.ingress.processor.className }}
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
-  {{- if .Values.ingress.processor.tls }}
+  {{- if .Values.ingress.tls }}
   tls:
-    {{- range .Values.ingress.processor.tls }}
+    {{- range .Values.ingress.tls }}
     - hosts:
         {{- range .hosts }}
         - {{ . | quote }}

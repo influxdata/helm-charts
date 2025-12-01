@@ -643,34 +643,38 @@ probes:
 # Separate ingresses for write and query traffic
 
 ingress:
+  # Enable/disable all ingresses
+  enabled: true
+
   # Host for all ingresses
   host: "influxdb.example.com"
+
+  # Ingress class name
+  className: "nginx"
+
+  # TLS configuration for all ingresses
+  tls: []
+  # tls:
+  #   - secretName: influxdb-tls
+  #     hosts:
+  #       - influxdb.example.com
 
   # Ingress for write traffic (to ingesters)
   # Routes: /api/v3/write_lp, /api/v2/write, /write → Ingester
   write:
-    enabled: true
-    className: "nginx"
     annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: "100m"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    tls: []
 
   # Ingress for query traffic (to queriers)
   # Routes: /api/v3/query*, /query, / (default) → Querier
   query:
-    enabled: true
-    className: "nginx"
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    tls: []
 
-  # Ingress for HTTP-triggered plugins (optional, only if processingEngine.enabled)
+  # Ingress for HTTP-triggered plugins (created only if processingEngine.enabled)
   processor:
-    enabled: false
-    className: "nginx"
     annotations: {}
-    tls: []
 
 # ============================================================================
 # Network Policies (optional, disabled by default)
