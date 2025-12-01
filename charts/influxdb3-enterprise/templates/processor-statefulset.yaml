@@ -115,7 +115,7 @@ spec:
           volumeMounts:
           {{- if .Values.processingEngine.persistence.enabled }}
             - name: plugins
-              mountPath: {{ .Values.processingEngine.pluginDir }}
+              mountPath: {{ .Values.processingEngine.pluginDir | default "/plugins" }}
           {{- end }}
             {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
       {{- with .Values.processingEngine.nodeSelector }}

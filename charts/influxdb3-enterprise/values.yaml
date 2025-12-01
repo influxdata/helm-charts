@@ -110,12 +110,11 @@ objectStorage:
   # Local filesystem (for development/testing only)
   # NOT RECOMMENDED for production - use cloud object storage
   # Requires RWX storage; PVC is always created when type=file
-  # file:
-  #   dataDir: "/var/lib/influxdb3"
-  #   # Persistent volume for file storage
-  #   persistence:
-  #     storageClass: ""
-  #     size: 100Gi
+  file:
+    dataDir: "/var/lib/influxdb3"
+    persistence:
+      storageClass: ""
+      size: 100Gi
 
   # In-memory storage (for testing only, no persistence)
   # memory:
@@ -475,7 +474,7 @@ processingEngine:
   #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # Plugin configuration
-  # pluginDir: ""                     # Local directory that contains Python plugins and their test files.
+  pluginDir: "/plugins"               # Local directory that contains Python plugins and their test files.
   # pluginRepo: "https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/"  # URL of remote plugin repository
   # packageManager: "discover"        # discover, pip, uv, or disabled
 
