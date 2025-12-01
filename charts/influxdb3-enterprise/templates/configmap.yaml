@@ -165,8 +165,8 @@ data:
   LOG_DESTINATION: {{ .logDestination | quote }}
   {{- end }}
   {{- if .logFormat }}
-  {{- end }}
   LOG_FORMAT: {{ .logFormat | quote }}
+  {{- end }}
   {{- if .queryLogSize }}
   INFLUXDB3_QUERY_LOG_SIZE: {{ .queryLogSize }}
   {{- end }}
