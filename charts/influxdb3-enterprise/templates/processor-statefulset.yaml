@@ -63,7 +63,11 @@ spec:
                 serve \
                 --mode=process \
                 --node-id=$(hostname) \
-                --datafusion-num-threads={{ .Values.processingEngine.datafusion.numThreads }}
+                {{- with .Values.processingEngine.datafusion }}
+                {{- with .numThreads }}
+                --datafusion-num-threads={{ . }} \
+                {{- end }}
+                {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config

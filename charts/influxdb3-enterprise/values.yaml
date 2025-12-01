@@ -203,10 +203,10 @@ ingester:
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
-  datafusion:
-    numThreads: 16                  # --datafusion-num-threads
-    maxParquetFanout: 1000          # --datafusion-max-parquet-fanout
-    config: ""                      # --datafusion-config (key:value pairs)
+  # datafusion:
+  #   numThreads: 16                # --datafusion-num-threads
+  #   maxParquetFanout: 1000        # --datafusion-max-parquet-fanout
+  #   config: ""                    # --datafusion-config (key:value pairs)
 
   # Memory tuning (per-component)
   # memory:
@@ -295,10 +295,10 @@ querier:
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
-  datafusion:
-    numThreads: 20                  # --datafusion-num-threads
-    maxParquetFanout: 1000          # --datafusion-max-parquet-fanout
-    config: ""                      # --datafusion-config (key:value pairs)
+  # datafusion:
+  #   numThreads: 20                # --datafusion-num-threads
+  #   maxParquetFanout: 1000        # --datafusion-max-parquet-fanout
+  #   config: ""                    # --datafusion-config (key:value pairs)
 
   # Memory tuning (per-component)
   # memory:
@@ -378,10 +378,10 @@ compactor:
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
-  datafusion:
-    numThreads: 24                  # --datafusion-num-threads
-    maxParquetFanout: 1000          # --datafusion-max-parquet-fanout
-    config: ""                      # --datafusion-config (key:value pairs)
+  # datafusion:
+  #   numThreads: 24                # --datafusion-num-threads
+  #   maxParquetFanout: 1000        # --datafusion-max-parquet-fanout
+  #   config: ""                    # --datafusion-config (key:value pairs)
 
   # Memory tuning (per-component)
   # memory:
@@ -455,10 +455,10 @@ processingEngine:
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # DataFusion configuration
-  datafusion:
-    numThreads: 12                  # --datafusion-num-threads
-    maxParquetFanout: 1000          # --datafusion-max-parquet-fanout
-    config: ""                      # --datafusion-config (key:value pairs)
+  # datafusion:
+  #   numThreads: 12                # --datafusion-num-threads
+  #   maxParquetFanout: 1000        # --datafusion-max-parquet-fanout
+  #   config: ""                    # --datafusion-config (key:value pairs)
 
   # Memory tuning (per-component)
   # memory:

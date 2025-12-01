@@ -64,7 +64,11 @@ spec:
                 serve \
                 --mode=compact \
                 --node-id=$(hostname) \
-                --datafusion-num-threads={{ .Values.compactor.datafusion.numThreads }}
+                {{- with .Values.compactor.datafusion }}
+                {{- with .numThreads }}
+                --datafusion-num-threads={{ . }} \
+                {{- end }}
+                {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
