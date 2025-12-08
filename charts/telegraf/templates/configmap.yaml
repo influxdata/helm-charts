@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "telegraf.fullname" . }}
-  labels:
-    {{- include "telegraf.labels" . | nindent 4 }}
+  name: { { include "telegraf.fullname" . } }
+  namespace: { { .Release.Namespace } }
+  labels: { { - include "telegraf.labels" . | nindent 4 } }
 data:
   telegraf.conf: |+
     {{- $tplVersion := include "detect.version" . }}
