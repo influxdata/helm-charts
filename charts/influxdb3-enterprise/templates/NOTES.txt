@@ -1,0 +1,101 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your InfluxDB 3 Enterprise cluster has been deployed to namespace {{ .Release.Namespace }}.
+
+Components deployed:
+{{- if .Values.ingester.enabled }}
+  ✓ Ingesters: {{ .Values.ingester.replicas }} replica(s)
+{{- end }}
+{{- if .Values.querier.enabled }}
+  ✓ Queriers: {{ .Values.querier.replicas }} replica(s)
+{{- end }}
+{{- if .Values.compactor.enabled }}
+  ✓ Compactor: 1 replica
+{{- end }}
+{{- if .Values.processingEngine.enabled }}
+  ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
+{{- end }}
+
+{{- /* Calculate total resource requests */ -}}
+{{- $totalCpuMillis := 0 }}
+{{- $totalMemoryGi := 0 }}
+{{- if .Values.ingester.enabled }}
+  {{- $cpu := .Values.ingester.resources.requests.cpu | toString | trimSuffix "m" | int }}
+  {{- $mem := .Values.ingester.resources.requests.memory | toString | trimSuffix "Gi" | int }}
+  {{- $totalCpuMillis = add $totalCpuMillis (mul .Values.ingester.replicas $cpu) }}
+  {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.ingester.replicas $mem) }}
+{{- end }}
+{{- if .Values.querier.enabled }}
+  {{- $cpu := .Values.querier.resources.requests.cpu | toString | trimSuffix "m" | int }}
+  {{- $mem := .Values.querier.resources.requests.memory | toString | trimSuffix "Gi" | int }}
+  {{- $totalCpuMillis = add $totalCpuMillis (mul .Values.querier.replicas $cpu) }}
+  {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.querier.replicas $mem) }}
+{{- end }}
+{{- if .Values.compactor.enabled }}
+  {{- $cpu := .Values.compactor.resources.requests.cpu | toString | trimSuffix "m" | int }}
+  {{- $mem := .Values.compactor.resources.requests.memory | toString | trimSuffix "Gi" | int }}
+  {{- $totalCpuMillis = add $totalCpuMillis (mul .Values.compactor.replicas $cpu) }}
+  {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.compactor.replicas $mem) }}
+{{- end }}
+{{- if .Values.processingEngine.enabled }}
+  {{- $cpu := .Values.processingEngine.resources.requests.cpu | toString | trimSuffix "m" | int }}
+  {{- $mem := .Values.processingEngine.resources.requests.memory | toString | trimSuffix "Gi" | int }}
+  {{- $totalCpuMillis = add $totalCpuMillis (mul .Values.processingEngine.replicas $cpu) }}
+  {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.processingEngine.replicas $mem) }}
+{{- end }}
+
+Resource requests (total):
+  CPU:    {{ divf $totalCpuMillis 1000 }} cores ({{ $totalCpuMillis }}m)
+  Memory: {{ $totalMemoryGi }}Gi
+
+To verify cluster capacity:
+  kubectl top nodes
+  kubectl describe nodes | grep -A 5 "Allocated resources"
+
+{{- if .Values.ingress.enabled }}
+Note: Ingress is enabled by default. Override `ingress.host` with your domain; leaving it as "{{ .Values.ingress.host }}" may cause 404s when sending write or query requests through the ingress.
+{{- end }}
+
+Access endpoints:
+{{- if .Values.ingress.enabled }}
+  Write endpoint: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
+  Query endpoint: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
+{{- else }}
+  Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
+  Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
+{{- end }}
+
+Getting started:
+
+  1. Create an admin token:
+
+     kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- \
+        influxdb3 create token --admin
+
+  2. Create a database:
+
+     export INFLUXDB3_AUTH_TOKEN=<your-admin-token>
+{{- if .Values.ingress.enabled }}
+     export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
+{{- else }}
+     export INFLUXDB3_HOST_URL=http://localhost:8181
+{{- end }}
+     influxdb3 create database mydb
+
+  3. Write data:
+
+     influxdb3 write mydb "measurement field=value"
+
+  4. Query data:
+
+     influxdb3 query mydb "SELECT * FROM measurement"
+
+Documentation: https://docs.influxdata.com/influxdb3/enterprise/
+
+{{- if not .Values.license.email }}
+{{- if not .Values.license.existingSecret }}
+
+⚠️  WARNING: No license configured!
+    Set .Values.license.email or .Values.license.existingSecret to activate your license.
+{{- end }}
+{{- end }}

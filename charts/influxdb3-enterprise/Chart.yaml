@@ -1,0 +1,21 @@
+apiVersion: v2
+name: influxdb3-enterprise
+description: A Helm chart for deploying InfluxDB 3 Enterprise on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "3.6.0"
+keywords:
+  - influxdb
+  - time-series
+  - database
+  - metrics
+  - iot
+  - enterprise
+home: https://www.influxdata.com/products/influxdb-3-enterprise/
+sources:
+  - https://github.com/influxdata/influxdb
+  - https://docs.influxdata.com/influxdb3/enterprise/
+maintainers:
+  - name: InfluxData
+    email: support@influxdata.com
+icon: https://www.influxdata.com/wp-content/uploads/influxdata-logo.svg

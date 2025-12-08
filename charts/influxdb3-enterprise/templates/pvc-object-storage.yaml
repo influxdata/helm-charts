@@ -1,0 +1,38 @@
+# PersistentVolumeClaim for file-based object storage
+#
+# This PVC is only created when objectStorage.type is "file"
+# All components (ingesters, queriers, compactor) will mount this shared volume
+#
+# IMPORTANT: Requires a StorageClass that supports ReadWriteMany (RWX) access mode
+# Common RWX-capable storage classes:
+# - NFS
+# - CephFS
+# - Azure Files
+# - GlusterFS
+# - EFS (AWS)
+#
+# For local testing without RWX support, consider using MinIO instead
+# ============================================================================
+{{- if eq .Values.objectStorage.type "file" }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-object-storage
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: object-storage
+spec:
+  accessModes:
+    - ReadWriteMany  # Required: All pods need to access the same storage
+  {{- if .Values.objectStorage.file.persistence.storageClass }}
+  {{- if (eq "-" .Values.objectStorage.file.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.objectStorage.file.persistence.storageClass | quote }}
+  {{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.objectStorage.file.persistence.size }}
+{{- end }}

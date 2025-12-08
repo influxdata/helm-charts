@@ -1,0 +1,182 @@
+# Azure Blob Storage Configuration
+# - Uses Azure Blob Storage for object storage
+# - Production-ready cloud storage
+# - Suitable for AKS (Azure Kubernetes Service) deployments
+# - Supports both access keys and Workload Identity (Managed Identity)
+
+# Prerequisites:
+# 1. Create Azure Storage Account and container:
+#    az storage account create \
+#      --name influxdb3storage \
+#      --resource-group YOUR_RESOURCE_GROUP \
+#      --location eastus \
+#      --sku Standard_LRS \
+#      --kind StorageV2
+#
+#    az storage container create \
+#      --name influxdb3-data \
+#      --account-name influxdb3storage
+#
+# 2. (Option A) Use storage account access keys:
+#    a. Get storage account key:
+#       az storage account keys list \
+#         --resource-group YOUR_RESOURCE_GROUP \
+#         --account-name influxdb3storage \
+#         --query '[0].value' -o tsv
+#
+#    b. Create Kubernetes secret:
+#       kubectl create secret generic influxdb3-azure-credentials \
+#         --from-literal=storage-account=influxdb3storage \
+#         --from-literal=access-key=YOUR_ACCESS_KEY \
+#         -n influxdb3
+#
+# 3. (Option B - RECOMMENDED for AKS) Use Workload Identity (Managed Identity):
+#    a. Enable Workload Identity on your AKS cluster (if not already enabled):
+#       az aks update \
+#         --resource-group YOUR_RESOURCE_GROUP \
+#         --name YOUR_CLUSTER_NAME \
+#         --enable-oidc-issuer \
+#         --enable-workload-identity
+#
+#    b. Get the OIDC issuer URL:
+#       AKS_OIDC_ISSUER=$(az aks show --name YOUR_CLUSTER_NAME \
+#         --resource-group YOUR_RESOURCE_GROUP \
+#         --query "oidcIssuerProfile.issuerUrl" -o tsv)
+#
+#    c. Create managed identity:
+#       az identity create \
+#         --name influxdb3-identity \
+#         --resource-group YOUR_RESOURCE_GROUP
+#
+#    d. Get managed identity details:
+#       IDENTITY_CLIENT_ID=$(az identity show \
+#         --name influxdb3-identity \
+#         --resource-group YOUR_RESOURCE_GROUP \
+#         --query 'clientId' -o tsv)
+#
+#    e. Assign Storage Blob Data Contributor role to managed identity:
+#       STORAGE_ACCOUNT_ID=$(az storage account show \
+#         --name influxdb3storage \
+#         --resource-group YOUR_RESOURCE_GROUP \
+#         --query 'id' -o tsv)
+#
+#       az role assignment create \
+#         --role "Storage Blob Data Contributor" \
+#         --assignee $IDENTITY_CLIENT_ID \
+#         --scope $STORAGE_ACCOUNT_ID
+#
+#    f. Create federated identity credential:
+#       az identity federated-credential create \
+#         --name influxdb3-federated-identity \
+#         --identity-name influxdb3-identity \
+#         --resource-group YOUR_RESOURCE_GROUP \
+#         --issuer $AKS_OIDC_ISSUER \
+#         --subject system:serviceaccount:influxdb3:influxdb3-enterprise
+#
+#    g. Use serviceAccount configuration below (Option B)
+#
+# 4. (Optional) Configure lifecycle management for cost optimization:
+#    - Transition to Cool tier after 30 days
+#    - Transition to Archive tier after 90 days
+#    - Delete old data after retention period
+#
+# 5. (Optional) Enable soft delete for data protection:
+#    az storage blob service-properties delete-policy update \
+#      --days-retained 7 \
+#      --account-name influxdb3storage \
+#      --enable true
+#
+# 6. (Optional) Enable versioning:
+#    az storage account blob-service-properties update \
+#      --account-name influxdb3storage \
+#      --enable-versioning true
+
+# Azure Blob Storage configuration
+objectStorage:
+  type: azure
+  bucket: "influxdb3-data"
+  azure:
+    # Storage account name
+    storageAccount: "influxdb3storage"
+
+    # Option A: Use access keys from Kubernetes secret
+    # Uncomment if using access keys instead of Managed Identity:
+    # existingSecret: "influxdb3-azure-credentials"
+
+    # Option B: Leave credentials empty if using Workload Identity (recommended for AKS)
+    # Configure serviceAccount below with proper annotations
+    accessKey: ""
+
+    # Azure Blob Storage endpoint (optional, uses default if empty)
+    # Default: https://<storage-account>.blob.core.windows.net
+    endpoint: ""
+
+    # Use HTTPS (recommended)
+    allowHttp: false
+
+license:
+  type: "trial"
+  email: "azure@example.com"
+
+# Option B: Service Account for Workload Identity (recommended for AKS)
+# Uncomment if using Managed Identity instead of access keys
+# serviceAccount:
+#   create: true
+#   annotations:
+#     azure.workload.identity/client-id: YOUR_MANAGED_IDENTITY_CLIENT_ID
+#   name: "influxdb3-enterprise"
+#   labels:
+#     azure.workload.identity/use: "true"
+
+ingester:
+  persistence:
+    # Azure Kubernetes storage classes:
+    # managed: Azure Managed Disk (default)
+    # managed-premium: Premium SSD
+    # azurefile: Azure Files (supports ReadWriteMany)
+    # azurefile-premium: Premium Azure Files
+    storageClass: "managed-premium"
+    size: "20Gi"
+
+querier: {}
+
+compactor: {}
+
+# Enable network policies for security
+networkPolicy:
+  enabled: true
+  egress:
+    # Allow access to Azure Blob Storage endpoints
+    toObjectStorage: true
+
+# Notes:
+# - Azure Blob Storage provides 99.999999999% (11 9's) durability with LRS
+# - Storage account performance tiers:
+#   - Standard (HDD): Lower cost, good for infrequent access
+#   - Premium (SSD): Higher performance for frequent access
+# - Storage redundancy options:
+#   - LRS (Locally Redundant): 3 copies in single region
+#   - ZRS (Zone Redundant): 3 copies across availability zones
+#   - GRS (Geo Redundant): 6 copies across two regions
+#   - GZRS (Geo-Zone Redundant): ZRS + geo-replication
+# - Access tiers for cost optimization:
+#   - Hot: Frequent access, higher storage cost, lower access cost
+#   - Cool: Infrequent access (30+ days), lower storage cost
+#   - Archive: Rare access (180+ days), lowest cost, higher latency
+# - Workload Identity is more secure than access keys (automatic rotation)
+# - Enable soft delete for accidental deletion protection
+# - Use Azure Storage Analytics for monitoring and logging
+# - Monitor costs using Azure Cost Management
+# - Enable Azure Defender for Storage for threat protection
+# - Use private endpoints for secure access from AKS
+# - Consider using customer-managed keys (CMK) for encryption
+# - Enable Azure Monitor for metrics and alerting
+# - Use lifecycle management policies for automatic tiering
+# - Enable versioning for compliance and data protection
+# - Configure CORS rules if accessing from web applications
+# - Use Azure Front Door or CDN for global distribution
+# - Enable diagnostic logs for troubleshooting
+# - Consider using Azure Premium Block Blobs for low latency
+# - AKS nodes in same region minimize egress costs
+# - Use managed-premium storage class for WAL (better IOPS)
+# - Enable hierarchical namespace for better performance (Data Lake Gen2)

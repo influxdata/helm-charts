@@ -1,0 +1,156 @@
+{{- if .Values.processingEngine.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-processor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: processor
+spec:
+  serviceName: {{ include "influxdb3-enterprise.fullname" . }}-processor
+  replicas: {{ .Values.processingEngine.replicas }}
+  {{- if .Values.processingEngine.updateStrategy }}
+  updateStrategy:
+    {{- toYaml .Values.processingEngine.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: processor
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
+        checksum/license: {{ include "influxdb3-enterprise.licenseChecksum" . }}
+        {{- with .Values.processingEngine.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "influxdb3-enterprise.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: processor
+        {{- with .Values.processingEngine.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "influxdb3-enterprise.serviceAccountName" . }}
+      {{- if .Values.processingEngine.priorityClassName }}
+      priorityClassName: {{ .Values.processingEngine.priorityClassName }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.processingEngine.podSecurityContext | nindent 8 }}
+      containers:
+        - name: influxdb3
+          {{- with .Values.processingEngine.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: {{ include "influxdb3-enterprise.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              exec influxdb3 \
+                {{- with .Values.processingEngine.numIOThreads }}
+                --num-io-threads={{ . }} \
+                {{- end }}
+                serve \
+                --mode=process \
+                --node-id=$(hostname)
+          envFrom:
+            - configMapRef:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-config
+          env:
+            {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
+            {{- with .Values.processingEngine.pluginDir }}
+            - name: INFLUXDB3_PLUGIN_DIR
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.processingEngine.pluginRepo }}
+            - name: INFLUXDB3_PLUGIN_REPO
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.processingEngine.virtualEnvLocation }}
+            - name: VIRTUAL_ENV
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.processingEngine.packageManager }}
+            - name: INFLUXDB3_PACKAGE_MANAGER
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.processingEngine.memory }}
+            {{- if .execMemPoolBytes }}
+            - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
+              value: {{ .execMemPoolBytes | quote }}
+            {{- end }}
+            {{- if .forceSnapshotMemThreshold }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
+              value: {{ .forceSnapshotMemThreshold | quote }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.processingEngine.datafusion }}
+            {{- if .numThreads }}
+            - name: INFLUXDB3_DATAFUSION_NUM_THREADS
+              value: {{ .numThreads | quote }}
+            {{- end }}
+            {{- if .maxParquetFanout }}
+            - name: INFLUXDB3_DATAFUSION_MAX_PARQUET_FANOUT
+              value: {{ .maxParquetFanout | quote }}
+            {{- end }}
+            {{- if .config }}
+            - name: INFLUXDB3_DATAFUSION_CONFIG
+              value: {{ .config | quote }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8181
+              protocol: TCP
+          {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.processingEngine.resources | nindent 12 }}
+          volumeMounts:
+          {{- if .Values.processingEngine.persistence.enabled }}
+            - name: plugins
+              mountPath: {{ .Values.processingEngine.pluginDir | default "/plugins" }}
+          {{- end }}
+            {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
+      {{- with .Values.processingEngine.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.processingEngine.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.processingEngine.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
+  {{- if .Values.processingEngine.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: plugins
+      spec:
+        accessModes:
+          - {{ .Values.processingEngine.persistence.accessMode }}
+      {{- if .Values.processingEngine.persistence.storageClass }}
+        storageClassName: {{ .Values.processingEngine.persistence.storageClass | quote }}
+      {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.processingEngine.persistence.size }}
+  {{- end }}
+{{- end }}

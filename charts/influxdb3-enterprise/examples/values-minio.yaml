@@ -1,0 +1,45 @@
+# MinIO Configuration
+# - Uses MinIO
+# - S3-compatible object storage
+# - No external cloud costs
+# - Suitable for on-premises or air-gapped deployments
+
+# See https://docs.influxdata.com/influxdb3/enterprise/admin/object-storage/minio/
+
+objectStorage:
+  type: s3
+  bucket: "influxdb3"
+  s3:
+    # MinIO service endpoint
+    endpoint: "http://localhost:9000"
+    # Allow HTTP connections (MinIO internal traffic)
+    allowHttp: true
+    # MinIO credentials (default, change in production)
+    accessKeyId: "minioadmin"
+    secretAccessKey: "minioadmin"
+    # For production, use existing secret:
+    # existingSecret: "minio-credentials"
+
+license:
+  type: "trial"
+  email: "minio@example.com"
+
+ingester:
+  persistence:
+    size: "20Gi"
+
+querier: {}
+
+compactor: {}
+
+networkPolicy:
+  enabled: true
+  egress:
+    # Allow access to MinIO service
+    toObjectStorage: true
+
+# Notes:
+# - MinIO service must be accessible from InfluxDB pods
+# - For production, create dedicated MinIO users with restricted permissions
+# - Consider MinIO distributed mode for high availability
+# - Monitor MinIO storage capacity

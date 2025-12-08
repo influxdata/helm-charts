@@ -1,0 +1,55 @@
+# Development Configuration
+# - Small resource allocation
+# - Local filesystem storage (no cloud costs)
+# - Single replica for most components
+# - Suitable for local testing and development
+
+# Local filesystem for development
+objectStorage:
+  type: file
+  file:
+    enabled: true
+    dataDir: "/var/lib/influxdb3"
+    persistence:
+      enabled: true
+      storageClass: ""
+      size: 10Gi
+
+license:
+  type: "trial"
+  email: "dev@example.com"
+
+# Reduced resources for development
+ingester:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  persistence:
+    size: "5Gi"
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+compactor:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+ingress:
+  host: "localhost"

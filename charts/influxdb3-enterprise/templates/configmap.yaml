@@ -1,0 +1,209 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+data:
+  # Cluster configuration (env-style)
+  INFLUXDB3_ENTERPRISE_CLUSTER_ID: {{ .Values.cluster.id | quote }}
+  {{- if .Values.cluster.replicationInterval }}
+  INFLUXDB3_ENTERPRISE_REPLICATION_INTERVAL: {{ .Values.cluster.replicationInterval | quote }}
+  {{- end }}
+  {{- if .Values.cluster.catalogSyncInterval }}
+  INFLUXDB3_ENTERPRISE_CATALOG_SYNC_INTERVAL: {{ .Values.cluster.catalogSyncInterval | quote }}
+  {{- end }}
+  {{- if .Values.cluster.waitForRunningIngestor }}
+  INFLUXDB3_ENTERPRISE_WAIT_FOR_RUNNING_INGESTOR: {{ .Values.cluster.waitForRunningIngestor | quote }}
+  {{- end }}
+
+  # Security
+  {{- if .Values.security.tls.enabled }}
+  INFLUXDB3_TLS_CERT: {{ .Values.security.tls.certPath | quote }}
+  INFLUXDB3_TLS_KEY: {{ .Values.security.tls.keyPath | quote }}
+  INFLUXDB3_TLS_MINIMUM_VERSION: {{ .Values.security.tls.minVersion | quote }}
+  {{- end }}
+  {{- if .Values.security.auth.disabled }}
+  INFLUXDB3_START_WITHOUT_AUTH: {{ ternary "true" "false" .Values.security.auth.disabled | quote }}
+  {{- end }}
+  {{- if .Values.security.auth.disableAuthz }}
+  INFLUXDB3_DISABLE_AUTHZ: {{ join "," .Values.security.auth.disableAuthz | quote }}
+  {{- end }}
+
+  # HTTP
+  {{- with .Values.http }}
+  {{- if .bind }}
+  INFLUXDB3_HTTP_BIND_ADDR: {{ .bind | quote }}
+  {{- end }}
+  {{- if .maxRequestSize }}
+  INFLUXDB3_MAX_HTTP_REQUEST_SIZE: {{ .maxRequestSize | int | quote }}
+  {{- end }}
+  {{- end }}
+
+  # Object storage (non-secret)
+  INFLUXDB3_OBJECT_STORE: {{ .Values.objectStorage.type | quote }}
+  {{- if eq .Values.objectStorage.type "file" }}
+  INFLUXDB3_DB_DIR: {{ .Values.objectStorage.file.dataDir | quote }}
+  {{- else }}
+  INFLUXDB3_BUCKET: {{ .Values.objectStorage.bucket | quote }}
+  {{- end }}
+  {{- if .Values.objectStorage.connectionLimit }}
+  OBJECT_STORE_CONNECTION_LIMIT: {{ .Values.objectStorage.connectionLimit | quote }}
+  {{- end }}
+  {{- if hasKey .Values.objectStorage "http2Only" }}
+  OBJECT_STORE_HTTP2_ONLY: {{ ternary "true" "false" .Values.objectStorage.http2Only | quote }}
+  {{- end }}
+  {{- if .Values.objectStorage.http2MaxFrameSize }}
+  OBJECT_STORE_HTTP2_MAX_FRAME_SIZE: {{ .Values.objectStorage.http2MaxFrameSize | quote }}
+  {{- end }}
+  {{- if .Values.objectStorage.maxRetries }}
+  OBJECT_STORE_MAX_RETRIES: {{ .Values.objectStorage.maxRetries | quote }}
+  {{- end }}
+  {{- if .Values.objectStorage.retryTimeout }}
+  OBJECT_STORE_RETRY_TIMEOUT: {{ .Values.objectStorage.retryTimeout | quote }}
+  {{- end }}
+  {{- if .Values.objectStorage.cacheEndpoint }}
+  OBJECT_STORE_CACHE_ENDPOINT: {{ .Values.objectStorage.cacheEndpoint | quote }}
+  {{- end }}
+  {{- if eq .Values.objectStorage.type "s3" }}
+  AWS_DEFAULT_REGION: {{ .Values.objectStorage.s3.region | quote }}
+  {{- if .Values.objectStorage.s3.endpoint }}
+  AWS_ENDPOINT: {{ .Values.objectStorage.s3.endpoint | quote }}
+  {{- end }}
+  {{- if .Values.objectStorage.s3.allowHttp }}
+  AWS_ALLOW_HTTP: "true"
+  {{- end }}
+  {{- end }}
+  {{- if eq .Values.objectStorage.type "azure" }}
+  {{- if .Values.objectStorage.azure.endpoint }}
+  AZURE_ENDPOINT: {{ .Values.objectStorage.azure.endpoint | quote }}
+  {{- end }}
+  {{- if .Values.objectStorage.azure.allowHttp }}
+  AZURE_ALLOW_HTTP: "true"
+  {{- end }}
+  {{- end }}
+  {{- if eq .Values.objectStorage.type "google" }}
+  GOOGLE_SERVICE_ACCOUNT: "/var/secrets/google/service-account.json"
+  {{- end }}
+
+  # Caching configuration
+  {{- with .Values.caching }}
+  {{- if .parquetMemCacheSize }}
+  INFLUXDB3_PARQUET_MEM_CACHE_SIZE: {{ .parquetMemCacheSize | quote }}
+  {{ end }}
+  {{- if .parquetMemCacheQueryPathDuration }}
+  INFLUXDB3_PARQUET_MEM_CACHE_QUERY_PATH_DURATION: {{ .parquetMemCacheQueryPathDuration | quote }}
+  {{- end }}
+  {{- if .parquetMemCachePrunePercentage }}
+  INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE: {{ .parquetMemCachePrunePercentage | quote }}
+  {{- end }}
+  {{- if .parquetMemCachePruneInterval }}
+  INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_INTERVAL: {{ .parquetMemCachePruneInterval | quote }}
+  {{- end }}
+  {{- if hasKey . "disableParquetMemCache" }}
+  INFLUXDB3_DISABLE_PARQUET_MEM_CACHE: {{ ternary "true" "false" .disableParquetMemCache | quote }}
+  {{- end }}
+  {{- if .preemptiveCacheAge }}
+  INFLUXDB3_PREEMPTIVE_CACHE_AGE: {{ .preemptiveCacheAge | quote }}
+  {{- end }}
+  {{- if hasKey . "lastValueCacheDisableFromHistory" }}
+  INFLUXDB3_ENTERPRISE_LAST_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .lastValueCacheDisableFromHistory | quote }}
+  {{- end }}
+  {{- if .lastCacheEvictionInterval }}
+  INFLUXDB3_LAST_CACHE_EVICTION_INTERVAL: {{ .lastCacheEvictionInterval | quote }}
+  {{- end }}
+  {{- if hasKey . "distinctValueCacheDisableFromHistory" }}
+  INFLUXDB3_ENTERPRISE_DISTINCT_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .distinctValueCacheDisableFromHistory | quote }}
+  {{- end }}
+  {{- if .distinctCacheEvictionInterval }}
+  INFLUXDB3_DISTINCT_CACHE_EVICTION_INTERVAL: {{ .distinctCacheEvictionInterval | quote }}
+  {{- end }}
+  {{- if .tableIndexCacheMaxEntries }}
+  INFLUXDB3_TABLE_INDEX_CACHE_MAX_ENTRIES: {{ .tableIndexCacheMaxEntries | quote }}
+  {{- end }}
+  {{- if .tableIndexCacheConcurrencyLimit }}
+  INFLUXDB3_TABLE_INDEX_CACHE_CONCURRENCY_LIMIT: {{ .tableIndexCacheConcurrencyLimit | quote }}
+  {{- end }}
+  {{- end }}
+
+  # Resource limits
+  {{- with .Values.resourceLimits }}
+  {{- if .numDatabases }}
+  INFLUXDB3_ENTERPRISE_NUM_DATABASE_LIMIT: {{ .numDatabases }}
+  {{- end }}
+  {{- if .numTables }}
+  INFLUXDB3_ENTERPRISE_NUM_TABLE_LIMIT: {{ .numTables }}
+  {{- end }}
+  {{- if .numColumnsPerTable }}
+  INFLUXDB3_ENTERPRISE_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .numColumnsPerTable }}
+  {{- end }}
+  {{- end }}
+
+  # Data lifecycle
+  {{- with .Values.dataLifecycle }}
+  {{- if .gen1LookbackDuration }}
+  INFLUXDB3_GEN1_LOOKBACK_DURATION: {{ .gen1LookbackDuration | quote }}
+  {{- end }}
+  {{- if .retentionCheckInterval }}
+  INFLUXDB3_RETENTION_CHECK_INTERVAL: {{ .retentionCheckInterval | quote }}
+  {{- end }}
+  {{- if .deleteGracePeriod }}
+  INFLUXDB3_DELETE_GRACE_PERIOD: {{ .deleteGracePeriod | quote }}
+  {{- end }}
+  {{- if .hardDeleteDefaultDuration }}
+  INFLUXDB3_HARD_DELETE_DEFAULT_DURATION: {{ .hardDeleteDefaultDuration | quote }}
+  {{- end }}
+  {{- end }}
+
+  # Logs
+  {{- with .Values.logs }}
+  {{- if .logFilter }}
+  LOG_FILTER: {{ .logFilter | quote }}
+  {{- end }}
+  {{- if .logDestination }}
+  LOG_DESTINATION: {{ .logDestination | quote }}
+  {{- end }}
+  {{- if .logFormat }}
+  LOG_FORMAT: {{ .logFormat | quote }}
+  {{- end }}
+  {{- if .queryLogSize }}
+  INFLUXDB3_QUERY_LOG_SIZE: {{ .queryLogSize }}
+  {{- end }}
+  {{- end }}
+
+  # Tracing
+  {{- with .Values.traces }}
+  INFLUXDB3_TRACES_EXPORTER: {{ .exporter | quote }}
+  {{- with .jaeger }}
+  {{- if .agentHost }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_HOST: {{ .agentHost | quote }}
+  {{- end }}
+  {{- if .agentPort }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_PORT: {{ .agentPort | quote }}
+  {{- end }}
+  {{- if .serviceName }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_SERVICE_NAME: {{ .serviceName | quote }}
+  {{- end }}
+  {{- if .traceContextHeaderName }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_TRACE_CONTEXT_HEADER_NAME: {{ .traceContextHeaderName | quote }}
+  {{- end }}
+  {{- if .debugName }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_DEBUG_NAME: {{ .debugName | quote }}
+  {{- end }}
+  {{- if .tags }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_TAGS: {{ .tags | quote }}
+  {{- end }}
+  {{- if .maxMsgsPerSecond }}
+  INFLUXDB3_TRACES_JAEGER_MAX_MSGS_PER_SECOND: {{ .maxMsgsPerSecond | quote }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+
+  # Telemetry
+  {{- with .Values.telemetry }}
+  INFLUXDB3_TELEMETRY_DISABLE_UPLOAD: {{ .disableUpload | quote }}
+  {{- if .endpoint }}
+  INFLUXDB3_TELEMETRY_ENDPOINT: {{ .endpoint | quote }}
+  {{- end }}
+  {{- end }}
