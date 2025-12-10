@@ -6,7 +6,7 @@
 # (e.g., Calico, Cilium, Weave Net, or Antrea)
 #
 # If your cluster doesn't support NetworkPolicy, keep this disabled
-{{- if .Values.networkPolicy.enabled }}
+{{- if and .Values.networkPolicy.enabled .Values.ingester.enabled }}
 ---
 # NetworkPolicy for Ingester nodes
 apiVersion: networking.k8s.io/v1
@@ -124,7 +124,8 @@ spec:
         - protocol: TCP
           port: 8181
 
----
+{{- end }}
+{{- if and .Values.networkPolicy.enabled .Values.querier.enabled }}
 # NetworkPolicy for Querier nodes
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -230,7 +231,8 @@ spec:
         - protocol: TCP
           port: 8181
 
----
+{{- end }}
+{{- if and .Values.networkPolicy.enabled .Values.compactor.enabled }}
 # NetworkPolicy for Compactor node
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -324,7 +326,8 @@ spec:
         - protocol: TCP
           port: 8181
 
-{{- if .Values.processingEngine.enabled }}
+{{- end }}
+{{- if and .Values.networkPolicy.enabled .Values.processingEngine.enabled }}
 ---
 # NetworkPolicy for Processor nodes
 apiVersion: networking.k8s.io/v1
@@ -455,5 +458,4 @@ spec:
           port: 80
     {{- end }}
     {{- end }}
-{{- end }}
 {{- end }}
