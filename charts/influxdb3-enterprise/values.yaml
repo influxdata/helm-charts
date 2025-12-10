@@ -66,7 +66,8 @@ objectStorage:
     secretAccessKey: ""
     sessionToken: ""                # Optional, for federated/SSO
     # Credentials file (alternative to accessKeyId/secretAccessKey)
-    credentialsFile: ""             # Path to AWS JSON credentials file (mounted to /etc/influxdb/aws/credentials)
+    # Use: helm install ... --set-file objectStorage.s3.credentialsFile=/path/to/credentials.json
+    credentialsFile: ""             # Path to AWS JSON credentials file
     # Connection options
     # allowHttp: false                # Set true for HTTP (non-TLS) connections
     # skipSignature: false            # Skip request signing (not recommended)
@@ -451,7 +452,7 @@ processingEngine:
   # Pre-install plugins via initContainer (optional)
   initPlugins: []
     # - name: system-metrics
-    #  source: "gh:influxdata/system_metrics/system_metrics.py"
+    #   source: "gh:influxdata/system_metrics/system_metrics.py"
 
   # Pod affinity/anti-affinity, node selectors, tolerations
   # Default: soft anti-affinity to spread pods across nodes when possible
