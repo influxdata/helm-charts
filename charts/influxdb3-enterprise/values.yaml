@@ -65,11 +65,11 @@ objectStorage:
     accessKeyId: ""
     secretAccessKey: ""
     sessionToken: ""                # Optional, for federated/SSO
-    # Connection options
-    allowHttp: false                # Set true for HTTP (non-TLS) connections
-    skipSignature: false            # Skip request signing (not recommended)
     # Credentials file (alternative to accessKeyId/secretAccessKey)
     credentialsFile: ""             # Path to JSON credentials file
+    # Connection options
+    # allowHttp: false                # Set true for HTTP (non-TLS) connections
+    # skipSignature: false            # Skip request signing (not recommended)
 
     # Existing secret (alternative to specifying credentials here)
     # If specified, the chart will use this secret instead of creating one
