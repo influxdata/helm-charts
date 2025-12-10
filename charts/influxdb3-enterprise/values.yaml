@@ -540,14 +540,12 @@ security:
     #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
 
 # HTTP server configuration
-# http:
-#   bind: "0.0.0.0:8181"
-#   maxRequestSize: 10485760          # 10MB default
-
-# Write-Ahead Log (WAL) configuration
+http:
+  # bind: "0.0.0.0:8181"
+  # maxRequestSize: 10485760          # 10MB default
 
 # Caching configuration
-# caching:
+caching:
   # Parquet file caching
   # parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
   # parquetMemCacheQueryPathDuration: "5h"
