@@ -1,3 +1,4 @@
+{{- include "influxdb3-enterprise.validateObjectStorageType" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

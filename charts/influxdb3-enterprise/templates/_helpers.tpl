@@ -86,6 +86,17 @@ License secret name
 {{- end }}
 
 {{/*
+Validate object storage type
+*/}}
+{{- define "influxdb3-enterprise.validateObjectStorageType" -}}
+{{- $type := default "s3" .Values.objectStorage.type -}}
+{{- $valid := list "s3" "azure" "google" "file" "memory" "memory-throttled" -}}
+{{- if not (has $type $valid) -}}
+{{- fail (printf "Invalid objectStorage.type: %s. Must be one of: %s" $type (join ", " $valid)) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 License checksum (handles existingSecret via lookup)
 */}}
 {{- define "influxdb3-enterprise.licenseChecksum" -}}
