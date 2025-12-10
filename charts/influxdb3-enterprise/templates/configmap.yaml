@@ -78,6 +78,9 @@ data:
   {{- if .Values.objectStorage.s3.skipSignature }}
   AWS_SKIP_SIGNATURE: "true"
   {{- end }}
+  {{- if .Values.objectStorage.s3.credentialsFile }}
+  AWS_CREDENTIALS_FILE: "/etc/influxdb/aws/credentials"
+  {{- end }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "azure" }}
   {{- if .Values.objectStorage.azure.endpoint }}

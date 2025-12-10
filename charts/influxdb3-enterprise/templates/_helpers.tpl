@@ -227,6 +227,11 @@ Shared volume mounts (license/TLS/GCS and user extras)
   mountPath: /var/secrets/google
   readOnly: true
 {{- end }}
+{{- if and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile }}
+- name: aws-credentials
+  mountPath: /etc/influxdb/aws
+  readOnly: true
+{{- end }}
 {{- if or .Values.license.file .Values.license.existingSecret }}
 - name: license
   mountPath: /etc/influxdb/license
@@ -259,6 +264,14 @@ Shared volumes (license/TLS/GCS and user extras)
     items:
       - key: service-account.json
         path: service-account.json
+{{- end }}
+{{- if and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile }}
+- name: aws-credentials
+  secret:
+    secretName: {{ include "influxdb3-enterprise.fullname" . }}-aws-credentials
+    items:
+      - key: credentials
+        path: credentials
 {{- end }}
 {{- if or .Values.license.file .Values.license.existingSecret }}
 - name: license

@@ -66,7 +66,7 @@ objectStorage:
     secretAccessKey: ""
     sessionToken: ""                # Optional, for federated/SSO
     # Credentials file (alternative to accessKeyId/secretAccessKey)
-    credentialsFile: ""             # Path to JSON credentials file
+    credentialsFile: ""             # Path to AWS JSON credentials file (mounted to /etc/influxdb/aws/credentials)
     # Connection options
     # allowHttp: false                # Set true for HTTP (non-TLS) connections
     # skipSignature: false            # Skip request signing (not recommended)
