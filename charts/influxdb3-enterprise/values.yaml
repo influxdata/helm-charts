@@ -120,9 +120,11 @@ objectStorage:
       storageClass: ""
       size: 100Gi
 
-  # In-memory storage (for testing only, no persistence)
+  # In-memory storage (no persistence)
   # memory:
-  #   throttled: false              # Set true to simulate cloud latency
+
+  # In-memory storage (no persistence) but with latency and throughput that somewhat resembles a cloud object store
+  # memory-throttled:
 
 # ============================================================================
 # License Configuration (Shared across all components)
