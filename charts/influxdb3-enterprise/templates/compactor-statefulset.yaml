@@ -130,8 +130,6 @@ spec:
           {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.compactor.resources | nindent 12 }}
-          {{- if eq .Values.objectStorage.type "file" }}
-          {{- end }}
           volumeMounts:
             {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
       {{- with .Values.compactor.nodeSelector }}
