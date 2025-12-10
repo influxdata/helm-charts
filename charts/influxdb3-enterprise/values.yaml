@@ -398,7 +398,7 @@ compactor:
   # Protect the single compactor from voluntary disruptions (node drains/maintenance)
   podDisruptionBudget:
     enabled: false
-    maxUnavailable: 0
+    maxUnavailable: 1
 
   # Priority class for pod scheduling priority
   # Higher priority pods are scheduled before lower priority pods
