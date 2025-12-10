@@ -471,7 +471,7 @@ logs:
 | `image.tag` | Image tag | `3-enterprise` |
 | `license.type` | trial, home, or commercial | `trial` |
 | `license.email` | Email for trial/home | `""` |
-| `license.file` | Path to license file (commercial) | `""` |
+| `license.file` | License file content (use `--set-file license.file=/path/to/file`) | `""` |
 | `license.existingSecret` | Secret with `license-email` or `license-file` | `""` |
 
 ### Object Storage Parameters

@@ -140,8 +140,8 @@ license:
   # Required for trial and home licenses
   email: ""
 
-  # License file path (for commercial licenses)
-  # Mutually exclusive with email
+  # License file content (for commercial licenses)
+  # Use: helm install ... --set-file license.file=/path/to/license.jwt
   file: ""
 
   # Existing secret containing license information

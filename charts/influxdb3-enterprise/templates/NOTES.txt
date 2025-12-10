@@ -92,10 +92,8 @@ Getting started:
 
 Documentation: https://docs.influxdata.com/influxdb3/enterprise/
 
-{{- if not .Values.license.email }}
-{{- if not .Values.license.existingSecret }}
+{{- if not (or .Values.license.email .Values.license.file .Values.license.existingSecret) }}
 
 ⚠️  WARNING: No license configured!
-    Set .Values.license.email or .Values.license.existingSecret to activate your license.
-{{- end }}
+    Set license.email, license.file, or license.existingSecret to activate your license.
 {{- end }}
