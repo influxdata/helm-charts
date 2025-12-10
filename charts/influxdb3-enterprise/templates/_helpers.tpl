@@ -144,7 +144,7 @@ TLS secret name
 {{- end }}
 {{- end }}
 
-{{/*  
+{{/*
 License environment (shared across components)
 */}}
 {{- define "influxdb3-enterprise.licenseEnv" -}}
@@ -156,12 +156,9 @@ License environment (shared across components)
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
 {{- end }}
-{{- if .Values.license.file }}
+{{- if or .Values.license.file .Values.license.existingSecret }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
-      key: license-file
+  value: "/etc/influxdb/license/license"
 {{- end }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
   value: {{ .Values.license.type | quote }}
