@@ -238,7 +238,7 @@ ingester:
   priorityClassName: ""
 
   # Pod disruption budget for high availability
-  # Protect the single compactor from voluntary disruptions (node drains/maintenance)
+  # Protect ingesters from voluntary disruptions (node drains/maintenance)
   podDisruptionBudget:
     enabled: false
     maxUnavailable: 1
