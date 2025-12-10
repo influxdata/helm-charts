@@ -153,16 +153,16 @@ spec:
       {{- end }}
       volumes:
         {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
-    volumeClaimTemplates:
-      - metadata:
-          name: plugins
-        spec:
-          accessModes:
-            - {{ .Values.processingEngine.persistence.accessMode }}
-        {{- if .Values.processingEngine.persistence.storageClass }}
-          storageClassName: {{ .Values.processingEngine.persistence.storageClass | quote }}
-        {{- end }}
-          resources:
-            requests:
-              storage: {{ .Values.processingEngine.persistence.size }}
+  volumeClaimTemplates:
+    - metadata:
+        name: plugins
+      spec:
+        accessModes:
+          - {{ .Values.processingEngine.persistence.accessMode }}
+      {{- if .Values.processingEngine.persistence.storageClass }}
+        storageClassName: {{ .Values.processingEngine.persistence.storageClass | quote }}
+      {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.processingEngine.persistence.size }}
 {{- end }}
