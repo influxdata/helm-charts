@@ -158,7 +158,7 @@ License environment (shared across components)
 {{- end }}
 {{- if or .Values.license.file .Values.license.existingSecret }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
-  value: "/etc/influxdb/license/license"
+  value: "/etc/influxdb/license"
 {{- end }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
   value: {{ .Values.license.type | quote }}
@@ -219,6 +219,7 @@ Shared volume mounts (license/TLS/GCS and user extras)
 {{- if or .Values.license.file .Values.license.existingSecret }}
 - name: license
   mountPath: /etc/influxdb/license
+  subPath: license
   readOnly: true
 {{- end }}
 {{- if .Values.security.tls.enabled }}
