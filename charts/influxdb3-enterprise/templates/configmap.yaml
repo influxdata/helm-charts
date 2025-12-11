@@ -1,3 +1,4 @@
+{{- include "influxdb3-enterprise.validateObjectStorageType" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -73,6 +74,12 @@ data:
   {{- end }}
   {{- if .Values.objectStorage.s3.allowHttp }}
   AWS_ALLOW_HTTP: "true"
+  {{- end }}
+  {{- if .Values.objectStorage.s3.skipSignature }}
+  AWS_SKIP_SIGNATURE: "true"
+  {{- end }}
+  {{- if .Values.objectStorage.s3.credentialsFile }}
+  AWS_CREDENTIALS_FILE: "/etc/influxdb/aws/credentials"
   {{- end }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "azure" }}
@@ -174,28 +181,28 @@ data:
 
   # Tracing
   {{- with .Values.traces }}
-  INFLUXDB3_TRACES_EXPORTER: {{ .exporter | quote }}
+  TRACES_EXPORTER: {{ .exporter | quote }}
   {{- with .jaeger }}
   {{- if .agentHost }}
-  INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_HOST: {{ .agentHost | quote }}
+  TRACES_EXPORTER_JAEGER_AGENT_HOST: {{ .agentHost | quote }}
   {{- end }}
   {{- if .agentPort }}
-  INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_PORT: {{ .agentPort | quote }}
+  TRACES_EXPORTER_JAEGER_AGENT_PORT: {{ .agentPort | quote }}
   {{- end }}
   {{- if .serviceName }}
-  INFLUXDB3_TRACES_EXPORTER_JAEGER_SERVICE_NAME: {{ .serviceName | quote }}
+  TRACES_EXPORTER_JAEGER_SERVICE_NAME: {{ .serviceName | quote }}
   {{- end }}
   {{- if .traceContextHeaderName }}
-  INFLUXDB3_TRACES_EXPORTER_JAEGER_TRACE_CONTEXT_HEADER_NAME: {{ .traceContextHeaderName | quote }}
+  TRACES_EXPORTER_JAEGER_TRACE_CONTEXT_HEADER_NAME: {{ .traceContextHeaderName | quote }}
   {{- end }}
   {{- if .debugName }}
-  INFLUXDB3_TRACES_EXPORTER_JAEGER_DEBUG_NAME: {{ .debugName | quote }}
+  TRACES_EXPORTER_JAEGER_DEBUG_NAME: {{ .debugName | quote }}
   {{- end }}
   {{- if .tags }}
-  INFLUXDB3_TRACES_EXPORTER_JAEGER_TAGS: {{ .tags | quote }}
+  TRACES_EXPORTER_JAEGER_TAGS: {{ .tags | quote }}
   {{- end }}
   {{- if .maxMsgsPerSecond }}
-  INFLUXDB3_TRACES_JAEGER_MAX_MSGS_PER_SECOND: {{ .maxMsgsPerSecond | quote }}
+  TRACES_JAEGER_MAX_MSGS_PER_SECOND: {{ .maxMsgsPerSecond | quote }}
   {{- end }}
   {{- end }}
   {{- end }}

@@ -49,14 +49,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Component labels
-*/}}
-{{- define "influxdb3-enterprise.componentLabels" -}}
-{{ include "influxdb3-enterprise.labels" . }}
-app.kubernetes.io/component: {{ .component }}
-{{- end }}
-
-{{/*
 Service account name
 */}}
 {{- define "influxdb3-enterprise.serviceAccountName" -}}
@@ -94,6 +86,17 @@ License secret name
 {{- end }}
 
 {{/*
+Validate object storage type
+*/}}
+{{- define "influxdb3-enterprise.validateObjectStorageType" -}}
+{{- $type := default "s3" .Values.objectStorage.type -}}
+{{- $valid := list "s3" "azure" "google" "file" "memory" "memory-throttled" -}}
+{{- if not (has $type $valid) -}}
+{{- fail (printf "Invalid objectStorage.type: %s. Must be one of: %s" $type (join ", " $valid)) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 License checksum (handles existingSecret via lookup)
 */}}
 {{- define "influxdb3-enterprise.licenseChecksum" -}}
@@ -113,152 +116,6 @@ TLS secret name
 {{- .Values.security.tls.existingSecret }}
 {{- else }}
 {{- include "influxdb3-enterprise.fullname" . }}-tls
-{{- end }}
-{{- end }}
-
-{{/*
-HTTP/TLS/Auth environment (shared across components)
-*/}}
-{{- define "influxdb3-enterprise.httpEnv" -}}{{- end }}
-
-{{/*
-Cluster environment (shared across components)
-*/}}
-{{- define "influxdb3-enterprise.clusterEnv" -}}{{- end }}
-
-{{/*
-Caching environment (shared across components)
-*/}}
-{{- define "influxdb3-enterprise.cachingEnv" -}}
-{{- with .Values.caching }}
-  {{- if .parquetMemCacheSize }}
-- name: INFLUXDB3_PARQUET_MEM_CACHE_SIZE
-  value: {{ .parquetMemCacheSize | quote }}
-  {{- end }}
-  {{- if .parquetMemCacheQueryPathDuration }}
-- name: INFLUXDB3_PARQUET_MEM_CACHE_QUERY_PATH_DURATION
-  value: {{ .parquetMemCacheQueryPathDuration | quote }}
-  {{- end }}
-  {{- if .parquetMemCachePrunePercentage }}
-- name: INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE
-  value: {{ .parquetMemCachePrunePercentage | quote }}
-  {{- end }}
-  {{- if .parquetMemCachePruneInterval }}
-- name: INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_INTERVAL
-  value: {{ .parquetMemCachePruneInterval | quote }}
-  {{- end }}
-  {{- if hasKey . "disableParquetMemCache" }}
-- name: INFLUXDB3_DISABLE_PARQUET_MEM_CACHE
-  value: {{ ternary "true" "false" .disableParquetMemCache | quote }}
-  {{- end }}
-  {{- if .preemptiveCacheAge }}
-- name: INFLUXDB3_PREEMPTIVE_CACHE_AGE
-  value: {{ .preemptiveCacheAge | quote }}
-  {{- end }}
-  {{- if hasKey . "lastValueCacheDisableFromHistory" }}
-- name: INFLUXDB3_ENTERPRISE_LAST_VALUE_CACHE_DISABLE_FROM_HISTORY
-  value: {{ ternary "true" "false" .lastValueCacheDisableFromHistory | quote }}
-  {{- end }}
-  {{- if .lastCacheEvictionInterval }}
-- name: INFLUXDB3_LAST_CACHE_EVICTION_INTERVAL
-  value: {{ .lastCacheEvictionInterval | quote }}
-  {{- end }}
-  {{- if hasKey . "distinctValueCacheDisableFromHistory" }}
-- name: INFLUXDB3_ENTERPRISE_DISTINCT_VALUE_CACHE_DISABLE_FROM_HISTORY
-  value: {{ ternary "true" "false" .distinctValueCacheDisableFromHistory | quote }}
-  {{- end }}
-  {{- if .distinctCacheEvictionInterval }}
-- name: INFLUXDB3_DISTINCT_CACHE_EVICTION_INTERVAL
-  value: {{ .distinctCacheEvictionInterval | quote }}
-  {{- end }}
-  {{- if .tableIndexCacheMaxEntries }}
-- name: INFLUXDB3_TABLE_INDEX_CACHE_MAX_ENTRIES
-  value: {{ .tableIndexCacheMaxEntries | quote }}
-  {{- end }}
-  {{- if .tableIndexCacheConcurrencyLimit }}
-- name: INFLUXDB3_TABLE_INDEX_CACHE_CONCURRENCY_LIMIT
-  value: {{ .tableIndexCacheConcurrencyLimit | quote }}
-  {{- end }}
-{{- end }}
-{{- end }}
-
-{{/*
-Logs environment (shared across components)
-*/}}
-{{- define "influxdb3-enterprise.logsEnv" -}}
-{{- $logs := default (dict) .Values.logs }}
-- name: LOG_DESTINATION
-  value: {{ default "stdout" (default ($logs.logDestination) ($logs.destination)) | quote }}
-- name: LOG_FORMAT
-  value: {{ default "full" (default ($logs.logFormat) ($logs.format)) | quote }}
-{{- if $logs.logFilter }}
-- name: LOG_FILTER
-  value: {{ $logs.logFilter | quote }}
-{{- end }}
-- name: INFLUXDB3_QUERY_LOG_SIZE
-  value: {{ default 1000 ($logs.queryLogSize) | quote }}
-{{- end }}
-
-{{/*
-Object storage environment (shared across components)
-*/}}
-{{- define "influxdb3-enterprise.objectStoreEnv" -}}
-- name: INFLUXDB3_OBJECT_STORE
-  value: {{ .Values.objectStorage.type | quote }}
-{{- if eq .Values.objectStorage.type "file" }}
-- name: INFLUXDB3_DB_DIR
-  value: {{ .Values.objectStorage.file.dataDir | quote }}
-{{- else }}
-- name: INFLUXDB3_BUCKET
-  value: {{ .Values.objectStorage.bucket | quote }}
-{{- if .Values.objectStorage.connectionLimit }}
-- name: OBJECT_STORE_CONNECTION_LIMIT
-  value: {{ .Values.objectStorage.connectionLimit | quote }}
-{{- end }}
-{{- if hasKey .Values.objectStorage "http2Only" }}
-- name: OBJECT_STORE_HTTP2_ONLY
-  value: {{ ternary "true" "false" .Values.objectStorage.http2Only | quote }}
-{{- end }}
-{{- if .Values.objectStorage.http2MaxFrameSize }}
-- name: OBJECT_STORE_HTTP2_MAX_FRAME_SIZE
-  value: {{ .Values.objectStorage.http2MaxFrameSize | quote }}
-{{- end }}
-{{- if .Values.objectStorage.maxRetries }}
-- name: OBJECT_STORE_MAX_RETRIES
-  value: {{ .Values.objectStorage.maxRetries | quote }}
-{{- end }}
-{{- if .Values.objectStorage.retryTimeout }}
-- name: OBJECT_STORE_RETRY_TIMEOUT
-  value: {{ .Values.objectStorage.retryTimeout | quote }}
-{{- end }}
-{{- if .Values.objectStorage.cacheEndpoint }}
-- name: OBJECT_STORE_CACHE_ENDPOINT
-  value: {{ .Values.objectStorage.cacheEndpoint | quote }}
-{{- end }}
-{{- if eq .Values.objectStorage.type "s3" }}
-- name: AWS_DEFAULT_REGION
-  value: {{ .Values.objectStorage.s3.region | quote }}
-{{- if .Values.objectStorage.s3.endpoint }}
-- name: AWS_ENDPOINT
-  value: {{ .Values.objectStorage.s3.endpoint | quote }}
-{{- end }}
-{{- if .Values.objectStorage.s3.allowHttp }}
-- name: AWS_ALLOW_HTTP
-  value: "true"
-{{- end }}
-{{- else if eq .Values.objectStorage.type "azure" }}
-{{- if .Values.objectStorage.azure.endpoint }}
-- name: AZURE_ENDPOINT
-  value: {{ .Values.objectStorage.azure.endpoint | quote }}
-{{- end }}
-{{- if .Values.objectStorage.azure.allowHttp }}
-- name: AZURE_ALLOW_HTTP
-  value: "true"
-{{- end }}
-{{- else if eq .Values.objectStorage.type "google" }}
-- name: GOOGLE_SERVICE_ACCOUNT
-  value: "/var/secrets/google/service-account.json"
-{{- end }}
 {{- end }}
 {{- end }}
 
@@ -298,7 +155,7 @@ Object storage environment (shared across components)
 {{- end }}
 {{- end }}
 
-{{/*  
+{{/*
 License environment (shared across components)
 */}}
 {{- define "influxdb3-enterprise.licenseEnv" -}}
@@ -310,12 +167,9 @@ License environment (shared across components)
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
 {{- end }}
-{{- if .Values.license.file }}
+{{- if or .Values.license.file .Values.license.existingSecret }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
-      key: license-file
+  value: "/etc/influxdb/license"
 {{- end }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
   value: {{ .Values.license.type | quote }}
@@ -373,9 +227,15 @@ Shared volume mounts (license/TLS/GCS and user extras)
   mountPath: /var/secrets/google
   readOnly: true
 {{- end }}
+{{- if and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile }}
+- name: aws-credentials
+  mountPath: /etc/influxdb/aws
+  readOnly: true
+{{- end }}
 {{- if or .Values.license.file .Values.license.existingSecret }}
 - name: license
   mountPath: /etc/influxdb/license
+  subPath: license
   readOnly: true
 {{- end }}
 {{- if .Values.security.tls.enabled }}
@@ -404,6 +264,14 @@ Shared volumes (license/TLS/GCS and user extras)
     items:
       - key: service-account.json
         path: service-account.json
+{{- end }}
+{{- if and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile }}
+- name: aws-credentials
+  secret:
+    secretName: {{ include "influxdb3-enterprise.fullname" . }}-aws-credentials
+    items:
+      - key: credentials
+        path: credentials
 {{- end }}
 {{- if or .Values.license.file .Values.license.existingSecret }}
 - name: license

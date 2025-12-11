@@ -65,11 +65,12 @@ objectStorage:
     accessKeyId: ""
     secretAccessKey: ""
     sessionToken: ""                # Optional, for federated/SSO
+    # AWS JSON credentials file content (alternative to accessKeyId/secretAccessKey)
+    # Use: helm install ... --set-file objectStorage.s3.credentialsFile=/path/to/credentials.json
+    credentialsFile: ""
     # Connection options
-    allowHttp: false                # Set true for HTTP (non-TLS) connections
-    skipSignature: false            # Skip request signing (not recommended)
-    # Credentials file (alternative to accessKeyId/secretAccessKey)
-    credentialsFile: ""             # Path to JSON credentials file
+    # allowHttp: false                # Set true for HTTP (non-TLS) connections
+    # skipSignature: false            # Skip request signing (not recommended)
 
     # Existing secret (alternative to specifying credentials here)
     # If specified, the chart will use this secret instead of creating one
@@ -120,9 +121,11 @@ objectStorage:
       storageClass: ""
       size: 100Gi
 
-  # In-memory storage (for testing only, no persistence)
+  # In-memory storage (no persistence)
   # memory:
-  #   throttled: false              # Set true to simulate cloud latency
+
+  # In-memory storage (no persistence) but with latency and throughput that somewhat resembles a cloud object store
+  # memory-throttled:
 
 # ============================================================================
 # License Configuration (Shared across all components)
@@ -140,8 +143,8 @@ license:
   # Required for trial and home licenses
   email: ""
 
-  # License file path (for commercial licenses)
-  # Mutually exclusive with email
+  # License file content (for commercial licenses)
+  # Use: helm install ... --set-file license.file=/path/to/license.jwt
   file: ""
 
   # Existing secret containing license information
@@ -236,7 +239,7 @@ ingester:
   priorityClassName: ""
 
   # Pod disruption budget for high availability
-  # Protect the single compactor from voluntary disruptions (node drains/maintenance)
+  # Protect ingesters from voluntary disruptions (node drains/maintenance)
   podDisruptionBudget:
     enabled: false
     maxUnavailable: 1
@@ -442,7 +445,6 @@ processingEngine:
 
   # Persistent storage for plugins
   persistence:
-    enabled: true
     storageClass: ""
     size: "5Gi"
     accessMode: ReadWriteOnce
@@ -450,7 +452,7 @@ processingEngine:
   # Pre-install plugins via initContainer (optional)
   initPlugins: []
     # - name: system-metrics
-  #   source: "gh:influxdata/system_metrics/system_metrics.py"
+    #   source: "gh:influxdata/system_metrics/system_metrics.py"
 
   # Pod affinity/anti-affinity, node selectors, tolerations
   # Default: soft anti-affinity to spread pods across nodes when possible
@@ -538,14 +540,12 @@ security:
     #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
 
 # HTTP server configuration
-# http:
-#   bind: "0.0.0.0:8181"
-#   maxRequestSize: 10485760          # 10MB default
-
-# Write-Ahead Log (WAL) configuration
+http:
+  # bind: "0.0.0.0:8181"
+  # maxRequestSize: 10485760          # 10MB default
 
 # Caching configuration
-# caching:
+caching:
   # Parquet file caching
   # parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
   # parquetMemCacheQueryPathDuration: "5h"

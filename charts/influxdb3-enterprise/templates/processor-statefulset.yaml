@@ -34,6 +34,22 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- if and .Values.processingEngine.initPlugins (gt (len .Values.processingEngine.initPlugins) 0) }}
+      initContainers:
+        {{- range .Values.processingEngine.initPlugins }}
+        - name: init-plugin-{{ .name | default "plugin" | replace "." "-" | replace "_" "-" | trunc 51 | trimSuffix "-" }}
+          image: {{ include "influxdb3-enterprise.image" $ }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - >
+              influxdb3 install package {{ .name | quote }}{{- if .source }} --source {{ .source | quote }}{{- end }} --plugin-dir {{ $.Values.processingEngine.pluginDir | default "/plugins" | quote }}
+          volumeMounts:
+            - name: plugins
+              mountPath: {{ $.Values.processingEngine.pluginDir | default "/plugins" }}
+        {{- end }}
+      {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -120,10 +136,8 @@ spec:
           resources:
             {{- toYaml .Values.processingEngine.resources | nindent 12 }}
           volumeMounts:
-          {{- if .Values.processingEngine.persistence.enabled }}
             - name: plugins
               mountPath: {{ .Values.processingEngine.pluginDir | default "/plugins" }}
-          {{- end }}
             {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
       {{- with .Values.processingEngine.nodeSelector }}
       nodeSelector:
@@ -139,7 +153,6 @@ spec:
       {{- end }}
       volumes:
         {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
-  {{- if .Values.processingEngine.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: plugins
@@ -152,5 +165,4 @@ spec:
         resources:
           requests:
             storage: {{ .Values.processingEngine.persistence.size }}
-  {{- end }}
 {{- end }}

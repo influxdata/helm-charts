@@ -471,7 +471,7 @@ logs:
 | `image.tag` | Image tag | `3-enterprise` |
 | `license.type` | trial, home, or commercial | `trial` |
 | `license.email` | Email for trial/home | `""` |
-| `license.file` | Path to license file (commercial) | `""` |
+| `license.file` | License file content (use `--set-file license.file=/path/to/file`) | `""` |
 | `license.existingSecret` | Secret with `license-email` or `license-file` | `""` |
 
 ### Object Storage Parameters
@@ -484,7 +484,7 @@ logs:
 | `objectStorage.s3.endpoint` | S3 endpoint (for S3-compatible) | `""` |
 | `objectStorage.s3.accessKeyId` / `secretAccessKey` | S3 credentials | `""` |
 | `objectStorage.s3.sessionToken` | Optional session token | `""` |
-| `objectStorage.s3.credentialsFile` | Path to credentials file | `""` |
+| `objectStorage.s3.credentialsFile` | Credentials file content (use `--set-file objectStorage.s3.credentialsFile=/path/to/file`) | `""` |
 | `objectStorage.s3.existingSecret` | Secret with `access-key-id`/`secret-access-key` | `""` |
 | `objectStorage.azure.storageAccount` | Azure storage account | `""` |
 | `objectStorage.azure.accessKey` | Azure access key | `""` |
