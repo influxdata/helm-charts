@@ -484,7 +484,7 @@ logs:
 | `objectStorage.s3.endpoint` | S3 endpoint (for S3-compatible) | `""` |
 | `objectStorage.s3.accessKeyId` / `secretAccessKey` | S3 credentials | `""` |
 | `objectStorage.s3.sessionToken` | Optional session token | `""` |
-| `objectStorage.s3.credentialsFile` | Path to credentials file | `""` |
+| `objectStorage.s3.credentialsFile` | Credentials file content (use `--set-file objectStorage.s3.credentialsFile=/path/to/file`) | `""` |
 | `objectStorage.s3.existingSecret` | Secret with `access-key-id`/`secret-access-key` | `""` |
 | `objectStorage.azure.storageAccount` | Azure storage account | `""` |
 | `objectStorage.azure.accessKey` | Azure access key | `""` |
