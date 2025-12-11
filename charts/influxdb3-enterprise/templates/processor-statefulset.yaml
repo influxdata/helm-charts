@@ -37,7 +37,7 @@ spec:
       {{- if and .Values.processingEngine.initPlugins (gt (len .Values.processingEngine.initPlugins) 0) }}
       initContainers:
         {{- range .Values.processingEngine.initPlugins }}
-        - name: init-plugin-{{ .name | default "plugin" | replace "." "-" | replace "_" "-" | trunc 63 | trimSuffix "-" }}
+        - name: init-plugin-{{ .name | default "plugin" | replace "." "-" | replace "_" "-" | trunc 51 | trimSuffix "-" }}
           image: {{ include "influxdb3-enterprise.image" $ }}
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
           command:
