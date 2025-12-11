@@ -67,7 +67,7 @@ objectStorage:
     sessionToken: ""                # Optional, for federated/SSO
     # AWS JSON credentials file content (alternative to accessKeyId/secretAccessKey)
     # Use: helm install ... --set-file objectStorage.s3.credentialsFile=/path/to/credentials.json
-    credentialsFile: ""             # Path to AWS JSON credentials file
+    credentialsFile: ""
     # Connection options
     # allowHttp: false                # Set true for HTTP (non-TLS) connections
     # skipSignature: false            # Skip request signing (not recommended)
