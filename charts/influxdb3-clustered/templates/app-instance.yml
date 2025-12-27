@@ -82,7 +82,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: app-instance
-  namespace: {{ .Values.NamspaceOverride | default .Release.Namespace }}
+  namespace: {{ .Values.namespaceOverride | default .Release.Namespace }}
 data:
   app-instance: |
     {{ include "app-instance.influxdb" . | fromYaml | toJson }}
