@@ -1,8 +1,8 @@
 apiVersion: v2
 type: application
 
-version: 0.1.23
-appVersion: "20250925-1878107"
+version: 0.1.24
+appVersion: "20251218-1946608"
 name: influxdb3-clustered
 description: InfluxDB 3.0 Clustered
 maintainers:
