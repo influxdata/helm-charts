@@ -1,5 +1,3 @@
-{{- $bl := empty .Values.influxURL }}
-{{- if not $bl }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,7 +31,7 @@ spec:
         - name: KAPACITOR_HOSTNAME
           value: {{ template "kapacitor.fullname" . }}.{{ .Release.Namespace }}
         - name: KAPACITOR_INFLUXDB_0_URLS_0
-          value: {{ .Values.influxURL }}
+          value: {{ .Values.influxURL | required "Value influxURL not set!"}}
         {{- range $key, $val := .Values.envVars }}
         - name: {{ $key }}
           value: {{ $val | quote }}
@@ -112,4 +110,3 @@ spec:
         - name: sc-sideload-volume
           emptyDir: {}
       {{- end -}}
-{{- end }}
