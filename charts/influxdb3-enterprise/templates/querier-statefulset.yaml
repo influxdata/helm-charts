@@ -46,6 +46,10 @@ spec:
         {{- toYaml .Values.querier.podSecurityContext | nindent 8 }}
       containers:
         - name: influxdb3
+          {{- with .Values.querier.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: {{ include "influxdb3-enterprise.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
