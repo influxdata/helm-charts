@@ -3180,6 +3180,31 @@ entries:
   influxdb3-enterprise:
   - apiVersion: v2
     appVersion: 3.6.0
+    created: "2026-02-06T07:08:52.399240884Z"
+    description: A Helm chart for deploying InfluxDB 3 Enterprise on Kubernetes
+    digest: 93a3ce7f9e7c3bf0992af0a08940c25663021818aeb2660c59f9b441333fabaa
+    home: https://www.influxdata.com/products/influxdb-3-enterprise/
+    icon: https://www.influxdata.com/wp-content/uploads/influxdata-logo.svg
+    keywords:
+    - influxdb
+    - time-series
+    - database
+    - metrics
+    - iot
+    - enterprise
+    maintainers:
+    - email: support@influxdata.com
+      name: InfluxData
+    name: influxdb3-enterprise
+    sources:
+    - https://github.com/influxdata/influxdb
+    - https://docs.influxdata.com/influxdb3/enterprise/
+    type: application
+    urls:
+    - https://github.com/influxdata/helm-charts/releases/download/influxdb3-enterprise-0.1.2/influxdb3-enterprise-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 3.6.0
     created: "2025-12-11T20:12:22.138858269Z"
     description: A Helm chart for deploying InfluxDB 3 Enterprise on Kubernetes
     digest: baece0a3f5eaf2530e5cc0f77ae78a416b009aa7c49ba28d7a7478a4e7e58435
@@ -8345,4 +8370,4 @@ entries:
     urls:
     - https://github.com/influxdata/helm-charts/releases/download/telegraf-operator-1.0.0/telegraf-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2026-01-12T19:06:23.226744428Z"
+generated: "2026-02-06T07:08:52.399705541Z"
