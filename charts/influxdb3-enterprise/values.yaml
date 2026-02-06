@@ -227,6 +227,9 @@ ingester:
     runAsUser: 1500            # Run as influxdb3 user
     runAsGroup: 1500           # Run as influxdb3 group
 
+  # Container-level security context (optional override)
+  securityContext: {}
+
   # Service configuration
   service:
     type: ClusterIP
@@ -305,6 +308,9 @@ querier:
     runAsNonRoot: true         # Security best practice
     runAsUser: 1500            # Run as influxdb3 user
     runAsGroup: 1500           # Run as influxdb3 group
+
+  # Container-level security context (optional override)
+  securityContext: {}
 
   # Service configuration
   service:
@@ -388,6 +394,9 @@ compactor:
     runAsNonRoot: true         # Security best practice
     runAsUser: 1500            # Run as influxdb3 user
     runAsGroup: 1500           # Run as influxdb3 group
+
+  # Container-level security context (optional override)
+  securityContext: {}
 
   # Service configuration (for metrics only)
   service:
