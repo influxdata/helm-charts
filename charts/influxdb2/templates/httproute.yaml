@@ -34,7 +34,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       backendRefs:
-        - kind: Service
+        - group: ""
+          kind: Service
           name: {{ include "influxdb.fullname" . }}
           port: {{ .Values.service.port }}
           weight: 1
