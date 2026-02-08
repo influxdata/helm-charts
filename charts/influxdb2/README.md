@@ -13,6 +13,7 @@ bootstrap an InfluxDB v2 StatefulSet and service on a
 - Helm v3 or later
 - Kubernetes 1.4+
 - (Optional) PersistentVolume (PV) provisioner support in the underlying infrastructure
+- (Optional) Gateway API with istio service mesh
 
 ## Install the chart
 
