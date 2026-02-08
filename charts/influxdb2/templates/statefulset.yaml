@@ -44,6 +44,10 @@ spec:
         {{- if .Values.volumes }}
           {{- toYaml .Values.volumes | nindent 8 }}
         {{- end }}
+        {{- if .Capabilities.APIVersions.Has "security.openshift.io/v1/SecurityContextConstraints" }}
+        - name: etc
+          emptyDir: {}
+        {{- end }}
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
       {{- range .Values.image.pullSecrets }}
@@ -150,6 +154,10 @@ spec:
           {{- end }}
           {{- if .Values.mountPoints }}
             {{- toYaml .Values.mountPoints | nindent 10 }}
+          {{- end }}
+          {{- if .Capabilities.APIVersions.Has "security.openshift.io/v1/SecurityContextConstraints" }}
+          - name: etc
+            mountPath: /etc/influxdb2
           {{- end }}
           resources:
             {{ .Values.resources | toYaml | nindent 12 | trim }}
