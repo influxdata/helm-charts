@@ -185,6 +185,9 @@ livenessProbe:
   httpGet:
     path: /health
     port: http
+    {{- if .Values.security.tls.enabled }}
+    scheme: HTTPS
+    {{- end }}
   initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
   periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
   timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
@@ -193,6 +196,9 @@ readinessProbe:
   httpGet:
     path: /health
     port: http
+    {{- if .Values.security.tls.enabled }}
+    scheme: HTTPS
+    {{- end }}
   initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
   periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
   timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
@@ -201,6 +207,9 @@ startupProbe:
   httpGet:
     path: /health
     port: http
+    {{- if .Values.security.tls.enabled }}
+    scheme: HTTPS
+    {{- end }}
   initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
   periodSeconds: {{ .Values.probes.startup.periodSeconds }}
   timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
