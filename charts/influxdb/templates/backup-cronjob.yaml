@@ -83,8 +83,10 @@ spec:
             - |
               if [ -n "$KEY_FILE" ]; then
                 gcloud auth activate-service-account --key-file $KEY_FILE
+                gsutil -m cp -r /backup/* "$DST_URL"
+              else
+                gcloud storage cp -r /backup/* "$DST_URL"
               fi
-              gsutil -m cp -r /backup/* "$DST_URL"
               rm -rf /backup/*
             volumeMounts:
             - name: backup
