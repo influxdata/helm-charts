@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         {{- include "telegraf-operator.selectorLabels" . | nindent 8 }}
+        {{- if .Values.podLabels }}
+        {{ toYaml .Values.podLabels | nindent 8 }}
+        {{- end }}
 {{- if eq .Values.certManager.enable false }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/tls.yml") . | sha256sum }}
@@ -23,7 +26,7 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ include "telegraf-operator.version" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - "--telegraf-default-class={{ .Values.classes.default }}"

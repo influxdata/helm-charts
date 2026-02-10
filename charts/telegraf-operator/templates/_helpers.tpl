@@ -32,13 +32,21 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Define image version
+*/}}
+{{- define "telegraf-operator.version" -}}
+{{- $version := default .Chart.AppVersion .Values.image.tag -}}
+{{- printf "%s" $version -}}
+{{- end -}}
+
+{{/*
 Common labels
 */}}
 {{- define "telegraf-operator.labels" -}}
 helm.sh/chart: {{ include "telegraf-operator.chart" . }}
 {{ include "telegraf-operator.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/version: {{ include "telegraf-operator.version" . | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
