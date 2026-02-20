@@ -52,6 +52,9 @@ spec:
       {{- end}}
       {{- end }}
       serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
+{{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+{{- end }}
       containers:
       - name: {{ include "influxdb.fullname" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
