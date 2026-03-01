@@ -322,13 +322,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
         {{ $val | quote }}
                   {{- end }}
                   {{- if eq $tp "float64" }}
-        {{ $val | int64 }}
+        {{ $val | float64 }}
                   {{- end }}
                 {{- else }}
                   {{- if eq $tp "string" }}
         {{ $val | quote }},
                   {{- end}}
-                  {{- if eq $tp "float64" }}
+                  {{- if eq $tp "int" }}
         {{ $val | int64 }},
                   {{- end }}
                 {{- end }}
