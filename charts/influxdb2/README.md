@@ -90,6 +90,27 @@ For more information see "Automated Setup" in the [docker image README](https://
 
 For configuration options see `adminUser` in `values.yaml`.
 
+## HTTPRoute (Gateway API)
+
+This chart supports the [Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/) HTTPRoute resource as an alternative to Ingress.
+
+To enable HTTPRoute:
+
+```yaml
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: my-gateway
+      namespace: gateway-namespace
+      sectionName: https
+  hostnames:
+    - influxdb.example.com
+  path: /
+  pathType: PathPrefix
+```
+
+> **Note**: You must have a Gateway API implementation (e.g., Envoy Gateway, Istio, Cilium) installed in your cluster.
+
 ## Configuration
 
 Extra environment variables can be passed influxdb using `.Values.env`. For
