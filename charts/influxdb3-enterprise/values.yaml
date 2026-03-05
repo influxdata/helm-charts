@@ -691,7 +691,9 @@ ingress:
     host: ""
     # Optional TLS override. If empty, inherits ingress.tls.
     tls: []
-    # Path prefixes that should be treated as gRPC/Flight.
+    # Flight service path patterns.
+    # NOTE: ingress-flight uses pathType=ImplementationSpecific because
+    # ingress-nginx warns on these dotted gRPC service paths with Prefix.
     paths:
       - /arrow.flight.protocol.FlightService
       - /arrow.flight.protocol.sql.FlightSqlService
