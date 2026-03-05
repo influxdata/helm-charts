@@ -91,15 +91,13 @@ At minimum, you must configure:
      # For commercial licenses use `file: /path/to/license` or `existingSecret`
    ```
 
-3. **Ingress Hosts**:
+3. **Ingress Host**:
    ```yaml
    ingress:
-     write:
-       hosts:
-         - host: writes.your-domain.com
-     query:
-       hosts:
-         - host: query.your-domain.com
+     host: "influxdb.example.com"
+     # Optional Flight host override (defaults to ingress.host)
+     flight:
+       host: ""
    ```
 
 ## Configuration
@@ -221,29 +219,43 @@ tls:
 
 #### Ingress Configuration
 
-Separate ingresses for write and query traffic:
+The chart creates separate ingresses for write, query, and Flight/gRPC traffic:
 
 ```yaml
 ingress:
+  enabled: true
+  className: "nginx"
+  host: "influxdb.example.com"
+  tls:
+    - secretName: influxdb-tls
+      hosts:
+        - influxdb.example.com
+
   write:
-    enabled: true
-    className: "nginx"
     annotations:
-      cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    hosts:
-      - host: writes.influxdb.example.com
-        paths:
-          - path: /api/v3/write_lp
-            pathType: Prefix
-          - path: /api/v2/write
-            pathType: Prefix
-          - path: /write
-            pathType: Prefix
-    tls:
-      - secretName: influxdb-write-tls
-        hosts:
-          - writes.influxdb.example.com
+      nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+
+  query:
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+
+  # Flight/gRPC ingress to querier
+  flight:
+    host: "" # Optional override; defaults to ingress.host
+    paths:
+      - /arrow.flight.protocol.FlightService
+      - /arrow.flight.protocol.sql.FlightSqlService
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 ```
+
+Route summary:
+- Write ingress routes `/api/v3/write_lp`, `/api/v2/write`, `/write` to ingester.
+- Query ingress routes `/api/v3/query`, `/query`, `/` to querier.
+- Flight ingress routes `ingress.flight.paths` (default Arrow Flight service paths) to querier with gRPC backend protocol.
+- Processor ingress routes `/api/v3/engine` to processor when processing engine is enabled.
 
 #### Network Policies
 
@@ -331,10 +343,11 @@ processingEngine:
 
 ### Data Flow
 
-1. **Write Path**: Client → Ingress → Ingester Service → Ingester Pods → Object Storage
-2. **Query Path**: Client → Ingress → Querier Service → Querier Pods → Object Storage
-3. **Compaction**: Compactor reads from Object Storage, compacts data, writes back
-4. **Processing**: Processor nodes execute plugins on data writes, schedules, or HTTP requests
+1. **Write Path**: Client → Write Ingress → Ingester Service → Ingester Pods → Object Storage
+2. **HTTP Query Path**: Client → Query Ingress → Querier Service → Querier Pods → Object Storage
+3. **Flight/gRPC Query Path**: Client → Flight Ingress → Querier Service → Querier Pods → Object Storage
+4. **Compaction**: Compactor reads from Object Storage, compacts data, writes back
+5. **Processing**: Processor nodes execute plugins on data writes, schedules, or HTTP requests
 
 ## Upgrading
 
@@ -520,8 +533,18 @@ logs:
 | `ingress.className` | Ingress class | `nginx` |
 | `ingress.port` | Host port referenced in NOTES | `8181` |
 | `ingress.tls` | TLS host/secret list | `[]` |
+| `ingress.write.annotations` | Write ingress annotations | `proxy-body-size/read-timeout` |
+| `ingress.query.annotations` | Query ingress annotations | `proxy-read-timeout` |
+| `ingress.flight.host` | Optional host override for Flight ingress | `""` (uses `ingress.host`) |
+| `ingress.flight.tls` | Optional TLS override for Flight ingress | `[]` (uses `ingress.tls`) |
+| `ingress.flight.paths` | Flight/gRPC service paths routed to querier | Flight + Flight SQL paths |
+| `ingress.flight.annotations` | Flight ingress annotations (includes GRPC backend protocol) | includes `backend-protocol: GRPC` |
+| `ingress.processor.annotations` | Processor ingress annotations | `{}` |
 
-Ingress paths are fixed in the templates: write ingress exposes `/api/v3/write_lp`, `/api/v2/write`, `/write`; query ingress exposes `/api/v3/query`, `/query`, and `/`.
+Ingress routes:
+- Write ingress exposes `/api/v3/write_lp`, `/api/v2/write`, `/write`.
+- Query ingress exposes `/api/v3/query`, `/query`, `/`.
+- Flight ingress exposes `ingress.flight.paths` (defaults to Arrow Flight service paths).
 
 ### Network Policy Parameters
 
