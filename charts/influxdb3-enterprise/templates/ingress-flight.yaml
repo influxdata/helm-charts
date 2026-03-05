@@ -41,6 +41,7 @@ spec:
         paths:
           {{- range .Values.ingress.flight.paths }}
           - path: {{ . | quote }}
+            # Keep ImplementationSpecific for dotted gRPC service paths.
             pathType: ImplementationSpecific
             backend:
               service:
