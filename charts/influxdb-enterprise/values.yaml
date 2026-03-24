@@ -162,7 +162,7 @@ meta:
     useCertManager: true
     secret:
       name: influxdb-tls
-      # defaultMode: 0600
+      # defaultMode: 384  # 0600 (octal) - Kubernetes expects an integer (decimal)
       # crt: tls.crt
       # key: tls.key
       # ca: ca.crt
@@ -260,7 +260,7 @@ data:
     useCertManager: true
     secret:
       name: influxdb-tls
-      # defaultMode: 0600
+      # defaultMode: 384  # 0600
       # crt: tls.crt
       # key: tls.key
       # ca: ca.crt
