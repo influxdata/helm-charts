@@ -60,7 +60,7 @@ spec:
               path: tls.key
           {{ end }}
           {{ end }}
-          {{- if .Values.data.https.secret.defaultMode }}
+          {{- if and .Values.data.https.secret .Values.data.https.secret.defaultMode }}
           defaultMode: {{ .Values.data.https.secret.defaultMode }}
           {{- end }}
       {{ end }}
