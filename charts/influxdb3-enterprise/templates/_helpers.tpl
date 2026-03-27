@@ -234,7 +234,7 @@ Image reference
 {{- define "influxdb3-enterprise.image" -}}
 {{- $registry := .Values.image.registry }}
 {{- $repository := .Values.image.repository }}
-{{- $tag := .Values.image.tag | default .Chart.AppVersion }}
+{{- $tag := .Values.image.tag | default (printf "%s-enterprise" .Chart.AppVersion) }}
 {{- printf "%s/%s:%s" $registry $repository $tag }}
 {{- end }}
 
