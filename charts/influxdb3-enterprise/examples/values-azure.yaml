@@ -125,10 +125,14 @@ license:
 #   annotations:
 #     azure.workload.identity/client-id: YOUR_MANAGED_IDENTITY_CLIENT_ID
 #   name: "influxdb3-enterprise"
-#   labels:
-#     azure.workload.identity/use: "true"
+
+# For Workload Identity: add pod label `azure.workload.identity/use: "true"`
+# on every enabled component (ingester, querier, compactor, and processor if enabled).
 
 ingester:
+  # For Workload Identity: uncomment pod label below.
+  # podLabels:
+  #   azure.workload.identity/use: "true"
   persistence:
     # Azure Kubernetes storage classes:
     # managed: Azure Managed Disk (default)
@@ -138,8 +142,16 @@ ingester:
     storageClass: "managed-premium"
     size: "20Gi"
 
+# For Workload Identity: add querier pod label.
+# querier:
+#   podLabels:
+#     azure.workload.identity/use: "true"
 querier: {}
 
+# For Workload Identity: add compactor pod label.
+# compactor:
+#   podLabels:
+#     azure.workload.identity/use: "true"
 compactor: {}
 
 # Enable network policies for security
