@@ -140,7 +140,7 @@ TLS secret name
       optional: true
   {{- end }}
 {{- else if eq .Values.objectStorage.type "azure" }}
-  {{- if or .Values.objectStorage.azure.existingSecret (and .Values.objectStorage.azure.storageAccount .Values.objectStorage.azure.accessKey) }}
+  {{- if .Values.objectStorage.azure.existingSecret }}
 - name: AZURE_STORAGE_ACCOUNT
   valueFrom:
     secretKeyRef:
@@ -151,6 +151,17 @@ TLS secret name
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
       key: access-key
+      optional: true
+  {{- else if .Values.objectStorage.azure.storageAccount }}
+- name: AZURE_STORAGE_ACCOUNT
+  value: {{ .Values.objectStorage.azure.storageAccount | quote }}
+  {{- if .Values.objectStorage.azure.accessKey }}
+- name: AZURE_STORAGE_ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      key: access-key
+  {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
