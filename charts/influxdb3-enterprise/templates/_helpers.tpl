@@ -63,15 +63,19 @@ Service account name
 Object storage secret name
 */}}
 {{- define "influxdb3-enterprise.objectStorageSecretName" -}}
-{{- if and .Values.objectStorage.s3 .Values.objectStorage.s3.existingSecret }}
-{{- .Values.objectStorage.s3.existingSecret }}
-{{- else if and .Values.objectStorage.azure (hasKey .Values.objectStorage.azure "existingSecret") .Values.objectStorage.azure.existingSecret }}
-{{- .Values.objectStorage.azure.existingSecret }}
-{{- else if and .Values.objectStorage.google (hasKey .Values.objectStorage.google "existingSecret") .Values.objectStorage.google.existingSecret }}
-{{- .Values.objectStorage.google.existingSecret }}
-{{- else }}
+{{- $type := .Values.objectStorage.type | default "s3" -}}
+{{- if eq $type "s3" -}}
+{{- $s3 := .Values.objectStorage.s3 | default dict -}}
+{{- get $s3 "existingSecret" | default (printf "%s-object-storage" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- else if eq $type "azure" -}}
+{{- $azure := .Values.objectStorage.azure | default dict -}}
+{{- get $azure "existingSecret" | default (printf "%s-object-storage" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- else if eq $type "google" -}}
+{{- $google := .Values.objectStorage.google | default dict -}}
+{{- get $google "existingSecret" | default (printf "%s-object-storage" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- else -}}
 {{- include "influxdb3-enterprise.fullname" . }}-object-storage
-{{- end }}
+{{- end -}}
 {{- end }}
 
 {{/*
