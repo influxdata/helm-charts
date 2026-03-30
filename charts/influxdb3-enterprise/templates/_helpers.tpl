@@ -97,6 +97,19 @@ Validate object storage type
 {{- end }}
 
 {{/*
+Validate Azure object storage auth config
+*/}}
+{{- define "influxdb3-enterprise.validateAzureObjectStorageAuth" -}}
+{{- if eq .Values.objectStorage.type "azure" -}}
+{{- if not .Values.objectStorage.azure.existingSecret -}}
+{{- if not (and .Values.objectStorage.azure.storageAccount .Values.objectStorage.azure.accessKey) -}}
+{{- fail "When objectStorage.type=azure and objectStorage.azure.existingSecret is not set, both objectStorage.azure.storageAccount and objectStorage.azure.accessKey must be set." -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 License checksum (handles existingSecret via lookup)
 */}}
 {{- define "influxdb3-enterprise.licenseChecksum" -}}
