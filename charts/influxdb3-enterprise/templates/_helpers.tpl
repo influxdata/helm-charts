@@ -114,6 +114,39 @@ Validate Azure object storage auth config
 {{- end }}
 
 {{/*
+Validate S3 object storage auth config
+*/}}
+{{- define "influxdb3-enterprise.validateS3ObjectStorageAuth" -}}
+{{- if eq .Values.objectStorage.type "s3" -}}
+{{- $s3 := .Values.objectStorage.s3 | default dict -}}
+{{- $existingSecret := get $s3 "existingSecret" | default "" -}}
+{{- $accessKeyID := get $s3 "accessKeyId" | default "" -}}
+{{- $secretAccessKey := get $s3 "secretAccessKey" | default "" -}}
+{{- $sessionToken := get $s3 "sessionToken" | default "" -}}
+{{- if and (not $existingSecret) (or (and $accessKeyID (not $secretAccessKey)) (and (not $accessKeyID) $secretAccessKey)) -}}
+{{- fail "When objectStorage.type=s3, objectStorage.s3.accessKeyId and objectStorage.s3.secretAccessKey must be set together." -}}
+{{- end -}}
+{{- if and (not $existingSecret) $sessionToken (not (and $accessKeyID $secretAccessKey)) -}}
+{{- fail "When objectStorage.type=s3 and objectStorage.s3.sessionToken is set, both objectStorage.s3.accessKeyId and objectStorage.s3.secretAccessKey must also be set." -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Validate Google object storage auth config
+*/}}
+{{- define "influxdb3-enterprise.validateGoogleObjectStorageAuth" -}}
+{{- if eq .Values.objectStorage.type "google" -}}
+{{- $google := .Values.objectStorage.google | default dict -}}
+{{- $existingSecret := get $google "existingSecret" | default "" -}}
+{{- $serviceAccountJSON := get $google "serviceAccountJson" | default "" -}}
+{{- if not (or $existingSecret $serviceAccountJSON) -}}
+{{- fail "When objectStorage.type=google, set either objectStorage.google.existingSecret or objectStorage.google.serviceAccountJson." -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 License checksum (handles existingSecret via lookup)
 */}}
 {{- define "influxdb3-enterprise.licenseChecksum" -}}
@@ -138,7 +171,11 @@ TLS secret name
 
 {{- define "influxdb3-enterprise.objectStoreSecretEnv" -}}
 {{- if eq .Values.objectStorage.type "s3" }}
-  {{- if or .Values.objectStorage.s3.existingSecret (and .Values.objectStorage.s3.accessKeyId .Values.objectStorage.s3.secretAccessKey) }}
+  {{- $s3 := .Values.objectStorage.s3 | default dict }}
+  {{- $s3ExistingSecret := get $s3 "existingSecret" | default "" }}
+  {{- $s3AccessKeyID := get $s3 "accessKeyId" | default "" }}
+  {{- $s3SecretAccessKey := get $s3 "secretAccessKey" | default "" }}
+  {{- if or $s3ExistingSecret (and $s3AccessKeyID $s3SecretAccessKey) }}
 - name: AWS_ACCESS_KEY_ID
   valueFrom:
     secretKeyRef:
@@ -267,7 +304,8 @@ Shared volume mounts (license/TLS/GCS and user extras)
   mountPath: /var/secrets/google
   readOnly: true
 {{- end }}
-{{- if and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile }}
+{{- $s3 := .Values.objectStorage.s3 | default dict }}
+{{- if and (eq .Values.objectStorage.type "s3") (get $s3 "credentialsFile") }}
 - name: aws-credentials
   mountPath: /etc/influxdb/aws
   readOnly: true
@@ -305,7 +343,8 @@ Shared volumes (license/TLS/GCS and user extras)
       - key: service-account.json
         path: service-account.json
 {{- end }}
-{{- if and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile }}
+{{- $s3 := .Values.objectStorage.s3 | default dict }}
+{{- if and (eq .Values.objectStorage.type "s3") (get $s3 "credentialsFile") }}
 - name: aws-credentials
   secret:
     secretName: {{ include "influxdb3-enterprise.fullname" . }}-aws-credentials
