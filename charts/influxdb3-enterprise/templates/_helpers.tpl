@@ -64,17 +64,18 @@ Object storage secret name
 */}}
 {{- define "influxdb3-enterprise.objectStorageSecretName" -}}
 {{- $type := .Values.objectStorage.type | default "s3" -}}
+{{- $defaultSecret := printf "%s-object-storage" (include "influxdb3-enterprise.fullname" .) -}}
 {{- if eq $type "s3" -}}
 {{- $s3 := .Values.objectStorage.s3 | default dict -}}
-{{- get $s3 "existingSecret" | default (printf "%s-object-storage" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- get $s3 "existingSecret" | default $defaultSecret -}}
 {{- else if eq $type "azure" -}}
 {{- $azure := .Values.objectStorage.azure | default dict -}}
-{{- get $azure "existingSecret" | default (printf "%s-object-storage" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- get $azure "existingSecret" | default $defaultSecret -}}
 {{- else if eq $type "google" -}}
 {{- $google := .Values.objectStorage.google | default dict -}}
-{{- get $google "existingSecret" | default (printf "%s-object-storage" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- get $google "existingSecret" | default $defaultSecret -}}
 {{- else -}}
-{{- include "influxdb3-enterprise.fullname" . }}-object-storage
+{{- $defaultSecret -}}
 {{- end -}}
 {{- end }}
 
@@ -174,6 +175,7 @@ TLS secret name
 {{- end }}
 
 {{- define "influxdb3-enterprise.objectStoreSecretEnv" -}}
+{{- $objectStoreSecretName := include "influxdb3-enterprise.objectStorageSecretName" . }}
 {{- if eq .Values.objectStorage.type "s3" }}
   {{- $s3 := .Values.objectStorage.s3 | default dict }}
   {{- $s3ExistingSecret := get $s3 "existingSecret" | default "" }}
@@ -183,17 +185,17 @@ TLS secret name
 - name: AWS_ACCESS_KEY_ID
   valueFrom:
     secretKeyRef:
-      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      name: {{ $objectStoreSecretName }}
       key: access-key-id
 - name: AWS_SECRET_ACCESS_KEY
   valueFrom:
     secretKeyRef:
-      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      name: {{ $objectStoreSecretName }}
       key: secret-access-key
 - name: AWS_SESSION_TOKEN
   valueFrom:
     secretKeyRef:
-      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      name: {{ $objectStoreSecretName }}
       key: session-token
       optional: true
   {{- end }}
@@ -206,12 +208,12 @@ TLS secret name
 - name: AZURE_STORAGE_ACCOUNT
   valueFrom:
     secretKeyRef:
-      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      name: {{ $objectStoreSecretName }}
       key: storage-account
 - name: AZURE_STORAGE_ACCESS_KEY
   valueFrom:
     secretKeyRef:
-      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      name: {{ $objectStoreSecretName }}
       key: access-key
   {{- else if $azureStorageAccount }}
 - name: AZURE_STORAGE_ACCOUNT
@@ -220,7 +222,7 @@ TLS secret name
 - name: AZURE_STORAGE_ACCESS_KEY
   valueFrom:
     secretKeyRef:
-      name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
+      name: {{ $objectStoreSecretName }}
       key: access-key
   {{- end }}
   {{- end }}
