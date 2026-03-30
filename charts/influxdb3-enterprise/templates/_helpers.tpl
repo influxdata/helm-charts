@@ -151,7 +151,6 @@ TLS secret name
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
       key: access-key
-      optional: true
   {{- else if .Values.objectStorage.azure.storageAccount }}
 - name: AZURE_STORAGE_ACCOUNT
   value: {{ .Values.objectStorage.azure.storageAccount | quote }}
