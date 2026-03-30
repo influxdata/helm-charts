@@ -10,7 +10,7 @@ fullnameOverride: ""
 image:
   registry: docker.io
   repository: influxdb
-  # Optional explicit tag override. If empty, defaults to "<Chart.appVersion>-enterprise".
+  # Optional explicit tag override. If empty, defaults to "<appVersion>-enterprise".
   tag: ""
   pullPolicy: IfNotPresent
 

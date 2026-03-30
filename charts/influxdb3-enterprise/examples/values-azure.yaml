@@ -54,9 +54,9 @@ objectStorage:
     # Storage account name
     storageAccount: "influxdb3storage"
 
-    # Use access keys from Kubernetes secret
-    # existingSecret: "influxdb3-azure-credentials"
-    # Or set access key inline:
+    # Use access keys from Kubernetes secret (matches prerequisite step 2b)
+    existingSecret: "influxdb3-azure-credentials"
+    # Alternative: set access key inline and set existingSecret: ""
     accessKey: ""
 
     # Azure Blob Storage endpoint (optional, uses default if empty)

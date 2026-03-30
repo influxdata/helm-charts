@@ -101,8 +101,12 @@ Validate Azure object storage auth config
 */}}
 {{- define "influxdb3-enterprise.validateAzureObjectStorageAuth" -}}
 {{- if eq .Values.objectStorage.type "azure" -}}
-{{- if not .Values.objectStorage.azure.existingSecret -}}
-{{- if not (and .Values.objectStorage.azure.storageAccount .Values.objectStorage.azure.accessKey) -}}
+{{- $azure := .Values.objectStorage.azure | default dict -}}
+{{- $existingSecret := get $azure "existingSecret" | default "" -}}
+{{- $storageAccount := get $azure "storageAccount" | default "" -}}
+{{- $accessKey := get $azure "accessKey" | default "" -}}
+{{- if not $existingSecret -}}
+{{- if not (and $storageAccount $accessKey) -}}
 {{- fail "When objectStorage.type=azure and objectStorage.azure.existingSecret is not set, both objectStorage.azure.storageAccount and objectStorage.azure.accessKey must be set." -}}
 {{- end -}}
 {{- end -}}
@@ -153,7 +157,11 @@ TLS secret name
       optional: true
   {{- end }}
 {{- else if eq .Values.objectStorage.type "azure" }}
-  {{- if .Values.objectStorage.azure.existingSecret }}
+  {{- $azure := .Values.objectStorage.azure | default dict }}
+  {{- $azureExistingSecret := get $azure "existingSecret" | default "" }}
+  {{- $azureStorageAccount := get $azure "storageAccount" | default "" }}
+  {{- $azureAccessKey := get $azure "accessKey" | default "" }}
+  {{- if $azureExistingSecret }}
 - name: AZURE_STORAGE_ACCOUNT
   valueFrom:
     secretKeyRef:
@@ -164,10 +172,10 @@ TLS secret name
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.objectStorageSecretName" . }}
       key: access-key
-  {{- else if .Values.objectStorage.azure.storageAccount }}
+  {{- else if $azureStorageAccount }}
 - name: AZURE_STORAGE_ACCOUNT
-  value: {{ .Values.objectStorage.azure.storageAccount | quote }}
-  {{- if .Values.objectStorage.azure.accessKey }}
+  value: {{ $azureStorageAccount | quote }}
+  {{- if $azureAccessKey }}
 - name: AZURE_STORAGE_ACCESS_KEY
   valueFrom:
     secretKeyRef:

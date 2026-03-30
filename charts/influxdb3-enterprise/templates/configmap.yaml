@@ -84,11 +84,13 @@ data:
   {{- end }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "azure" }}
-  {{- if .Values.objectStorage.azure.endpoint }}
-  AZURE_ENDPOINT: {{ .Values.objectStorage.azure.endpoint | quote }}
+  {{- with .Values.objectStorage.azure }}
+  {{- if .endpoint }}
+  AZURE_ENDPOINT: {{ .endpoint | quote }}
   {{- end }}
-  {{- if .Values.objectStorage.azure.allowHttp }}
+  {{- if .allowHttp }}
   AZURE_ALLOW_HTTP: "true"
+  {{- end }}
   {{- end }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "google" }}
