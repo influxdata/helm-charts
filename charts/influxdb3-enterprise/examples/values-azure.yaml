@@ -2,7 +2,7 @@
 # - Uses Azure Blob Storage for object storage
 # - Production-ready cloud storage
 # - Suitable for AKS (Azure Kubernetes Service) deployments
-# - Supports both access keys and Workload Identity (Managed Identity)
+# - Uses Azure storage-account access keys for authentication
 
 # Prerequisites:
 # 1. Create Azure Storage Account and container:
@@ -30,63 +30,18 @@
 #         --from-literal=access-key=YOUR_ACCESS_KEY \
 #         -n influxdb3
 #
-# 3. (Option B - RECOMMENDED for AKS) Use Workload Identity (Managed Identity):
-#    a. Enable Workload Identity on your AKS cluster (if not already enabled):
-#       az aks update \
-#         --resource-group YOUR_RESOURCE_GROUP \
-#         --name YOUR_CLUSTER_NAME \
-#         --enable-oidc-issuer \
-#         --enable-workload-identity
-#
-#    b. Get the OIDC issuer URL:
-#       AKS_OIDC_ISSUER=$(az aks show --name YOUR_CLUSTER_NAME \
-#         --resource-group YOUR_RESOURCE_GROUP \
-#         --query "oidcIssuerProfile.issuerUrl" -o tsv)
-#
-#    c. Create managed identity:
-#       az identity create \
-#         --name influxdb3-identity \
-#         --resource-group YOUR_RESOURCE_GROUP
-#
-#    d. Get managed identity details:
-#       IDENTITY_CLIENT_ID=$(az identity show \
-#         --name influxdb3-identity \
-#         --resource-group YOUR_RESOURCE_GROUP \
-#         --query 'clientId' -o tsv)
-#
-#    e. Assign Storage Blob Data Contributor role to managed identity:
-#       STORAGE_ACCOUNT_ID=$(az storage account show \
-#         --name influxdb3storage \
-#         --resource-group YOUR_RESOURCE_GROUP \
-#         --query 'id' -o tsv)
-#
-#       az role assignment create \
-#         --role "Storage Blob Data Contributor" \
-#         --assignee $IDENTITY_CLIENT_ID \
-#         --scope $STORAGE_ACCOUNT_ID
-#
-#    f. Create federated identity credential:
-#       az identity federated-credential create \
-#         --name influxdb3-federated-identity \
-#         --identity-name influxdb3-identity \
-#         --resource-group YOUR_RESOURCE_GROUP \
-#         --issuer $AKS_OIDC_ISSUER \
-#         --subject system:serviceaccount:influxdb3:influxdb3-enterprise
-#
-#    g. Use serviceAccount configuration below (Option B)
-#
-# 4. (Optional) Configure lifecycle management for cost optimization:
+# 3. (Optional) Configure lifecycle management for cost optimization:
 #    - Transition to Cool tier after 30 days
 #    - Transition to Archive tier after 90 days
 #    - Delete old data after retention period
 #
-# 5. (Optional) Enable soft delete for data protection:
+# 4. (Optional) Enable soft delete for data protection:
 #    az storage blob service-properties delete-policy update \
 #      --days-retained 7 \
 #      --account-name influxdb3storage \
 #      --enable true
 #
-# 6. (Optional) Enable versioning:
+# 5. (Optional) Enable versioning:
 #    az storage account blob-service-properties update \
 #      --account-name influxdb3storage \
 #      --enable-versioning true
@@ -99,12 +54,9 @@ objectStorage:
     # Storage account name
     storageAccount: "influxdb3storage"
 
-    # Option A: Use access keys from Kubernetes secret
-    # Uncomment if using access keys instead of Managed Identity:
+    # Use access keys from Kubernetes secret
     # existingSecret: "influxdb3-azure-credentials"
-
-    # Option B: Leave credentials empty if using Workload Identity (recommended for AKS)
-    # Configure serviceAccount below with proper annotations
+    # Or set access key inline:
     accessKey: ""
 
     # Azure Blob Storage endpoint (optional, uses default if empty)
@@ -118,21 +70,7 @@ license:
   type: "trial"
   email: "azure@example.com"
 
-# Option B: Service Account for Workload Identity (recommended for AKS)
-# Uncomment if using Managed Identity instead of access keys
-# serviceAccount:
-#   create: true
-#   annotations:
-#     azure.workload.identity/client-id: YOUR_MANAGED_IDENTITY_CLIENT_ID
-#   name: "influxdb3-enterprise"
-
-# For Workload Identity: add pod label `azure.workload.identity/use: "true"`
-# on every enabled component (ingester, querier, compactor, and processor if enabled).
-
 ingester:
-  # For Workload Identity: uncomment pod label below.
-  # podLabels:
-  #   azure.workload.identity/use: "true"
   persistence:
     # Azure Kubernetes storage classes:
     # managed: Azure Managed Disk (default)
@@ -142,16 +80,8 @@ ingester:
     storageClass: "managed-premium"
     size: "20Gi"
 
-# For Workload Identity: add querier pod label.
-# querier:
-#   podLabels:
-#     azure.workload.identity/use: "true"
 querier: {}
 
-# For Workload Identity: add compactor pod label.
-# compactor:
-#   podLabels:
-#     azure.workload.identity/use: "true"
 compactor: {}
 
 # Enable network policies for security
@@ -175,7 +105,6 @@ networkPolicy:
 #   - Hot: Frequent access, higher storage cost, lower access cost
 #   - Cool: Infrequent access (30+ days), lower storage cost
 #   - Archive: Rare access (180+ days), lowest cost, higher latency
-# - Workload Identity is more secure than access keys (automatic rotation)
 # - Enable soft delete for accidental deletion protection
 # - Use Azure Storage Analytics for monitoring and logging
 # - Monitor costs using Azure Cost Management
