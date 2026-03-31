@@ -10,7 +10,8 @@ fullnameOverride: ""
 image:
   registry: docker.io
   repository: influxdb
-  tag: "3-enterprise"
+  # Optional explicit tag override. If empty, defaults to "<appVersion>-enterprise".
+  tag: ""
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []

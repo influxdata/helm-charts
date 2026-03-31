@@ -468,7 +468,7 @@ logs:
 | `cluster.id` | Cluster identifier | `cluster-01` |
 | `image.registry` | Image registry | `docker.io` |
 | `image.repository` | Image repository | `influxdb` |
-| `image.tag` | Image tag | `3-enterprise` |
+| `image.tag` | Image tag override (defaults to `<appVersion>-enterprise` when empty) | `""` |
 | `license.type` | trial, home, or commercial | `trial` |
 | `license.email` | Email for trial/home | `""` |
 | `license.file` | License file content (use `--set-file license.file=/path/to/file`) | `""` |

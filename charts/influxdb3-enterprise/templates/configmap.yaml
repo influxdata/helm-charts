@@ -1,4 +1,7 @@
 {{- include "influxdb3-enterprise.validateObjectStorageType" . }}
+{{- include "influxdb3-enterprise.validateAzureObjectStorageAuth" . }}
+{{- include "influxdb3-enterprise.validateS3ObjectStorageAuth" . }}
+{{- include "influxdb3-enterprise.validateGoogleObjectStorageAuth" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -68,26 +71,29 @@ data:
   OBJECT_STORE_CACHE_ENDPOINT: {{ .Values.objectStorage.cacheEndpoint | quote }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "s3" }}
-  AWS_DEFAULT_REGION: {{ .Values.objectStorage.s3.region | quote }}
-  {{- if .Values.objectStorage.s3.endpoint }}
-  AWS_ENDPOINT: {{ .Values.objectStorage.s3.endpoint | quote }}
+  {{- $s3 := .Values.objectStorage.s3 | default dict }}
+  AWS_DEFAULT_REGION: {{ (get $s3 "region" | default "us-east-1") | quote }}
+  {{- if get $s3 "endpoint" }}
+  AWS_ENDPOINT: {{ get $s3 "endpoint" | quote }}
   {{- end }}
-  {{- if .Values.objectStorage.s3.allowHttp }}
+  {{- if get $s3 "allowHttp" }}
   AWS_ALLOW_HTTP: "true"
   {{- end }}
-  {{- if .Values.objectStorage.s3.skipSignature }}
+  {{- if get $s3 "skipSignature" }}
   AWS_SKIP_SIGNATURE: "true"
   {{- end }}
-  {{- if .Values.objectStorage.s3.credentialsFile }}
+  {{- if get $s3 "credentialsFile" }}
   AWS_CREDENTIALS_FILE: "/etc/influxdb/aws/credentials"
   {{- end }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "azure" }}
-  {{- if .Values.objectStorage.azure.endpoint }}
-  AZURE_ENDPOINT: {{ .Values.objectStorage.azure.endpoint | quote }}
+  {{- with .Values.objectStorage.azure }}
+  {{- if .endpoint }}
+  AZURE_ENDPOINT: {{ .endpoint | quote }}
   {{- end }}
-  {{- if .Values.objectStorage.azure.allowHttp }}
+  {{- if .allowHttp }}
   AZURE_ALLOW_HTTP: "true"
+  {{- end }}
   {{- end }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "google" }}
