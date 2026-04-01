@@ -163,6 +163,26 @@ meta:
     insecure: true # Only enable if your CA isn't trusted
 ```
 
+When using `defaultMode: 0600`, TLS secret files are root-owned and readable only by UID 0.
+If you configure non-root containers (for example `meta.securityContext.runAsUser`,
+`meta.securityContext.runAsNonRoot`, `data.securityContext.runAsUser`, or
+`data.securityContext.runAsNonRoot`), the process may not be able to read `tls.key`.
+
+If you must run non-root, use this temporary compatibility configuration:
+
+```yaml
+meta:
+  https:
+    secret:
+      defaultMode: 0640
+    insecureCertificate: true
+data:
+  https:
+    secret:
+      defaultMode: 0640
+    insecureCertificate: true
+```
+
 If you cannot mount TLS files with restrictive permissions, you can temporarily skip local certificate/key permission checks:
 
 ```yaml
@@ -174,7 +194,7 @@ data:
     insecureCertificate: true
 ```
 
-Use this only as a temporary compatibility workaround. It reduces TLS safety and should be disabled after fixing secret file permissions.
+Use this only as a temporary compatibility workaround. It reduces TLS safety and should be disabled after fixing secret file permissions and/or non-root file access.
 
 #### DDL/DML (Optional)
 
