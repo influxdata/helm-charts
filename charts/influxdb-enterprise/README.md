@@ -163,6 +163,19 @@ meta:
     insecure: true # Only enable if your CA isn't trusted
 ```
 
+If you cannot mount TLS files with restrictive permissions, you can temporarily skip local certificate/key permission checks:
+
+```yaml
+meta:
+  https:
+    insecureCertificate: true
+data:
+  https:
+    insecureCertificate: true
+```
+
+Use this only as a temporary compatibility workaround. It reduces TLS safety and should be disabled after fixing secret file permissions.
+
 #### DDL/DML (Optional)
 
 If you wish to create databases or import data after installation, we've provided this DDL/DML hook. Your config map must contain the keys `ddl` and `dml`.
