@@ -169,7 +169,12 @@ meta:
       defaultMode: 0600
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
+    # Disable TLS peer certificate verification for remote endpoints
+    # (maps to `https-insecure-tls` option).
     insecure: true
+    # Skip local TLS certificate/private key file permission checks; use only as a
+    # temporary compatibility escape hatch (maps to `https-insecure-certificate` option).
+    insecureCertificate: false
   ## Additional data container environment variables e.g.:
   ##   INFLUXDB_HTTP_FLUX_ENABLED: "true"
   env: {}
@@ -269,7 +274,12 @@ data:
       defaultMode: 0600
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
+    # Disable TLS peer certificate verification for remote endpoints
+    # (maps to `https-insecure-tls` option).
     insecure: true
+    # Skip local TLS certificate/private key file permission checks; use only as a
+    # temporary compatibility escape hatch (maps to `https-insecure-certificate` option).
+    insecureCertificate: false
   flux:
     enabled: true
   ## Additional data container environment variables e.g.:

@@ -21,6 +21,10 @@ data:
     https-certificate = "/var/run/secrets/tls/tls.crt"
     https-private-key = "/var/run/secrets/tls/tls.key"
 
+    {{ if .Values.data.https.insecureCertificate }}
+    https-insecure-certificate = true
+    {{ end }}
+
     {{ end }}
 
     {{ if .Values.data.flux.enabled }}
@@ -45,6 +49,9 @@ data:
 
     {{ if .Values.data.https.insecure }}
     https-insecure-tls = true
+    {{ end }}
+    {{ if .Values.data.https.insecureCertificate }}
+    https-insecure-certificate = true
     {{ end }}
     {{ end }}
 
