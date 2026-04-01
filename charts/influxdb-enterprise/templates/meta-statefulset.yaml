@@ -48,6 +48,7 @@ spec:
       {{- if .Values.meta.https.enabled }}
       - name: tls
         secret:
+          defaultMode: {{ .Values.meta.https.secret.defaultMode | default 0600 }}
           {{- if .Values.meta.https.useCertManager }}
           secretName: {{ include "influxdb-enterprise.fullname" . }}-meta-tls
           {{ else }}

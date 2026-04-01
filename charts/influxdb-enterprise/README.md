@@ -159,6 +159,7 @@ meta:
   https:
     secret:
       name: my-tls-secret
+      defaultMode: 0600 # Restrictive mode required for TLS private key files
     insecure: true # Only enable if your CA isn't trusted
 ```
 
