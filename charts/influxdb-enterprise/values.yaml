@@ -166,8 +166,6 @@ meta:
       # key: tls.key
       # defaultMode sets file permissions for mounted TLS files.
       # InfluxDB Enterprise requires restrictive permissions on the private key.
-      # Files are mounted as root-owned; with runAsNonRoot/runAsUser, 0600 may not be readable.
-      # For temporary non-root compatibility, use 0640 with `insecureCertificate: true`.
       defaultMode: 0600
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
@@ -273,8 +271,6 @@ data:
       # key: tls.key
       # defaultMode sets file permissions for mounted TLS files.
       # InfluxDB Enterprise requires restrictive permissions on the private key.
-      # Files are mounted as root-owned; with runAsNonRoot/runAsUser, 0600 may not be readable.
-      # For temporary non-root compatibility, use 0640 with `insecureCertificate: true`.
       defaultMode: 0600
       # ca: ca.crt
       # caSecret: secret-name # only use if different from the above
