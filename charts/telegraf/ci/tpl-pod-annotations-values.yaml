@@ -1,0 +1,5 @@
+# Validates that podAnnotations values are evaluated through tpl(),
+# allowing Helm template expressions such as {{ .Release.Name }}.
+podAnnotations:
+  example.io/release: "{{ .Release.Name }}"
+  example.io/namespace: "{{ .Release.Namespace }}"

@@ -22,7 +22,7 @@ spec:
         # This means that if the configmap changes, the deployment will be rolled
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
+{{ tpl (toYaml .Values.podAnnotations) . | indent 8 }}
         {{- end }}
     spec:
       {{- if .Values.imagePullSecrets }}
