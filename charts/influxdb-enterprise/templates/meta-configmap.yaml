@@ -31,6 +31,9 @@ data:
       {{ if .Values.meta.https.insecure }}
       https-insecure-tls = true
       {{ end }}
+      {{ if .Values.meta.https.insecureCertificate }}
+      https-insecure-certificate = true
+      {{ end }}
 
       {{ end }}
 

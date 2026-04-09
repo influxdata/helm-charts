@@ -159,8 +159,22 @@ meta:
   https:
     secret:
       name: my-tls-secret
+      defaultMode: 0600 # Restrictive mode required for TLS private key files
     insecure: true # Only enable if your CA isn't trusted
 ```
+
+If you cannot mount TLS files with restrictive permissions, you can temporarily skip local certificate/key permission checks:
+
+```yaml
+meta:
+  https:
+    insecureCertificate: true
+data:
+  https:
+    insecureCertificate: true
+```
+
+Use this only as a temporary compatibility workaround. It reduces TLS safety and should be disabled after fixing secret file permissions.
 
 #### DDL/DML (Optional)
 
