@@ -14,6 +14,10 @@ serviceAccount:
   name:
   annotations: {}
 
+## Specify priorityClassName
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: system-node-critical
+
 ## Customize liveness, readiness and startup probes
 ## ref: https://docs.influxdata.com/influxdb/v1.8/tools/api/#ping-http-endpoint
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
