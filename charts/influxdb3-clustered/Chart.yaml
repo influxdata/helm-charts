@@ -1,13 +1,13 @@
 apiVersion: v2
 type: application
 
-version: 0.1.24
-appVersion: "20251218-1946608"
+version: 0.1.25
+appVersion: "20260421-2022186"
 name: influxdb3-clustered
 description: InfluxDB 3.0 Clustered
 maintainers:
-  - name: jenniferplusplus
-    email: team-clustered@influxdata.com
+  - name: eatondustin1
+    email: team-platform@influxdata.com
     url: https://github.com/orgs/influxdata/teams/project-clustered
 keywords:
   - influxdb
