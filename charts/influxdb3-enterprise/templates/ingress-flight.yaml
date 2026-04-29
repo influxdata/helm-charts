@@ -39,14 +39,20 @@ spec:
     - host: {{ $flightHost | quote }}
       http:
         paths:
-          {{- range .Values.ingress.flight.paths }}
-          - path: {{ . | quote }}
+          - path: /arrow.flight.protocol.FlightService
             # Keep ImplementationSpecific for dotted gRPC service paths.
             pathType: ImplementationSpecific
             backend:
               service:
-                name: {{ include "influxdb3-enterprise.fullname" $ }}-querier
+                name: {{ include "influxdb3-enterprise.fullname" . }}-querier
                 port:
-                  number: {{ $.Values.querier.service.port }}
-          {{- end }}
+                  number: {{ .Values.querier.service.port }}
+          - path: /arrow.flight.protocol.sql.FlightSqlService
+            # Keep ImplementationSpecific for dotted gRPC service paths.
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-querier
+                port:
+                  number: {{ .Values.querier.service.port }}
 {{- end }}

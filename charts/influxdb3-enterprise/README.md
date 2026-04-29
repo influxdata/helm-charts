@@ -243,9 +243,6 @@ ingress:
   # Flight/gRPC ingress to querier
   flight:
     host: "" # Optional override; defaults to ingress.host
-    paths:
-      - /arrow.flight.protocol.FlightService
-      - /arrow.flight.protocol.sql.FlightSqlService
     annotations:
       nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
@@ -254,7 +251,7 @@ ingress:
 Route summary:
 - Write ingress routes `/api/v3/write_lp`, `/api/v2/write`, `/write` to ingester.
 - Query ingress routes `/api/v3/query`, `/query`, `/` to querier.
-- Flight ingress routes `ingress.flight.paths` (default Arrow Flight service paths) to querier with gRPC backend protocol.
+- Flight ingress routes `/arrow.flight.protocol.FlightService` and `/arrow.flight.protocol.sql.FlightSqlService` to querier with gRPC backend protocol.
 - Processor ingress routes `/api/v3/engine` to processor when processing engine is enabled.
 
 #### Network Policies
@@ -537,14 +534,13 @@ logs:
 | `ingress.query.annotations` | Query ingress annotations | `proxy-read-timeout` |
 | `ingress.flight.host` | Optional host override for Flight ingress | `""` (uses `ingress.host`) |
 | `ingress.flight.tls` | Optional TLS override for Flight ingress | `[]` (uses `ingress.tls`) |
-| `ingress.flight.paths` | Flight/gRPC service paths routed to querier | Flight + Flight SQL paths |
 | `ingress.flight.annotations` | Flight ingress annotations (includes GRPC backend protocol) | includes `backend-protocol: GRPC` |
 | `ingress.processor.annotations` | Processor ingress annotations | `{}` |
 
 Ingress routes:
 - Write ingress exposes `/api/v3/write_lp`, `/api/v2/write`, `/write`.
 - Query ingress exposes `/api/v3/query`, `/query`, `/`.
-- Flight ingress exposes `ingress.flight.paths` (defaults to Arrow Flight service paths).
+- Flight ingress exposes `/arrow.flight.protocol.FlightService` and `/arrow.flight.protocol.sql.FlightSqlService`.
 
 ### Network Policy Parameters
 
