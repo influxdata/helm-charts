@@ -685,6 +685,17 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 
+  # Ingress for Flight/gRPC query traffic (to queriers)
+  # Routes: /arrow.flight.protocol.* → Querier (gRPC backend)
+  flight:
+    # Optional host override. If empty, inherits ingress.host.
+    host: ""
+    # Optional TLS override. If empty, inherits ingress.tls.
+    tls: []
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+
   # Ingress for HTTP-triggered plugins (created only if processingEngine.enabled)
   processor:
     annotations: {}
