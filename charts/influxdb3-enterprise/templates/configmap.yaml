@@ -53,22 +53,22 @@ data:
   INFLUXDB3_BUCKET: {{ .Values.objectStorage.bucket | quote }}
   {{- end }}
   {{- if .Values.objectStorage.connectionLimit }}
-  OBJECT_STORE_CONNECTION_LIMIT: {{ .Values.objectStorage.connectionLimit | quote }}
+  INFLUXDB3_OBJECT_STORE_CONNECTION_LIMIT: {{ .Values.objectStorage.connectionLimit | quote }}
   {{- end }}
   {{- if hasKey .Values.objectStorage "http2Only" }}
-  OBJECT_STORE_HTTP2_ONLY: {{ ternary "true" "false" .Values.objectStorage.http2Only | quote }}
+  INFLUXDB3_OBJECT_STORE_HTTP2_ONLY: {{ ternary "true" "false" .Values.objectStorage.http2Only | quote }}
   {{- end }}
   {{- if .Values.objectStorage.http2MaxFrameSize }}
-  OBJECT_STORE_HTTP2_MAX_FRAME_SIZE: {{ .Values.objectStorage.http2MaxFrameSize | quote }}
+  INFLUXDB3_OBJECT_STORE_HTTP2_MAX_FRAME_SIZE: {{ .Values.objectStorage.http2MaxFrameSize | quote }}
   {{- end }}
   {{- if .Values.objectStorage.maxRetries }}
-  OBJECT_STORE_MAX_RETRIES: {{ .Values.objectStorage.maxRetries | quote }}
+  INFLUXDB3_OBJECT_STORE_MAX_RETRIES: {{ .Values.objectStorage.maxRetries | quote }}
   {{- end }}
   {{- if .Values.objectStorage.retryTimeout }}
-  OBJECT_STORE_RETRY_TIMEOUT: {{ .Values.objectStorage.retryTimeout | quote }}
+  INFLUXDB3_OBJECT_STORE_RETRY_TIMEOUT: {{ .Values.objectStorage.retryTimeout | quote }}
   {{- end }}
   {{- if .Values.objectStorage.cacheEndpoint }}
-  OBJECT_STORE_CACHE_ENDPOINT: {{ .Values.objectStorage.cacheEndpoint | quote }}
+  INFLUXDB3_OBJECT_STORE_CACHE_ENDPOINT: {{ .Values.objectStorage.cacheEndpoint | quote }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "s3" }}
   {{- $s3 := .Values.objectStorage.s3 | default dict }}
@@ -172,13 +172,13 @@ data:
   # Logs
   {{- with .Values.logs }}
   {{- if .logFilter }}
-  LOG_FILTER: {{ .logFilter | quote }}
+  INFLUXDB3_LOG_FILTER: {{ .logFilter | quote }}
   {{- end }}
   {{- if .logDestination }}
-  LOG_DESTINATION: {{ .logDestination | quote }}
+  INFLUXDB3_LOG_DESTINATION: {{ .logDestination | quote }}
   {{- end }}
   {{- if .logFormat }}
-  LOG_FORMAT: {{ .logFormat | quote }}
+  INFLUXDB3_LOG_FORMAT: {{ .logFormat | quote }}
   {{- end }}
   {{- if .queryLogSize }}
   INFLUXDB3_QUERY_LOG_SIZE: {{ .queryLogSize }}
@@ -187,28 +187,28 @@ data:
 
   # Tracing
   {{- with .Values.traces }}
-  TRACES_EXPORTER: {{ .exporter | quote }}
+  INFLUXDB3_TRACES_EXPORTER: {{ .exporter | quote }}
   {{- with .jaeger }}
   {{- if .agentHost }}
-  TRACES_EXPORTER_JAEGER_AGENT_HOST: {{ .agentHost | quote }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_HOST: {{ .agentHost | quote }}
   {{- end }}
   {{- if .agentPort }}
-  TRACES_EXPORTER_JAEGER_AGENT_PORT: {{ .agentPort | quote }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_PORT: {{ .agentPort | quote }}
   {{- end }}
   {{- if .serviceName }}
-  TRACES_EXPORTER_JAEGER_SERVICE_NAME: {{ .serviceName | quote }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_SERVICE_NAME: {{ .serviceName | quote }}
   {{- end }}
   {{- if .traceContextHeaderName }}
-  TRACES_EXPORTER_JAEGER_TRACE_CONTEXT_HEADER_NAME: {{ .traceContextHeaderName | quote }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_TRACE_CONTEXT_HEADER_NAME: {{ .traceContextHeaderName | quote }}
   {{- end }}
   {{- if .debugName }}
-  TRACES_EXPORTER_JAEGER_DEBUG_NAME: {{ .debugName | quote }}
+  INFLUXDB3_TRACES_JAEGER_DEBUG_NAME: {{ .debugName | quote }}
   {{- end }}
   {{- if .tags }}
-  TRACES_EXPORTER_JAEGER_TAGS: {{ .tags | quote }}
+  INFLUXDB3_TRACES_JAEGER_TAGS: {{ .tags | quote }}
   {{- end }}
   {{- if .maxMsgsPerSecond }}
-  TRACES_JAEGER_MAX_MSGS_PER_SECOND: {{ .maxMsgsPerSecond | quote }}
+  INFLUXDB3_TRACES_JAEGER_MAX_MSGS_PER_SECOND: {{ .maxMsgsPerSecond | quote }}
   {{- end }}
   {{- end }}
   {{- end }}
