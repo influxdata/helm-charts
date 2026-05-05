@@ -1,4 +1,10 @@
 {{- if .Values.processingEngine.enabled }}
+{{- $processorPersistence := .Values.processingEngine.persistence | default dict }}
+{{- $pluginsPVCEnabled := true }}
+{{- if hasKey $processorPersistence "enabled" }}
+{{- $pluginsPVCEnabled = (get $processorPersistence "enabled") }}
+{{- end }}
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -46,8 +52,10 @@ spec:
             - >
               influxdb3 install package {{ .name | quote }}{{- if .source }} --source {{ .source | quote }}{{- end }} --plugin-dir {{ $.Values.processingEngine.pluginDir | default "/plugins" | quote }}
           volumeMounts:
+            {{- if $pluginsPVCEnabled }}
             - name: plugins
               mountPath: {{ $.Values.processingEngine.pluginDir | default "/plugins" }}
+            {{- end }}
         {{- end }}
       {{- end }}
       {{- with .Values.imagePullSecrets }}
@@ -136,8 +144,10 @@ spec:
           resources:
             {{- toYaml .Values.processingEngine.resources | nindent 12 }}
           volumeMounts:
+            {{- if $pluginsPVCEnabled }}
             - name: plugins
               mountPath: {{ .Values.processingEngine.pluginDir | default "/plugins" }}
+            {{- end }}
             {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
       {{- with .Values.processingEngine.nodeSelector }}
       nodeSelector:
@@ -153,6 +163,7 @@ spec:
       {{- end }}
       volumes:
         {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
+  {{- if $pluginsPVCEnabled }}
   volumeClaimTemplates:
     - metadata:
         name: plugins
@@ -165,4 +176,5 @@ spec:
         resources:
           requests:
             storage: {{ .Values.processingEngine.persistence.size }}
+  {{- end }}
 {{- end }}

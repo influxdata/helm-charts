@@ -461,6 +461,7 @@ processingEngine:
 
   # Persistent storage for plugins
   persistence:
+    enabled: true
     storageClass: ""
     size: "5Gi"
     accessMode: ReadWriteOnce
