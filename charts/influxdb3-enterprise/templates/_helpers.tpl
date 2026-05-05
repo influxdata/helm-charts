@@ -246,13 +246,13 @@ License environment (shared across components)
 */}}
 {{- define "influxdb3-enterprise.licenseEnv" -}}
 {{- if or .Values.license.existingSecret (or .Values.license.email .Values.license.file) }}
-{{- if or .Values.license.email .Values.license.existingSecret }}
+{{- $licenseType := .Values.license.type | default "trial" -}}
+{{- if and (or (eq $licenseType "trial") (eq $licenseType "home")) (or .Values.license.email .Values.license.existingSecret) }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
   valueFrom:
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
-      optional: true
 {{- end }}
 {{- if or .Values.license.file .Values.license.existingSecret }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
