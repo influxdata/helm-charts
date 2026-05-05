@@ -2,6 +2,7 @@
 {{- include "influxdb3-enterprise.validateAzureObjectStorageAuth" . }}
 {{- include "influxdb3-enterprise.validateS3ObjectStorageAuth" . }}
 {{- include "influxdb3-enterprise.validateGoogleObjectStorageAuth" . }}
+{{- include "influxdb3-enterprise.validateObjectStoreTlsCa" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -60,6 +61,18 @@ data:
   {{- end }}
   {{- if .Values.objectStorage.http2MaxFrameSize }}
   INFLUXDB3_OBJECT_STORE_HTTP2_MAX_FRAME_SIZE: {{ .Values.objectStorage.http2MaxFrameSize | quote }}
+  {{- end }}
+  {{- if .Values.objectStorage.requestTimeout }}
+  INFLUXDB3_OBJECT_STORE_REQUEST_TIMEOUT: {{ .Values.objectStorage.requestTimeout | quote }}
+  {{- end }}
+  {{- if hasKey .Values.objectStorage "tlsAllowInsecure" }}
+  INFLUXDB3_OBJECT_STORE_TLS_ALLOW_INSECURE: {{ ternary "true" "false" .Values.objectStorage.tlsAllowInsecure | quote }}
+  {{- end }}
+  {{- $tlsCa := .Values.objectStorage.tlsCa | default dict }}
+  {{- if get $tlsCa "certPath" }}
+  INFLUXDB3_OBJECT_STORE_TLS_CA: {{ get $tlsCa "certPath" | quote }}
+  {{- else if get $tlsCa "existingSecret" }}
+  INFLUXDB3_OBJECT_STORE_TLS_CA: "/etc/influxdb/object-store-ca/ca.crt"
   {{- end }}
   {{- if .Values.objectStorage.maxRetries }}
   INFLUXDB3_OBJECT_STORE_MAX_RETRIES: {{ .Values.objectStorage.maxRetries | quote }}

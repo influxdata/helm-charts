@@ -49,9 +49,15 @@ objectStorage:
   # connectionLimit: 16             # Max connections to object store (doc default 16)
   # http2Only: false                # Force HTTP/2 connections (optional)
   # http2MaxFrameSize: ""           # HTTP/2 max frame size (optional)
+  # requestTimeout: ""              # Object store request timeout (optional, server default: 30s)
   # maxRetries: ""                  # Object store retry attempts (optional)
   # retryTimeout: ""                # Object store retry timeout (optional)
   # cacheEndpoint: ""               # Object store cache endpoint (optional)
+  # tlsAllowInsecure: false         # Skip object-store TLS cert verification (testing only)
+  # tlsCa:
+  #   certPath: ""                  # Path to custom CA PEM file for object-store TLS verification
+  #   existingSecret: ""            # Alternative to certPath; secret with key "ca.crt"
+  # NOTE: set only one of tlsCa.certPath or tlsCa.existingSecret
 
   # S3 and S3-compatible storage (MinIO, etc.)
   s3:

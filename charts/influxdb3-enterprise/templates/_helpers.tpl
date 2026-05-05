@@ -152,6 +152,18 @@ Validate Google object storage auth config
 {{- end }}
 
 {{/*
+Validate object store TLS CA config
+*/}}
+{{- define "influxdb3-enterprise.validateObjectStoreTlsCa" -}}
+{{- $tlsCa := .Values.objectStorage.tlsCa | default dict -}}
+{{- $certPath := get $tlsCa "certPath" | default "" -}}
+{{- $existingSecret := get $tlsCa "existingSecret" | default "" -}}
+{{- if and $certPath $existingSecret -}}
+{{- fail "Set only one of objectStorage.tlsCa.certPath or objectStorage.tlsCa.existingSecret." -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 License checksum (handles existingSecret via lookup)
 */}}
 {{- define "influxdb3-enterprise.licenseChecksum" -}}
@@ -327,6 +339,12 @@ Shared volume mounts (license/TLS/GCS and user extras)
   mountPath: /etc/influxdb/tls
   readOnly: true
 {{- end }}
+{{- $tlsCa := .Values.objectStorage.tlsCa | default dict }}
+{{- if get $tlsCa "existingSecret" }}
+- name: object-store-ca
+  mountPath: /etc/influxdb/object-store-ca
+  readOnly: true
+{{- end }}
 {{- with .Values.extraVolumeMounts }}
 {{ toYaml . }}
 {{- end }}
@@ -371,6 +389,15 @@ Shared volumes (license/TLS/GCS and user extras)
 - name: tls
   secret:
     secretName: {{ include "influxdb3-enterprise.tlsSecretName" . }}
+{{- end }}
+{{- $tlsCa := .Values.objectStorage.tlsCa | default dict }}
+{{- if get $tlsCa "existingSecret" }}
+- name: object-store-ca
+  secret:
+    secretName: {{ get $tlsCa "existingSecret" }}
+    items:
+      - key: ca.crt
+        path: ca.crt
 {{- end }}
 {{- with .Values.extraVolumes }}
 {{ toYaml . }}

@@ -482,6 +482,10 @@ logs:
 | `objectStorage.bucket` | Bucket/container name | `influxdb3-enterprise-data` |
 | `objectStorage.s3.region` | AWS region | `us-east-1` |
 | `objectStorage.s3.endpoint` | S3 endpoint (for S3-compatible) | `""` |
+| `objectStorage.requestTimeout` | Object store request timeout | `""` (server default `30s`) |
+| `objectStorage.tlsAllowInsecure` | Skip object-store TLS cert verification (testing only) | `false` |
+| `objectStorage.tlsCa.certPath` | Path to custom CA PEM file for object-store TLS verification | `""` |
+| `objectStorage.tlsCa.existingSecret` | Secret containing object-store CA PEM (`ca.crt`) | `""` |
 | `objectStorage.s3.accessKeyId` / `secretAccessKey` | S3 credentials | `""` |
 | `objectStorage.s3.sessionToken` | Optional session token | `""` |
 | `objectStorage.s3.credentialsFile` | Credentials file content (use `--set-file objectStorage.s3.credentialsFile=/path/to/file`) | `""` |
