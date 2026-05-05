@@ -103,7 +103,7 @@ spec:
             {{- end }}
             {{- with .Values.ingester.datafusion }}
             {{- if .numThreads }}
-            - name: INFLUXDB3_DATAFUSION_NUM_THREADS
+            - name: INFLUXDB3_NUM_DATAFUSION_THREADS
               value: {{ .numThreads | quote }}
             {{- end }}
             {{- if .maxParquetFanout }}
