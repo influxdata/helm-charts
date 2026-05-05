@@ -259,7 +259,7 @@ License environment (shared across components)
   value: "/etc/influxdb/license"
 {{- end }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
-  value: {{ .Values.license.type | quote }}
+  value: {{ $licenseType | quote }}
 {{- end }}
 {{- end }}
 
