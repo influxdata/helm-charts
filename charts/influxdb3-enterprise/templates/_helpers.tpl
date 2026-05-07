@@ -383,7 +383,7 @@ Whether processor pluginDir is actually mounted by processorPluginVolumeMounts
 {{- $mounts := include "influxdb3-enterprise.processorPluginVolumeMounts" . -}}
 {{- $pluginDir := .pluginDir | default "/plugins" -}}
 {{- $needle := printf "mountPath: %s\n" $pluginDir -}}
-{{- if contains $needle $mounts -}}
+{{- if contains $needle (printf "%s\n" $mounts) -}}
 true
 {{- else -}}
 false
