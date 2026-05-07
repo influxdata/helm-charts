@@ -352,6 +352,45 @@ Shared volume mounts (license/TLS/GCS and user extras)
 {{- end }}
 
 {{/*
+Processor plugin volume mounts (chart-managed plugins PVC or shared mounts)
+*/}}
+{{- define "influxdb3-enterprise.processorPluginVolumeMounts" -}}
+{{- $pluginsPVCEnabled := true -}}
+{{- if hasKey . "pluginsPVCEnabled" -}}
+{{- $pluginsPVCEnabled = (get . "pluginsPVCEnabled") -}}
+{{- end -}}
+{{- $pluginDir := .pluginDir | default "/plugins" -}}
+{{- $root := .root -}}
+{{- if $pluginsPVCEnabled }}
+- name: plugins
+  mountPath: {{ $pluginDir }}
+{{- end }}
+{{- include "influxdb3-enterprise.sharedVolumeMounts" $root }}
+{{- end }}
+
+{{/*
+Whether processor plugin volume mounts are present
+*/}}
+{{- define "influxdb3-enterprise.hasProcessorPluginVolumeMounts" -}}
+{{- $mounts := include "influxdb3-enterprise.processorPluginVolumeMounts" . | trim -}}
+{{- ternary "true" "false" (ne $mounts "") -}}
+{{- end }}
+
+{{/*
+Whether processor pluginDir is actually mounted by processorPluginVolumeMounts
+*/}}
+{{- define "influxdb3-enterprise.hasProcessorPluginDirMount" -}}
+{{- $mounts := include "influxdb3-enterprise.processorPluginVolumeMounts" . -}}
+{{- $pluginDir := .pluginDir | default "/plugins" -}}
+{{- $needle := printf "mountPath: %s\n" $pluginDir -}}
+{{- if contains $needle $mounts -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{/*
 Shared volumes (license/TLS/GCS and user extras)
 */}}
 {{- define "influxdb3-enterprise.sharedVolumes" -}}
