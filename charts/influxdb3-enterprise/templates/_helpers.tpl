@@ -365,7 +365,7 @@ Processor plugin volume mounts (chart-managed plugins PVC or shared mounts)
 - name: plugins
   mountPath: {{ $pluginDir }}
 {{- end }}
-{{- include "influxdb3-enterprise.sharedVolumeMounts" $root }}
+{{ include "influxdb3-enterprise.sharedVolumeMounts" $root }}
 {{- end }}
 
 {{/*
