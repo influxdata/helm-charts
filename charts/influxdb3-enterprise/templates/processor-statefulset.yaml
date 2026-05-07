@@ -5,7 +5,9 @@
 {{- $pluginsPVCEnabled = (get $processorPersistence "enabled") }}
 {{- end }}
 {{- $pluginVolumeMountCtx := dict "root" . "pluginsPVCEnabled" $pluginsPVCEnabled "pluginDir" (.Values.processingEngine.pluginDir | default "/plugins") }}
-{{- if and (not $pluginsPVCEnabled) .Values.processingEngine.initPlugins (gt (len .Values.processingEngine.initPlugins) 0) (ne (include "influxdb3-enterprise.hasProcessorPluginDirMount" $pluginVolumeMountCtx) "true") }}
+{{- $hasProcessorPluginVolumeMounts := eq (include "influxdb3-enterprise.hasProcessorPluginVolumeMounts" $pluginVolumeMountCtx) "true" }}
+{{- $hasProcessorPluginDirMount := eq (include "influxdb3-enterprise.hasProcessorPluginDirMount" $pluginVolumeMountCtx) "true" }}
+{{- if and (not $pluginsPVCEnabled) .Values.processingEngine.initPlugins (gt (len .Values.processingEngine.initPlugins) 0) (not $hasProcessorPluginDirMount) }}
 {{- fail "processingEngine.initPlugins requires processingEngine.pluginDir to be mounted. Set processingEngine.persistence.enabled=true or configure extraVolumes/extraVolumeMounts to mount processingEngine.pluginDir." }}
 {{- end }}
 
@@ -55,7 +57,7 @@ spec:
             - -c
             - >
               influxdb3 install package {{ .name | quote }}{{- if .source }} --source {{ .source | quote }}{{- end }} --plugin-dir {{ $.Values.processingEngine.pluginDir | default "/plugins" | quote }}
-          {{- if eq (include "influxdb3-enterprise.hasProcessorPluginVolumeMounts" $pluginVolumeMountCtx) "true" }}
+          {{- if $hasProcessorPluginVolumeMounts }}
           volumeMounts:
             {{- include "influxdb3-enterprise.processorPluginVolumeMounts" $pluginVolumeMountCtx | nindent 12 }}
           {{- end }}
@@ -146,7 +148,7 @@ spec:
           {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.processingEngine.resources | nindent 12 }}
-          {{- if eq (include "influxdb3-enterprise.hasProcessorPluginVolumeMounts" $pluginVolumeMountCtx) "true" }}
+          {{- if $hasProcessorPluginVolumeMounts }}
           volumeMounts:
             {{- include "influxdb3-enterprise.processorPluginVolumeMounts" $pluginVolumeMountCtx | nindent 12 }}
           {{- end }}
