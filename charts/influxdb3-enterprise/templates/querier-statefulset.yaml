@@ -93,6 +93,12 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
+            {{- if not .Values.processingEngine.enabled }}
+            # Prevent Processing Engine initialization on non-processor pods (air-gapped deployments)
+            # Official docs: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#disable-the-processing-engine
+            - name: INFLUXDB3_UNSET_VARS
+              value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_PACKAGE_MANAGER INFLUXDB3_PLUGIN_REPO"
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
