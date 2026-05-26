@@ -8,7 +8,7 @@ ingress:
   enabled: false
 
 ingester:
-  replicas: 2
+  replicas: 1
   resources:
     requests:
       cpu: "250m"
@@ -20,7 +20,7 @@ ingester:
     enabled: false
 
 querier:
-  replicas: 2
+  replicas: 1
   resources:
     requests:
       cpu: "250m"
