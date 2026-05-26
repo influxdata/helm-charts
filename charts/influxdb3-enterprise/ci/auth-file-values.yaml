@@ -1,6 +1,3 @@
-license:
-  email: "dburton+test@influxdata.com"
-
 objectStorage:
   type: memory
 
