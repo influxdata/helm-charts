@@ -1,3 +1,6 @@
+license:
+  existingSecret: influxdb3-license
+
 objectStorage:
   type: memory
 
