@@ -1,0 +1,70 @@
+license:
+  email: "dburton+test@influxdata.com"
+
+objectStorage:
+  type: memory
+
+ingress:
+  enabled: false
+
+ingester:
+  replicas: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  persistence:
+    enabled: false
+
+querier:
+  replicas: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+compactor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+processingEngine:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  persistence:
+    enabled: false
+
+security:
+  auth:
+    adminToken:
+      file: /etc/influxdb/bootstrap/admin-token.json
+    permissionTokens:
+      file: /etc/influxdb/bootstrap/permission-tokens.json
+
+extraVolumes:
+  - name: bootstrap-tokens
+    secret:
+      secretName: influxdb3-bootstrap-tokens
+
+extraVolumeMounts:
+  - name: bootstrap-tokens
+    mountPath: /etc/influxdb/bootstrap
+    readOnly: true
