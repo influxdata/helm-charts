@@ -64,9 +64,15 @@ jobs:
 
       - name: Create Enterprise V3 Test Resources
         run: |
+          kubectl create secret generic influxdb3-license \
+            --namespace=default \
+            --from-literal=license-email=${INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL}
           kubectl create secret generic influxdb3-bootstrap-tokens \
+            --namespace=default \
             --from-file=admin-token.json=./charts/influxdb3-enterprise/ci/admin-token.json \
             --from-file=permission-tokens.json=./charts/influxdb3-enterprise/ci/permission-tokens.json
+        env:
+          INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL: "${{ secrets.INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL }}"
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
