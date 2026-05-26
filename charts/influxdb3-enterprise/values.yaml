@@ -556,8 +556,9 @@ security:
     adminToken:
       existingSecret: ""
       file: ""
-    # adminTokenRecovery:
-    #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
+      # Admin token recovery configuration
+      # recovery:
+      #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
     # Existing secret containing offline permission tokens JSON.
     # Secret must contain key: permission-tokens.json
     # Set only one of permissionTokens.existingSecret or permissionTokens.file.
