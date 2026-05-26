@@ -102,6 +102,36 @@ At minimum, you must configure:
          - host: query.your-domain.com
    ```
 
+### Preconfigured Admin Token
+
+Use this when you want the cluster to start with a known offline-generated admin token.
+
+1. Generate an offline admin token file:
+   ```bash
+   influxdb3 create token --admin --name bootstrap-admin --expiry 365d --offline --output-file admin-token.json
+   chmod 600 admin-token.json
+   ```
+
+2. Create a Kubernetes secret from that file:
+   ```bash
+   kubectl -n influxdb3 create secret generic influxdb3-admin-token \
+     --from-file=admin-token.json=admin-token.json
+   ```
+
+3. Configure the chart:
+   ```yaml
+   security:
+     auth:
+       adminToken:
+         existingSecret: influxdb3-admin-token
+   ```
+
+Notes:
+- Secret key must be `admin-token.json`.
+- The chart mounts it at `/etc/influxdb/admin-token/admin-token.json`.
+- `security.auth.adminToken.existingSecret` and `security.auth.adminToken.file` are mutually exclusive.
+- If using `security.auth.adminToken.file`, ensure that path exists inside the container (for example via `extraVolumes`/`extraVolumeMounts`).
+
 ## Configuration
 
 ### Component Architecture
@@ -473,6 +503,10 @@ logs:
 | `license.email` | Email for trial/home | `""` |
 | `license.file` | License file content (use `--set-file license.file=/path/to/file`) | `""` |
 | `license.existingSecret` | Secret with `license-email` or `license-file` | `""` |
+| `security.auth.adminToken.existingSecret` | Secret with offline admin token key `admin-token.json` | `""` |
+| `security.auth.adminToken.file` | Path to offline admin token file; mutually exclusive with `security.auth.adminToken.existingSecret` | `""` |
+| `security.auth.permissionTokens.existingSecret` | Secret with offline permission tokens key `permission-tokens.json` | `""` |
+| `security.auth.permissionTokens.file` | Path to offline permission tokens file; mutually exclusive with `security.auth.permissionTokens.existingSecret` | `""` |
 
 ### Object Storage Parameters
 

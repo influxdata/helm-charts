@@ -164,6 +164,34 @@ Validate object store TLS CA config
 {{- end }}
 
 {{/*
+Validate admin token bootstrap config
+*/}}
+{{- define "influxdb3-enterprise.validateAdminTokenConfig" -}}
+{{- $security := .Values.security | default dict -}}
+{{- $auth := get $security "auth" | default dict -}}
+{{- $adminToken := get $auth "adminToken" | default dict -}}
+{{- $existingSecret := get $adminToken "existingSecret" | default "" -}}
+{{- $adminTokenFile := get $adminToken "file" | default "" -}}
+{{- if and $existingSecret $adminTokenFile -}}
+{{- fail "Set only one of security.auth.adminToken.existingSecret or security.auth.adminToken.file." -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Validate permission tokens bootstrap config
+*/}}
+{{- define "influxdb3-enterprise.validatePermissionTokensConfig" -}}
+{{- $security := .Values.security | default dict -}}
+{{- $auth := get $security "auth" | default dict -}}
+{{- $permissionTokens := get $auth "permissionTokens" | default dict -}}
+{{- $existingSecret := get $permissionTokens "existingSecret" | default "" -}}
+{{- $permissionTokensFile := get $permissionTokens "file" | default "" -}}
+{{- if and $existingSecret $permissionTokensFile -}}
+{{- fail "Set only one of security.auth.permissionTokens.existingSecret or security.auth.permissionTokens.file." -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 License checksum (handles existingSecret via lookup)
 */}}
 {{- define "influxdb3-enterprise.licenseChecksum" -}}
@@ -264,6 +292,40 @@ License environment (shared across components)
 {{- end }}
 
 {{/*
+Preconfigured admin token environment
+*/}}
+{{- define "influxdb3-enterprise.adminTokenEnv" -}}
+{{- $security := .Values.security | default dict -}}
+{{- $auth := get $security "auth" | default dict -}}
+{{- $adminToken := get $auth "adminToken" | default dict -}}
+{{- $adminTokenFile := get $adminToken "file" | default "" -}}
+{{- if get $adminToken "existingSecret" }}
+- name: INFLUXDB3_ADMIN_TOKEN_FILE
+  value: "/etc/influxdb/admin-token/admin-token.json"
+{{- else if $adminTokenFile }}
+- name: INFLUXDB3_ADMIN_TOKEN_FILE
+  value: {{ $adminTokenFile | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Preconfigured permission tokens environment
+*/}}
+{{- define "influxdb3-enterprise.permissionTokensEnv" -}}
+{{- $security := .Values.security | default dict -}}
+{{- $auth := get $security "auth" | default dict -}}
+{{- $permissionTokens := get $auth "permissionTokens" | default dict -}}
+{{- $permissionTokensFile := get $permissionTokens "file" | default "" -}}
+{{- if get $permissionTokens "existingSecret" }}
+- name: INFLUXDB3_PERMISSION_TOKENS_FILE
+  value: "/etc/influxdb/permission-tokens/permission-tokens.json"
+{{- else if $permissionTokensFile }}
+- name: INFLUXDB3_PERMISSION_TOKENS_FILE
+  value: {{ $permissionTokensFile | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
 Probe configuration (shared across components)
 */}}
 {{- define "influxdb3-enterprise.probes" -}}
@@ -348,6 +410,34 @@ Shared volume mounts (license/TLS/GCS and user extras)
 {{- end }}
 {{- with .Values.extraVolumeMounts }}
 {{ toYaml . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Admin token volume mounts
+*/}}
+{{- define "influxdb3-enterprise.adminTokenVolumeMounts" -}}
+{{- $security := .Values.security | default dict -}}
+{{- $auth := get $security "auth" | default dict -}}
+{{- $adminToken := get $auth "adminToken" | default dict -}}
+{{- if get $adminToken "existingSecret" }}
+- name: admin-token
+  mountPath: /etc/influxdb/admin-token
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{/*
+Permission tokens volume mounts
+*/}}
+{{- define "influxdb3-enterprise.permissionTokensVolumeMounts" -}}
+{{- $security := .Values.security | default dict -}}
+{{- $auth := get $security "auth" | default dict -}}
+{{- $permissionTokens := get $auth "permissionTokens" | default dict -}}
+{{- if get $permissionTokens "existingSecret" }}
+- name: permission-tokens
+  mountPath: /etc/influxdb/permission-tokens
+  readOnly: true
 {{- end }}
 {{- end }}
 
@@ -441,5 +531,41 @@ Shared volumes (license/TLS/GCS and user extras)
 {{- end }}
 {{- with .Values.extraVolumes }}
 {{ toYaml . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Admin token volumes
+*/}}
+{{- define "influxdb3-enterprise.adminTokenVolumes" -}}
+{{- $security := .Values.security | default dict -}}
+{{- $auth := get $security "auth" | default dict -}}
+{{- $adminToken := get $auth "adminToken" | default dict -}}
+{{- if get $adminToken "existingSecret" }}
+- name: admin-token
+  secret:
+    secretName: {{ get $adminToken "existingSecret" }}
+    defaultMode: 0400
+    items:
+      - key: admin-token.json
+        path: admin-token.json
+{{- end }}
+{{- end }}
+
+{{/*
+Permission tokens volumes
+*/}}
+{{- define "influxdb3-enterprise.permissionTokensVolumes" -}}
+{{- $security := .Values.security | default dict -}}
+{{- $auth := get $security "auth" | default dict -}}
+{{- $permissionTokens := get $auth "permissionTokens" | default dict -}}
+{{- if get $permissionTokens "existingSecret" }}
+- name: permission-tokens
+  secret:
+    secretName: {{ get $permissionTokens "existingSecret" }}
+    defaultMode: 0400
+    items:
+      - key: permission-tokens.json
+        path: permission-tokens.json
 {{- end }}
 {{- end }}

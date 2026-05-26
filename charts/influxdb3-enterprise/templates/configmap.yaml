@@ -3,6 +3,8 @@
 {{- include "influxdb3-enterprise.validateS3ObjectStorageAuth" . }}
 {{- include "influxdb3-enterprise.validateGoogleObjectStorageAuth" . }}
 {{- include "influxdb3-enterprise.validateObjectStoreTlsCa" . }}
+{{- include "influxdb3-enterprise.validateAdminTokenConfig" . }}
+{{- include "influxdb3-enterprise.validatePermissionTokensConfig" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

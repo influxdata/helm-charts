@@ -7,6 +7,10 @@
 {{- $pluginVolumeMountCtx := dict "root" . "pluginsPVCEnabled" $pluginsPVCEnabled "pluginDir" (.Values.processingEngine.pluginDir | default "/plugins") }}
 {{- $hasProcessorPluginVolumeMounts := eq (include "influxdb3-enterprise.hasProcessorPluginVolumeMounts" $pluginVolumeMountCtx) "true" }}
 {{- $hasProcessorPluginDirMount := eq (include "influxdb3-enterprise.hasProcessorPluginDirMount" $pluginVolumeMountCtx) "true" }}
+{{- $adminTokenVolumeMounts := include "influxdb3-enterprise.adminTokenVolumeMounts" . | trim }}
+{{- $hasAdminTokenVolumeMounts := ne $adminTokenVolumeMounts "" }}
+{{- $permissionTokensVolumeMounts := include "influxdb3-enterprise.permissionTokensVolumeMounts" . | trim }}
+{{- $hasPermissionTokensVolumeMounts := ne $permissionTokensVolumeMounts "" }}
 {{- if and (not $pluginsPVCEnabled) .Values.processingEngine.initPlugins (gt (len .Values.processingEngine.initPlugins) 0) (not $hasProcessorPluginDirMount) }}
 {{- fail "processingEngine.initPlugins requires processingEngine.pluginDir to be mounted. Set processingEngine.persistence.enabled=true or configure extraVolumes/extraVolumeMounts to mount processingEngine.pluginDir." }}
 {{- end }}
@@ -98,6 +102,8 @@ spec:
           env:
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
             {{- with .Values.processingEngine.pluginDir }}
             - name: INFLUXDB3_PLUGIN_DIR
               value: {{ . | quote }}
@@ -148,9 +154,17 @@ spec:
           {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.processingEngine.resources | nindent 12 }}
-          {{- if $hasProcessorPluginVolumeMounts }}
+          {{- if or $hasProcessorPluginVolumeMounts $hasAdminTokenVolumeMounts $hasPermissionTokensVolumeMounts }}
           volumeMounts:
+            {{- if $hasProcessorPluginVolumeMounts }}
             {{- include "influxdb3-enterprise.processorPluginVolumeMounts" $pluginVolumeMountCtx | nindent 12 }}
+            {{- end }}
+            {{- if $hasAdminTokenVolumeMounts }}
+            {{- include "influxdb3-enterprise.adminTokenVolumeMounts" . | nindent 12 }}
+            {{- end }}
+            {{- if $hasPermissionTokensVolumeMounts }}
+            {{- include "influxdb3-enterprise.permissionTokensVolumeMounts" . | nindent 12 }}
+            {{- end }}
           {{- end }}
       {{- with .Values.processingEngine.nodeSelector }}
       nodeSelector:
@@ -166,6 +180,8 @@ spec:
       {{- end }}
       volumes:
         {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
+        {{ include "influxdb3-enterprise.adminTokenVolumes" . | nindent 8 }}
+        {{ include "influxdb3-enterprise.permissionTokensVolumes" . | nindent 8 }}
   {{- if $pluginsPVCEnabled }}
   volumeClaimTemplates:
     - metadata:
