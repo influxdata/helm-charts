@@ -545,7 +545,6 @@ Admin token volumes
 - name: admin-token
   secret:
     secretName: {{ get $adminToken "existingSecret" }}
-    defaultMode: 0400
     items:
       - key: admin-token.json
         path: admin-token.json
@@ -563,7 +562,6 @@ Permission tokens volumes
 - name: permission-tokens
   secret:
     secretName: {{ get $permissionTokens "existingSecret" }}
-    defaultMode: 0400
     items:
       - key: permission-tokens.json
         path: permission-tokens.json
