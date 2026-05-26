@@ -131,6 +131,8 @@ Notes:
 - The chart mounts it at `/etc/influxdb/admin-token/admin-token.json`.
 - `security.auth.adminToken.existingSecret` and `security.auth.adminToken.file` are mutually exclusive.
 - If using `security.auth.adminToken.file`, ensure that path exists inside the container (for example via `extraVolumes`/`extraVolumeMounts`).
+- `security.auth.adminToken.recovery.httpBind` enables an unauthenticated recovery endpoint. Use only when necessary and keep it accessible only from trusted networks.
+- See: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#admin-token-recovery-http-bind
 
 ## Configuration
 
