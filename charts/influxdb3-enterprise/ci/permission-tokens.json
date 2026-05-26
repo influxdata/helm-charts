@@ -6,7 +6,7 @@
   ],
   "tokens": [
     {
-      "token": "apiv3_iwm47dJlXDF2wYSazrJHONCuvmJ1Th3Bgh0xNs4RIIS7q4mjGZ3J7103mqMcdm2c5y2ZlZ61bmwECuso8oJDbQ",
+      "token": "apiv3_ci_test_only_not_a_real_secret_token_111111111111111111111111111111111111",
       "name": "example-token",
       "expiry_millis": 1914080061529,
       "permissions": [

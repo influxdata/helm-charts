@@ -1,5 +1,5 @@
 {
-  "token": "apiv3_2_sms_SzgiOB9nD2u7SSOf0GdQyBFCW67COcFn4ng2d0JEC8FBeyNXXaDVsCVbCX5iAy4teDtXoUJjY1YC2rQQ",
+  "token": "apiv3_ci_test_only_not_a_real_secret_token_000000000000000000000000000000000000",
   "name": "example-admin-token",
   "expiry_millis": 1914080061529
 }
