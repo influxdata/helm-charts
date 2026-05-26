@@ -62,6 +62,13 @@ jobs:
           INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
 
+      - name: Create Enterprise V3 Test Resources
+        run: |
+          kubectl create secret generic influxdb3-bootstrap-tokens \
+            --from-file=admin-token.json=./charts/influxdb3-enterprise/ci/admin-token.json \
+            --from-file=permission-tokens.json=./charts/influxdb3-enterprise/ci/permission-tokens.json
+        if: steps.list-changed.outputs.changed == 'true'
+
       - name: Run chart-testing (install)
         id: install
         run: |
