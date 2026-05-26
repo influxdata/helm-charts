@@ -134,6 +134,30 @@ Notes:
 - `security.auth.adminToken.recovery.httpBind` enables an unauthenticated recovery endpoint. Use only when necessary and keep it accessible only from trusted networks.
 - See: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#admin-token-recovery-http-bind
 
+### Preconfigured Permission Tokens
+
+Use this when you want the cluster to start with known offline-generated permission tokens.
+
+1. Generate an offline permission tokens file.
+2. Create a Kubernetes secret from that file:
+   ```bash
+   kubectl -n influxdb3 create secret generic influxdb3-permission-tokens \
+     --from-file=permission-tokens.json=permission-tokens.json
+   ```
+3. Configure the chart:
+   ```yaml
+   security:
+     auth:
+       permissionTokens:
+         existingSecret: influxdb3-permission-tokens
+   ```
+
+Notes:
+- Secret key must be `permission-tokens.json`.
+- The chart mounts it at `/etc/influxdb/permission-tokens/permission-tokens.json`.
+- `security.auth.permissionTokens.existingSecret` and `security.auth.permissionTokens.file` are mutually exclusive.
+- See: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#permission-tokens-file
+
 ## Configuration
 
 ### Component Architecture
