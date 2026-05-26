@@ -282,7 +282,10 @@ License environment (shared across components)
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
 {{- end }}
-{{- if or .Values.license.file .Values.license.existingSecret }}
+{{- if .Values.license.file }}
+- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+  value: "/etc/influxdb/license"
+{{- else if and .Values.license.existingSecret (and (ne $licenseType "trial") (ne $licenseType "home")) }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- end }}
@@ -391,7 +394,13 @@ Shared volume mounts (license/TLS/GCS and user extras)
   mountPath: /etc/influxdb/aws
   readOnly: true
 {{- end }}
-{{- if or .Values.license.file .Values.license.existingSecret }}
+{{- $licenseType := .Values.license.type | default "trial" -}}
+{{- if .Values.license.file }}
+- name: license
+  mountPath: /etc/influxdb/license
+  subPath: license
+  readOnly: true
+{{- else if and .Values.license.existingSecret (and (ne $licenseType "trial") (ne $licenseType "home")) }}
 - name: license
   mountPath: /etc/influxdb/license
   subPath: license
@@ -506,7 +515,16 @@ Shared volumes (license/TLS/GCS and user extras)
       - key: credentials
         path: credentials
 {{- end }}
-{{- if or .Values.license.file .Values.license.existingSecret }}
+{{- $licenseType := .Values.license.type | default "trial" -}}
+{{- if .Values.license.file }}
+- name: license
+  secret:
+    secretName: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+    optional: true
+    items:
+      - key: license-file
+        path: license
+{{- else if and .Values.license.existingSecret (and (ne $licenseType "trial") (ne $licenseType "home")) }}
 - name: license
   secret:
     secretName: {{ include "influxdb3-enterprise.licenseSecretName" . }}
