@@ -109,7 +109,6 @@ Use this when you want the cluster to start with a known offline-generated admin
 1. Generate an offline admin token file:
    ```bash
    influxdb3 create token --admin --name bootstrap-admin --expiry 365d --offline --output-file admin-token.json
-   chmod 600 admin-token.json
    ```
 
 2. Create a Kubernetes secret from that file:
@@ -138,7 +137,17 @@ Notes:
 
 Use this when you want the cluster to start with known offline-generated permission tokens.
 
-1. Generate an offline permission tokens file.
+1. Generate an offline permission tokens file:
+   ```bash
+   influxdb3 create token \
+     --name "bootstrap-token" \
+     --permission "db:db1,db2:read,write" \
+     --permission "db:db3:read" \
+     --expiry 365d \
+     --offline \
+     --create-databases db1,db2 \
+     --output-file permission-tokens.json
+   ```
 2. Create a Kubernetes secret from that file:
    ```bash
    kubectl -n influxdb3 create secret generic influxdb3-permission-tokens \
