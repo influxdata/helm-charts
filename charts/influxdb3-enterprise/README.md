@@ -102,6 +102,71 @@ At minimum, you must configure:
          - host: query.your-domain.com
    ```
 
+### Preconfigured Admin Token
+
+Use this when you want the cluster to start with a known offline-generated admin token.
+
+1. Generate an offline admin token file:
+   ```bash
+   influxdb3 create token --admin --name bootstrap-admin --expiry 365d --offline --output-file admin-token.json
+   ```
+
+2. Create a Kubernetes secret from that file:
+   ```bash
+   kubectl -n influxdb3 create secret generic influxdb3-admin-token \
+     --from-file=admin-token.json=admin-token.json
+   ```
+
+3. Configure the chart:
+   ```yaml
+   security:
+     auth:
+       adminToken:
+         existingSecret: influxdb3-admin-token
+   ```
+
+Notes:
+- Secret key must be `admin-token.json`.
+- The chart mounts it at `/etc/influxdb/admin-token/admin-token.json`.
+- `security.auth.adminToken.existingSecret` and `security.auth.adminToken.file` are mutually exclusive.
+- If using `security.auth.adminToken.file`, ensure that path exists inside the container (for example via `extraVolumes`/`extraVolumeMounts`).
+- `security.auth.adminToken.recovery.httpBind` enables an unauthenticated recovery endpoint. Use only when necessary and keep it accessible only from trusted networks.
+- See: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#admin-token-recovery-http-bind
+
+### Preconfigured Permission Tokens
+
+Use this when you want the cluster to start with known offline-generated permission tokens.
+
+1. Generate an offline permission tokens file:
+   ```bash
+   influxdb3 create token \
+     --name "bootstrap-token" \
+     --permission "db:db1,db2:read,write" \
+     --permission "db:db3:read" \
+     --expiry 365d \
+     --offline \
+     --create-databases db1,db2 \
+     --output-file permission-tokens.json
+   ```
+2. Create a Kubernetes secret from that file:
+   ```bash
+   kubectl -n influxdb3 create secret generic influxdb3-permission-tokens \
+     --from-file=permission-tokens.json=permission-tokens.json
+   ```
+3. Configure the chart:
+   ```yaml
+   security:
+     auth:
+       permissionTokens:
+         existingSecret: influxdb3-permission-tokens
+   ```
+
+Notes:
+- Secret key must be `permission-tokens.json`.
+- The chart mounts it at `/etc/influxdb/permission-tokens/permission-tokens.json`.
+- `security.auth.permissionTokens.existingSecret` and `security.auth.permissionTokens.file` are mutually exclusive.
+- See: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#permission-tokens-file
+
 ## Configuration
 
 ### Component Architecture
@@ -473,6 +538,11 @@ logs:
 | `license.email` | Email for trial/home | `""` |
 | `license.file` | License file content (use `--set-file license.file=/path/to/file`) | `""` |
 | `license.existingSecret` | Secret with `license-email` or `license-file` | `""` |
+| `security.auth.adminToken.existingSecret` | Secret with offline admin token key `admin-token.json` | `""` |
+| `security.auth.adminToken.file` | Path to offline admin token file; mutually exclusive with `security.auth.adminToken.existingSecret` | `""` |
+| `security.auth.permissionTokens.existingSecret` | Secret with offline permission tokens key `permission-tokens.json` | `""` |
+| `security.auth.permissionTokens.file` | Path to offline permission tokens file; mutually exclusive with `security.auth.permissionTokens.existingSecret` | `""` |
+| `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND`) | `""` |
 
 ### Object Storage Parameters
 

@@ -16,6 +16,16 @@ Components deployed:
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
 {{- end }}
 
+{{- $security := .Values.security | default dict }}
+{{- $auth := get $security "auth" | default dict }}
+{{- $adminToken := get $auth "adminToken" | default dict }}
+{{- if get $adminToken "existingSecret" }}
+
+Preconfigured admin token:
+  Enabled via secret: {{ get $adminToken "existingSecret" }}
+  Token file path: /etc/influxdb/admin-token/admin-token.json
+{{- end }}
+
 {{- /* Calculate total resource requests */ -}}
 {{- $totalCpuMillis := 0 }}
 {{- $totalMemoryGi := 0 }}

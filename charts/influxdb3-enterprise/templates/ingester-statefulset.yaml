@@ -69,6 +69,8 @@ spec:
           env:
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
             {{- with .Values.ingester.wal }}
             {{- if .flushInterval }}
             - name: INFLUXDB3_WAL_FLUSH_INTERVAL
@@ -135,6 +137,8 @@ spec:
               {{- end }}
           {{- end }}
             {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
+            {{ include "influxdb3-enterprise.adminTokenVolumeMounts" . | nindent 12 }}
+            {{ include "influxdb3-enterprise.permissionTokensVolumeMounts" . | nindent 12 }}
       {{- with .Values.ingester.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -149,6 +153,8 @@ spec:
       {{- end }}
       volumes:
         {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
+        {{ include "influxdb3-enterprise.adminTokenVolumes" . | nindent 8 }}
+        {{ include "influxdb3-enterprise.permissionTokensVolumes" . | nindent 8 }}
   {{- if .Values.ingester.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:

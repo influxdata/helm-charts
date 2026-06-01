@@ -1,0 +1,5 @@
+{
+  "token": "apiv3_ci_test_only_not_a_real_secret_token_000000000000000000000000000000000000",
+  "name": "example-admin-token",
+  "expiry_millis": 1914080061529
+}

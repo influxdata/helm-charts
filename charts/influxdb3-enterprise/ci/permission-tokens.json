@@ -1,0 +1,18 @@
+{
+  "create_databases": [
+    "db1",
+    "db2",
+    "db3"
+  ],
+  "tokens": [
+    {
+      "token": "apiv3_ci_test_only_not_a_real_secret_token_111111111111111111111111111111111111",
+      "name": "example-token",
+      "expiry_millis": 1914080061529,
+      "permissions": [
+        "db:db1,db2:read,write",
+        "db:db3:read"
+      ]
+    }
+  ]
+}

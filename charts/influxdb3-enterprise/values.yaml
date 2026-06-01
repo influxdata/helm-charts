@@ -550,11 +550,21 @@ security:
     # Available endpoints: health, ping, metrics
     # Set to [] to require authentication for all endpoints
     disableAuthz: ["health"]
-    # Offline token files (for automated deployments)
-    adminTokenFile: ""
-    permissionTokensFile: ""
-    # adminTokenRecovery:
-    #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
+    # Existing secret containing an offline preconfigured admin token JSON.
+    # Secret must contain key: admin-token.json
+    # Set only one of adminToken.existingSecret or adminToken.file.
+    adminToken:
+      existingSecret: ""
+      file: ""
+      # Admin token recovery configuration
+      # recovery:
+      #   httpBind: "127.0.0.1:8182"     # Recovery bind address when enabled (doc default)
+    # Existing secret containing offline permission tokens JSON.
+    # Secret must contain key: permission-tokens.json
+    # Set only one of permissionTokens.existingSecret or permissionTokens.file.
+    permissionTokens:
+      existingSecret: ""
+      file: ""
 
 # HTTP server configuration
 http:

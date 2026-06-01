@@ -3,6 +3,8 @@
 {{- include "influxdb3-enterprise.validateS3ObjectStorageAuth" . }}
 {{- include "influxdb3-enterprise.validateGoogleObjectStorageAuth" . }}
 {{- include "influxdb3-enterprise.validateObjectStoreTlsCa" . }}
+{{- include "influxdb3-enterprise.validateAdminTokenConfig" . }}
+{{- include "influxdb3-enterprise.validatePermissionTokensConfig" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -34,6 +36,13 @@ data:
   {{- end }}
   {{- if .Values.security.auth.disableAuthz }}
   INFLUXDB3_DISABLE_AUTHZ: {{ join "," .Values.security.auth.disableAuthz | quote }}
+  {{- end }}
+  {{- $security := .Values.security | default dict }}
+  {{- $auth := get $security "auth" | default dict }}
+  {{- $adminToken := get $auth "adminToken" | default dict }}
+  {{- $adminTokenRecovery := get $adminToken "recovery" | default dict }}
+  {{- if get $adminTokenRecovery "httpBind" }}
+  INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND: {{ get $adminTokenRecovery "httpBind" | quote }}
   {{- end }}
 
   # HTTP

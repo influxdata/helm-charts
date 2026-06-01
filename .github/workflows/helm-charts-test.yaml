@@ -21,7 +21,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
         with:
-          version: v3.6.3
+          version: v3.16.4
 
       - uses: actions/setup-python@v5
         with:
@@ -62,10 +62,24 @@ jobs:
           INFLUXDB_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
 
+      - name: Create Enterprise V3 Test Resources
+        run: |
+          kubectl create secret generic influxdb3-license \
+            --namespace=default \
+            --from-literal=license-email=${INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL}
+          kubectl create secret generic influxdb3-bootstrap-tokens \
+            --namespace=default \
+            --from-file=admin-token.json=./charts/influxdb3-enterprise/ci/admin-token.json \
+            --from-file=permission-tokens.json=./charts/influxdb3-enterprise/ci/permission-tokens.json
+        env:
+          INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL: "${{ secrets.INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL }}"
+        if: steps.list-changed.outputs.changed == 'true'
+
       - name: Run chart-testing (install)
         id: install
         run: |
-          ct install --namespace=default 2>&1 | tee $RUNNER_TEMP/$GITHUB_RUN_NUMBER.txt
+          set -o pipefail
+          ct install --namespace=default --target-branch=master 2>&1 | tee $RUNNER_TEMP/$GITHUB_RUN_NUMBER.txt
 # When https://github.com/helm/chart-testing/issues/212 is fixed, this can be used to set the license key instead of using env from secret
 #        run: ct install --namespace=default --helm-extra-args="--set license.key=${INFLUXDB_ENTERPRISE_LICENSE_KEY}"
 #        env:
