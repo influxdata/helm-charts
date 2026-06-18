@@ -614,12 +614,13 @@ probes:
 
   # Startup probe settings
   # Protects container during initialization. Once successful, never runs again.
-  # For ~15s startup: 10s initial + (12 × 5s) = 70s total (4-5x safety buffer)
+  # For ~100s startup in 3.2: 30s initial + (20 × 10s) = 230s total (~2.3x safety buffer)
+  # Accounts for Python Processing Engine initialization, WAL recovery, and compaction preloading
   startup:
-    initialDelaySeconds: 10           # Wait ~50% of expected startup time
-    periodSeconds: 5                  # Check every 5 seconds
-    timeoutSeconds: 5
-    failureThreshold: 12              # 10s + (12 × 5s) = 70s total
+    initialDelaySeconds: 30           # Wait ~30% of expected startup time
+    periodSeconds: 10                 # Check every 10 seconds (less aggressive)
+    timeoutSeconds: 10                # Increased timeout for slower environments
+    failureThreshold: 20              # 30s + (20 × 10s) = 230s total
 
   # Liveness probe settings
   # Only starts checking AFTER startup probe succeeds
