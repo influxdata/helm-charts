@@ -58,9 +58,6 @@ spec:
           image: {{ include "influxdb3-enterprise.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            {{- with .Values.compactor.numIOThreads }}
-            - --num-io-threads={{ . }}
-            {{- end }}
             - serve
             - --mode=compact
             - --node-id=$(POD_NAME)
@@ -73,6 +70,10 @@ spec:
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
+            {{- with .Values.compactor.numIOThreads }}
+            - name: INFLUXDB3_NUM_IO_THREADS
+              value: {{ . | quote }}
+            {{- end }}
             {{- with .Values.compactor.compaction }}
             {{- if .gen2Duration }}
             - name: INFLUXDB3_ENTERPRISE_COMPACTION_GEN2_DURATION

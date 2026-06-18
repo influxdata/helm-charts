@@ -97,9 +97,6 @@ spec:
           image: {{ include "influxdb3-enterprise.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            {{- with .Values.processingEngine.numIOThreads }}
-            - --num-io-threads={{ . }}
-            {{- end }}
             - serve
             - --mode=process
             - --node-id=$(POD_NAME)
@@ -112,6 +109,10 @@ spec:
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
+            {{- with .Values.processingEngine.numIOThreads }}
+            - name: INFLUXDB3_NUM_IO_THREADS
+              value: {{ . | quote }}
+            {{- end }}
             {{- with .Values.processingEngine.pluginDir }}
             - name: INFLUXDB3_PLUGIN_DIR
               value: {{ . | quote }}
