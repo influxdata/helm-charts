@@ -17,6 +17,13 @@ extraEnv:
 
 ingester:
   replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
       value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
@@ -27,12 +34,26 @@ ingester:
 
 querier:
   replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
       value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
 
 compactor:
   replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
       value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
@@ -40,6 +61,13 @@ compactor:
 processingEngine:
   enabled: true
   replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
       value: "INFLUXDB3_HTTP_BIND_ADDR"
