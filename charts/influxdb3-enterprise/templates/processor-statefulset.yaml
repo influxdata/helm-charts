@@ -11,6 +11,7 @@
 {{- $hasAdminTokenVolumeMounts := ne $adminTokenVolumeMounts "" }}
 {{- $permissionTokensVolumeMounts := include "influxdb3-enterprise.permissionTokensVolumeMounts" . | trim }}
 {{- $hasPermissionTokensVolumeMounts := ne $permissionTokensVolumeMounts "" }}
+{{- $processorExtraEnv := include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.processingEngine) | trim }}
 {{- if and (not $pluginsPVCEnabled) .Values.processingEngine.initPlugins (gt (len .Values.processingEngine.initPlugins) 0) (not $hasProcessorPluginDirMount) }}
 {{- fail "processingEngine.initPlugins requires processingEngine.pluginDir to be mounted. Set processingEngine.persistence.enabled=true or configure extraVolumes/extraVolumeMounts to mount processingEngine.pluginDir." }}
 {{- end }}
@@ -56,11 +57,21 @@ spec:
         - name: init-plugin-{{ .name | default "plugin" | replace "." "-" | replace "_" "-" | trunc 51 | trimSuffix "-" }}
           image: {{ include "influxdb3-enterprise.image" $ }}
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
-          command:
-            - /bin/sh
-            - -c
-            - >
-              influxdb3 install package {{ .name | quote }}{{- if .source }} --source {{ .source | quote }}{{- end }} --plugin-dir {{ $.Values.processingEngine.pluginDir | default "/plugins" | quote }}
+          args:
+            - influxdb3
+            - install
+            - package
+            - {{ .name | quote }}
+            {{- with .source }}
+            - --source
+            - {{ . | quote }}
+            {{- end }}
+            - --plugin-dir
+            - {{ $.Values.processingEngine.pluginDir | default "/plugins" | quote }}
+          {{- if $processorExtraEnv }}
+          env:
+            {{- $processorExtraEnv | nindent 12 }}
+          {{- end }}
           {{- if $hasProcessorPluginVolumeMounts }}
           volumeMounts:
             {{- include "influxdb3-enterprise.processorPluginVolumeMounts" $pluginVolumeMountCtx | nindent 12 }}
@@ -85,21 +96,18 @@ spec:
           {{- end }}
           image: {{ include "influxdb3-enterprise.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - /bin/sh
-            - -c
-            - |
-              exec influxdb3 \
-                {{- with .Values.processingEngine.numIOThreads }}
-                --num-io-threads={{ . }} \
-                {{- end }}
-                serve \
-                --mode=process \
-                --node-id=$(hostname)
+          args:
+            {{- with .Values.processingEngine.numIOThreads }}
+            - --num-io-threads={{ . }}
+            {{- end }}
+            - serve
+            - --mode=process
+            - --node-id=$(POD_NAME)
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
           env:
+            {{- include "influxdb3-enterprise.podNameEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
@@ -144,9 +152,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
+            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.processingEngine) | nindent 12 }}
           ports:
             - name: http
               containerPort: 8181

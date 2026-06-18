@@ -329,6 +329,28 @@ Preconfigured permission tokens environment
 {{- end }}
 
 {{/*
+Pod name environment for stable StatefulSet node IDs
+*/}}
+{{- define "influxdb3-enterprise.podNameEnv" -}}
+- name: POD_NAME
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.name
+{{- end }}
+
+{{/*
+Global plus component-specific extra environment variables
+*/}}
+{{- define "influxdb3-enterprise.componentExtraEnv" -}}
+{{- $global := .root.Values.extraEnv | default (list) -}}
+{{- $component := .component.extraEnv | default (list) -}}
+{{- $extraEnv := concat $global $component -}}
+{{- if $extraEnv }}
+{{- toYaml $extraEnv }}
+{{- end }}
+{{- end }}
+
+{{/*
 Probe configuration (shared across components)
 */}}
 {{- define "influxdb3-enterprise.probes" -}}

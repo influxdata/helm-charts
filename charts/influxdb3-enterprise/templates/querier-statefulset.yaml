@@ -52,21 +52,18 @@ spec:
           {{- end }}
           image: {{ include "influxdb3-enterprise.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - /bin/sh
-            - -c
-            - |
-              exec influxdb3 \
-                {{- with .Values.querier.numIOThreads }}
-                --num-io-threads={{ . }} \
-                {{- end }}
-                serve \
-                --mode=query \
-                --node-id=$(hostname)
+          args:
+            {{- with .Values.querier.numIOThreads }}
+            - --num-io-threads={{ . }}
+            {{- end }}
+            - serve
+            - --mode=query
+            - --node-id=$(POD_NAME)
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
           env:
+            {{- include "influxdb3-enterprise.podNameEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
@@ -95,9 +92,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
+            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.querier) | nindent 12 }}
           ports:
             - name: http
               containerPort: 8181
