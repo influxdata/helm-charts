@@ -1,0 +1,38 @@
+{{- if .Values.ingress.enabled }}
+{{- $host := default .Values.ingress.host .Values.ingress.flight.host }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "influxdb3-core.fullname" . }}-flight
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-core.labels" . | nindent 4 }}
+  {{- with .Values.ingress.flight.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.flight.tls }}
+  tls:
+    {{- toYaml .Values.ingress.flight.tls | nindent 4 }}
+  {{- else if .Values.ingress.tls }}
+  tls:
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ $host | quote }}
+      http:
+        paths:
+          {{- range $path := list "/arrow.flight.protocol.FlightService" "/arrow.flight.protocol.sql.FlightSqlService" }}
+          - path: {{ $path }}
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "influxdb3-core.fullname" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+{{- end }}

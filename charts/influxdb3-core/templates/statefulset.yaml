@@ -1,0 +1,220 @@
+{{- $tlsCa := .Values.objectStorage.tlsCa | default dict }}
+{{- $processingEngine := .Values.processingEngine | default dict }}
+{{- $pluginPersistence := get $processingEngine "persistence" | default dict }}
+{{- $pluginPersistenceEnabled := get $pluginPersistence "enabled" | default false }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "influxdb3-core.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-core.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "influxdb3-core.fullname" . }}
+  replicas: 1
+  {{- with .Values.updateStrategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-core.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/object-storage-secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
+        checksum/tls-secret: {{ include (print $.Template.BasePath "/secret-tls.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "influxdb3-core.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "influxdb3-core.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: influxdb3
+          image: {{ include "influxdb3-core.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          args:
+            - serve
+            - --node-id=$(POD_NAME)
+          envFrom:
+            - configMapRef:
+                name: {{ include "influxdb3-core.fullname" . }}-config
+          env:
+            {{- include "influxdb3-core.podNameEnv" . | nindent 12 }}
+            {{- include "influxdb3-core.objectStorageEnv" . | nindent 12 }}
+            {{- with .Values.numIOThreads }}
+            - name: INFLUXDB3_NUM_IO_THREADS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if .Values.security.auth.adminToken.existingSecret }}
+            - name: INFLUXDB3_ADMIN_TOKEN_FILE
+              value: /etc/influxdb/admin-token/admin-token.json
+            {{- else if .Values.security.auth.adminToken.file }}
+            - name: INFLUXDB3_ADMIN_TOKEN_FILE
+              value: {{ .Values.security.auth.adminToken.file | quote }}
+            {{- end }}
+            {{- with get $processingEngine "pluginDir" }}
+            - name: INFLUXDB3_PLUGIN_DIR
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with get $processingEngine "pluginRepo" }}
+            - name: INFLUXDB3_PLUGIN_REPO
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with get $processingEngine "virtualEnvLocation" }}
+            - name: VIRTUAL_ENV
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with get $processingEngine "packageManager" }}
+            - name: INFLUXDB3_PACKAGE_MANAGER
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8181
+              protocol: TCP
+          {{- include "influxdb3-core.probes" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if or (eq .Values.objectStorage.type "file") (eq .Values.objectStorage.type "google") .Values.objectStorage.s3.credentialsFile .Values.security.tls.enabled (get $tlsCa "existingSecret") .Values.security.auth.adminToken.existingSecret $pluginPersistenceEnabled .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- if eq .Values.objectStorage.type "file" }}
+            - name: data
+              mountPath: {{ .Values.objectStorage.file.dataDir }}
+            {{- end }}
+            {{- if $pluginPersistenceEnabled }}
+            - name: plugins
+              mountPath: {{ get $processingEngine "pluginDir" }}
+            {{- end }}
+            {{- if eq .Values.objectStorage.type "google" }}
+            - name: google-service-account
+              mountPath: /var/secrets/google
+              readOnly: true
+            {{- end }}
+            {{- if and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile }}
+            - name: aws-credentials
+              mountPath: /etc/influxdb/aws
+              readOnly: true
+            {{- end }}
+            {{- if .Values.security.tls.enabled }}
+            - name: tls
+              mountPath: /etc/influxdb/tls
+              readOnly: true
+            {{- end }}
+            {{- if get $tlsCa "existingSecret" }}
+            - name: object-store-ca
+              mountPath: /etc/influxdb/object-store-ca
+              readOnly: true
+            {{- end }}
+            {{- if .Values.security.auth.adminToken.existingSecret }}
+            - name: admin-token
+              mountPath: /etc/influxdb/admin-token
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or (eq .Values.objectStorage.type "google") .Values.objectStorage.s3.credentialsFile .Values.security.tls.enabled (get $tlsCa "existingSecret") .Values.security.auth.adminToken.existingSecret .Values.extraVolumes }}
+      volumes:
+        {{- if eq .Values.objectStorage.type "google" }}
+        - name: google-service-account
+          secret:
+            secretName: {{ include "influxdb3-core.objectStorageSecretName" . }}
+            items:
+              - key: service-account.json
+                path: service-account.json
+        {{- end }}
+        {{- if and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile }}
+        - name: aws-credentials
+          secret:
+            secretName: {{ include "influxdb3-core.fullname" . }}-aws-credentials
+        {{- end }}
+        {{- if .Values.security.tls.enabled }}
+        - name: tls
+          secret:
+            secretName: {{ include "influxdb3-core.tlsSecretName" . }}
+        {{- end }}
+        {{- if get $tlsCa "existingSecret" }}
+        - name: object-store-ca
+          secret:
+            secretName: {{ get $tlsCa "existingSecret" }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+        {{- end }}
+        {{- if .Values.security.auth.adminToken.existingSecret }}
+        - name: admin-token
+          secret:
+            secretName: {{ .Values.security.auth.adminToken.existingSecret }}
+            items:
+              - key: admin-token.json
+                path: admin-token.json
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+  {{- if or (eq .Values.objectStorage.type "file") $pluginPersistenceEnabled }}
+  volumeClaimTemplates:
+    {{- if eq .Values.objectStorage.type "file" }}
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - {{ .Values.objectStorage.file.persistence.accessMode }}
+        {{- if .Values.objectStorage.file.persistence.storageClass }}
+        storageClassName: {{ .Values.objectStorage.file.persistence.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.objectStorage.file.persistence.size }}
+    {{- end }}
+    {{- if $pluginPersistenceEnabled }}
+    - metadata:
+        name: plugins
+      spec:
+        accessModes:
+          - {{ get $pluginPersistence "accessMode" }}
+        {{- if get $pluginPersistence "storageClass" }}
+        storageClassName: {{ get $pluginPersistence "storageClass" | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ get $pluginPersistence "size" }}
+    {{- end }}
+  {{- end }}
