@@ -174,7 +174,7 @@ The chart rejects an authenticated ServiceMonitor configuration that leaves
 
 The InfluxDB 3 Core image enables the Processing Engine with
 `INFLUXDB3_PLUGIN_DIR=/plugins`. Enable persistent storage for that directory
-when plugins must survive pod replacement:
+when plugins and installed packages must survive pod replacement:
 
 ```yaml
 processingEngine:
@@ -186,11 +186,28 @@ processingEngine:
     accessMode: ReadWriteOnce
 ```
 
-By default, plugin storage is ephemeral unless `extraVolumeMounts` provides
-storage at `pluginDir`.
+By default, plugin files and installed packages are ephemeral unless
+`extraVolumeMounts` provides storage at `pluginDir`.
 
 Optional settings include `processingEngine.pluginRepo`,
 `processingEngine.virtualEnvLocation`, and `processingEngine.packageManager`.
+
+Install Python package dependencies after the pod is running:
+
+```sh
+kubectl exec -it POD_NAME -- \
+  influxdb3 install package \
+    --plugin-dir /plugins \
+    --token AUTH_TOKEN \
+    pandas
+```
+
+Replace `POD_NAME` with the InfluxDB pod name and `AUTH_TOKEN` with an admin
+token. Omit `--token AUTH_TOKEN` when authentication is disabled.
+
+For programmatic installation or CI/CD workflows, use the
+[package installation HTTP API](https://docs.influxdata.com/influxdb3/core/plugins/#manage-plugin-dependencies).
+The chart does not install packages automatically.
 
 ## Configuration
 
