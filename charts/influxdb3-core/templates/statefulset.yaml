@@ -98,7 +98,7 @@ spec:
           {{- include "influxdb3-core.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if or (eq .Values.objectStorage.type "file") (eq .Values.objectStorage.type "google") .Values.objectStorage.s3.credentialsFile .Values.security.tls.enabled (get $tlsCa "existingSecret") .Values.security.auth.adminToken.existingSecret $pluginPersistenceEnabled .Values.extraVolumeMounts }}
+          {{- if or (eq .Values.objectStorage.type "file") (eq .Values.objectStorage.type "google") (and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile) .Values.security.tls.enabled (get $tlsCa "existingSecret") .Values.security.auth.adminToken.existingSecret $pluginPersistenceEnabled .Values.extraVolumeMounts }}
           volumeMounts:
             {{- if eq .Values.objectStorage.type "file" }}
             - name: data
@@ -149,7 +149,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or (eq .Values.objectStorage.type "google") .Values.objectStorage.s3.credentialsFile .Values.security.tls.enabled (get $tlsCa "existingSecret") .Values.security.auth.adminToken.existingSecret .Values.extraVolumes }}
+      {{- if or (eq .Values.objectStorage.type "google") (and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile) .Values.security.tls.enabled (get $tlsCa "existingSecret") .Values.security.auth.adminToken.existingSecret .Values.extraVolumes }}
       volumes:
         {{- if eq .Values.objectStorage.type "google" }}
         - name: google-service-account
