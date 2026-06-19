@@ -1,0 +1,2 @@
+objectStorage:
+  type: memory
