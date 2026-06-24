@@ -81,6 +81,7 @@ The following table lists configurable parameters, their descriptions, and their
 | affinity | [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for pod assignment | {                                                                    |
 | tolerations | [Tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) for pod assignment | []                                                                   |
 | securityContext | [securityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for pod | {}                                                                   |
+| containerSecurityContext | [containerSecurityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for container | {}                                                                   |
 | env | environment variables for influxdb container | {}                                                                   |
 | volumes | `volumes` stanza(s) to be used in the main container | nil                                                                  |
 | mountPoints | `volumeMount` stanza(s) to be used in the main container | nil                                                                  |
