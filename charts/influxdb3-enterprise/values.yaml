@@ -182,7 +182,7 @@ ingester:
   # Thread configuration
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
-  # Extra environment variables for ingester pods. Rendered after top-level extraEnv.
+  # Extra environment variables for ingester pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
@@ -282,7 +282,7 @@ querier:
   # Thread configuration
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
-  # Extra environment variables for querier pods. Rendered after top-level extraEnv.
+  # Extra environment variables for querier pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
@@ -373,7 +373,7 @@ compactor:
   # Thread configuration
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
-  # Extra environment variables for compactor pods. Rendered after top-level extraEnv.
+  # Extra environment variables for compactor pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
@@ -458,7 +458,7 @@ processingEngine:
   # Thread configuration
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
-  # Extra environment variables for Processing Engine pods. Rendered after top-level extraEnv.
+  # Extra environment variables for Processing Engine pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: PROCESSOR_ONLY_VAR
     #   value: "processor-only"
@@ -848,8 +848,8 @@ serviceAccount:
 # Additional Configuration
 # ============================================================================
 
-# Extra environment variables for all pods. Component-specific extraEnv entries
-# are rendered after these values and can override them by using the same name.
+# Extra environment variables for all pods. Component-specific extraEnv entries override
+# entries with the same name for one component.
 extraEnv: []
   # - name: CUSTOM_VAR
   #   value: "custom-value"

@@ -341,7 +341,7 @@ extraEnv:
     value: "custom-value"
 ```
 
-Use component-specific `extraEnv` to target only one component. Component-specific entries are rendered after top-level `extraEnv`, so a component entry with the same name is intended to override the global value for that component. Avoid duplicate names unless this override is intentional.
+Use component-specific `extraEnv` to target only one component. Component-specific entries override top-level `extraEnv` entries with the same `name`.
 
 ```yaml
 processingEngine:

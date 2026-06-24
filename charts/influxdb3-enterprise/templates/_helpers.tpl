@@ -339,12 +339,26 @@ Pod name environment for stable StatefulSet node IDs
 {{- end }}
 
 {{/*
-Global plus component-specific extra environment variables
+Global plus component-specific extra environment variables.
+Component-specific entries override global entries with the same name.
 */}}
 {{- define "influxdb3-enterprise.componentExtraEnv" -}}
 {{- $global := .root.Values.extraEnv | default (list) -}}
 {{- $component := .component.extraEnv | default (list) -}}
-{{- $extraEnv := concat $global $component -}}
+{{- $componentNames := dict -}}
+{{- range $env := $component }}
+{{- with $env.name }}
+{{- $_ := set $componentNames . true -}}
+{{- end }}
+{{- end }}
+{{- $extraEnv := list -}}
+{{- range $env := $global }}
+{{- $name := $env.name | default "" -}}
+{{- if or (not $name) (not (hasKey $componentNames $name)) }}
+{{- $extraEnv = append $extraEnv $env -}}
+{{- end }}
+{{- end }}
+{{- $extraEnv = concat $extraEnv $component -}}
 {{- if $extraEnv }}
 {{- toYaml $extraEnv }}
 {{- end }}
