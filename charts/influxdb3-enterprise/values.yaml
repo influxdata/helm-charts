@@ -727,7 +727,7 @@ ingress:
   flight:
     # Optional host override. If empty, inherits ingress.host.
     host: ""
-    # Optional TLS override. If empty, inherits ingress.tls.
+    # Optional TLS override. Required when host differs from ingress.host.
     tls: []
     annotations:
       nginx.ingress.kubernetes.io/backend-protocol: "GRPC"

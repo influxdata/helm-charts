@@ -631,7 +631,7 @@ logs:
 | `ingress.write.annotations` | Write ingress annotations | `proxy-body-size/read-timeout` |
 | `ingress.query.annotations` | Query ingress annotations | `proxy-read-timeout` |
 | `ingress.flight.host` | Optional host override for Flight ingress | `""` (uses `ingress.host`) |
-| `ingress.flight.tls` | Optional TLS override for Flight ingress | `[]` (uses `ingress.tls`) |
+| `ingress.flight.tls` | Optional TLS override for Flight ingress. Required when `ingress.flight.host` differs from `ingress.host`. | `[]` |
 | `ingress.flight.annotations` | Flight ingress annotations (includes GRPC backend protocol) | includes `backend-protocol: GRPC` |
 | `ingress.processor.annotations` | Processor ingress annotations | `{}` |
 

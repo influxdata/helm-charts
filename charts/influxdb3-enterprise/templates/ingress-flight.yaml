@@ -1,5 +1,6 @@
 {{- if and .Values.ingress.enabled .Values.querier.enabled }}
 {{- $flightHost := default .Values.ingress.host .Values.ingress.flight.host }}
+{{- $useGlobalTLS := eq $flightHost .Values.ingress.host }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -25,7 +26,7 @@ spec:
         {{- end }}
       secretName: {{ .secretName }}
     {{- end }}
-  {{- else if .Values.ingress.tls }}
+  {{- else if and $useGlobalTLS .Values.ingress.tls }}
   tls:
     {{- range .Values.ingress.tls }}
     - hosts:
