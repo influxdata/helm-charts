@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "telegraf.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 spec:
