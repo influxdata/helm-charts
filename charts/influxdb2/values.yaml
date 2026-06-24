@@ -17,6 +17,10 @@ podLabels: {}
 nameOverride: ""
 fullnameOverride: ""
 
+# The name of the Namespace to deploy
+# If not set, `.Release.Namespace` is used
+namespace: null
+
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
