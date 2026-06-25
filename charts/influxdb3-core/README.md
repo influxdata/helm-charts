@@ -170,6 +170,9 @@ serviceMonitor:
 The chart rejects an authenticated ServiceMonitor configuration that leaves
 `/metrics` protected because the generated ServiceMonitor has no token.
 
+When backend TLS is enabled, the ServiceMonitor uses HTTPS. Configure
+`serviceMonitor.tlsConfig` if Prometheus needs custom TLS settings.
+
 ## Processing Engine
 
 The InfluxDB 3 Core image enables the Processing Engine with
@@ -258,6 +261,7 @@ Remote object-store data is not deleted by uninstalling the chart.
 | `processingEngine.persistence.size` | Plugin PVC size | `5Gi` |
 | `ingress.enabled` | Create HTTP and Flight ingresses | `false` |
 | `serviceMonitor.enabled` | Create a Prometheus Operator ServiceMonitor | `false` |
+| `serviceMonitor.tlsConfig` | Prometheus Operator TLS settings for metrics scraping | `{}` |
 | `updateStrategy.type` | StatefulSet update strategy | `RollingUpdate` |
 
 See `values.yaml` for the complete parameter list.

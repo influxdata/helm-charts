@@ -411,6 +411,9 @@ serviceMonitor:
   scrapeTimeout: 10s
   # Additional labels for ServiceMonitor (for Prometheus operator selector)
   additionalLabels: {}
+  # TLS settings for Prometheus Operator endpoint scraping
+  # Example: { insecureSkipVerify: true }
+  tlsConfig: {}
   # prometheus: kube-prometheus
 
 # ============================================================================
