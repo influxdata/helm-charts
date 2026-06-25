@@ -52,25 +52,23 @@ spec:
           {{- end }}
           image: {{ include "influxdb3-enterprise.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - /bin/sh
-            - -c
-            - |
-              exec influxdb3 \
-                {{- with .Values.querier.numIOThreads }}
-                --num-io-threads={{ . }} \
-                {{- end }}
-                serve \
-                --mode=query \
-                --node-id=$(hostname)
+          args:
+            - serve
+            - --mode=query
+            - --node-id=$(POD_NAME)
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
           env:
+            {{- include "influxdb3-enterprise.podNameEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
+            {{- with .Values.querier.numIOThreads }}
+            - name: INFLUXDB3_NUM_IO_THREADS
+              value: {{ . | quote }}
+            {{- end }}
             {{- with .Values.querier.memory }}
             {{- if .execMemPoolBytes }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
@@ -95,9 +93,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
+            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.querier) | nindent 12 }}
           ports:
             - name: http
               containerPort: 8181

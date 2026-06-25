@@ -2,8 +2,8 @@ apiVersion: v2
 name: influxdb3-enterprise
 description: A Helm chart for deploying InfluxDB 3 Enterprise on Kubernetes
 type: application
-version: 0.5.0
-appVersion: "3.9.2"
+version: 0.6.0
+appVersion: "3.9.3"
 keywords:
   - influxdb
   - time-series
