@@ -1,0 +1,77 @@
+license:
+  existingSecret: influxdb3-license
+
+objectStorage:
+  type: memory
+
+ingress:
+  enabled: false
+
+extraEnv:
+  - name: GLOBAL_COMPONENT_OVERRIDE_TEST
+    value: "global"
+  # Intentionally invalid. Component INFLUXDB3_UNSET_VARS must remove it;
+  # otherwise the pod fails to start and ct install fails.
+  - name: INFLUXDB3_HTTP_BIND_ADDR
+    value: "invalid-address"
+
+ingester:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  extraEnv:
+    - name: INFLUXDB3_UNSET_VARS
+      value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
+    - name: GLOBAL_COMPONENT_OVERRIDE_TEST
+      value: "ingester"
+  persistence:
+    enabled: false
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  extraEnv:
+    - name: INFLUXDB3_UNSET_VARS
+      value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
+
+compactor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  extraEnv:
+    - name: INFLUXDB3_UNSET_VARS
+      value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
+
+processingEngine:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  extraEnv:
+    - name: INFLUXDB3_UNSET_VARS
+      value: "INFLUXDB3_HTTP_BIND_ADDR"
+    - name: PROCESSOR_ONLY_TEST_VAR
+      value: "processor-only"
+  persistence:
+    enabled: false

@@ -331,6 +331,25 @@ networkPolicy:
 
 Each component has an optional PDB controlled by `podDisruptionBudget.enabled` and `maxUnavailable` in `values.yaml`. Defaults are disabled; enable per component or via the command line (e.g., `--set ingester.podDisruptionBudget.enabled=true`).
 
+#### Extra Environment Variables
+
+Use top-level `extraEnv` for environment variables that should be applied to every component:
+
+```yaml
+extraEnv:
+  - name: CUSTOM_VAR
+    value: "custom-value"
+```
+
+Use component-specific `extraEnv` to target only one component. Component-specific entries override top-level `extraEnv` entries with the same `name`.
+
+```yaml
+processingEngine:
+  extraEnv:
+    - name: INFLUXDB3_UNSET_VARS
+      value: "INFLUXDB3_PLUGIN_DIR"
+```
+
 #### Monitoring
 
 Enable Prometheus ServiceMonitor:
@@ -543,6 +562,7 @@ logs:
 | `security.auth.permissionTokens.existingSecret` | Secret with offline permission tokens key `permission-tokens.json` | `""` |
 | `security.auth.permissionTokens.file` | Path to offline permission tokens file; mutually exclusive with `security.auth.permissionTokens.existingSecret` | `""` |
 | `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND`) | `""` |
+| `extraEnv` | Extra environment variables applied to all components | `[]` |
 
 ### Object Storage Parameters
 
@@ -574,6 +594,10 @@ logs:
 | `querier.replicas` | Number of querier replicas | `2` |
 | `compactor.replicas` | Number of compactor replicas | `1` (fixed) |
 | `processingEngine.enabled` | Enable Processing Engine | `false` |
+| `ingester.extraEnv` | Extra environment variables applied only to ingester pods | `[]` |
+| `querier.extraEnv` | Extra environment variables applied only to querier pods | `[]` |
+| `compactor.extraEnv` | Extra environment variables applied only to compactor pods | `[]` |
+| `processingEngine.extraEnv` | Extra environment variables applied only to Processing Engine pods | `[]` |
 | `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
 | `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
 
