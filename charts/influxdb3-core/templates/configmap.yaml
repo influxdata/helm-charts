@@ -136,7 +136,7 @@ data:
   {{- end }}
   {{- with .Values.datafusion }}
   {{- if ne .numThreads nil }}
-  INFLUXDB3_DATAFUSION_NUM_THREADS: {{ .numThreads | quote }}
+  INFLUXDB3_NUM_DATAFUSION_THREADS: {{ .numThreads | quote }}
   {{- end }}
   {{- if ne .maxParquetFanout nil }}
   INFLUXDB3_DATAFUSION_MAX_PARQUET_FANOUT: {{ .maxParquetFanout | quote }}
