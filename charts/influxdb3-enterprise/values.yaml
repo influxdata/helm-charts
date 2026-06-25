@@ -662,12 +662,12 @@ probes:
   # Startup probe settings
   # Protects container during initialization. Once successful, never runs again.
   # Allows slower startup without delaying successful readiness detection.
-  # 10s initial + (30 × 5s) = 160s total.
+  # 10s initial + (40 × 5s) = 210s total.
   startup:
     initialDelaySeconds: 10
     periodSeconds: 5                  # Check every 5 seconds
     timeoutSeconds: 5
-    failureThreshold: 30
+    failureThreshold: 40
 
   # Liveness probe settings
   # Only starts checking AFTER startup probe succeeds
