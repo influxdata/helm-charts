@@ -57,8 +57,8 @@ jobs:
       # Our Enterprise chart requires some resources created
       - name: Create Enterprise Test Resources
         run: |
-          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.4/cert-manager.yaml
-          sleep 30 # wait for CertManager
+          kubectl apply --validate=false -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.3/cert-manager.yaml
+          kubectl wait --namespace cert-manager --for=condition=Available --timeout=45s deployment --all
           kubectl apply -f ./charts/influxdb-enterprise/example-resources.yaml
           kubectl create secret generic influxdb-license --from-literal=INFLUXDB_ENTERPRISE_LICENSE_KEY=${INFLUXDB_ENTERPRISE_LICENSE_KEY}
         env:
