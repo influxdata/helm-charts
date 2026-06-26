@@ -1,0 +1,87 @@
+Thank you for installing {{ .Chart.Name }}!
+
+InfluxDB 3 Core has been deployed to namespace {{ .Release.Namespace }}.
+
+Deployment:
+  Object store: {{ .Values.objectStorage.type }}
+{{- if eq .Values.objectStorage.type "file" }}
+  Data directory: {{ .Values.objectStorage.file.dataDir }}
+  Persistent volume: {{ .Values.objectStorage.file.persistence.size }} ({{ .Values.objectStorage.file.persistence.accessMode }})
+  Storage class: {{ default "cluster default" .Values.objectStorage.file.persistence.storageClass }}
+{{- else if has .Values.objectStorage.type (list "memory" "memory-throttled") }}
+  Persistence: disabled; data is lost when the pod stops
+{{- else }}
+  Persistence: diskless; data and WAL files are stored in the configured object store
+{{- end }}
+{{- if .Values.security.tls.enabled }}
+  Backend TLS: enabled
+{{- end }}
+{{- if .Values.serviceMonitor.enabled }}
+  ServiceMonitor: enabled
+{{- if and (not .Values.security.auth.disabled) (has "metrics" .Values.security.auth.disableAuthz) }}
+  Metrics authorization: disabled for Prometheus scraping
+{{- end }}
+{{- end }}
+  Plugin directory: {{ .Values.processingEngine.pluginDir }}
+{{- if .Values.processingEngine.persistence.enabled }}
+  Plugin volume: {{ .Values.processingEngine.persistence.size }} ({{ .Values.processingEngine.persistence.accessMode }})
+  Plugin storage class: {{ default "cluster default" .Values.processingEngine.persistence.storageClass }}
+{{- else }}
+  Plugin persistence: chart-managed persistence is disabled
+  Configure extraVolumes and extraVolumeMounts to provide persistent plugin storage.
+{{- end }}
+
+Access:
+{{- if .Values.ingress.enabled }}
+  HTTP URL: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
+  Flight/gRPC host: {{ default .Values.ingress.host .Values.ingress.flight.host }}:{{ .Values.ingress.port }}
+  Flight clients require HTTP/2 support through the ingress controller.
+{{- if eq .Values.ingress.host "influxdb.example.com" }}
+
+  WARNING: ingress.host still uses the example hostname.
+  Set ingress.host to a resolvable hostname before using the ingress.
+{{- end }}
+{{- else }}
+  Run this command in a separate terminal:
+
+    kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "influxdb3-core.fullname" . }} 8181:{{ .Values.service.port }}
+
+  Then configure the CLI:
+
+    export INFLUXDB3_HOST_URL=http{{ if .Values.security.tls.enabled }}s{{ end }}://localhost:8181
+{{- end }}
+
+Authorization:
+{{- if .Values.security.auth.disabled }}
+  Authentication is disabled. No token is required.
+{{- else if .Values.security.auth.adminToken.existingSecret }}
+  A preconfigured admin token is mounted from:
+    Secret: {{ .Values.security.auth.adminToken.existingSecret }}
+    Key: admin-token.json
+  Use the token value from that JSON file for INFLUXDB3_AUTH_TOKEN.
+{{- else if .Values.security.auth.adminToken.file }}
+  A preconfigured admin token is loaded from:
+    {{ .Values.security.auth.adminToken.file }}
+  Use the token value from that JSON file for INFLUXDB3_AUTH_TOKEN.
+{{- else }}
+  Create the first admin token:
+
+    kubectl exec -n {{ .Release.Namespace }} -it {{ include "influxdb3-core.fullname" . }}-0 -- \
+      influxdb3 create token --admin
+
+  Store the returned token securely. It is displayed only when created.
+{{- end }}
+
+Getting started:
+
+{{- if .Values.ingress.enabled }}
+  export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
+{{- end }}
+{{- if not .Values.security.auth.disabled }}
+  export INFLUXDB3_AUTH_TOKEN=<your-admin-token>
+{{- end }}
+  influxdb3 create database mydb
+  influxdb3 write --database mydb "home,room=Kitchen temp=72.0"
+  influxdb3 query --database mydb "SELECT * FROM home"
+
+Documentation: https://docs.influxdata.com/influxdb3/core/
