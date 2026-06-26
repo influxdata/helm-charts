@@ -1,3 +1,4 @@
+{{- if eq .Values.objectStorage.type "file" }}
 # PersistentVolumeClaim for file-based object storage
 #
 # This PVC is only created when objectStorage.type is "file"
@@ -13,7 +14,6 @@
 #
 # For local testing without RWX support, consider using MinIO instead
 # ============================================================================
-{{- if eq .Values.objectStorage.type "file" }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -24,7 +24,7 @@ metadata:
     app.kubernetes.io/component: object-storage
 spec:
   accessModes:
-    - ReadWriteMany  # Required: All pods need to access the same storage
+    - {{ .Values.objectStorage.file.persistence.accessMode }}
   {{- if .Values.objectStorage.file.persistence.storageClass }}
   {{- if (eq "-" .Values.objectStorage.file.persistence.storageClass) }}
   storageClassName: ""

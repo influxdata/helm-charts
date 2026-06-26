@@ -29,7 +29,7 @@ InfluxDB 3 Enterprise is a high-performance time series database designed for pr
 - Kubernetes 1.23+
 - Helm 3.8+
 - Object storage (S3, Azure Blob Storage, or Google Cloud Storage)
-- PersistentVolume provisioner support (for ingester WAL storage)
+- RWX PersistentVolume provisioner support when using `objectStorage.type=file`
 - InfluxDB 3 Enterprise license (trial, home, or commercial)
 - **NGINX Ingress Controller** (required if using ingress, which is enabled by default)
 
@@ -239,11 +239,22 @@ objectStorage:
 objectStorage:
   type: file
   # PVC is always created for file storage
-  # file:
-  #   dataDir: "/var/lib/influxdb3"
-  #   persistence:
-  #     size: 100Gi
+  file:
+    dataDir: "/var/lib/influxdb3"
+    persistence:
+      accessMode: ReadWriteMany
+      size: 100Gi
 ```
+
+For `objectStorage.type=s3`, `google`, `azure`, `memory`, or `memory-throttled`,
+the chart does not create a data or WAL PVC. WAL files, snapshots, catalog data,
+and Parquet files are persisted through the configured object store.
+
+For `objectStorage.type=file`, the chart creates one shared RWX object-storage
+PVC and mounts it at `objectStorage.file.dataDir` for Enterprise components.
+For single-node local testing only, you can set
+`objectStorage.file.persistence.accessMode=ReadWriteOnce` to use a local-path
+style StorageClass.
 
 #### Resource Configuration
 
@@ -654,10 +665,11 @@ Ingress routes:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `ingester.persistence.enabled` | Enable WAL PVC | `true` |
-| `ingester.persistence.size` | WAL PVC size | `10Gi` |
+| `ingester.persistence.enabled` | Deprecated compatibility value; WAL is persisted through the configured object store | `false` |
+| `ingester.persistence.size` | Deprecated compatibility value; not used by default templates | `10Gi` |
 | `processingEngine.persistence.enabled` | Enable plugins PVC | `true` |
-| `objectStorage.type` `file` | Always creates PVC for file storage | — |
+| `objectStorage.type=file` | Creates one shared RWX object-storage PVC mounted at `objectStorage.file.dataDir` | — |
+| `objectStorage.file.persistence.accessMode` | Access mode for the file object-storage PVC | `ReadWriteMany` |
 
 ### Monitoring Parameters
 

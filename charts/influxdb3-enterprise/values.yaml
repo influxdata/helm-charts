@@ -121,10 +121,11 @@ objectStorage:
 
   # Local filesystem (for development/testing only)
   # NOT RECOMMENDED for production - use cloud object storage
-  # Requires RWX storage; PVC is always created when type=file
+  # Creates one shared RWX PVC mounted by Enterprise components when type=file
   file:
     dataDir: "/var/lib/influxdb3"
     persistence:
+      accessMode: ReadWriteMany     # Use ReadWriteOnce only for single-node local testing
       storageClass: ""
       size: 100Gi
 
@@ -206,9 +207,11 @@ ingester:
   #   snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
   #   replayFailOnError: false
 
-  # Persistent storage for Write-Ahead Log (WAL)
+  # Deprecated: WAL files are persisted through the configured object store.
+  # This value is retained only for chart compatibility and is not used by
+  # default templates.
   persistence:
-    enabled: true
+    enabled: false
     storageClass: ""                # Use default storage class
     size: "10Gi"                    # Minimum 2Gi recommended
     accessMode: ReadWriteOnce
