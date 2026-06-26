@@ -664,12 +664,13 @@ probes:
 
   # Startup probe settings
   # Protects container during initialization. Once successful, never runs again.
-  # For ~15s startup: 10s initial + (12 × 5s) = 70s total (4-5x safety buffer)
+  # Allows slower startup without delaying successful readiness detection.
+  # 10s initial + (30 × 5s) = 160s total.
   startup:
-    initialDelaySeconds: 10           # Wait ~50% of expected startup time
+    initialDelaySeconds: 10
     periodSeconds: 5                  # Check every 5 seconds
     timeoutSeconds: 5
-    failureThreshold: 12              # 10s + (12 × 5s) = 70s total
+    failureThreshold: 30
 
   # Liveness probe settings
   # Only starts checking AFTER startup probe succeeds
