@@ -419,6 +419,10 @@ Image reference
 Shared volume mounts (license/TLS/GCS and user extras)
 */}}
 {{- define "influxdb3-enterprise.sharedVolumeMounts" -}}
+{{- if eq .Values.objectStorage.type "file" }}
+- name: object-storage
+  mountPath: {{ .Values.objectStorage.file.dataDir }}
+{{- end }}
 {{- if eq .Values.objectStorage.type "google" }}
 - name: google-service-account
   mountPath: /var/secrets/google
