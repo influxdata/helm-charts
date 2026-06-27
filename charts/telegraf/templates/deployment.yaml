@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "telegraf.fullname" . }}
+  namespace: {{ include "telegraf.namespace" . }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 spec:
