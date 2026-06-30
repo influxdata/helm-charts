@@ -14,8 +14,8 @@ ingester:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "4Gi"
   persistence:
     enabled: false
 
@@ -26,8 +26,8 @@ querier:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "4Gi"
 
 compactor:
   replicas: 1
@@ -36,8 +36,8 @@ compactor:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "4Gi"
 
 processingEngine:
   enabled: true
@@ -47,7 +47,7 @@ processingEngine:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "4Gi"
   persistence:
     enabled: false
