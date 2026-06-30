@@ -455,6 +455,37 @@ helm upgrade influxdb3-enterprise . \
   -f my-values.yaml
 ```
 
+#### Upgrade from chart 0.6.x
+
+Chart 0.7.0 removes the ingester WAL `volumeClaimTemplates` from the
+StatefulSet. Kubernetes does not allow this field to be removed from an existing
+StatefulSet during an in-place `helm upgrade`.
+
+For existing releases installed with chart 0.6.x, schedule a maintenance window,
+stop writes, and allow the WAL to flush to the configured object store. Then
+delete the ingester StatefulSet before upgrading. The old WAL PVCs are retained
+by Kubernetes.
+
+```bash
+kubectl delete statefulset -n influxdb3 influxdb3-enterprise-ingester
+helm upgrade influxdb3-enterprise . \
+  --namespace influxdb3 \
+  -f my-values.yaml
+```
+
+After the upgraded ingester pods are healthy and data has been verified in the
+configured object store, the old ingester WAL PVCs can be removed if they are no
+longer needed. There is one old WAL PVC per ingester replica.
+
+```bash
+kubectl get pvc -n influxdb3 -l app.kubernetes.io/component=ingester
+# Default release name examples:
+# wal-influxdb3-enterprise-ingester-0
+# wal-influxdb3-enterprise-ingester-1
+kubectl delete pvc -n influxdb3 wal-influxdb3-enterprise-ingester-0
+kubectl delete pvc -n influxdb3 wal-influxdb3-enterprise-ingester-1
+```
+
 ### Rolling Updates
 
 StatefulSets perform rolling updates by default. Pods are updated one at a time to ensure availability.
