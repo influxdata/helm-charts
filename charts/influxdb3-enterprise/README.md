@@ -461,6 +461,11 @@ Chart 0.7.0 removes the ingester WAL `volumeClaimTemplates` from the
 StatefulSet. Kubernetes does not allow this field to be removed from an existing
 StatefulSet during an in-place `helm upgrade`.
 
+For existing 0.6.x releases using `objectStorage.type=file`, back up
+`objectStorage.file.dataDir` from the ingester pods before deleting them. File
+storage is intended for development/testing only, and chart 0.6.x did not mount
+the shared object-storage PVC at that path.
+
 For existing releases installed with chart 0.6.x, schedule a maintenance window,
 stop writes, and allow the WAL to flush to the configured object store. Then
 delete the ingester StatefulSet before upgrading. The old WAL PVCs are retained
