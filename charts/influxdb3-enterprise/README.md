@@ -246,9 +246,13 @@ objectStorage:
       size: 100Gi
 ```
 
-For `objectStorage.type=s3`, `google`, `azure`, `memory`, or `memory-throttled`,
-the chart does not create a data or WAL PVC. WAL files, snapshots, catalog data,
-and Parquet files are persisted through the configured object store.
+For `objectStorage.type=s3`, `google`, or `azure`, the chart does not create a
+data or WAL PVC. WAL files, snapshots, catalog data, and Parquet files are
+persisted through the configured durable object store.
+
+For `objectStorage.type=memory` or `memory-throttled`, all object-store data
+(WAL files, snapshots, catalog data, and Parquet files) is held in memory and
+lost when the pod restarts. These modes are intended for testing only.
 
 For `objectStorage.type=file`, the chart creates one shared RWX object-storage
 PVC and mounts it at `objectStorage.file.dataDir` for Enterprise components.
