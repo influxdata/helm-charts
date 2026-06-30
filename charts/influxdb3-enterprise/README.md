@@ -572,16 +572,22 @@ kubectl run -it --rm debug --image=amazon/aws-cli --restart=Never -- \
   s3 ls s3://your-bucket --region us-east-1
 ```
 
-#### Ingester WAL Issues
+#### Ingester WAL and Object Storage Issues
 
-Check PVC status:
+WAL files are persisted through the configured object store. Check object
+storage connectivity first:
 ```bash
-kubectl get pvc -n influxdb3
+kubectl logs -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i object
 ```
 
 View ingester logs for WAL errors:
 ```bash
 kubectl logs -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i wal
+```
+
+For `objectStorage.type=file`, also check the shared object-storage PVC:
+```bash
+kubectl get pvc -n influxdb3 influxdb3-enterprise-object-storage
 ```
 
 ### Debug Mode
