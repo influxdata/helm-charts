@@ -2,7 +2,11 @@ license:
   existingSecret: influxdb3-license
 
 objectStorage:
-  type: memory
+  type: file
+  file:
+    persistence:
+      accessMode: ReadWriteOnce
+      size: 5Gi
 
 ingress:
   enabled: false
@@ -68,6 +72,3 @@ extraVolumeMounts:
   - name: bootstrap-tokens
     mountPath: /etc/influxdb/bootstrap
     readOnly: true
-
-cluster:
-  waitForRunningIngestor: "60s"

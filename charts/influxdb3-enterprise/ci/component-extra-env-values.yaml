@@ -2,7 +2,11 @@ license:
   existingSecret: influxdb3-license
 
 objectStorage:
-  type: memory
+  type: file
+  file:
+    persistence:
+      accessMode: ReadWriteOnce
+      size: 5Gi
 
 ingress:
   enabled: false
@@ -75,6 +79,3 @@ processingEngine:
       value: "processor-only"
   persistence:
     enabled: false
-
-cluster:
-  waitForRunningIngestor: "60s"
