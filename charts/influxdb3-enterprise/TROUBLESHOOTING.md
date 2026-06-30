@@ -203,11 +203,11 @@ kubectl describe pvc -n influxdb3 influxdb3-enterprise-object-storage
 3. **Insufficient Capacity**
     - Solution: Increase node storage or reduce PVC size
 
-### WAL Disk Full
+### Object Storage Capacity Issues
 
 **Error Message:**
 ```
-WAL directory full, cannot accept more writes
+Failed to write WAL, snapshot, catalog, or Parquet data to object storage
 ```
 
 **Solution:**
@@ -231,9 +231,10 @@ WAL directory full, cannot accept more writes
 
 3. **Adjust WAL settings:**
    ```yaml
-   wal:
-     flushInterval: "500ms"  # More frequent flushes
-     snapshotSize: 300       # Smaller snapshots
+   ingester:
+     wal:
+       flushInterval: "500ms"  # More frequent flushes
+       snapshotSize: 300       # Smaller snapshots
    ```
 
 ---
@@ -338,8 +339,9 @@ kubectl describe networkpolicy -n influxdb3
 
 3. **Optimize WAL:**
    ```yaml
-   wal:
-     flushInterval: "500ms"  # More frequent flushes
+   ingester:
+     wal:
+       flushInterval: "500ms"  # More frequent flushes
    ```
 
 ### Slow Queries

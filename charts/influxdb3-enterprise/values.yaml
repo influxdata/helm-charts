@@ -207,14 +207,12 @@ ingester:
   #   snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
   #   replayFailOnError: false
 
-  # Deprecated: WAL files are persisted through the configured object store.
-  # This value is retained only for chart compatibility and is not used by
+  # Deprecated: retained only so old values files that set
+  # ingester.persistence.enabled remain recognizable. WAL files are persisted
+  # through the configured object store, and ingester.persistence is not used by
   # default templates.
   persistence:
     enabled: false
-    storageClass: ""                # Use default storage class
-    size: "10Gi"                    # Minimum 2Gi recommended
-    accessMode: ReadWriteOnce
 
   # Pod affinity/anti-affinity, node selectors, tolerations
   # Default: soft anti-affinity to spread pods across nodes when possible

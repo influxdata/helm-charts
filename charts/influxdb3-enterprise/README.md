@@ -256,9 +256,9 @@ lost when the pod restarts. These modes are intended for testing only.
 
 For `objectStorage.type=file`, the chart creates one shared RWX object-storage
 PVC and mounts it at `objectStorage.file.dataDir` for Enterprise components.
-For single-node local testing only, you can set
-`objectStorage.file.persistence.accessMode=ReadWriteOnce` to use a local-path
-style StorageClass.
+For single-node local testing only, where all pods run on the same node, you can
+set `objectStorage.file.persistence.accessMode=ReadWriteOnce` to use a
+local-path style StorageClass.
 
 #### Resource Configuration
 
@@ -273,9 +273,9 @@ ingester:
     limits:
       cpu: "8000m"
       memory: "16Gi"
-  threads:
-    io: 12              # For line protocol parsing
-    datafusion: 20      # For WAL snapshots
+  numIOThreads: 12
+  datafusion:
+    numThreads: 20
 ```
 
 #### TLS
@@ -712,7 +712,6 @@ Ingress routes:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `ingester.persistence.enabled` | Deprecated compatibility value; WAL is persisted through the configured object store | `false` |
-| `ingester.persistence.size` | Deprecated compatibility value; not used by default templates | `10Gi` |
 | `processingEngine.persistence.enabled` | Enable plugins PVC | `true` |
 | `objectStorage.type=file` | Creates one shared RWX object-storage PVC mounted at `objectStorage.file.dataDir` | — |
 | `objectStorage.file.persistence.accessMode` | Access mode for the file object-storage PVC | `ReadWriteMany` |
