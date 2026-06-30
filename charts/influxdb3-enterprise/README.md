@@ -461,15 +461,14 @@ Chart 0.7.0 removes the ingester WAL `volumeClaimTemplates` from the
 StatefulSet. Kubernetes does not allow this field to be removed from an existing
 StatefulSet during an in-place `helm upgrade`.
 
-For existing 0.6.x releases using `objectStorage.type=file`, back up
-`objectStorage.file.dataDir` from the ingester pods before deleting them. File
-storage is intended for development/testing only, and chart 0.6.x did not mount
-the shared object-storage PVC at that path.
+For existing releases installed with chart 0.6.x, delete the ingester
+StatefulSet before upgrading. This is required for all object-store types
+because the immutable `volumeClaimTemplates` field changed.
 
-For existing releases installed with chart 0.6.x, schedule a maintenance window,
-stop writes, and allow the WAL to flush to the configured object store. Then
-delete the ingester StatefulSet before upgrading. The old WAL PVCs are retained
-by Kubernetes.
+For `objectStorage.type=file` only, chart 0.6.x stored object-store contents on
+the pod's ephemeral filesystem. File storage is intended for development/testing
+only. If you used file storage and want to preserve that dev/test data, back up
+`objectStorage.file.dataDir` from a live pod before deleting the StatefulSet.
 
 ```bash
 kubectl delete statefulset -n influxdb3 influxdb3-enterprise-ingester
@@ -478,9 +477,11 @@ helm upgrade influxdb3-enterprise . \
   -f my-values.yaml
 ```
 
-After the upgraded ingester pods are healthy and data has been verified in the
-configured object store, the old ingester WAL PVCs can be removed if they are no
-longer needed. There is one old WAL PVC per ingester replica.
+After the upgraded ingester pods are healthy, delete the old ingester WAL PVCs.
+Chart 0.6.x created these PVCs when `ingester.persistence.enabled` was true, but
+they were unused leftovers: InfluxDB 3 Enterprise writes the WAL to the
+configured object store, not to those local PVC mounts. There is one old WAL PVC
+per ingester replica.
 
 ```bash
 kubectl get pvc -n influxdb3 -l app.kubernetes.io/component=ingester
