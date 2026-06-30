@@ -68,3 +68,6 @@ extraVolumeMounts:
   - name: bootstrap-tokens
     mountPath: /etc/influxdb/bootstrap
     readOnly: true
+
+cluster:
+  waitForRunningIngestor: "60s"

@@ -51,3 +51,6 @@ processingEngine:
       memory: "4Gi"
   persistence:
     enabled: false
+
+cluster:
+  waitForRunningIngestor: "60s"

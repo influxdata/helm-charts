@@ -75,3 +75,6 @@ processingEngine:
       value: "processor-only"
   persistence:
     enabled: false
+
+cluster:
+  waitForRunningIngestor: "60s"
