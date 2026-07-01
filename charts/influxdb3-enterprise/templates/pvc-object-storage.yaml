@@ -24,7 +24,7 @@ metadata:
     app.kubernetes.io/component: object-storage
 spec:
   accessModes:
-    - {{ .Values.objectStorage.file.persistence.accessMode }}
+    - {{ .Values.objectStorage.file.persistence.accessMode | default "ReadWriteMany" }}
   {{- if .Values.objectStorage.file.persistence.storageClass }}
   {{- if (eq "-" .Values.objectStorage.file.persistence.storageClass) }}
   storageClassName: ""
