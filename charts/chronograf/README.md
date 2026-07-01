@@ -80,6 +80,7 @@ The following table lists configurable parameters, their descriptions, and their
 | `oauth.heroku.gh_orgs`       | oauth github                                                                                              | ""                                          |
 | `env`                        | Extra environment variables that will be passed onto deployment pods                                      | {}                                          |
 | `envFromSecret`              | The name of a secret in the same kubernetes namespace which contain values to be added to the environment | {}                                          |
+| `extraLabels`                | Additional common labels to add to the generated resources                                                | {}                                          |
 | `nodeSelector`               | Node labels for pod assignment                                                                            | {}                                          |
 | `tolerations`                | Toleration labels for pod assignment                                                                      | []                                          |
 | `affinity`                   | Affinity settings for pod assignment                                                                      | {}                                          |
