@@ -90,6 +90,10 @@ startupProbe:
 #         key: my-key
 env: {}
 
+## Configure priorityClass for InfluxDB Statefulset
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#priorityclass
+priorityClassName: ""
+
 ## Create default user through docker entrypoint
 ## Defaults indicated below
 ##
