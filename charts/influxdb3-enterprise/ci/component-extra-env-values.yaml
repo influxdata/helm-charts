@@ -2,7 +2,11 @@ license:
   existingSecret: influxdb3-license
 
 objectStorage:
-  type: memory
+  type: file
+  file:
+    persistence:
+      accessMode: ReadWriteOnce
+      size: 5Gi
 
 ingress:
   enabled: false
@@ -22,8 +26,8 @@ ingester:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "4Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
       value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
@@ -39,8 +43,8 @@ querier:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "4Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
       value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
@@ -52,8 +56,8 @@ compactor:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "4Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
       value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
@@ -66,8 +70,8 @@ processingEngine:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "4Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
       value: "INFLUXDB3_HTTP_BIND_ADDR"

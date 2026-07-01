@@ -29,7 +29,7 @@ InfluxDB 3 Enterprise is a high-performance time series database designed for pr
 - Kubernetes 1.23+
 - Helm 3.8+
 - Object storage (S3, Azure Blob Storage, or Google Cloud Storage)
-- PersistentVolume provisioner support (for ingester WAL storage)
+- RWX PersistentVolume provisioner support when using `objectStorage.type=file`
 - InfluxDB 3 Enterprise license (trial, home, or commercial)
 - **NGINX Ingress Controller** (required if using ingress, which is enabled by default)
 
@@ -239,11 +239,26 @@ objectStorage:
 objectStorage:
   type: file
   # PVC is always created for file storage
-  # file:
-  #   dataDir: "/var/lib/influxdb3"
-  #   persistence:
-  #     size: 100Gi
+  file:
+    dataDir: "/var/lib/influxdb3"
+    persistence:
+      accessMode: ReadWriteMany
+      size: 100Gi
 ```
+
+For `objectStorage.type=s3`, `google`, or `azure`, the chart does not create a
+data or WAL PVC. WAL files, snapshots, catalog data, and Parquet files are
+persisted through the configured durable object store.
+
+For `objectStorage.type=memory` or `memory-throttled`, all object-store data
+(WAL files, snapshots, catalog data, and Parquet files) is held in memory and
+lost when the pod restarts. These modes are intended for testing only.
+
+For `objectStorage.type=file`, the chart creates one shared RWX object-storage
+PVC and mounts it at `objectStorage.file.dataDir` for Enterprise components.
+For single-node local testing only, where all pods run on the same node, you can
+set `objectStorage.file.persistence.accessMode=ReadWriteOnce` to use a
+local-path style StorageClass.
 
 #### Resource Configuration
 
@@ -258,9 +273,9 @@ ingester:
     limits:
       cpu: "8000m"
       memory: "16Gi"
-  threads:
-    io: 12              # For line protocol parsing
-    datafusion: 20      # For WAL snapshots
+  numIOThreads: 12
+  datafusion:
+    numThreads: 20
 ```
 
 #### TLS
@@ -440,6 +455,49 @@ helm upgrade influxdb3-enterprise . \
   -f my-values.yaml
 ```
 
+#### Upgrade from chart 0.6.x
+
+Chart 0.7.0 removes the ingester WAL `volumeClaimTemplates` from the
+StatefulSet. Kubernetes does not allow this field to be removed from an existing
+StatefulSet during an in-place `helm upgrade`.
+
+For existing releases installed with chart 0.6.x, delete the ingester
+StatefulSet before upgrading. This is required for all object-store types
+because the immutable `volumeClaimTemplates` field changed.
+
+For `objectStorage.type=file` only, chart 0.6.x stored object-store contents on
+the pod's ephemeral filesystem. File storage is intended for development/testing
+only. If you used file storage and want to preserve that dev/test data, back up
+`objectStorage.file.dataDir` from a live pod before deleting the StatefulSet.
+
+```bash
+kubectl delete statefulset -n influxdb3 influxdb3-enterprise-ingester
+helm upgrade influxdb3-enterprise . \
+  --namespace influxdb3 \
+  -f my-values.yaml
+```
+
+After the upgraded ingester pods are healthy, delete the old ingester WAL PVCs.
+Chart 0.6.x created these PVCs when `ingester.persistence.enabled` was true, but
+they were unused leftovers: InfluxDB 3 Enterprise writes the WAL to the
+configured object store, not to those local PVC mounts. There is one old WAL PVC
+per ingester replica. The PVC name pattern is
+`wal-<ingester-statefulset-name>-<ordinal>`, where `<ordinal>` starts at `0`.
+
+```bash
+# List old WAL PVCs for the default StatefulSet name and namespace:
+kubectl get pvc -n influxdb3 | grep '^wal-influxdb3-enterprise-ingester-'
+
+# Delete one old WAL PVC per old ingester replica:
+# wal-influxdb3-enterprise-ingester-0
+# wal-influxdb3-enterprise-ingester-1
+kubectl delete pvc -n influxdb3 wal-influxdb3-enterprise-ingester-0
+kubectl delete pvc -n influxdb3 wal-influxdb3-enterprise-ingester-1
+```
+
+Replace `influxdb3-enterprise-ingester` with your old ingester StatefulSet name
+and delete one PVC for each old ingester replica ordinal.
+
 ### Rolling Updates
 
 StatefulSets perform rolling updates by default. Pods are updated one at a time to ensure availability.
@@ -526,16 +584,22 @@ kubectl run -it --rm debug --image=amazon/aws-cli --restart=Never -- \
   s3 ls s3://your-bucket --region us-east-1
 ```
 
-#### Ingester WAL Issues
+#### Ingester WAL and Object Storage Issues
 
-Check PVC status:
+WAL files are persisted through the configured object store. Check object
+storage connectivity first:
 ```bash
-kubectl get pvc -n influxdb3
+kubectl logs -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i object
 ```
 
 View ingester logs for WAL errors:
 ```bash
 kubectl logs -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i wal
+```
+
+For `objectStorage.type=file`, also check the shared object-storage PVC:
+```bash
+kubectl get pvc -n influxdb3 influxdb3-enterprise-object-storage
 ```
 
 ### Debug Mode
@@ -654,10 +718,10 @@ Ingress routes:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `ingester.persistence.enabled` | Enable WAL PVC | `true` |
-| `ingester.persistence.size` | WAL PVC size | `10Gi` |
+| `ingester.persistence.enabled` | Deprecated compatibility value; WAL is persisted through the configured object store | `false` |
 | `processingEngine.persistence.enabled` | Enable plugins PVC | `true` |
-| `objectStorage.type` `file` | Always creates PVC for file storage | — |
+| `objectStorage.type=file` | Creates one shared RWX object-storage PVC mounted at `objectStorage.file.dataDir` | — |
+| `objectStorage.file.persistence.accessMode` | Access mode for the file object-storage PVC | `ReadWriteMany` |
 
 ### Monitoring Parameters
 

@@ -121,10 +121,11 @@ objectStorage:
 
   # Local filesystem (for development/testing only)
   # NOT RECOMMENDED for production - use cloud object storage
-  # Requires RWX storage; PVC is always created when type=file
+  # Creates one shared RWX PVC mounted by Enterprise components when type=file
   file:
     dataDir: "/var/lib/influxdb3"
     persistence:
+      accessMode: ReadWriteMany     # Use ReadWriteOnce only for single-node local testing
       storageClass: ""
       size: 100Gi
 
@@ -206,12 +207,12 @@ ingester:
   #   snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
   #   replayFailOnError: false
 
-  # Persistent storage for Write-Ahead Log (WAL)
+  # Deprecated: retained only so old values files that set
+  # ingester.persistence.enabled remain recognizable. WAL files are persisted
+  # through the configured object store, and ingester.persistence is not used by
+  # default templates.
   persistence:
-    enabled: true
-    storageClass: ""                # Use default storage class
-    size: "10Gi"                    # Minimum 2Gi recommended
-    accessMode: ReadWriteOnce
+    enabled: false
 
   # Pod affinity/anti-affinity, node selectors, tolerations
   # Default: soft anti-affinity to spread pods across nodes when possible
@@ -661,12 +662,13 @@ probes:
 
   # Startup probe settings
   # Protects container during initialization. Once successful, never runs again.
-  # For ~15s startup: 10s initial + (12 × 5s) = 70s total (4-5x safety buffer)
+  # Allows slower startup without delaying successful readiness detection.
+  # 10s initial + (30 × 5s) = 160s total.
   startup:
-    initialDelaySeconds: 10           # Wait ~50% of expected startup time
+    initialDelaySeconds: 10
     periodSeconds: 5                  # Check every 5 seconds
     timeoutSeconds: 5
-    failureThreshold: 12              # 10s + (12 × 5s) = 70s total
+    failureThreshold: 30
 
   # Liveness probe settings
   # Only starts checking AFTER startup probe succeeds

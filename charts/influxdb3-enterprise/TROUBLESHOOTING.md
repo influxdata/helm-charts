@@ -36,9 +36,9 @@ kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0
     - Check node resources: `kubectl top nodes`
     - Solution: Add more nodes or reduce resource requests
 
-2. **PVC Not Bound**
+2. **Storage PVC Not Bound**
     - Check PVC status: `kubectl get pvc -n influxdb3`
-    - Solution: Verify StorageClass exists and can provision volumes
+    - Solution: Verify StorageClass exists and can provision object-storage or plugin volumes
 
 3. **Node Selector/Affinity**
     - Check if nodes match selector
@@ -175,18 +175,18 @@ Failed to connect to object store: connection refused
 - **Endpoint**: Ensure `objectStorage.s3.endpoint` is correct
 - **Credentials**: Rotate and update access keys
 
-### PVC Not Binding
+### Storage PVC Not Binding
 
 **Error:**
 ```bash
 kubectl get pvc -n influxdb3
 NAME                              STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS
-data-influxdb3-enterprise-ingester-0   Pending                                  gp3
+influxdb3-enterprise-object-storage   Pending                                  nfs
 ```
 
 **Diagnosis:**
 ```bash
-kubectl describe pvc -n influxdb3 data-influxdb3-enterprise-ingester-0
+kubectl describe pvc -n influxdb3 influxdb3-enterprise-object-storage
 ```
 
 **Common Causes:**
@@ -203,20 +203,24 @@ kubectl describe pvc -n influxdb3 data-influxdb3-enterprise-ingester-0
 3. **Insufficient Capacity**
     - Solution: Increase node storage or reduce PVC size
 
-### WAL Disk Full
+### Object Storage Capacity Issues
 
 **Error Message:**
 ```
-WAL directory full, cannot accept more writes
+Failed to write WAL, snapshot, catalog, or Parquet data to object storage
 ```
 
 **Solution:**
 
-1. **Increase PVC size:**
+1. **Verify object storage capacity and connectivity:**
+   - For cloud object stores, check bucket/container quota, credentials, and endpoint connectivity
+   - For `objectStorage.type=file`, increase the shared object-storage PVC size:
    ```yaml
-   ingester:
-     persistence:
-       size: "20Gi"  # Increase from 10Gi
+   objectStorage:
+     type: file
+     file:
+       persistence:
+         size: "200Gi"
    ```
 
 2. **Force snapshot creation:**
@@ -227,9 +231,10 @@ WAL directory full, cannot accept more writes
 
 3. **Adjust WAL settings:**
    ```yaml
-   wal:
-     flushInterval: "500ms"  # More frequent flushes
-     snapshotSize: 300       # Smaller snapshots
+   ingester:
+     wal:
+       flushInterval: "500ms"  # More frequent flushes
+       snapshotSize: 300       # Smaller snapshots
    ```
 
 ---
@@ -334,8 +339,9 @@ kubectl describe networkpolicy -n influxdb3
 
 3. **Optimize WAL:**
    ```yaml
-   wal:
-     flushInterval: "500ms"  # More frequent flushes
+   ingester:
+     wal:
+       flushInterval: "500ms"  # More frequent flushes
    ```
 
 ### Slow Queries

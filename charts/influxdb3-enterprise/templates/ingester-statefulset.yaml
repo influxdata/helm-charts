@@ -124,14 +124,6 @@ spec:
           resources:
             {{- toYaml .Values.ingester.resources | nindent 12 }}
           volumeMounts:
-          {{- if .Values.ingester.persistence.enabled }}
-            - name: wal
-              {{- if eq .Values.objectStorage.type "file" }}
-              mountPath: {{ .Values.objectStorage.file.dataDir }}/.wal
-              {{- else }}
-              mountPath: /var/lib/influxdb3/.wal
-              {{- end }}
-          {{- end }}
             {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
             {{ include "influxdb3-enterprise.adminTokenVolumeMounts" . | nindent 12 }}
             {{ include "influxdb3-enterprise.permissionTokensVolumeMounts" . | nindent 12 }}
@@ -151,18 +143,4 @@ spec:
         {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
         {{ include "influxdb3-enterprise.adminTokenVolumes" . | nindent 8 }}
         {{ include "influxdb3-enterprise.permissionTokensVolumes" . | nindent 8 }}
-  {{- if .Values.ingester.persistence.enabled }}
-  volumeClaimTemplates:
-    - metadata:
-        name: wal
-      spec:
-        accessModes:
-          - {{ .Values.ingester.persistence.accessMode }}
-      {{- if .Values.ingester.persistence.storageClass }}
-        storageClassName: {{ .Values.ingester.persistence.storageClass | quote }}
-      {{- end }}
-        resources:
-          requests:
-            storage: {{ .Values.ingester.persistence.size }}
-  {{- end }}
 {{- end }}
