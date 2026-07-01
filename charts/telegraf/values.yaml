@@ -2,6 +2,9 @@
 ## This is a YAML-formatted file.
 ## ref: https://hub.docker.com/r/library/telegraf/tags/
 
+# Override the namespace for namespaced resources in this chart.
+namespaceOverride: ""
+
 replicaCount: 1
 image:
   repo: "docker.io/library/telegraf"
