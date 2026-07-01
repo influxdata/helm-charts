@@ -481,16 +481,22 @@ After the upgraded ingester pods are healthy, delete the old ingester WAL PVCs.
 Chart 0.6.x created these PVCs when `ingester.persistence.enabled` was true, but
 they were unused leftovers: InfluxDB 3 Enterprise writes the WAL to the
 configured object store, not to those local PVC mounts. There is one old WAL PVC
-per ingester replica.
+per ingester replica. The PVC name pattern is
+`wal-<ingester-statefulset-name>-<ordinal>`, where `<ordinal>` starts at `0`.
 
 ```bash
-kubectl get pvc -n influxdb3 -l app.kubernetes.io/component=ingester
-# Default release name examples:
+# List old WAL PVCs for the default StatefulSet name and namespace:
+kubectl get pvc -n influxdb3 | grep '^wal-influxdb3-enterprise-ingester-'
+
+# Delete one old WAL PVC per old ingester replica:
 # wal-influxdb3-enterprise-ingester-0
 # wal-influxdb3-enterprise-ingester-1
 kubectl delete pvc -n influxdb3 wal-influxdb3-enterprise-ingester-0
 kubectl delete pvc -n influxdb3 wal-influxdb3-enterprise-ingester-1
 ```
+
+Replace `influxdb3-enterprise-ingester` with your old ingester StatefulSet name
+and delete one PVC for each old ingester replica ordinal.
 
 ### Rolling Updates
 
