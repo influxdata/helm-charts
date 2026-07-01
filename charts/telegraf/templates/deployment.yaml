@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "telegraf.fullname" . }}
+  {{- if .Values.deploymentAnnotations }}
+  annotations:
+  {{ toYaml .Values.configmapAnnotations | indent 4 }}
+  {{- end }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 spec:
