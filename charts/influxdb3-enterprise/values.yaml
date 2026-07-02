@@ -863,6 +863,9 @@ serviceAccount:
 
 # Extra environment variables for all pods. Component-specific extraEnv entries override
 # entries with the same name for one component.
+# Non-processor pods set INFLUXDB3_UNSET_VARS=INFLUXDB3_PLUGIN_DIR by default.
+# If you override INFLUXDB3_UNSET_VARS, include INFLUXDB3_PLUGIN_DIR yourself
+# or the Processing Engine may initialize on non-processor pods.
 extraEnv: []
   # - name: CUSTOM_VAR
   #   value: "custom-value"

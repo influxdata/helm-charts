@@ -115,10 +115,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
-            # Prevent Processing Engine initialization on non-processor pods (air-gapped deployments)
-            # Official docs: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#disable-the-processing-engine
-            - name: INFLUXDB3_UNSET_VARS
-              value: "INFLUXDB3_PLUGIN_DIR"
+            {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.ingester) | nindent 12 }}
             {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.ingester) | nindent 12 }}
           ports:
             - name: http

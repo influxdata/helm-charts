@@ -365,6 +365,27 @@ Component-specific entries override global entries with the same name.
 {{- end }}
 
 {{/*
+Air-gap protection for non-processor pods. If the user explicitly sets
+INFLUXDB3_UNSET_VARS through extraEnv, that value is authoritative.
+Docs:
+https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#disable-the-processing-engine
+*/}}
+{{- define "influxdb3-enterprise.nonProcessorUnsetVars" -}}
+{{- $global := .root.Values.extraEnv | default (list) -}}
+{{- $component := .component.extraEnv | default (list) -}}
+{{- $userSet := false -}}
+{{- range (concat $global $component) -}}
+{{- if eq (.name | default "") "INFLUXDB3_UNSET_VARS" -}}
+{{- $userSet = true -}}
+{{- end -}}
+{{- end -}}
+{{- if not $userSet }}
+- name: INFLUXDB3_UNSET_VARS
+  value: "INFLUXDB3_PLUGIN_DIR"
+{{- end -}}
+{{- end }}
+
+{{/*
 Probe configuration (shared across components)
 */}}
 {{- define "influxdb3-enterprise.probes" -}}

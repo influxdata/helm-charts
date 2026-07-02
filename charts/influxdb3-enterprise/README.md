@@ -368,11 +368,13 @@ extraEnv:
 Use component-specific `extraEnv` to target only one component. Component-specific entries override top-level `extraEnv` entries with the same `name`.
 
 ```yaml
-processingEngine:
+ingester:
   extraEnv:
-    - name: INFLUXDB3_UNSET_VARS
-      value: "INFLUXDB3_PLUGIN_DIR"
+    - name: CUSTOM_INGESTER_VAR
+      value: "custom-value"
 ```
+
+Non-processor pods set `INFLUXDB3_UNSET_VARS=INFLUXDB3_PLUGIN_DIR` by default to keep the Processing Engine disabled. If you override `INFLUXDB3_UNSET_VARS` through top-level or component `extraEnv`, include `INFLUXDB3_PLUGIN_DIR` yourself or the Processing Engine may initialize on those pods.
 
 #### Monitoring
 
