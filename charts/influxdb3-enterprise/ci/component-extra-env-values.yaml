@@ -30,7 +30,7 @@ ingester:
       memory: "4Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
-      value: "INFLUXDB3_PLUGIN_DIR,INFLUXDB3_HTTP_BIND_ADDR"
+      value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
     - name: GLOBAL_COMPONENT_OVERRIDE_TEST
       value: "ingester"
   persistence:
@@ -47,7 +47,7 @@ querier:
       memory: "4Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
-      value: "INFLUXDB3_PLUGIN_DIR,INFLUXDB3_HTTP_BIND_ADDR"
+      value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
 
 compactor:
   replicas: 1
@@ -60,7 +60,7 @@ compactor:
       memory: "4Gi"
   extraEnv:
     - name: INFLUXDB3_UNSET_VARS
-      value: "INFLUXDB3_PLUGIN_DIR,INFLUXDB3_HTTP_BIND_ADDR"
+      value: "INFLUXDB3_PLUGIN_DIR INFLUXDB3_HTTP_BIND_ADDR"
 
 processingEngine:
   enabled: true
