@@ -83,6 +83,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "influxdb3-enterprise.serviceAccountName" . }}
+      {{- if not (kindIs "invalid" .Values.serviceAccount.automountServiceAccountToken) }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      {{- end }}
       {{- if .Values.processingEngine.priorityClassName }}
       priorityClassName: {{ .Values.processingEngine.priorityClassName }}
       {{- end }}
