@@ -537,20 +537,6 @@ Whether processor plugin volume mounts are present
 {{- end }}
 
 {{/*
-Whether processor pluginDir is actually mounted by processorPluginVolumeMounts
-*/}}
-{{- define "influxdb3-enterprise.hasProcessorPluginDirMount" -}}
-{{- $mounts := include "influxdb3-enterprise.processorPluginVolumeMounts" . -}}
-{{- $pluginDir := .pluginDir | default "/plugins" -}}
-{{- $needle := printf "mountPath: %s\n" $pluginDir -}}
-{{- if contains $needle (printf "%s\n" $mounts) -}}
-true
-{{- else -}}
-false
-{{- end -}}
-{{- end }}
-
-{{/*
 Shared volumes (license/TLS/GCS and user extras)
 */}}
 {{- define "influxdb3-enterprise.sharedVolumes" -}}

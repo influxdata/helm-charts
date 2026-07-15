@@ -487,11 +487,6 @@ processingEngine:
     size: "5Gi"
     accessMode: ReadWriteOnce
 
-  # Pre-install plugins via initContainer (optional)
-  initPlugins: []
-    # - name: system-metrics
-    #   source: "gh:influxdata/system_metrics/system_metrics.py"
-
   # Pod affinity/anti-affinity, node selectors, tolerations
   # Default: soft anti-affinity to spread pods across nodes when possible
   affinity:
