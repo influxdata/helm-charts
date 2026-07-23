@@ -95,9 +95,20 @@ Validate object storage type
 */}}
 {{- define "influxdb3-enterprise.validateObjectStorageType" -}}
 {{- $type := default "s3" .Values.objectStorage.type -}}
-{{- $valid := list "s3" "azure" "google" "file" "memory" "memory-throttled" -}}
+{{- $valid := list "s3" "azure" "google" "file" -}}
 {{- if not (has $type $valid) -}}
 {{- fail (printf "Invalid objectStorage.type: %s. Must be one of: %s" $type (join ", " $valid)) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Validate license type
+*/}}
+{{- define "influxdb3-enterprise.validateLicenseType" -}}
+{{- $type := default "trial" .Values.license.type -}}
+{{- $valid := list "trial" "commercial" -}}
+{{- if not (has $type $valid) -}}
+{{- fail (printf "Invalid license.type: %s. Must be one of: %s" $type (join ", " $valid)) -}}
 {{- end -}}
 {{- end }}
 
@@ -275,7 +286,7 @@ License environment (shared across components)
 {{- define "influxdb3-enterprise.licenseEnv" -}}
 {{- if or .Values.license.existingSecret (or .Values.license.email .Values.license.file) }}
 {{- $licenseType := .Values.license.type | default "trial" -}}
-{{- if and (or (eq $licenseType "trial") (eq $licenseType "home")) (or .Values.license.email .Values.license.existingSecret) }}
+{{- if and (eq $licenseType "trial") (or .Values.license.email .Values.license.existingSecret) }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
   valueFrom:
     secretKeyRef:
@@ -285,7 +296,7 @@ License environment (shared across components)
 {{- if .Values.license.file }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
   value: "/etc/influxdb/license"
-{{- else if and .Values.license.existingSecret (and (ne $licenseType "trial") (ne $licenseType "home")) }}
+{{- else if and .Values.license.existingSecret (eq $licenseType "commercial") }}
 - name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- end }}
@@ -461,7 +472,7 @@ Shared volume mounts (license/TLS/GCS and user extras)
   mountPath: /etc/influxdb/license
   subPath: license
   readOnly: true
-{{- else if and .Values.license.existingSecret (and (ne $licenseType "trial") (ne $licenseType "home")) }}
+{{- else if and .Values.license.existingSecret (eq $licenseType "commercial") }}
 - name: license
   mountPath: /etc/influxdb/license
   subPath: license
@@ -571,7 +582,7 @@ Shared volumes (license/TLS/GCS and user extras)
     items:
       - key: license-file
         path: license
-{{- else if and .Values.license.existingSecret (and (ne $licenseType "trial") (ne $licenseType "home")) }}
+{{- else if and .Values.license.existingSecret (eq $licenseType "commercial") }}
 - name: license
   secret:
     secretName: {{ include "influxdb3-enterprise.licenseSecretName" . }}

@@ -30,7 +30,7 @@ InfluxDB 3 Enterprise is a high-performance time series database designed for pr
 - Helm 3.8+
 - Object storage (S3, Azure Blob Storage, or Google Cloud Storage)
 - RWX PersistentVolume provisioner support when using `objectStorage.type=file`
-- InfluxDB 3 Enterprise license (trial, home, or commercial)
+- InfluxDB 3 Enterprise license (trial or commercial)
 - **NGINX Ingress Controller** (required if using ingress, which is enabled by default)
 
 To install NGINX Ingress Controller:
@@ -250,14 +250,14 @@ For `objectStorage.type=s3`, `google`, or `azure`, the chart does not create a
 data or WAL PVC. WAL files, snapshots, catalog data, and Parquet files are
 persisted through the configured durable object store.
 
-For `objectStorage.type=memory` or `memory-throttled`, all object-store data
-(WAL files, snapshots, catalog data, and Parquet files) is held in memory and
-lost when the pod restarts. These modes are intended for testing only.
+`objectStorage.type=memory` and `memory-throttled` are not supported. Each
+component runs as a separate node, so in-process object storage cannot be
+shared across the cluster.
 
 For `objectStorage.type=file`, the chart creates one shared RWX object-storage
 PVC and mounts it at `objectStorage.file.dataDir` for Enterprise components.
-For single-node local testing only, where all pods run on the same node, you can
-set `objectStorage.file.persistence.accessMode=ReadWriteOnce` to use a
+For local testing where all pods run on the same Kubernetes node, you can set
+`objectStorage.file.persistence.accessMode=ReadWriteOnce` to use a
 local-path style StorageClass.
 
 #### Resource Configuration
@@ -631,8 +631,8 @@ logs:
 | `image.registry` | Image registry | `docker.io` |
 | `image.repository` | Image repository | `influxdb` |
 | `image.tag` | Image tag override (defaults to `<appVersion>-enterprise` when empty) | `""` |
-| `license.type` | trial, home, or commercial | `trial` |
-| `license.email` | Email for trial/home | `""` |
+| `license.type` | trial or commercial | `trial` |
+| `license.email` | Email for trial licenses | `""` |
 | `license.file` | License file content (use `--set-file license.file=/path/to/file`) | `""` |
 | `license.existingSecret` | Secret with `license-email` or `license-file` | `""` |
 | `security.auth.adminToken.existingSecret` | Secret with offline admin token key `admin-token.json` | `""` |
@@ -741,3 +741,8 @@ See `values.yaml` for complete parameter list.
 ## License
 
 InfluxDB 3 Enterprise software requires a valid license from InfluxData.
+
+This chart is designed exclusively for multi-node deployments and supports
+Trial and Commercial licenses. Home licenses are limited to one node and are
+not supported. For Home use, run the standalone Docker or binary deployment
+in all-mode.
