@@ -200,6 +200,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
           {{- if eq $tp "bool" }}
       {{ $key }} = {{ $value }}
           {{- end }}
+        {{- end }}
+        {{- range $key, $value := $config -}}
+          {{- $tp := typeOf $value -}}
           {{- if eq $tp "[]interface {}" }}
             {{- if eq (index $value 0 | typeOf) "map[string]interface {}" -}}
               {{- range $b, $val := $value }}
