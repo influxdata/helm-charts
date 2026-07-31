@@ -52,7 +52,6 @@ objectStorage:
   # requestTimeout: ""              # Object store request timeout (optional, server default: 30s)
   # maxRetries: ""                  # Object store retry attempts (optional)
   # retryTimeout: ""                # Object store retry timeout (optional)
-  # cacheEndpoint: ""               # Object store cache endpoint (optional)
   # tlsAllowInsecure: false         # Skip object-store TLS cert verification (testing only)
   # tlsCa:
   #   certPath: ""                  # Path to custom CA PEM file for object-store TLS verification
@@ -189,8 +188,11 @@ ingester:
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
   # Memory tuning
+  # IMPORTANT (3.11+): Bare numbers no longer accepted for memory flags.
+  # Use unit suffix ("4096mb", "4gb") or percentage ("20%").
+  # Percentages recommended for automatic container sizing.
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
+  #   execMemPoolBytes: "20%"            # --exec-mem-pool-size (renamed from --exec-mem-pool-bytes)
   #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # DataFusion configuration
@@ -289,8 +291,11 @@ querier:
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
   # Memory tuning
+  # IMPORTANT (3.11+): Bare numbers no longer accepted for memory flags.
+  # Use unit suffix ("4096mb", "4gb") or percentage ("20%").
+  # Percentages recommended for automatic container sizing.
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
+  #   execMemPoolBytes: "20%"            # --exec-mem-pool-size (renamed from --exec-mem-pool-bytes)
   #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # DataFusion configuration
@@ -380,8 +385,11 @@ compactor:
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
   # Memory tuning
+  # IMPORTANT (3.11+): Bare numbers no longer accepted for memory flags.
+  # Use unit suffix ("4096mb", "4gb") or percentage ("20%").
+  # Percentages recommended for automatic container sizing.
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
+  #   execMemPoolBytes: "20%"            # --exec-mem-pool-size (renamed from --exec-mem-pool-bytes)
   #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # DataFusion configuration
@@ -465,8 +473,11 @@ processingEngine:
     #   value: "processor-only"
 
   # Memory tuning
+  # IMPORTANT (3.11+): Bare numbers no longer accepted for memory flags.
+  # Use unit suffix ("4096mb", "4gb") or percentage ("20%").
+  # Percentages recommended for automatic container sizing.
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
+  #   execMemPoolBytes: "20%"            # --exec-mem-pool-size (renamed from --exec-mem-pool-bytes)
   #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
 
   # DataFusion configuration
@@ -589,8 +600,15 @@ http:
 
 # Caching configuration
 caching:
-  # Parquet file caching
-  # parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
+  # File caching (3.11+: renamed from parquet* to file*, old names still work)
+  # IMPORTANT (3.11+): Bare numbers no longer accepted.
+  # Use unit suffix ("4096mb") or percentage ("20%").
+  # fileCacheSize: "20%"                  # Total budget (3.11+: renamed from parquetMemCacheSize)
+  # fileCacheRecency: "5h"                # Query path duration (3.11+: renamed from parquetMemCacheQueryPathDuration)
+  # disableFileCache: false               # Disable file cache (3.11+: renamed from disableParquetMemCache)
+  
+  # Legacy names (3.9.x, still work with deprecation warnings in 3.11+)
+  # parquetMemCacheSize: "20%"
   # parquetMemCacheQueryPathDuration: "5h"
   # parquetMemCachePrunePercentage: 0.1
   # parquetMemCachePruneInterval: "1s"
@@ -620,7 +638,6 @@ caching:
 #   gen1LookbackDuration: "24h"       # Lookback for gen1 Parquet files
 #   retentionCheckInterval: "30m"     # How often to check retention policies
 #   deleteGracePeriod: "24h"          # Grace period before permanent deletion
-#   hardDeleteDefaultDuration: "90d"  # Default hard delete duration
 
 # Logs configuration
 # logs:

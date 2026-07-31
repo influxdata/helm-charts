@@ -78,15 +78,15 @@ spec:
               value: {{ .flushInterval | quote }}
             {{- end }}
             {{- if .snapshotSize }}
-            - name: INFLUXDB3_WAL_SNAPSHOT_SIZE
+            - name: INFLUXDB3_WAL_FILES_PER_SNAPSHOT
               value: {{ .snapshotSize | quote }}
             {{- end }}
             {{- if .maxWriteBufferSize }}
-            - name: INFLUXDB3_WAL_MAX_WRITE_BUFFER_SIZE
+            - name: INFLUXDB3_WAL_MAX_BUFFERED_WRITES
               value: {{ .maxWriteBufferSize | quote }}
             {{- end }}
             {{- if .snapshotFilesToKeep }}
-            - name: INFLUXDB3_NUM_WAL_FILES_TO_KEEP
+            - name: INFLUXDB3_SNAPSHOTTED_WAL_FILES_TO_KEEP
               value: {{ .snapshotFilesToKeep | quote }}
             {{- end }}
             {{- if hasKey . "replayFailOnError" }}
@@ -96,7 +96,7 @@ spec:
             {{- end }}
             {{- with .Values.ingester.memory }}
             {{- if .execMemPoolBytes }}
-            - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
+            - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
               value: {{ .execMemPoolBytes | quote }}
             {{- end }}
             {{- if .forceSnapshotMemThreshold }}

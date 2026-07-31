@@ -74,7 +74,7 @@ spec:
             {{- end }}
             {{- with .Values.querier.memory }}
             {{- if .execMemPoolBytes }}
-            - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
+            - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
               value: {{ .execMemPoolBytes | quote }}
             {{- end }}
             {{- if .forceSnapshotMemThreshold }}
