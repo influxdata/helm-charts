@@ -2,9 +2,14 @@
 
 Official Helm chart for deploying InfluxDB 3 Enterprise on Kubernetes with full workload isolation, high availability, and enterprise features.
 
+**Chart Version:** 0.9.0  
+**App Version:** 3.11.0  
+**Storage Engine:** PachaTree (new clusters), Parquet (existing clusters, migration available)
+
 ## Table of Contents
 
 - [Overview](#overview)
+- [What's New in 0.9.0](#whats-new-in-090)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -21,8 +26,68 @@ InfluxDB 3 Enterprise is a high-performance time series database designed for pr
 - **Workload Isolation**: Separate nodes for ingestion, querying, compaction, and processing
 - **High Availability**: Multiple replicas for ingesters and queriers
 - **Horizontal Scalability**: Scale each component independently
+- **PachaTree Storage Engine**: Next-generation storage with improved compaction performance (3.11+)
 - **Enterprise Features**: Processing Engine, multi-node clustering, advanced monitoring
 - **Production Ready**: Network policies, service monitors, resource management
+
+## What's New in 0.9.0
+
+This release updates the chart to support InfluxDB 3.11.0 with new features and improvements:
+
+### 🆕 New Features
+
+- **PachaTree Storage Engine**: Next-generation storage engine with improved compaction performance
+  - New clusters automatically use PachaTree
+  - Existing Parquet clusters can migrate via `engine.upgradePachaTree: true`
+  - See [MIGRATION-3.11.md](./MIGRATION-3.11.md) for migration guide
+
+- **Graceful Shutdown**: Configurable connection drain timeout
+  ```yaml
+  shutdown:
+    timeout: "30s"  # Default: 30s, 0s=skip drain
+  ```
+
+- **Processing Engine Updates**:
+  - `disablePackageManagement`: Lock down package installations
+  - `asyncTriggerConcurrencyLimit`: Control async trigger concurrency
+
+### ⚙️ Breaking Changes
+
+**Fully backward compatible** - Existing clusters upgrade seamlessly.
+
+- 12 environment variables renamed (`INFLUXDB3_ENTERPRISE_*` → `INFLUXDB3_*`)
+  - Old names still work with deprecation warnings
+- 3 WAL variables renamed (old names still work)
+- 1 memory variable renamed with format change (now requires units: `"2GB"`)
+- 2 deprecated options removed:
+  - `objectStorage.cacheEndpoint` (now automatic)
+  - `dataLifecycle.hardDeleteDefaultDuration` (cluster-level only)
+
+**See:** [MIGRATION-3.11.md](./MIGRATION-3.11.md) for complete upgrade guide.
+
+### 📦 Container Images
+
+**Quay.io (Recommended):**
+```yaml
+image:
+  registry: quay.io
+  repository: influxdb/influxdb3-enterprise
+  tag: "e5242f505d23039a340d21693a994b1a053b0f15"  # 3.11.0
+```
+
+**Docker Hub:**
+```yaml
+image:
+  registry: docker.io
+  repository: influxdb/influxdb3-enterprise
+  tag: "3.11.0-enterprise"
+```
+
+**Direct Downloads (non-containerized):**
+- [x86_64 RPM](https://dl.influxdata.com/influxdb/releases/influxdb3-enterprise-3.11.0.x86_64.rpm)
+- [aarch64 RPM](https://dl.influxdata.com/influxdb/releases/influxdb3-enterprise-3.11.0.aarch64.rpm)
+- [amd64 DEB](https://dl.influxdata.com/influxdb/releases/influxdb3-enterprise_3.11.0-1_amd64.deb)
+- [arm64 DEB](https://dl.influxdata.com/influxdb/releases/influxdb3-enterprise_3.11.0-1_arm64.deb)
 
 ## Prerequisites
 
@@ -166,6 +231,86 @@ Notes:
 - See: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#permission-tokens-file
 
 ## Configuration
+
+### Storage Engine (PachaTree)
+
+**New in 3.11:** InfluxDB 3 Enterprise supports two storage engines:
+
+| Engine | Description | Best For | Default |
+|--------|-------------|----------|---------|
+| **PachaTree** | Next-gen storage with improved compaction | New clusters, production workloads | ✅ New clusters (3.11+) |
+| **Parquet** | Previous-gen storage engine | Existing clusters, legacy compatibility | Existing clusters |
+
+#### For New Clusters
+
+**No configuration needed** - PachaTree is automatically enabled:
+
+```yaml
+# values.yaml for new cluster
+cluster:
+  id: "my-cluster"
+
+objectStorage:
+  type: s3
+  bucket: "my-bucket"
+  # ...
+
+# PachaTree is automatically enabled - no configuration required
+```
+
+#### For Existing Parquet Clusters
+
+**Stay on Parquet** (recommended until you're ready to migrate):
+
+```yaml
+# No configuration changes needed
+# Cluster stays on Parquet after upgrading to chart 0.9.0
+```
+
+**Migrate to PachaTree** (opt-in, one-time, one-way):
+
+```yaml
+# Enable PachaTree migration
+engine:
+  upgradePachaTree: true    # Set ONCE to start migration, then remove after completion
+  
+  # Optional: Tune PachaTree behavior
+  pachaTree:
+    shardCount: 2                    # More shards = more parallelism (default: 1)
+    maxTotalColumns: 10000           # Higher column limit (default: 5000)
+    snapshotSize: 200000             # Larger snapshot threshold (default: 100000)
+    gen0MaxFileSize: "200mb"         # Larger Gen0 files (default: "100mb")
+    walReplicaQueueLength: 2000      # Larger WAL queue (default: 1000)
+```
+
+**⚠️ Migration Notes:**
+- Migration is **one-way** (Parquet → PachaTree, no rollback)
+- Cluster stays online during migration
+- Duration varies by data volume (hours to days)
+- See [MIGRATION-3.11.md](./MIGRATION-3.11.md) for detailed migration guide
+
+#### PachaTree Benefits
+
+- ✅ **Better compaction throughput** - Time-disjoint two-level compaction
+- ✅ **Improved ingest performance** - Especially for leading-edge writes
+- ✅ **Reduced WAL lag** - Better handling of write spikes
+- ✅ **Better query performance** - On recent data
+
+### Graceful Shutdown
+
+**New in 3.11:** Configure connection drain timeout before pod shutdown:
+
+```yaml
+shutdown:
+  timeout: "30s"    # Drain connections for 30s before forcibly closing (default)
+  # timeout: "60s"  # Longer timeout for production
+  # timeout: "0s"   # Skip drain entirely (immediate shutdown)
+```
+
+**Benefits:**
+- Fewer client connection errors during rolling updates
+- Better user experience during maintenance
+- Reduced load on ingress/load balancers
 
 ### Component Architecture
 
@@ -399,10 +544,21 @@ processingEngine:
   enabled: true
   replicas: 1
   pluginDir: "/plugins"
+  
+  # Security: Lock down package management (3.11+)
+  disablePackageManagement: false    # Set true to reject package install API calls
+  
+  # Performance: Control async trigger concurrency (3.11+)
+  asyncTriggerConcurrencyLimit: 8    # Limit concurrent async triggers (default: unlimited)
+  
   persistence:
     enabled: true
     size: "5Gi"
 ```
+
+**New in 3.11:**
+- `disablePackageManagement`: Reject all package installation requests (security lockdown)
+- `asyncTriggerConcurrencyLimit`: Cap concurrent async trigger invocations (prevent runaway usage)
 
 ## Architecture
 
@@ -451,6 +607,38 @@ processingEngine:
 
 ## Upgrading
 
+### Upgrading to 0.9.0 (InfluxDB 3.11.0)
+
+**Chart 0.8.0 → 0.9.0** introduces InfluxDB 3.11.0 with PachaTree storage engine, graceful shutdown, and Processing Engine updates.
+
+**⚠️ IMPORTANT:** This upgrade is **backward compatible**. Existing clusters upgrade seamlessly.
+
+**Quick Upgrade:**
+```bash
+# Update Helm repository
+helm repo update influxdata
+
+# Upgrade to 0.9.0
+helm upgrade influxdb3-enterprise influxdata/influxdb3-enterprise \
+  --version 0.9.0 \
+  --namespace influxdb3 \
+  -f my-values.yaml
+```
+
+**What happens:**
+- Pods restart with new image (3.11.0-enterprise)
+- Existing Parquet clusters stay on Parquet (no migration)
+- Environment variables use new names (old names log deprecation warnings)
+- No data migration required
+
+**For complete upgrade guide including:**
+- Breaking changes (environment variable renames, removed options)
+- PachaTree migration steps for existing clusters
+- New features configuration
+- Troubleshooting
+
+**See:** [MIGRATION-3.11.md](./MIGRATION-3.11.md)
+
 ### Upgrade the Chart
 
 ```bash
@@ -459,7 +647,7 @@ helm upgrade influxdb3-enterprise . \
   -f my-values.yaml
 ```
 
-#### Upgrade from chart 0.6.x
+### Upgrade from chart 0.6.x
 
 Chart 0.7.0 removes the ingester WAL `volumeClaimTemplates` from the
 StatefulSet. Kubernetes does not allow this field to be removed from an existing
