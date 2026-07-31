@@ -59,6 +59,9 @@ spec:
             - serve
             - --mode=ingest
             - --node-id=$(POD_NAME)
+            {{- if .Values.engine.upgradePachaTree }}
+            - --upgrade-pacha-tree
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
@@ -118,6 +121,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
+            {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.ingester) | nindent 12 }}
             {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.ingester) | nindent 12 }}
           ports:

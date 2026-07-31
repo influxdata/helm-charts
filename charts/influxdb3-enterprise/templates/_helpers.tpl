@@ -632,3 +632,31 @@ Permission tokens volumes
         path: permission-tokens.json
 {{- end }}
 {{- end }}
+
+{{/*
+PachaTree engine environment variables
+*/}}
+{{- define "influxdb3-enterprise.pachaTreeEnv" -}}
+{{- with .Values.engine.pachaTree }}
+{{- if .shardCount }}
+- name: INFLUXDB3_SHARD_COUNT
+  value: {{ .shardCount | quote }}
+{{- end }}
+{{- if .maxTotalColumns }}
+- name: INFLUXDB3_MAX_TOTAL_COLUMNS
+  value: {{ .maxTotalColumns | quote }}
+{{- end }}
+{{- if .snapshotSize }}
+- name: INFLUXDB3_SNAPSHOT_SIZE
+  value: {{ .snapshotSize | quote }}
+{{- end }}
+{{- if .gen0MaxFileSize }}
+- name: INFLUXDB3_GEN0_MAX_FILE_SIZE
+  value: {{ .gen0MaxFileSize | quote }}
+{{- end }}
+{{- if .walReplicaQueueLength }}
+- name: INFLUXDB3_WAL_REPLICA_QUEUE_LENGTH
+  value: {{ .walReplicaQueueLength | quote }}
+{{- end }}
+{{- end }}
+{{- end }}

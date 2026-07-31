@@ -100,6 +100,14 @@ spec:
             - name: INFLUXDB3_PACKAGE_MANAGER
               value: {{ . | quote }}
             {{- end }}
+            {{- if .Values.processingEngine.disablePackageManagement }}
+            - name: INFLUXDB3_DISABLE_PACKAGE_MANAGEMENT
+              value: "true"
+            {{- end }}
+            {{- if .Values.processingEngine.asyncTriggerConcurrencyLimit }}
+            - name: INFLUXDB3_ASYNC_TRIGGER_CONCURRENCY_LIMIT
+              value: {{ .Values.processingEngine.asyncTriggerConcurrencyLimit | quote }}
+            {{- end }}
             {{- with .Values.processingEngine.memory }}
             {{- if .execMemPoolBytes }}
             - name: INFLUXDB3_EXEC_MEM_POOL_SIZE

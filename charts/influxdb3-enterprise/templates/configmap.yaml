@@ -55,6 +55,13 @@ data:
   {{- end }}
   {{- end }}
 
+  # Graceful shutdown (3.11+)
+  {{- with .Values.shutdown }}
+  {{- if .timeout }}
+  INFLUXDB3_SHUTDOWN_TIMEOUT: {{ .timeout | quote }}
+  {{- end }}
+  {{- end }}
+
   # Object storage (non-secret)
   INFLUXDB3_OBJECT_STORE: {{ .Values.objectStorage.type | quote }}
   {{- if eq .Values.objectStorage.type "file" }}

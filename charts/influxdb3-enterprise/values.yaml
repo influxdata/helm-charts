@@ -32,6 +32,34 @@ cluster:
 #  waitForRunningIngestor: "10s"     # Startup wait time for ingestor
 
 # ============================================================================
+# Storage Engine Configuration (3.11+)
+# ============================================================================
+# PachaTree is the default engine for new clusters in 3.11+
+# Existing Parquet clusters remain on Parquet until explicitly migrated
+
+engine:
+  # Migration flag for existing Parquet clusters
+  # Set to true ONLY when migrating an existing Parquet cluster to PachaTree
+  # DO NOT set for new clusters (they default to PachaTree automatically)
+  # DO NOT set for clusters already running PachaTree
+  upgradePachaTree: false
+  
+  # PachaTree-specific configuration
+  pachaTree:
+    # Shard configuration
+    # shardCount: 1                   # Number of shards (default: 1)
+    # maxTotalColumns: 5000           # Max columns across all tables (default: 5000)
+    
+    # Snapshot configuration
+    # snapshotSize: 100000            # Snapshot size threshold (default: 100000)
+    
+    # Gen0 file configuration
+    # gen0MaxFileSize: "100mb"        # Max size for Gen0 files (default: 100mb)
+    
+    # WAL replication
+    # walReplicaQueueLength: 1000     # WAL replica queue length (default: 1000)
+
+# ============================================================================
 # Object Storage Configuration
 # ============================================================================
 # InfluxDB 3 Enterprise requires object storage for persisting Parquet files.
@@ -489,7 +517,13 @@ processingEngine:
   # Plugin configuration
   pluginDir: "/plugins"               # Local directory that contains Python plugins and their test files.
   # pluginRepo: "https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/"  # URL of remote plugin repository
-  # packageManager: "discover"        # discover, pip, uv, or disabled
+  # packageManager: "discover"        # discover, pip, uv, or disabled (deprecated, use disablePackageManagement)
+  
+  # Package management (3.11+)
+  # disablePackageManagement: false   # Set true to reject all package install API calls
+  
+  # Async trigger configuration (3.11+)
+  # asyncTriggerConcurrencyLimit: 8   # Max concurrent async trigger invocations (default: unlimited)
 
   # Persistent storage for plugins
   persistence:
@@ -597,6 +631,13 @@ security:
 http:
   # bind: "0.0.0.0:8181"
   # maxRequestSize: 10485760          # 10MB default
+
+# Graceful shutdown configuration (3.11+)
+shutdown:
+  # Timeout for graceful connection drain before forcibly closing
+  # 0s skips drain entirely
+  # Default: 30s
+  # timeout: "30s"
 
 # Caching configuration
 caching:
