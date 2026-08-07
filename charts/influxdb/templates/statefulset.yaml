@@ -4,6 +4,13 @@ metadata:
   name: {{ include "influxdb.fullname" . }}
   labels:
     {{- include "influxdb.labels" . | nindent 4 }}
+    {{- if .Values.statefulSetLabels }}
+{{ toYaml .Values.statefulSetLabels | indent 4 }}
+    {{- end }}
+  {{- if .Values.statefulSetAnnotations }}
+  annotations:
+{{ toYaml .Values.statefulSetAnnotations | indent 4 }}
+  {{- end }}
 spec:
   {{- if .Values.enterprise.enabled }}
   replicas: {{ .Values.enterprise.clusterSize }}
