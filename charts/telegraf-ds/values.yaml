@@ -34,13 +34,6 @@ env:
     valueFrom:
       fieldRef:
         fieldPath: spec.nodeName
-  # In test clusters where hostnames are resolved in /etc/hosts on each node,
-  # the HOSTNAME is not resolvable from inside containers
-  # So inject the host IP as well
-  - name: HOSTIP
-    valueFrom:
-      fieldRef:
-        fieldPath: status.hostIP
   # Mount the host filesystem and set the appropriate env variables.
   # ref: https://github.com/influxdata/telegraf/blob/master/docs/FAQ.md
   # HOST_PROC is required by the cpu, disk, diskio, kernel and processes input plugins
