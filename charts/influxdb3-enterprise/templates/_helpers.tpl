@@ -94,7 +94,7 @@ License secret name
 Require acknowledgement of the InfluxDB 3.10 catalog migration.
 */}}
 {{- define "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" -}}
-{{- if and .Release.IsUpgrade (not .Values.acknowledgeCatalogMigration) -}}
+{{- if and .Release.IsUpgrade (ne (toString .Values.acknowledgeCatalogMigration) "true") -}}
 {{- fail "InfluxDB 3.10 performs a one-way catalog migration. Follow UPGRADING-3.9-TO-3.10.md, then set acknowledgeCatalogMigration: true in your values file." -}}
 {{- end -}}
 {{- end }}
