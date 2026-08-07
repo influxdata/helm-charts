@@ -16,7 +16,8 @@ objectStorage:
 
 license:
   type: "commercial"
-  email: "production@example.com"
+  # Secret must contain the commercial license under the `license-file` key.
+  existingSecret: "influxdb3-license"
 
 ingester:
   replicas: 3
