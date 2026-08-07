@@ -132,6 +132,9 @@ env:
 ## This can be useful for auth tokens, etc
 envFromSecret: ""
 
+## Additional common labels to add to generated resources
+extraLabels: {}
+
 # volumes:
 # - name: chronograf-output-influxdb2
 #   configMap:
