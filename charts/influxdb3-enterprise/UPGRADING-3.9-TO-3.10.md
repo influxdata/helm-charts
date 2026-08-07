@@ -18,7 +18,7 @@ export NAMESPACE=influxdb3
 export VALUES_FILE=./my-values.yaml
 export TARGET_CHART_VERSION=0.9.0
 
-helm get values "$RELEASE" -n "$NAMESPACE" > pre-3.10-values.yaml
+helm get values "$RELEASE" -n "$NAMESPACE" -o yaml > pre-3.10-values.yaml
 kubectl get pods -n "$NAMESPACE" \
   -l "app.kubernetes.io/instance=$RELEASE" \
   -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image,READY:.status.containerStatuses[0].ready
@@ -52,9 +52,10 @@ helm upgrade "$RELEASE" influxdata/influxdb3-enterprise \
   --wait --timeout 30m
 ```
 
-Do not use `--atomic`: after the catalog migration, rolling back to a 3.9 image
-fails unless the pre-upgrade catalog backup is restored. Do not enable
-`INFLUXDB3_UPGRADE_PACHA_TREE`; migrate the storage engine separately.
+Do not use `--atomic`, and do not run `helm rollback` to a 3.9 revision after
+the catalog migration. Both can restore a 3.9 image while leaving the catalog
+at v3. To return to 3.9, first restore the pre-upgrade catalog backup. Do not
+enable `INFLUXDB3_UPGRADE_PACHA_TREE`; migrate the storage engine separately.
 
 ## Verify
 
