@@ -13,8 +13,11 @@ documentation.
 ## Before upgrading
 
 ```bash
+# Set these to your existing Helm release name and namespace.
 export RELEASE=influxdb3-enterprise
 export NAMESPACE=influxdb3
+
+# Set this to the values file you will use for the upgrade.
 export VALUES_FILE=./my-values.yaml
 export TARGET_CHART_VERSION=0.9.0
 
