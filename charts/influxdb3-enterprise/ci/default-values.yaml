@@ -12,6 +12,9 @@ objectStorage:
 ingress:
   enabled: false
 
+networkPolicy:
+  enabled: true
+
 ingester:
   replicas: 1
   resources:
