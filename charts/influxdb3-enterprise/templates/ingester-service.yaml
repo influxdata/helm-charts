@@ -18,6 +18,12 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    {{- if .Values.processingEngine.enabled }}
+    - port: 8183
+      targetPort: grpc-internode
+      protocol: TCP
+      name: grpc-internode
+    {{- end }}
   selector:
     {{- include "influxdb3-enterprise.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: ingester

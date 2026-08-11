@@ -59,6 +59,10 @@ spec:
             - serve
             - --mode=ingest
             - --node-id=$(POD_NAME)
+            {{- if .Values.processingEngine.enabled }}
+            - --internode-bind-addr=0.0.0.0:8183
+            - --conn-info=$(POD_NAME).{{ include "influxdb3-enterprise.fullname" . }}-ingester:8183
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
@@ -124,6 +128,11 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
+            {{- if .Values.processingEngine.enabled }}
+            - name: grpc-internode
+              containerPort: 8183
+              protocol: TCP
+            {{- end }}
           {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.ingester.resources | nindent 12 }}
