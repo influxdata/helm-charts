@@ -695,6 +695,14 @@ logs:
 | `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
 | `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
 
+### Ingester internode Services
+
+When `processingEngine.enabled=true`, the chart creates one internal ClusterIP
+Service per ingester replica. Each Service is named exactly like its target Pod
+because that name is advertised through `--conn-info`. Scale ingesters by
+changing `ingester.replicas` and running a Helm upgrade; scaling the StatefulSet
+directly does not create or remove the corresponding Services.
+
 ### TLS Parameters
 
 | Parameter | Description | Default |

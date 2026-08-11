@@ -457,6 +457,13 @@ ingester.internode.port.
 {{- end }}
 
 {{/*
+Ingester Pod name shared by the StatefulSet, per-pod Service, and test.
+*/}}
+{{- define "influxdb3-enterprise.ingesterPodName" -}}
+{{- printf "%s-ingester-%d" (include "influxdb3-enterprise.fullname" .root) (int .ordinal) -}}
+{{- end }}
+
+{{/*
 Shared volume mounts (license/TLS/GCS and user extras)
 */}}
 {{- define "influxdb3-enterprise.sharedVolumeMounts" -}}

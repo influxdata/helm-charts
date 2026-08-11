@@ -22,24 +22,29 @@ spec:
     {{- include "influxdb3-enterprise.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: ingester
 {{- if .Values.processingEngine.enabled }}
+{{- range $ordinal := until (int .Values.ingester.replicas) }}
+{{- $podName := include "influxdb3-enterprise.ingesterPodName" (dict "root" $ "ordinal" $ordinal) }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ printf "%s-ingester-internode" (include "influxdb3-enterprise.fullname" .) | trunc 63 | trimSuffix "-" }}
-  namespace: {{ .Release.Namespace }}
+  # Must exactly match the StatefulSet Pod name advertised by --conn-info.
+  name: {{ $podName }}
+  namespace: {{ $.Release.Namespace }}
   labels:
-    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    {{- include "influxdb3-enterprise.labels" $ | nindent 4 }}
     app.kubernetes.io/component: ingester
 spec:
   type: ClusterIP
   ports:
-    - port: {{ include "influxdb3-enterprise.ingesterInternodePort" . }}
+    - port: {{ include "influxdb3-enterprise.ingesterInternodePort" $ }}
       targetPort: grpc-internode
       protocol: TCP
       name: grpc-internode
   selector:
-    {{- include "influxdb3-enterprise.selectorLabels" . | nindent 4 }}
+    {{- include "influxdb3-enterprise.selectorLabels" $ | nindent 4 }}
     app.kubernetes.io/component: ingester
+    statefulset.kubernetes.io/pod-name: {{ $podName }}
+{{- end }}
 {{- end }}
 {{- end }}
