@@ -446,6 +446,17 @@ Image reference
 {{- end }}
 
 {{/*
+Ingester internode gRPC port.
+The fallback supports upgrades using --reuse-values from releases that predate
+ingester.internode.port.
+*/}}
+{{- define "influxdb3-enterprise.ingesterInternodePort" -}}
+{{- $ingester := .Values.ingester | default dict -}}
+{{- $internode := get $ingester "internode" | default dict -}}
+{{- get $internode "port" | default 8183 -}}
+{{- end }}
+
+{{/*
 Shared volume mounts (license/TLS/GCS and user extras)
 */}}
 {{- define "influxdb3-enterprise.sharedVolumeMounts" -}}

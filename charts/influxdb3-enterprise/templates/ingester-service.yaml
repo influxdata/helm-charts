@@ -34,7 +34,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: {{ .Values.ingester.internode.port }}
+    - port: {{ include "influxdb3-enterprise.ingesterInternodePort" . }}
       targetPort: grpc-internode
       protocol: TCP
       name: grpc-internode

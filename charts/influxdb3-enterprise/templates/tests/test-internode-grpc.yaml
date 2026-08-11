@@ -36,10 +36,10 @@ spec:
         - |
           nc -z -w 10 \
             {{ printf "%s-ingester-internode" (include "influxdb3-enterprise.fullname" .) | trunc 63 | trimSuffix "-" }} \
-            {{ .Values.ingester.internode.port }}
+            {{ include "influxdb3-enterprise.ingesterInternodePort" . }}
           nc -z -w 10 \
             {{ include "influxdb3-enterprise.fullname" . }}-ingester-0.{{ include "influxdb3-enterprise.fullname" . }}-ingester \
-            {{ .Values.ingester.internode.port }}
+            {{ include "influxdb3-enterprise.ingesterInternodePort" . }}
       resources:
         requests:
           cpu: 10m
