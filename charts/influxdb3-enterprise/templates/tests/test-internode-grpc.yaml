@@ -1,0 +1,50 @@
+{{- if and .Values.ingester.enabled .Values.processingEngine.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-test-internode-grpc" (include "influxdb3-enterprise.fullname" .) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: processor
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: test-internode-grpc
+      image: busybox:1.37.0
+      imagePullPolicy: IfNotPresent
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      command:
+        - /bin/sh
+        - -ec
+      args:
+        - |
+          nc -z -w 10 \
+            {{ printf "%s-ingester-internode" (include "influxdb3-enterprise.fullname" .) | trunc 63 | trimSuffix "-" }} \
+            {{ .Values.ingester.internode.port }}
+          nc -z -w 10 \
+            {{ include "influxdb3-enterprise.fullname" . }}-ingester-0.{{ include "influxdb3-enterprise.fullname" . }}-ingester \
+            {{ .Values.ingester.internode.port }}
+      resources:
+        requests:
+          cpu: 10m
+          memory: 8Mi
+        limits:
+          cpu: 100m
+          memory: 32Mi
+{{- end }}

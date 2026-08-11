@@ -62,7 +62,7 @@ spec:
               app.kubernetes.io/component: processor
       ports:
         - protocol: TCP
-          port: 8183
+          port: {{ .Values.ingester.internode.port }}
     {{- end }}
     {{- end }}
     # Allow Prometheus to scrape metrics
@@ -455,7 +455,7 @@ spec:
               app.kubernetes.io/component: ingester
       ports:
         - protocol: TCP
-          port: 8183
+          port: {{ .Values.ingester.internode.port }}
     # Allow outbound HTTP/HTTPS for plugin operations (webhooks, notifications, etc.)
     {{- if .Values.networkPolicy.egress.toPluginEndpoints }}
     {{- if .Values.networkPolicy.egress.pluginEndpointCidrs }}

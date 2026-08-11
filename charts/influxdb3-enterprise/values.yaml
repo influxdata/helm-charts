@@ -253,6 +253,10 @@ ingester:
     port: 8181
     annotations: {}
 
+  # Internode gRPC communication with Processing Engine nodes
+  internode:
+    port: 8183
+
   # Priority class for pod scheduling priority
   # Higher priority pods are scheduled before lower priority pods
   # Use "system-cluster-critical" or "system-node-critical" for critical workloads
