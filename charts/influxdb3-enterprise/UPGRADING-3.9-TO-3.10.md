@@ -58,7 +58,8 @@ helm upgrade "$RELEASE" influxdata/influxdb3-enterprise \
 Do not use `--atomic`, and do not run `helm rollback` to a 3.9 revision after
 the catalog migration. Both can restore a 3.9 image while leaving the catalog
 at v3. To return to 3.9, first restore the pre-upgrade catalog backup. Do not
-enable `INFLUXDB3_UPGRADE_PACHA_TREE`; migrate the storage engine separately.
+enable `--use-pacha-tree` or set `INFLUXDB3_ENTERPRISE_USE_PACHA_TREE=true`
+during this upgrade; migrate the storage engine separately.
 
 ## Verify
 
