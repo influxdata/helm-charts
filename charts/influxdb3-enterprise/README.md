@@ -684,6 +684,7 @@ logs:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `ingester.replicas` | Number of ingester replicas | `2` |
+| `ingester.internode.port` | Internode gRPC port used when the Processing Engine is enabled | `8183` |
 | `querier.replicas` | Number of querier replicas | `2` |
 | `compactor.replicas` | Number of compactor replicas | `1` (fixed) |
 | `processingEngine.enabled` | Enable Processing Engine | `false` |
