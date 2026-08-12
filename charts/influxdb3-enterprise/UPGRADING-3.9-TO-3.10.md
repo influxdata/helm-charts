@@ -27,9 +27,9 @@ kubectl get pods -n "$NAMESPACE" \
   -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image,READY:.status.containerStatuses[0].ready
 ```
 
-Quiesce writes. Back up `{prefix}/catalog/v2/logs/` and
-`{prefix}/catalog/v2/snapshot` in object storage, and verify that the backup can
-be restored.
+Quiesce writes. Back up `{cluster-id}/catalog/v2/logs/` and
+`{cluster-id}/catalog/v2/snapshot` in object storage, where `{cluster-id}` is the
+configured `cluster.id` value. Verify that the backup can be restored.
 
 If `VALUES_FILE` sets `image.tag`, remove the override or change it to
 `3.10.5-enterprise`. Otherwise, the chart continues deploying the overridden
