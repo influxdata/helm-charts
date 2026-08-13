@@ -29,7 +29,16 @@ cluster:
   # Cluster management settings for multi-node coordination
 #  replicationInterval: "250ms"      # Data replication interval between nodes
 #  catalogSyncInterval: "10s"        # Catalog synchronization interval
-#  waitForRunningIngestor: "10s"     # Startup wait time for ingestor
+#  waitForRunningIngester: "10s"     # Startup wait time for ingester
+#  waitForRunningIngestor: "10s"     # legacy values key; renders wait-for-running-ingester
+
+# Web UI / Explorer configuration (3.11+)
+# Add "webui" to a component mode, for example ingester.mode: "all,webui",
+# to enable the integrated Explorer. A session secret is required by InfluxDB
+# whenever webui mode is enabled.
+webui:
+  sessionSecret: ""
+  existingSecret: ""
 
 # ============================================================================
 # Storage Engine Configuration (3.11+)
@@ -46,18 +55,61 @@ engine:
   
   # PachaTree-specific configuration
   pachaTree:
-    # Shard configuration
+    # General
+    # enginePathPrefix: ""            # Optional path prefix for engine files
     # shardCount: 1                   # Number of shards (default: 1)
-    # maxTotalColumns: 5000           # Max columns across all tables (default: 5000)
+    # maxTotalColumns: 10000000       # Max columns across the instance
+    # enableRetention: true           # Enable retention enforcement
+    # disableHybridQuery: false       # Query only upgraded-engine data during migration
     
-    # Snapshot configuration
-    # snapshotSize: 100000            # Snapshot size threshold (default: 100000)
+    # WAL and snapshot configuration
+    # walBufferSize: "15mb"           # Maximum in-memory WAL buffer size
+    # walFlushConcurrency: 2          # WAL flush concurrency
+    # snapshotSize: "250mb"           # Maximum snapshot bucket size before rotation
+    # snapshotDuration: "10s"         # Snapshot rotation interval
+    # maxConcurrentSnapshots: 5       # Concurrent snapshot operations before backpressure
+    # walSnapshotsToKeep: 5           # Snapshot manifests worth of WAL history to retain
     
     # Gen0 file configuration
+    # gen0MaxRowsPerFile: 10000000    # Max rows per Gen0 file
     # gen0MaxFileSize: "100mb"        # Max size for Gen0 files (default: 100mb)
+    # mergeThresholdSize: "62.5mb"    # File merge threshold (default: snapshot-size / 4)
+
+    # PachaTree compaction levels
+    # l1TailTargetSize: "600mb"
+    # l1ConsolidationTargetSize: "1gb"
+    # l1ConsolidationMinAge: "5m"
+    # l1ConsolidationMinRunSets: 2
+    # l1TargetFileSize: "25mb"
+    # l1PromotionCount: 3
+    # l2TailTargetSize: "1.2gb"
+    # l2TargetFileSize: "75mb"
+    # l2PromotionCount: 3
+    # l3TailTargetSize: "2.5gb"
+    # l3TargetFileSize: "75mb"
+    # l3PromotionCount: 4
+    # l4TailTargetSize: "50gb"
+    # l4TargetFileSize: "125mb"
+    # finalCompactionAge: "4h"
+    # compactorInputSizeBudget: "2gb"
+    # compactorMaxConcurrentMerges: 8
+    # compactorMaxSourceRunSetsPerPromotion: 20
+    # compactorJobHeartbeatTimeout: "1h"
+    # compactorCleanupCooldown: "10m"
     
     # WAL replication
     # walReplicaQueueLength: 1000     # WAL replica queue length (default: 1000)
+    # walReplicaRecoveryConcurrency: 8
+    # walReplicaSteadyConcurrency: 8
+    # walReplicaRecoveryTailSkipLimit: 128
+    # replicaGen0LoadConcurrency: 16
+    # replicaMaxBufferSize: "50%"
+
+    # PachaTree cache helpers. These can also be set globally under caching.
+    # fileCacheEvictAfter: "24h"
+    # enableAutoDvc: false
+    # autoDvcMaxCardinality: 100000
+    # autoDvcRefreshInterval: "10m"
 
 # ============================================================================
 # Object Storage Configuration
@@ -197,6 +249,10 @@ license:
 ingester:
   enabled: true
   replicas: 2                       # Number of ingester nodes
+  # Server mode override. Defaults to "ingest".
+  # For single-node local/home deployments, set to "all" and disable
+  # separate querier and compactor pods.
+  mode: ""
 
   # Resource allocation
   resources:
@@ -208,6 +264,7 @@ ingester:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 48                # --num-cores
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for ingester pods. Overrides top-level extraEnv entries with the same name.
@@ -221,7 +278,8 @@ ingester:
   # Percentages recommended for automatic container sizing.
   # memory:
   #   execMemPoolBytes: "20%"            # --exec-mem-pool-size (renamed from --exec-mem-pool-bytes)
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   forceSnapshotMemSize: "50%"        # --force-snapshot-mem-size
+  #   forceSnapshotMemThreshold: "50%"   # legacy values key; renders force-snapshot-mem-size
 
   # DataFusion configuration
   # datafusion:
@@ -300,6 +358,8 @@ ingester:
 querier:
   enabled: true
   replicas: 2                       # Number of querier nodes
+  # Server mode override. Defaults to "query".
+  mode: ""
 
   # Resource allocation
   resources:
@@ -311,6 +371,7 @@ querier:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 64                # --num-cores
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for querier pods. Overrides top-level extraEnv entries with the same name.
@@ -324,7 +385,8 @@ querier:
   # Percentages recommended for automatic container sizing.
   # memory:
   #   execMemPoolBytes: "20%"            # --exec-mem-pool-size (renamed from --exec-mem-pool-bytes)
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   forceSnapshotMemSize: "50%"        # --force-snapshot-mem-size
+  #   forceSnapshotMemThreshold: "50%"   # legacy values key; renders force-snapshot-mem-size
 
   # DataFusion configuration
   # datafusion:
@@ -394,6 +456,8 @@ compactor:
   # Multiple compactors will cause data corruption and conflicts
   # DO NOT change this value unless explicitly advised by InfluxData
   replicas: 1
+  # Server mode override. Defaults to "compact".
+  mode: ""
 
   # Resource allocation (CPU-intensive)
   resources:
@@ -405,6 +469,7 @@ compactor:
       memory: "4Gi"
 
   # Thread configuration
+  # numCores: 32                # --num-cores
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for compactor pods. Overrides top-level extraEnv entries with the same name.
@@ -418,7 +483,8 @@ compactor:
   # Percentages recommended for automatic container sizing.
   # memory:
   #   execMemPoolBytes: "20%"            # --exec-mem-pool-size (renamed from --exec-mem-pool-bytes)
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   forceSnapshotMemSize: "50%"        # --force-snapshot-mem-size
+  #   forceSnapshotMemThreshold: "50%"   # legacy values key; renders force-snapshot-mem-size
 
   # DataFusion configuration
   # datafusion:
@@ -428,10 +494,17 @@ compactor:
 
   # Compaction settings
   # compaction:
+  #   # PachaTree options:
+  #   inputSizeBudget: "2gb"
+  #   maxConcurrentMerges: 8
+  #
+  #   # Parquet-engine options. Ignored by fresh 3.11+ PachaTree clusters.
   #   gen1Duration: "10m"             # 1m, 5m, or 10m
   #   gen2Duration: "20m"
   #   multipliers: "3,4,6,5"          # Compaction level multipliers
   #   maxNumFilesPerPlan: 500
+  #   rowLimit: 1000000
+  #   snapshotsLimit: 1000
   #   cleanupWait: "10m"
   #   checkInterval: "10s"
 
@@ -482,6 +555,9 @@ compactor:
 processingEngine:
   enabled: false
   replicas: 1
+  # Server mode override. Defaults to "process".
+  # Use "process,query" when scheduled plugins should query locally.
+  mode: ""
 
   # Resource allocation
   resources:
@@ -493,6 +569,7 @@ processingEngine:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 16                # --num-cores
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for Processing Engine pods. Overrides top-level extraEnv entries with the same name.
@@ -506,7 +583,8 @@ processingEngine:
   # Percentages recommended for automatic container sizing.
   # memory:
   #   execMemPoolBytes: "20%"            # --exec-mem-pool-size (renamed from --exec-mem-pool-bytes)
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   forceSnapshotMemSize: "50%"        # --force-snapshot-mem-size
+  #   forceSnapshotMemThreshold: "50%"   # legacy values key; renders force-snapshot-mem-size
 
   # DataFusion configuration
   # datafusion:
@@ -606,6 +684,9 @@ security:
   auth:
     # Disable authentication (dev/testing only - NOT RECOMMENDED)
     disabled: false
+    # User authentication methods to enable: none, basic, oauth, or a comma-separated list.
+    # Defaults to none when unset.
+    userAuthType: ""
     # Disable authorization for specific endpoints
     # Default: ["health"] - allows Kubernetes probes without authentication
     # Available endpoints: health, ping, metrics
@@ -630,7 +711,7 @@ security:
 # HTTP server configuration
 http:
   # bind: "0.0.0.0:8181"
-  # maxRequestSize: 10485760          # 10MB default
+  # maxRequestSize: "10mb"            # 10MB default; use explicit 3.11 size units
 
 # Graceful shutdown configuration (3.11+)
 shutdown:
@@ -647,6 +728,10 @@ caching:
   # fileCacheSize: "20%"                  # Total budget (3.11+: renamed from parquetMemCacheSize)
   # fileCacheRecency: "5h"                # Query path duration (3.11+: renamed from parquetMemCacheQueryPathDuration)
   # disableFileCache: false               # Disable file cache (3.11+: renamed from disableParquetMemCache)
+  # fileCacheEvictAfter: "24h"            # Evict files not accessed within this duration
+  # enableAutoDvc: false                  # Enable automatic distinct value cache creation
+  # autoDvcMaxCardinality: 100000         # Max cardinality for auto-created DVCs
+  # autoDvcRefreshInterval: "10m"         # Refresh interval for auto-created DVCs
   
   # Legacy names (3.9.x, still work with deprecation warnings in 3.11+)
   # parquetMemCacheSize: "20%"
@@ -685,7 +770,8 @@ caching:
 #   logFilter: ""                     # Override log filter (--log-filter)
 #   logDestination: "stdout"          # Override log destination (--log-destination)
 #   logFormat: "full"                 # Override log format (--log-format)
-#   queryLogSize: 1000                # Query log size (--query-log-size)
+#   queryLogMaxEntries: 1000          # Query log max entries (--query-log-max-entries)
+#   queryLogSize: 1000                # legacy values key; renders query-log-max-entries
 
 # Traces configuration (optional)
 # traces:

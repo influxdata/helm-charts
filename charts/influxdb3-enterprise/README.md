@@ -53,10 +53,12 @@ This release updates the chart to support InfluxDB 3.11.0 with new features and 
 
 ### ⚙️ Breaking Changes
 
-**Fully backward compatible** - Existing clusters upgrade seamlessly.
+**Mostly backward compatible** - existing Enterprise env aliases continue to work with warnings, but PachaTree `PT_` option names must be updated for 3.11.
 
-- 12 environment variables renamed (`INFLUXDB3_ENTERPRISE_*` → `INFLUXDB3_*`)
+- Enterprise environment variables renamed (`INFLUXDB3_ENTERPRISE_*` → `INFLUXDB3_*`)
   - Old names still work with deprecation warnings
+- PachaTree environment variables renamed (`INFLUXDB3_PT_*` -> `INFLUXDB3_*`)
+  - Old `PT_` names are ignored by InfluxDB 3.11
 - 3 WAL variables renamed (old names still work)
 - 1 memory variable renamed with format change (now requires units: `"2GB"`)
 - 2 deprecated options removed:
@@ -827,7 +829,7 @@ logs:
 | `security.auth.adminToken.file` | Path to offline admin token file; mutually exclusive with `security.auth.adminToken.existingSecret` | `""` |
 | `security.auth.permissionTokens.existingSecret` | Secret with offline permission tokens key `permission-tokens.json` | `""` |
 | `security.auth.permissionTokens.file` | Path to offline permission tokens file; mutually exclusive with `security.auth.permissionTokens.existingSecret` | `""` |
-| `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND`) | `""` |
+| `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR`) | `""` |
 | `serviceAccount.automountServiceAccountToken` | Configure automatic mounting of the Kubernetes service account token in component pods and the created ServiceAccount | `not set` |
 | `extraEnv` | Extra environment variables applied to all components | `[]` |
 

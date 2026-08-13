@@ -276,20 +276,20 @@ License environment (shared across components)
 {{- if or .Values.license.existingSecret (or .Values.license.email .Values.license.file) }}
 {{- $licenseType := .Values.license.type | default "trial" -}}
 {{- if and (or (eq $licenseType "trial") (eq $licenseType "home")) (or .Values.license.email .Values.license.existingSecret) }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
+- name: INFLUXDB3_LICENSE_EMAIL
   valueFrom:
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
 {{- end }}
 {{- if .Values.license.file }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+- name: INFLUXDB3_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- else if and .Values.license.existingSecret (and (ne $licenseType "trial") (ne $licenseType "home")) }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+- name: INFLUXDB3_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- end }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
+- name: INFLUXDB3_LICENSE_TYPE
   value: {{ $licenseType | quote }}
 {{- end }}
 {{- end }}
@@ -600,6 +600,28 @@ Shared volumes (license/TLS/GCS and user extras)
 {{- end }}
 
 {{/*
+Web UI session secret name
+*/}}
+{{- define "influxdb3-enterprise.webuiSecretName" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- get $webui "existingSecret" | default (printf "%s-webui" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Web UI session secret environment
+*/}}
+{{- define "influxdb3-enterprise.webuiSessionSecretEnv" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- if or (get $webui "existingSecret") (get $webui "sessionSecret") }}
+- name: INFLUXDB3_WEBUI_SESSION_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.webuiSecretName" . }}
+      key: session-secret
+{{- end }}
+{{- end }}
+
+{{/*
 Admin token volumes
 */}}
 {{- define "influxdb3-enterprise.adminTokenVolumes" -}}
@@ -638,6 +660,10 @@ PachaTree engine environment variables
 */}}
 {{- define "influxdb3-enterprise.pachaTreeEnv" -}}
 {{- with .Values.engine.pachaTree }}
+{{- if .enginePathPrefix }}
+- name: INFLUXDB3_ENGINE_PATH_PREFIX
+  value: {{ .enginePathPrefix | quote }}
+{{- end }}
 {{- if .shardCount }}
 - name: INFLUXDB3_SHARD_COUNT
   value: {{ .shardCount | quote }}
@@ -645,6 +671,10 @@ PachaTree engine environment variables
 {{- if .maxTotalColumns }}
 - name: INFLUXDB3_MAX_TOTAL_COLUMNS
   value: {{ .maxTotalColumns | quote }}
+{{- end }}
+{{- if hasKey . "enableRetention" }}
+- name: INFLUXDB3_ENABLE_RETENTION
+  value: {{ ternary "true" "false" .enableRetention | quote }}
 {{- end }}
 {{- if .snapshotSize }}
 - name: INFLUXDB3_SNAPSHOT_SIZE
@@ -657,6 +687,154 @@ PachaTree engine environment variables
 {{- if .walReplicaQueueLength }}
 - name: INFLUXDB3_WAL_REPLICA_QUEUE_LENGTH
   value: {{ .walReplicaQueueLength | quote }}
+{{- end }}
+{{- if .walBufferSize }}
+- name: INFLUXDB3_WAL_BUFFER_SIZE
+  value: {{ .walBufferSize | quote }}
+{{- end }}
+{{- if .walFlushConcurrency }}
+- name: INFLUXDB3_WAL_FLUSH_CONCURRENCY
+  value: {{ .walFlushConcurrency | quote }}
+{{- end }}
+{{- if .snapshotDuration }}
+- name: INFLUXDB3_SNAPSHOT_DURATION
+  value: {{ .snapshotDuration | quote }}
+{{- end }}
+{{- if .maxConcurrentSnapshots }}
+- name: INFLUXDB3_MAX_CONCURRENT_SNAPSHOTS
+  value: {{ .maxConcurrentSnapshots | quote }}
+{{- end }}
+{{- if .walSnapshotsToKeep }}
+- name: INFLUXDB3_WAL_SNAPSHOTS_TO_KEEP
+  value: {{ .walSnapshotsToKeep | quote }}
+{{- end }}
+{{- if .gen0MaxRowsPerFile }}
+- name: INFLUXDB3_GEN0_MAX_ROWS_PER_FILE
+  value: {{ .gen0MaxRowsPerFile | quote }}
+{{- end }}
+{{- if .mergeThresholdSize }}
+- name: INFLUXDB3_MERGE_THRESHOLD_SIZE
+  value: {{ .mergeThresholdSize | quote }}
+{{- end }}
+{{- if .l1TailTargetSize }}
+- name: INFLUXDB3_L1_TAIL_TARGET_SIZE
+  value: {{ .l1TailTargetSize | quote }}
+{{- end }}
+{{- if .l1ConsolidationTargetSize }}
+- name: INFLUXDB3_L1_CONSOLIDATION_TARGET_SIZE
+  value: {{ .l1ConsolidationTargetSize | quote }}
+{{- end }}
+{{- if .l1ConsolidationMinAge }}
+- name: INFLUXDB3_L1_CONSOLIDATION_MIN_AGE
+  value: {{ .l1ConsolidationMinAge | quote }}
+{{- end }}
+{{- if .l1ConsolidationMinRunSets }}
+- name: INFLUXDB3_L1_CONSOLIDATION_MIN_RUN_SETS
+  value: {{ .l1ConsolidationMinRunSets | quote }}
+{{- end }}
+{{- if .l1TargetFileSize }}
+- name: INFLUXDB3_L1_TARGET_FILE_SIZE
+  value: {{ .l1TargetFileSize | quote }}
+{{- end }}
+{{- if .l1PromotionCount }}
+- name: INFLUXDB3_L1_PROMOTION_COUNT
+  value: {{ .l1PromotionCount | quote }}
+{{- end }}
+{{- if .l2TailTargetSize }}
+- name: INFLUXDB3_L2_TAIL_TARGET_SIZE
+  value: {{ .l2TailTargetSize | quote }}
+{{- end }}
+{{- if .l2TargetFileSize }}
+- name: INFLUXDB3_L2_TARGET_FILE_SIZE
+  value: {{ .l2TargetFileSize | quote }}
+{{- end }}
+{{- if .l2PromotionCount }}
+- name: INFLUXDB3_L2_PROMOTION_COUNT
+  value: {{ .l2PromotionCount | quote }}
+{{- end }}
+{{- if .l3TailTargetSize }}
+- name: INFLUXDB3_L3_TAIL_TARGET_SIZE
+  value: {{ .l3TailTargetSize | quote }}
+{{- end }}
+{{- if .l3TargetFileSize }}
+- name: INFLUXDB3_L3_TARGET_FILE_SIZE
+  value: {{ .l3TargetFileSize | quote }}
+{{- end }}
+{{- if .l3PromotionCount }}
+- name: INFLUXDB3_L3_PROMOTION_COUNT
+  value: {{ .l3PromotionCount | quote }}
+{{- end }}
+{{- if .l4TailTargetSize }}
+- name: INFLUXDB3_L4_TAIL_TARGET_SIZE
+  value: {{ .l4TailTargetSize | quote }}
+{{- end }}
+{{- if .l4TargetFileSize }}
+- name: INFLUXDB3_L4_TARGET_FILE_SIZE
+  value: {{ .l4TargetFileSize | quote }}
+{{- end }}
+{{- if .finalCompactionAge }}
+- name: INFLUXDB3_FINAL_COMPACTION_AGE
+  value: {{ .finalCompactionAge | quote }}
+{{- end }}
+{{- if .compactorInputSizeBudget }}
+- name: INFLUXDB3_COMPACTOR_INPUT_SIZE_BUDGET
+  value: {{ .compactorInputSizeBudget | quote }}
+{{- end }}
+{{- if .compactorMaxConcurrentMerges }}
+- name: INFLUXDB3_COMPACTOR_MAX_CONCURRENT_MERGES
+  value: {{ .compactorMaxConcurrentMerges | quote }}
+{{- end }}
+{{- if .compactorMaxSourceRunSetsPerPromotion }}
+- name: INFLUXDB3_COMPACTOR_MAX_SOURCE_RUN_SETS_PER_PROMOTION
+  value: {{ .compactorMaxSourceRunSetsPerPromotion | quote }}
+{{- end }}
+{{- if .compactorJobHeartbeatTimeout }}
+- name: INFLUXDB3_COMPACTOR_JOB_HEARTBEAT_TIMEOUT
+  value: {{ .compactorJobHeartbeatTimeout | quote }}
+{{- end }}
+{{- if .compactorCleanupCooldown }}
+- name: INFLUXDB3_COMPACTOR_CLEANUP_COOLDOWN
+  value: {{ .compactorCleanupCooldown | quote }}
+{{- end }}
+{{- if .walReplicaRecoveryConcurrency }}
+- name: INFLUXDB3_WAL_REPLICA_RECOVERY_CONCURRENCY
+  value: {{ .walReplicaRecoveryConcurrency | quote }}
+{{- end }}
+{{- if .walReplicaSteadyConcurrency }}
+- name: INFLUXDB3_WAL_REPLICA_STEADY_CONCURRENCY
+  value: {{ .walReplicaSteadyConcurrency | quote }}
+{{- end }}
+{{- if .walReplicaRecoveryTailSkipLimit }}
+- name: INFLUXDB3_WAL_REPLICA_RECOVERY_TAIL_SKIP_LIMIT
+  value: {{ .walReplicaRecoveryTailSkipLimit | quote }}
+{{- end }}
+{{- if .replicaGen0LoadConcurrency }}
+- name: INFLUXDB3_REPLICA_GEN0_LOAD_CONCURRENCY
+  value: {{ .replicaGen0LoadConcurrency | quote }}
+{{- end }}
+{{- if .replicaMaxBufferSize }}
+- name: INFLUXDB3_REPLICA_MAX_BUFFER_SIZE
+  value: {{ .replicaMaxBufferSize | quote }}
+{{- end }}
+{{- if .fileCacheEvictAfter }}
+- name: INFLUXDB3_FILE_CACHE_EVICT_AFTER
+  value: {{ .fileCacheEvictAfter | quote }}
+{{- end }}
+{{- if hasKey . "enableAutoDvc" }}
+- name: INFLUXDB3_ENABLE_AUTO_DVC
+  value: {{ ternary "true" "false" .enableAutoDvc | quote }}
+{{- end }}
+{{- if .autoDvcMaxCardinality }}
+- name: INFLUXDB3_AUTO_DVC_MAX_CARDINALITY
+  value: {{ .autoDvcMaxCardinality | quote }}
+{{- end }}
+{{- if .autoDvcRefreshInterval }}
+- name: INFLUXDB3_AUTO_DVC_REFRESH_INTERVAL
+  value: {{ .autoDvcRefreshInterval | quote }}
+{{- end }}
+{{- if hasKey . "disableHybridQuery" }}
+- name: INFLUXDB3_DISABLE_HYBRID_QUERY
+  value: {{ ternary "true" "false" .disableHybridQuery | quote }}
 {{- end }}
 {{- end }}
 {{- end }}

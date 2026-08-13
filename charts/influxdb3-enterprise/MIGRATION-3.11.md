@@ -55,21 +55,28 @@ Chart 0.9.0 (InfluxDB 3.11.0)
 
 ### 1. Environment Variable Renames
 
-**12 environment variables** were renamed from `INFLUXDB3_ENTERPRISE_*` to `INFLUXDB3_*`:
+Enterprise-specific environment variables were renamed from `INFLUXDB3_ENTERPRISE_*` to `INFLUXDB3_*`:
 
 | Old Name (0.8.0) | New Name (0.9.0) | Compatibility |
 |------------------|------------------|---------------|
 | `INFLUXDB3_ENTERPRISE_ADMIN_TOKEN` | `INFLUXDB3_ADMIN_TOKEN` | ✅ Old name works in 3.11 |
-| `INFLUXDB3_ENTERPRISE_ADMIN_TOKEN_RECOVERY_HTTP_BIND` | `INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND` | ✅ Old name works in 3.11 |
+| `INFLUXDB3_ENTERPRISE_ADMIN_TOKEN_RECOVERY_HTTP_BIND` | `INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR` | ✅ Old name works in 3.11 |
 | `INFLUXDB3_ENTERPRISE_CLUSTER_ID` | `INFLUXDB3_CLUSTER_ID` | ✅ Old name works in 3.11 |
 | `INFLUXDB3_ENTERPRISE_NODE_ID` | `INFLUXDB3_NODE_ID` | ✅ Old name works in 3.11 |
 | `INFLUXDB3_ENTERPRISE_CLUSTER_REPLICATION_INTERVAL` | `INFLUXDB3_CLUSTER_REPLICATION_INTERVAL` | ✅ Old name works in 3.11 |
-| `INFLUXDB3_ENTERPRISE_SERVE_MODE` | `INFLUXDB3_SERVE_MODE` | ✅ Old name works in 3.11 |
-| (+ 6 more) | | |
+| `INFLUXDB3_ENTERPRISE_MODE` | `INFLUXDB3_MODE` | ✅ Old name works in 3.11 |
+| `INFLUXDB3_ENTERPRISE_LICENSE_EMAIL` | `INFLUXDB3_LICENSE_EMAIL` | ✅ Old name works in 3.11 |
+| `INFLUXDB3_ENTERPRISE_LICENSE_TYPE` | `INFLUXDB3_LICENSE_TYPE` | ✅ Old name works in 3.11 |
+| `INFLUXDB3_ENTERPRISE_LICENSE_FILE` | `INFLUXDB3_LICENSE_FILE` | ✅ Old name works in 3.11 |
+| `INFLUXDB3_ENTERPRISE_COMPACTION_GEN2_DURATION` | `INFLUXDB3_COMPACTION_GEN2_DURATION` | ✅ Old name works in 3.11 |
+| `INFLUXDB3_ENTERPRISE_COMPACTION_CHECK_INTERVAL` | `INFLUXDB3_COMPACTION_CHECK_INTERVAL` | ✅ Old name works in 3.11 |
+| Other `INFLUXDB3_ENTERPRISE_*` names | Drop `ENTERPRISE_` | ✅ Old names work with warnings |
 
 **Impact:** Chart v0.9.0 uses new names. InfluxDB 3.11 accepts both old and new names with deprecation warnings.
 
 **Action Required:** None - upgrade handles this automatically.
+
+PachaTree environment variables are different: 3.11 does not alias `INFLUXDB3_PT_*` or `INFLUXDB3_ENTERPRISE_PT_*`. Replace those names by dropping `PT_` and applying the documented renames, such as `INFLUXDB3_PT_MAX_COLUMNS` -> `INFLUXDB3_MAX_TOTAL_COLUMNS`, `INFLUXDB3_PT_GEN0_MAX_BYTES_PER_FILE` -> `INFLUXDB3_GEN0_MAX_FILE_SIZE`, and `INFLUXDB3_PT_WAL_REPLICA_QUEUE_SIZE` -> `INFLUXDB3_WAL_REPLICA_QUEUE_LENGTH`.
 
 ### 2. WAL Configuration Changes
 

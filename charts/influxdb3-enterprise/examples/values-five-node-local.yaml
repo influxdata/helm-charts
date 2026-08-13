@@ -1,0 +1,113 @@
+# Five-node local development topology for InfluxDB 3.11 Enterprise.
+#
+# This follows the documented medium cluster role split without the optional
+# processor pod:
+#   - 2 ingest nodes
+#   - 2 query nodes
+#   - 1 dedicated compactor
+#
+# The resources are intentionally small for local Kubernetes environments such
+# as Rancher Desktop, k3d, kind, or minikube.
+
+image:
+  repository: influxdb
+  tag: "3.11.0-enterprise"
+
+cluster:
+  id: "influxdb3-five-node-local"
+
+engine:
+  pachaTree:
+    walBufferSize: "5mb"
+    snapshotSize: "100mb"
+    replicaMaxBufferSize: "256mb"
+    compactorInputSizeBudget: "512mb"
+    compactorMaxConcurrentMerges: 2
+
+license:
+  type: "trial"
+  email: "you@example.com"
+
+objectStorage:
+  type: file
+  file:
+    dataDir: "/var/lib/influxdb3"
+    persistence:
+      accessMode: ReadWriteOnce
+      storageClass: local-path
+      size: 10Gi
+
+security:
+  auth:
+    disabled: true
+    disableAuthz:
+      - health
+      - ping
+      - metrics
+
+ingress:
+  enabled: false
+
+probes:
+  startup:
+    failureThreshold: 120
+
+ingester:
+  replicas: 2
+  mode: ingest
+  # InfluxDB 3.11 requires at least 2 licensed cores per node.
+  numCores: 2
+  numIOThreads: 1
+  datafusion:
+    numThreads: 2
+  extraEnv:
+    - name: INFLUXDB3_DISABLE_FILE_CACHE
+      value: "true"
+  memory:
+    execMemPoolBytes: "20%"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1536Mi"
+
+querier:
+  replicas: 2
+  mode: query
+  # InfluxDB 3.11 requires at least 2 licensed cores per node.
+  numCores: 2
+  numIOThreads: 1
+  datafusion:
+    numThreads: 2
+  memory:
+    execMemPoolBytes: "20%"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1536Mi"
+
+compactor:
+  replicas: 1
+  mode: compact
+  # InfluxDB 3.11 requires at least 2 licensed cores per node.
+  numCores: 2
+  numIOThreads: 1
+  datafusion:
+    numThreads: 2
+  memory:
+    execMemPoolBytes: "20%"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1536Mi"
+
+processingEngine:
+  enabled: false

@@ -24,6 +24,7 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
         checksum/license: {{ include "influxdb3-enterprise.licenseChecksum" . }}
+        checksum/webui: {{ include (print $.Template.BasePath "/secret-webui.yaml") . | sha256sum }}
         {{- with .Values.querier.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -57,7 +58,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - serve
-            - --mode=query
+            - --mode={{ .Values.querier.mode | default "query" }}
             - --node-id=$(POD_NAME)
             {{- if .Values.engine.upgradePachaTree }}
             - --upgrade-pacha-tree
@@ -68,6 +69,7 @@ spec:
           env:
             {{- include "influxdb3-enterprise.podNameEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.webuiSessionSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
@@ -75,14 +77,19 @@ spec:
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
             {{- end }}
+            {{- if hasKey .Values.querier "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.querier.numCores | quote }}
+            {{- end }}
             {{- with .Values.querier.memory }}
             {{- if .execMemPoolBytes }}
             - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
               value: {{ .execMemPoolBytes | quote }}
             {{- end }}
-            {{- if .forceSnapshotMemThreshold }}
-            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ .forceSnapshotMemThreshold | quote }}
+            {{- $forceSnapshotMemSize := .forceSnapshotMemSize | default .forceSnapshotMemThreshold }}
+            {{- if $forceSnapshotMemSize }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+              value: {{ $forceSnapshotMemSize | quote }}
             {{- end }}
             {{- end }}
             {{- with .Values.querier.datafusion }}

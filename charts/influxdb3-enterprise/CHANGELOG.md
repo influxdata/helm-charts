@@ -48,21 +48,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Environment Variable Updates (Backward Compatible)
-Updated 12 environment variables from `INFLUXDB3_ENTERPRISE_*` to `INFLUXDB3_*` prefix:
-- `INFLUXDB3_ENTERPRISE_ADMIN_TOKEN` → `INFLUXDB3_ADMIN_TOKEN`
-- `INFLUXDB3_ENTERPRISE_ADMIN_TOKEN_RECOVERY_HTTP_BIND` → `INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND`
-- `INFLUXDB3_ENTERPRISE_CLUSTER_ID` → `INFLUXDB3_CLUSTER_ID`
-- `INFLUXDB3_ENTERPRISE_NODE_ID` → `INFLUXDB3_NODE_ID`
-- `INFLUXDB3_ENTERPRISE_CLUSTER_REPLICATION_INTERVAL` → `INFLUXDB3_CLUSTER_REPLICATION_INTERVAL`
-- `INFLUXDB3_ENTERPRISE_SERVE_MODE` → `INFLUXDB3_SERVE_MODE`
-- `INFLUXDB3_ENTERPRISE_NUM_CLUSTER_PEERS` → `INFLUXDB3_NUM_CLUSTER_PEERS`
-- `INFLUXDB3_ENTERPRISE_NUM_PARTITION_WRITERS` → `INFLUXDB3_NUM_PARTITION_WRITERS`
-- `INFLUXDB3_ENTERPRISE_PARTITION_WRITERS_MODE` → `INFLUXDB3_PARTITION_WRITERS_MODE`
-- `INFLUXDB3_ENTERPRISE_PROCESSING_ENGINE_ENABLED` → `INFLUXDB3_PROCESSING_ENGINE_ENABLED`
-- `INFLUXDB3_ENTERPRISE_BOOTSTRAP_AUTH_TRUST_EXISTING_CLUSTER_ADMINS` → `INFLUXDB3_BOOTSTRAP_AUTH_TRUST_EXISTING_CLUSTER_ADMINS`
-- `INFLUXDB3_ENTERPRISE_DEFAULT_ADMIN_USERNAME` → `INFLUXDB3_DEFAULT_ADMIN_USERNAME`
+Updated chart-rendered environment variables to the InfluxDB 3.11 names:
+- Enterprise-specific names drop the `ENTERPRISE_` segment, for example `INFLUXDB3_ENTERPRISE_CLUSTER_ID` -> `INFLUXDB3_CLUSTER_ID`
+- PachaTree names drop the `PT_` segment, for example `INFLUXDB3_PT_SNAPSHOT_SIZE` -> `INFLUXDB3_SNAPSHOT_SIZE`
+- Admin token recovery now renders `INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR`
+- File cache, query log, and force-snapshot memory settings render the 3.11 names
 
-**Note:** Old names still work in InfluxDB 3.11 with deprecation warnings (backward compatible).
+**Note:** Legacy `INFLUXDB3_ENTERPRISE_*` names still work in InfluxDB 3.11 with deprecation warnings. Legacy `INFLUXDB3_PT_*` names are ignored by 3.11 and should be replaced.
 
 #### WAL Configuration Updates (Backward Compatible)
 Updated 3 WAL variables across all StatefulSets:
