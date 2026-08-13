@@ -14,15 +14,16 @@ metadata:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
 data:
   # Cluster configuration (env-style)
-  INFLUXDB3_ENTERPRISE_CLUSTER_ID: {{ .Values.cluster.id | quote }}
+  INFLUXDB3_CLUSTER_ID: {{ .Values.cluster.id | quote }}
   {{- if .Values.cluster.replicationInterval }}
-  INFLUXDB3_ENTERPRISE_REPLICATION_INTERVAL: {{ .Values.cluster.replicationInterval | quote }}
+  INFLUXDB3_REPLICATION_INTERVAL: {{ .Values.cluster.replicationInterval | quote }}
   {{- end }}
   {{- if .Values.cluster.catalogSyncInterval }}
-  INFLUXDB3_ENTERPRISE_CATALOG_SYNC_INTERVAL: {{ .Values.cluster.catalogSyncInterval | quote }}
+  INFLUXDB3_CATALOG_SYNC_INTERVAL: {{ .Values.cluster.catalogSyncInterval | quote }}
   {{- end }}
-  {{- if .Values.cluster.waitForRunningIngestor }}
-  INFLUXDB3_ENTERPRISE_WAIT_FOR_RUNNING_INGESTOR: {{ .Values.cluster.waitForRunningIngestor | quote }}
+  {{- $waitForRunningIngester := .Values.cluster.waitForRunningIngester | default .Values.cluster.waitForRunningIngestor }}
+  {{- if $waitForRunningIngester }}
+  INFLUXDB3_WAIT_FOR_RUNNING_INGESTER: {{ $waitForRunningIngester | quote }}
   {{- end }}
 
   # Security
@@ -32,7 +33,10 @@ data:
   INFLUXDB3_TLS_MINIMUM_VERSION: {{ .Values.security.tls.minVersion | quote }}
   {{- end }}
   {{- if .Values.security.auth.disabled }}
-  INFLUXDB3_START_WITHOUT_AUTH: {{ ternary "true" "false" .Values.security.auth.disabled | quote }}
+  INFLUXDB3_WITHOUT_AUTH: {{ ternary "true" "false" .Values.security.auth.disabled | quote }}
+  {{- end }}
+  {{- if .Values.security.auth.userAuthType }}
+  INFLUXDB3_USER_AUTH_TYPE: {{ .Values.security.auth.userAuthType | quote }}
   {{- end }}
   {{- if .Values.security.auth.disableAuthz }}
   INFLUXDB3_DISABLE_AUTHZ: {{ join "," .Values.security.auth.disableAuthz | quote }}
@@ -42,7 +46,7 @@ data:
   {{- $adminToken := get $auth "adminToken" | default dict }}
   {{- $adminTokenRecovery := get $adminToken "recovery" | default dict }}
   {{- if get $adminTokenRecovery "httpBind" }}
-  INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND: {{ get $adminTokenRecovery "httpBind" | quote }}
+  INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR: {{ get $adminTokenRecovery "httpBind" | quote }}
   {{- end }}
 
   # HTTP
@@ -51,14 +55,21 @@ data:
   INFLUXDB3_HTTP_BIND_ADDR: {{ .bind | quote }}
   {{- end }}
   {{- if .maxRequestSize }}
-  INFLUXDB3_MAX_HTTP_REQUEST_SIZE: {{ .maxRequestSize | int | quote }}
+  INFLUXDB3_MAX_HTTP_REQUEST_SIZE: {{ .maxRequestSize | quote }}
+  {{- end }}
+  {{- end }}
+
+  # Graceful shutdown (3.11+)
+  {{- with .Values.shutdown }}
+  {{- if .timeout }}
+  INFLUXDB3_SHUTDOWN_TIMEOUT: {{ .timeout | quote }}
   {{- end }}
   {{- end }}
 
   # Object storage (non-secret)
   INFLUXDB3_OBJECT_STORE: {{ .Values.objectStorage.type | quote }}
   {{- if eq .Values.objectStorage.type "file" }}
-  INFLUXDB3_DB_DIR: {{ .Values.objectStorage.file.dataDir | quote }}
+  INFLUXDB3_DATA_DIR: {{ .Values.objectStorage.file.dataDir | quote }}
   {{- else }}
   INFLUXDB3_BUCKET: {{ .Values.objectStorage.bucket | quote }}
   {{- end }}
@@ -88,9 +99,6 @@ data:
   {{- end }}
   {{- if .Values.objectStorage.retryTimeout }}
   INFLUXDB3_OBJECT_STORE_RETRY_TIMEOUT: {{ .Values.objectStorage.retryTimeout | quote }}
-  {{- end }}
-  {{- if .Values.objectStorage.cacheEndpoint }}
-  INFLUXDB3_OBJECT_STORE_CACHE_ENDPOINT: {{ .Values.objectStorage.cacheEndpoint | quote }}
   {{- end }}
   {{- if eq .Values.objectStorage.type "s3" }}
   {{- $s3 := .Values.objectStorage.s3 | default dict }}
@@ -124,11 +132,13 @@ data:
 
   # Caching configuration
   {{- with .Values.caching }}
-  {{- if .parquetMemCacheSize }}
-  INFLUXDB3_PARQUET_MEM_CACHE_SIZE: {{ .parquetMemCacheSize | quote }}
-  {{ end }}
-  {{- if .parquetMemCacheQueryPathDuration }}
-  INFLUXDB3_PARQUET_MEM_CACHE_QUERY_PATH_DURATION: {{ .parquetMemCacheQueryPathDuration | quote }}
+  {{- $fileCacheSize := .fileCacheSize | default .parquetMemCacheSize }}
+  {{- if $fileCacheSize }}
+  INFLUXDB3_FILE_CACHE_SIZE: {{ $fileCacheSize | quote }}
+  {{- end }}
+  {{- $fileCacheRecency := .fileCacheRecency | default .parquetMemCacheQueryPathDuration }}
+  {{- if $fileCacheRecency }}
+  INFLUXDB3_FILE_CACHE_RECENCY: {{ $fileCacheRecency | quote }}
   {{- end }}
   {{- if .parquetMemCachePrunePercentage }}
   INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE: {{ .parquetMemCachePrunePercentage | quote }}
@@ -136,20 +146,34 @@ data:
   {{- if .parquetMemCachePruneInterval }}
   INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_INTERVAL: {{ .parquetMemCachePruneInterval | quote }}
   {{- end }}
-  {{- if hasKey . "disableParquetMemCache" }}
-  INFLUXDB3_DISABLE_PARQUET_MEM_CACHE: {{ ternary "true" "false" .disableParquetMemCache | quote }}
+  {{- if hasKey . "disableFileCache" }}
+  INFLUXDB3_DISABLE_FILE_CACHE: {{ ternary "true" "false" .disableFileCache | quote }}
+  {{- else if hasKey . "disableParquetMemCache" }}
+  INFLUXDB3_DISABLE_FILE_CACHE: {{ ternary "true" "false" .disableParquetMemCache | quote }}
   {{- end }}
   {{- if .preemptiveCacheAge }}
   INFLUXDB3_PREEMPTIVE_CACHE_AGE: {{ .preemptiveCacheAge | quote }}
   {{- end }}
+  {{- if .fileCacheEvictAfter }}
+  INFLUXDB3_FILE_CACHE_EVICT_AFTER: {{ .fileCacheEvictAfter | quote }}
+  {{- end }}
+  {{- if hasKey . "enableAutoDvc" }}
+  INFLUXDB3_ENABLE_AUTO_DVC: {{ ternary "true" "false" .enableAutoDvc | quote }}
+  {{- end }}
+  {{- if .autoDvcMaxCardinality }}
+  INFLUXDB3_AUTO_DVC_MAX_CARDINALITY: {{ .autoDvcMaxCardinality | quote }}
+  {{- end }}
+  {{- if .autoDvcRefreshInterval }}
+  INFLUXDB3_AUTO_DVC_REFRESH_INTERVAL: {{ .autoDvcRefreshInterval | quote }}
+  {{- end }}
   {{- if hasKey . "lastValueCacheDisableFromHistory" }}
-  INFLUXDB3_ENTERPRISE_LAST_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .lastValueCacheDisableFromHistory | quote }}
+  INFLUXDB3_LAST_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .lastValueCacheDisableFromHistory | quote }}
   {{- end }}
   {{- if .lastCacheEvictionInterval }}
   INFLUXDB3_LAST_CACHE_EVICTION_INTERVAL: {{ .lastCacheEvictionInterval | quote }}
   {{- end }}
   {{- if hasKey . "distinctValueCacheDisableFromHistory" }}
-  INFLUXDB3_ENTERPRISE_DISTINCT_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .distinctValueCacheDisableFromHistory | quote }}
+  INFLUXDB3_DISTINCT_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .distinctValueCacheDisableFromHistory | quote }}
   {{- end }}
   {{- if .distinctCacheEvictionInterval }}
   INFLUXDB3_DISTINCT_CACHE_EVICTION_INTERVAL: {{ .distinctCacheEvictionInterval | quote }}
@@ -165,13 +189,13 @@ data:
   # Resource limits
   {{- with .Values.resourceLimits }}
   {{- if .numDatabases }}
-  INFLUXDB3_ENTERPRISE_NUM_DATABASE_LIMIT: {{ .numDatabases }}
+  INFLUXDB3_NUM_DATABASE_LIMIT: {{ .numDatabases }}
   {{- end }}
   {{- if .numTables }}
-  INFLUXDB3_ENTERPRISE_NUM_TABLE_LIMIT: {{ .numTables }}
+  INFLUXDB3_NUM_TABLE_LIMIT: {{ .numTables }}
   {{- end }}
   {{- if .numColumnsPerTable }}
-  INFLUXDB3_ENTERPRISE_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .numColumnsPerTable }}
+  INFLUXDB3_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .numColumnsPerTable }}
   {{- end }}
   {{- end }}
 
@@ -186,9 +210,6 @@ data:
   {{- if .deleteGracePeriod }}
   INFLUXDB3_DELETE_GRACE_PERIOD: {{ .deleteGracePeriod | quote }}
   {{- end }}
-  {{- if .hardDeleteDefaultDuration }}
-  INFLUXDB3_HARD_DELETE_DEFAULT_DURATION: {{ .hardDeleteDefaultDuration | quote }}
-  {{- end }}
   {{- end }}
 
   # Logs
@@ -202,8 +223,10 @@ data:
   {{- if .logFormat }}
   INFLUXDB3_LOG_FORMAT: {{ .logFormat | quote }}
   {{- end }}
-  {{- if .queryLogSize }}
-  INFLUXDB3_QUERY_LOG_SIZE: {{ .queryLogSize }}
+  {{- if .queryLogMaxEntries }}
+  INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ .queryLogMaxEntries }}
+  {{- else if .queryLogSize }}
+  INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ .queryLogSize }}
   {{- end }}
   {{- end }}
 
@@ -237,7 +260,7 @@ data:
 
   # Telemetry
   {{- with .Values.telemetry }}
-  INFLUXDB3_TELEMETRY_DISABLE_UPLOAD: {{ .disableUpload | quote }}
+  INFLUXDB3_DISABLE_TELEMETRY_UPLOAD: {{ .disableUpload | quote }}
   {{- if .endpoint }}
   INFLUXDB3_TELEMETRY_ENDPOINT: {{ .endpoint | quote }}
   {{- end }}

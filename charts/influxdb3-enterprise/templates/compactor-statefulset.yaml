@@ -29,6 +29,7 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
         checksum/license: {{ include "influxdb3-enterprise.licenseChecksum" . }}
+        checksum/webui: {{ include (print $.Template.BasePath "/secret-webui.yaml") . | sha256sum }}
         {{- with .Values.compactor.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -62,14 +63,18 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - serve
-            - --mode=compact
+            - --mode={{ .Values.compactor.mode | default "compact" }}
             - --node-id=$(POD_NAME)
+            {{- if .Values.engine.upgradePachaTree }}
+            - --upgrade-pacha-tree
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.fullname" . }}-config
           env:
             {{- include "influxdb3-enterprise.podNameEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.webuiSessionSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
@@ -77,26 +82,46 @@ spec:
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
             {{- end }}
+            {{- if hasKey .Values.compactor "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.compactor.numCores | quote }}
+            {{- end }}
             {{- with .Values.compactor.compaction }}
             {{- if .gen2Duration }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_GEN2_DURATION
+            - name: INFLUXDB3_COMPACTION_GEN2_DURATION
               value: {{ .gen2Duration | quote }}
             {{- end }}
             {{- if .multipliers }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_MULTIPLIERS
+            - name: INFLUXDB3_COMPACTION_MULTIPLIERS
               value: {{ .multipliers | quote }}
             {{- end }}
             {{- if .maxNumFilesPerPlan }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_MAX_NUM_FILES_PER_PLAN
+            - name: INFLUXDB3_COMPACTION_MAX_NUM_FILES_PER_PLAN
               value: {{ .maxNumFilesPerPlan | quote }}
             {{- end }}
+            {{- if .rowLimit }}
+            - name: INFLUXDB3_COMPACTION_ROW_LIMIT
+              value: {{ .rowLimit | quote }}
+            {{- end }}
+            {{- if .snapshotsLimit }}
+            - name: INFLUXDB3_COMPACTION_SNAPSHOTS_LIMIT
+              value: {{ .snapshotsLimit | quote }}
+            {{- end }}
             {{- if .cleanupWait }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_CLEANUP_WAIT
+            - name: INFLUXDB3_COMPACTION_CLEANUP_WAIT
               value: {{ .cleanupWait | quote }}
             {{- end }}
             {{- if .checkInterval }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_CHECK_INTERVAL
+            - name: INFLUXDB3_COMPACTION_CHECK_INTERVAL
               value: {{ .checkInterval | quote }}
+            {{- end }}
+            {{- if .inputSizeBudget }}
+            - name: INFLUXDB3_COMPACTOR_INPUT_SIZE_BUDGET
+              value: {{ .inputSizeBudget | quote }}
+            {{- end }}
+            {{- if .maxConcurrentMerges }}
+            - name: INFLUXDB3_COMPACTOR_MAX_CONCURRENT_MERGES
+              value: {{ .maxConcurrentMerges | quote }}
             {{- end }}
             {{- if .gen1Duration }}
             - name: INFLUXDB3_GEN1_DURATION
@@ -105,12 +130,13 @@ spec:
             {{- end }}
             {{- with .Values.compactor.memory }}
             {{- if .execMemPoolBytes }}
-            - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
+            - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
               value: {{ .execMemPoolBytes | quote }}
             {{- end }}
-            {{- if .forceSnapshotMemThreshold }}
-            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ .forceSnapshotMemThreshold | quote }}
+            {{- $forceSnapshotMemSize := .forceSnapshotMemSize | default .forceSnapshotMemThreshold }}
+            {{- if $forceSnapshotMemSize }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+              value: {{ $forceSnapshotMemSize | quote }}
             {{- end }}
             {{- end }}
             {{- with .Values.compactor.datafusion }}
@@ -127,6 +153,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
+            {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.compactor) | nindent 12 }}
             {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.compactor) | nindent 12 }}
           ports:
