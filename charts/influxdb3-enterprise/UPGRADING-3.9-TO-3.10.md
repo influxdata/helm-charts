@@ -56,8 +56,9 @@ The chart records `influxdata.com/catalog-format: v3` on its ConfigMap when the
 effective image tag clearly identifies InfluxDB 3.10 or later. The marker
 records an acknowledged migration attempt, not a completed migration. Retain
 the backup until every pod is ready and the verification steps below succeed.
-After the marker is recorded, `acknowledgeCatalogMigration` is obsolete; it may
-remain `true` in stored release values without affecting later live upgrades.
+After the marker is recorded, `acknowledgeCatalogMigration` is no longer needed
+for live upgrades, although Helm may retain `true` in stored release values.
+Client-side previews still require the flag because they cannot query the marker.
 
 Do not use `--atomic`, and do not run `helm rollback` to a 3.9 revision after
 the catalog migration. Both can restore a 3.9 image while leaving the catalog
