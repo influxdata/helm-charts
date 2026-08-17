@@ -69,13 +69,13 @@ jobs:
         run: |
           kubectl create secret generic influxdb3-license \
             --namespace=default \
-            --from-literal=license-email=${INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL}
+            --from-literal=license-file="${INFLUXDB3_ENTERPRISE_LICENSE_KEY}"
           kubectl create secret generic influxdb3-bootstrap-tokens \
             --namespace=default \
             --from-file=admin-token.json=./charts/influxdb3-enterprise/ci/admin-token.json \
             --from-file=permission-tokens.json=./charts/influxdb3-enterprise/ci/permission-tokens.json
         env:
-          INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL: "${{ secrets.INFLUXDB3_ENTERPRISE_TRIAL_LICENSE_EMAIL }}"
+          INFLUXDB3_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB3_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)

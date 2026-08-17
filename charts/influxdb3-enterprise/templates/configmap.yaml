@@ -1,3 +1,4 @@
+{{- include "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" . }}
 {{- include "influxdb3-enterprise.validateObjectStorageType" . }}
 {{- include "influxdb3-enterprise.validateLicenseType" . }}
 {{- include "influxdb3-enterprise.validateAzureObjectStorageAuth" . }}

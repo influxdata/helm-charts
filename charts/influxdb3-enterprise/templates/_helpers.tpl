@@ -91,6 +91,15 @@ License secret name
 {{- end }}
 
 {{/*
+Require acknowledgement of the InfluxDB 3.10 catalog migration.
+*/}}
+{{- define "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" -}}
+{{- if and .Release.IsUpgrade (ne (toString .Values.acknowledgeCatalogMigration) "true") -}}
+{{- fail "InfluxDB 3.10 performs a one-way catalog migration. Follow UPGRADING-3.9-TO-3.10.md, then set acknowledgeCatalogMigration: true in your values file." -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Validate object storage type
 */}}
 {{- define "influxdb3-enterprise.validateObjectStorageType" -}}
@@ -445,6 +454,24 @@ Image reference
 {{- $repository := .Values.image.repository }}
 {{- $tag := .Values.image.tag | default (printf "%s-enterprise" .Chart.AppVersion) }}
 {{- printf "%s/%s:%s" $registry $repository $tag }}
+{{- end }}
+
+{{/*
+Ingester internode gRPC port.
+The fallback supports upgrades using --reuse-values from releases that predate
+ingester.internode.port.
+*/}}
+{{- define "influxdb3-enterprise.ingesterInternodePort" -}}
+{{- $ingester := .Values.ingester | default dict -}}
+{{- $internode := get $ingester "internode" | default dict -}}
+{{- get $internode "port" | default 8183 -}}
+{{- end }}
+
+{{/*
+Ingester Pod name shared by the StatefulSet, per-pod Service, and test.
+*/}}
+{{- define "influxdb3-enterprise.ingesterPodName" -}}
+{{- printf "%s-ingester-%d" (include "influxdb3-enterprise.fullname" .root) (int .ordinal) -}}
 {{- end }}
 
 {{/*
