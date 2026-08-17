@@ -451,6 +451,19 @@ processingEngine:
 
 ## Upgrading
 
+### Upgrade from InfluxDB 3.9
+
+Chart 0.9.0 upgrades InfluxDB to 3.10.5. The first 3.10 startup automatically
+migrates catalog v2 to v3. This migration is one-way; restoring the catalog
+backup is required to return to 3.9.
+
+Follow [UPGRADING-3.9-TO-3.10.md](UPGRADING-3.9-TO-3.10.md). When Helm performs
+the upgrade, rendering is blocked until `acknowledgeCatalogMigration: true` is
+set in the values file. Template-only GitOps renderers such as Argo CD do not
+expose upgrade state, so the chart cannot enforce this gate. For those
+deployments, complete the guide and commit the acknowledgement to the GitOps
+values before synchronizing.
+
 ### Upgrade the Chart
 
 ```bash
@@ -627,6 +640,7 @@ logs:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
+| `acknowledgeCatalogMigration` | Acknowledge the one-way InfluxDB 3.10 catalog migration during Helm upgrades | `false` |
 | `cluster.id` | Cluster identifier | `cluster-01` |
 | `image.registry` | Image registry | `docker.io` |
 | `image.repository` | Image repository | `influxdb` |
@@ -670,6 +684,7 @@ logs:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `ingester.replicas` | Number of ingester replicas | `2` |
+| `ingester.internode.port` | Internode gRPC port used when the Processing Engine is enabled | `8183` |
 | `querier.replicas` | Number of querier replicas | `2` |
 | `compactor.replicas` | Number of compactor replicas | `1` (fixed) |
 | `processingEngine.enabled` | Enable Processing Engine | `false` |
@@ -679,6 +694,14 @@ logs:
 | `processingEngine.extraEnv` | Extra environment variables applied only to Processing Engine pods | `[]` |
 | `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
 | `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
+
+### Ingester internode Services
+
+When `processingEngine.enabled=true`, the chart creates one internal ClusterIP
+Service per ingester replica. Each Service is named exactly like its target Pod
+because that name is advertised through `--conn-info`. Scale ingesters by
+changing `ingester.replicas` and running a Helm upgrade; scaling the StatefulSet
+directly does not create or remove the corresponding Services.
 
 ### TLS Parameters
 

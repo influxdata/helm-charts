@@ -53,6 +53,17 @@ spec:
       ports:
         - protocol: TCP
           port: 8181
+    {{- if .Values.processingEngine.enabled }}
+    # Allow processors to write through the internode gRPC endpoint
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: processor
+      ports:
+        - protocol: TCP
+          port: {{ include "influxdb3-enterprise.ingesterInternodePort" . }}
+    {{- end }}
     {{- end }}
     # Allow Prometheus to scrape metrics
     {{- if .Values.networkPolicy.ingress.fromPrometheus }}
@@ -126,6 +137,7 @@ spec:
 
 {{- end }}
 {{- if and .Values.networkPolicy.enabled .Values.querier.enabled }}
+---
 # NetworkPolicy for Querier nodes
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -233,6 +245,7 @@ spec:
 
 {{- end }}
 {{- if and .Values.networkPolicy.enabled .Values.compactor.enabled }}
+---
 # NetworkPolicy for Compactor node
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -434,6 +447,15 @@ spec:
       ports:
         - protocol: TCP
           port: 8181
+    # Allow Processing Engine writes to ingesters over internode gRPC
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: ingester
+      ports:
+        - protocol: TCP
+          port: {{ include "influxdb3-enterprise.ingesterInternodePort" . }}
     # Allow outbound HTTP/HTTPS for plugin operations (webhooks, notifications, etc.)
     {{- if .Values.networkPolicy.egress.toPluginEndpoints }}
     {{- if .Values.networkPolicy.egress.pluginEndpointCidrs }}

@@ -1,4 +1,5 @@
 license:
+  type: commercial
   existingSecret: influxdb3-license
 
 objectStorage:
