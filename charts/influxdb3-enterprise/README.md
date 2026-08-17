@@ -457,12 +457,19 @@ Chart 0.9.0 upgrades InfluxDB to 3.10.5. The first 3.10 startup automatically
 migrates catalog v2 to v3. This migration is one-way; restoring the catalog
 backup is required to return to 3.9.
 
-Follow [UPGRADING-3.9-TO-3.10.md](UPGRADING-3.9-TO-3.10.md). When Helm performs
-the upgrade, rendering is blocked until `acknowledgeCatalogMigration: true` is
-set in the values file. Template-only GitOps renderers such as Argo CD do not
-expose upgrade state, so the chart cannot enforce this gate. For those
-deployments, complete the guide and commit the acknowledgement to the GitOps
-values before synchronizing.
+Follow [UPGRADING-3.9-TO-3.10.md](UPGRADING-3.9-TO-3.10.md). When Helm upgrades
+a release without the catalog format v3 marker, rendering is blocked until
+`acknowledgeCatalogMigration: true` is set. The chart then records the marker
+so later upgrades do not require the flag. Chart 0.9.0 predates the marker and
+therefore requires one final acknowledgement.
+
+Client-side previews cannot query the live marker. For `helm template
+--is-upgrade`, client-side `helm upgrade --dry-run`, or `helm diff upgrade`,
+pass `--set acknowledgeCatalogMigration=true` for that command only. Do not
+persist it after the marker has been recorded.
+
+Template-only GitOps renderers such as Argo CD do not expose upgrade state, so
+the chart cannot enforce this gate. Complete the guide before synchronizing.
 
 ### Upgrade the Chart
 
@@ -640,7 +647,7 @@ logs:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `acknowledgeCatalogMigration` | Acknowledge the one-way InfluxDB 3.10 catalog migration during Helm upgrades | `false` |
+| `acknowledgeCatalogMigration` | One-time acknowledgement for an upgrade without the catalog format v3 marker | `false` |
 | `cluster.id` | Cluster identifier | `cluster-01` |
 | `image.registry` | Image registry | `docker.io` |
 | `image.repository` | Image repository | `influxdb` |

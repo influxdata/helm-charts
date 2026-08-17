@@ -9,10 +9,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "influxdb3-enterprise.fullname" . }}-config
+  name: {{ include "influxdb3-enterprise.configMapName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+  {{- if eq (include "influxdb3-enterprise.targetUsesCatalogV3" .) "true" }}
+  annotations:
+    influxdata.com/catalog-format: "v3"
+  {{- end }}
 data:
   # Cluster configuration (env-style)
   INFLUXDB3_ENTERPRISE_CLUSTER_ID: {{ .Values.cluster.id | quote }}

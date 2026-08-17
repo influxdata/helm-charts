@@ -21,8 +21,9 @@ imagePullSecrets: []
 # Global Cluster Configuration
 # ============================================================================
 
-# Required on Helm upgrades to acknowledge the one-way InfluxDB 3.10 catalog
-# migration. Follow UPGRADING-3.9-TO-3.10.md before setting this to true.
+# One-time acknowledgement required when upgrading a release without the
+# catalog format v3 marker.
+# Follow UPGRADING-3.9-TO-3.10.md before setting this to true.
 acknowledgeCatalogMigration: false
 
 # Cluster configuration - all nodes must share the same cluster ID

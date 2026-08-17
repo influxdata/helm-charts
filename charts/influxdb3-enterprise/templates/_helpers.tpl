@@ -22,6 +22,13 @@ Create a default fully qualified app name.
 {{- end }}
 
 {{/*
+Main configuration ConfigMap name.
+*/}}
+{{- define "influxdb3-enterprise.configMapName" -}}
+{{- printf "%s-config" (include "influxdb3-enterprise.fullname" .) }}
+{{- end }}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "influxdb3-enterprise.chart" -}}
@@ -95,7 +102,15 @@ Require acknowledgement of the InfluxDB 3.10 catalog migration.
 */}}
 {{- define "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" -}}
 {{- if and .Release.IsUpgrade (ne (toString .Values.acknowledgeCatalogMigration) "true") -}}
-{{- fail "InfluxDB 3.10 performs a one-way catalog migration. Follow UPGRADING-3.9-TO-3.10.md, then set acknowledgeCatalogMigration: true in your values file." -}}
+{{- $name := include "influxdb3-enterprise.configMapName" . -}}
+{{- $configMap := lookup "v1" "ConfigMap" .Release.Namespace $name -}}
+{{- $annotations := dict -}}
+{{- if $configMap -}}
+{{- $annotations = $configMap.metadata.annotations | default dict -}}
+{{- end -}}
+{{- if ne (get $annotations "influxdata.com/catalog-format") "v3" -}}
+{{- fail (printf "Could not verify influxdata.com/catalog-format=v3 on ConfigMap %q. Follow UPGRADING-3.9-TO-3.10.md, then set acknowledgeCatalogMigration: true for the one-time upgrade or client-side preview." $name) -}}
+{{- end -}}
 {{- end -}}
 {{- end }}
 
@@ -436,12 +451,31 @@ startupProbe:
 {{- end }}
 
 {{/*
+Effective image tag.
+*/}}
+{{- define "influxdb3-enterprise.imageTag" -}}
+{{- .Values.image.tag | default (printf "%s-enterprise" .Chart.AppVersion) }}
+{{- end }}
+
+{{/*
+Return true only when the effective image tag clearly identifies 3.10+.
+Unknown tags fail closed by not receiving the catalog v3 marker.
+*/}}
+{{- define "influxdb3-enterprise.targetUsesCatalogV3" -}}
+{{- $tag := include "influxdb3-enterprise.imageTag" . -}}
+{{- $version := regexFind "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag | trimPrefix "v" -}}
+{{- if $version -}}
+{{- if semverCompare ">=3.10.0-0" $version -}}true{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Image reference
 */}}
 {{- define "influxdb3-enterprise.image" -}}
 {{- $registry := .Values.image.registry }}
 {{- $repository := .Values.image.repository }}
-{{- $tag := .Values.image.tag | default (printf "%s-enterprise" .Chart.AppVersion) }}
+{{- $tag := include "influxdb3-enterprise.imageTag" . }}
 {{- printf "%s/%s:%s" $registry $repository $tag }}
 {{- end }}
 
