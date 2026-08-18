@@ -47,6 +47,9 @@ spec:
           {{- end }}
           {{- end }}
           serviceAccountName: {{ include "influxdb.serviceAccountName" . }}
+          {{- with default .Values.priorityClassName .Values.backup.priorityClassName }}
+          priorityClassName: {{ . }}
+          {{- end }}
           containers:
           {{- if .Values.backupRetention.gcs }}
           {{- end }}
