@@ -6,13 +6,19 @@
 {{- include "influxdb3-enterprise.validateObjectStoreTlsCa" . }}
 {{- include "influxdb3-enterprise.validateAdminTokenConfig" . }}
 {{- include "influxdb3-enterprise.validatePermissionTokensConfig" . }}
+{{- $existing := lookup "v1" "ConfigMap" .Release.Namespace (include "influxdb3-enterprise.configMapName" .) | default dict }}
+{{- $recordedFormat := dig "metadata" "annotations" "influxdata.com/catalog-format" "" $existing }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "influxdb3-enterprise.fullname" . }}-config
+  name: {{ include "influxdb3-enterprise.configMapName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+  {{- if or (eq (include "influxdb3-enterprise.targetUsesCatalogV3" .) "true") (eq $recordedFormat "v3") }}
+  annotations:
+    influxdata.com/catalog-format: "v3"
+  {{- end }}
 data:
   # Cluster configuration (env-style)
   INFLUXDB3_ENTERPRISE_CLUSTER_ID: {{ .Values.cluster.id | quote }}
