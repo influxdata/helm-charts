@@ -19,7 +19,7 @@ export NAMESPACE=influxdb3
 
 # Set this to the values file you will use for the upgrade.
 export VALUES_FILE=./my-values.yaml
-export TARGET_CHART_VERSION=0.9.0
+export TARGET_CHART_VERSION=0.9.1
 
 helm get values "$RELEASE" -n "$NAMESPACE" -o yaml > pre-3.10-values.yaml
 kubectl get pods -n "$NAMESPACE" \
@@ -40,11 +40,7 @@ image.
 The chart does not enforce the documented ingester, querier, compactor upgrade
 order, so use a maintenance window.
 
-After completing the backup, persist the acknowledgement in your values file:
-
-```yaml
-acknowledgeCatalogMigration: true
-```
+After completing the backup, pass the acknowledgement for this upgrade only:
 
 ```bash
 helm repo update
@@ -52,8 +48,17 @@ helm upgrade "$RELEASE" influxdata/influxdb3-enterprise \
   -n "$NAMESPACE" \
   --version "$TARGET_CHART_VERSION" \
   -f "$VALUES_FILE" \
+  --set acknowledgeCatalogMigration=true \
   --wait --timeout 30m
 ```
+
+The chart records `influxdata.com/catalog-format: v3` on its ConfigMap when the
+effective image tag clearly identifies InfluxDB 3.10 or later. The marker
+records an acknowledged migration attempt, not a completed migration. Retain
+the backup until every pod is ready and the verification steps below succeed.
+After the marker is recorded, `acknowledgeCatalogMigration` is no longer needed
+for live upgrades, although Helm may retain `true` in stored release values.
+Client-side previews still require the flag because they cannot query the marker.
 
 Do not use `--atomic`, and do not run `helm rollback` to a 3.9 revision after
 the catalog migration. Both can restore a 3.9 image while leaving the catalog
@@ -75,6 +80,6 @@ write. Do not downgrade without restoring the pre-upgrade catalog backup.
 ## Existing 3.10 image override
 
 If the release already runs 3.10 through `image.tag`, its catalog is already
-migrated. Back up the catalog, remove or update the override, and still pass
-`acknowledgeCatalogMigration: true` in the values file; the chart cannot
-determine which image version was previously deployed.
+migrated. Back up the catalog, remove or update the override, and pass the
+one-time acknowledgement if the release does not yet carry the marker. Unknown
+or pre-3.10 image tags do not receive the marker.
