@@ -43,7 +43,7 @@ cluster:
 # All nodes in the cluster must connect to the same object store.
 
 objectStorage:
-  # Object store type: s3, azure, google, file, memory, memory-throttled
+  # Object store type: s3, azure, google, file
   # Default: s3 (recommended for production)
   type: s3
 
@@ -130,30 +130,24 @@ objectStorage:
   file:
     dataDir: "/var/lib/influxdb3"
     persistence:
-      accessMode: ReadWriteMany     # Use ReadWriteOnce only for single-node local testing
+      accessMode: ReadWriteMany     # Use ReadWriteOnce only when all pods run on one Kubernetes node
       storageClass: ""
       size: 100Gi
-
-  # In-memory storage (no persistence)
-  # memory:
-
-  # In-memory storage (no persistence) but with latency and throughput that somewhat resembles a cloud object store
-  # memory-throttled:
 
 # ============================================================================
 # License Configuration (Shared across all components)
 # ============================================================================
-# InfluxDB 3 Enterprise requires a license. Three types available:
+# InfluxDB 3 Enterprise requires a license. Two types are supported:
 # - trial: 30-day trial with full features
-# - home: For at-home hobbyist use (limited to 2 cores)
 # - commercial: Full commercial license
+# Home licenses are single-node only and are not supported by this multi-node chart.
 
 license:
-  # License type: trial, home, or commercial
+  # License type: trial or commercial
   type: "trial"
 
-  # Email address for trial/home licenses
-  # Required for trial and home licenses
+  # Email address for trial licenses
+  # Required for trial licenses
   email: ""
 
   # License file content (for commercial licenses)
