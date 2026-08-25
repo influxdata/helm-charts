@@ -90,15 +90,15 @@ spec:
               value: {{ .flushInterval | quote }}
             {{- end }}
             {{- if .snapshotSize }}
-            - name: INFLUXDB3_WAL_SNAPSHOT_SIZE
+            - name: INFLUXDB3_WAL_FILES_PER_SNAPSHOT
               value: {{ .snapshotSize | quote }}
             {{- end }}
             {{- if .maxWriteBufferSize }}
-            - name: INFLUXDB3_WAL_MAX_WRITE_BUFFER_SIZE
+            - name: INFLUXDB3_WAL_MAX_BUFFERED_WRITES
               value: {{ .maxWriteBufferSize | quote }}
             {{- end }}
             {{- if .snapshotFilesToKeep }}
-            - name: INFLUXDB3_NUM_WAL_FILES_TO_KEEP
+            - name: INFLUXDB3_SNAPSHOTTED_WAL_FILES_TO_KEEP
               value: {{ .snapshotFilesToKeep | quote }}
             {{- end }}
             {{- if hasKey . "replayFailOnError" }}
@@ -106,15 +106,20 @@ spec:
               value: {{ ternary "true" "false" .replayFailOnError | quote }}
             {{- end }}
             {{- end }}
-            {{- with .Values.ingester.memory }}
-            {{- if .execMemPoolBytes }}
+            {{- $memory := .Values.ingester.memory | default dict }}
+            {{- if get $memory "execMemPoolSize" }}
+            - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
+              value: {{ get $memory "execMemPoolSize" | quote }}
+            {{- else if get $memory "execMemPoolBytes" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
-              value: {{ .execMemPoolBytes | quote }}
+              value: {{ get $memory "execMemPoolBytes" | quote }}
             {{- end }}
-            {{- if .forceSnapshotMemThreshold }}
+            {{- if get $memory "forceSnapshotMemSize" }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+              value: {{ get $memory "forceSnapshotMemSize" | quote }}
+            {{- else if get $memory "forceSnapshotMemThreshold" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ .forceSnapshotMemThreshold | quote }}
-            {{- end }}
+              value: {{ get $memory "forceSnapshotMemThreshold" | quote }}
             {{- end }}
             {{- with .Values.ingester.datafusion }}
             {{- if .numThreads }}

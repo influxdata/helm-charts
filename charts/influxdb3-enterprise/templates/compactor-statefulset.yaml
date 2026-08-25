@@ -79,23 +79,23 @@ spec:
             {{- end }}
             {{- with .Values.compactor.compaction }}
             {{- if .gen2Duration }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_GEN2_DURATION
+            - name: INFLUXDB3_COMPACTION_GEN2_DURATION
               value: {{ .gen2Duration | quote }}
             {{- end }}
             {{- if .multipliers }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_MULTIPLIERS
+            - name: INFLUXDB3_COMPACTION_MULTIPLIERS
               value: {{ .multipliers | quote }}
             {{- end }}
             {{- if .maxNumFilesPerPlan }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_MAX_NUM_FILES_PER_PLAN
+            - name: INFLUXDB3_COMPACTION_MAX_NUM_FILES_PER_PLAN
               value: {{ .maxNumFilesPerPlan | quote }}
             {{- end }}
             {{- if .cleanupWait }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_CLEANUP_WAIT
+            - name: INFLUXDB3_COMPACTION_CLEANUP_WAIT
               value: {{ .cleanupWait | quote }}
             {{- end }}
             {{- if .checkInterval }}
-            - name: INFLUXDB3_ENTERPRISE_COMPACTION_CHECK_INTERVAL
+            - name: INFLUXDB3_COMPACTION_CHECK_INTERVAL
               value: {{ .checkInterval | quote }}
             {{- end }}
             {{- if .gen1Duration }}
@@ -103,15 +103,20 @@ spec:
               value: {{ .gen1Duration | quote }}
             {{- end }}
             {{- end }}
-            {{- with .Values.compactor.memory }}
-            {{- if .execMemPoolBytes }}
+            {{- $memory := .Values.compactor.memory | default dict }}
+            {{- if get $memory "execMemPoolSize" }}
+            - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
+              value: {{ get $memory "execMemPoolSize" | quote }}
+            {{- else if get $memory "execMemPoolBytes" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
-              value: {{ .execMemPoolBytes | quote }}
+              value: {{ get $memory "execMemPoolBytes" | quote }}
             {{- end }}
-            {{- if .forceSnapshotMemThreshold }}
+            {{- if get $memory "forceSnapshotMemSize" }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+              value: {{ get $memory "forceSnapshotMemSize" | quote }}
+            {{- else if get $memory "forceSnapshotMemThreshold" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ .forceSnapshotMemThreshold | quote }}
-            {{- end }}
+              value: {{ get $memory "forceSnapshotMemThreshold" | quote }}
             {{- end }}
             {{- with .Values.compactor.datafusion }}
             {{- if .numThreads }}

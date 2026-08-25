@@ -26,6 +26,11 @@ imagePullSecrets: []
 # Follow UPGRADING-3.9-TO-3.10.md before setting this to true.
 acknowledgeCatalogMigration: false
 
+# Acknowledge and start the PachaTree migration on an existing cluster.
+# Follow UPGRADING-3.10-TO-3.11.md before setting this to true.
+# It is safe to leave enabled after the migration completes.
+acknowledgePachaTreeMigration: false
+
 # Cluster configuration - all nodes must share the same cluster ID
 cluster:
   # Unique identifier for the cluster (must be different from any node-id)
@@ -34,7 +39,7 @@ cluster:
   # Cluster management settings for multi-node coordination
 #  replicationInterval: "250ms"      # Data replication interval between nodes
 #  catalogSyncInterval: "10s"        # Catalog synchronization interval
-#  waitForRunningIngestor: "10s"     # Startup wait time for ingestor
+#  waitForRunningIngester: "10s"     # Startup wait; deprecated alias: waitForRunningIngestor
 
 # ============================================================================
 # Object Storage Configuration
@@ -57,7 +62,7 @@ objectStorage:
   # requestTimeout: ""              # Object store request timeout (optional, server default: 30s)
   # maxRetries: ""                  # Object store retry attempts (optional)
   # retryTimeout: ""                # Object store retry timeout (optional)
-  # cacheEndpoint: ""               # Object store cache endpoint (optional)
+  # cacheEndpoint: ""               # Deprecated: ignored by InfluxDB 3.11+
   # tlsAllowInsecure: false         # Skip object-store TLS cert verification (testing only)
   # tlsCa:
   #   certPath: ""                  # Path to custom CA PEM file for object-store TLS verification
@@ -189,8 +194,8 @@ ingester:
 
   # Memory tuning
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -293,8 +298,8 @@ querier:
 
   # Memory tuning
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -384,8 +389,8 @@ compactor:
 
   # Memory tuning
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -469,8 +474,8 @@ processingEngine:
 
   # Memory tuning
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -592,9 +597,9 @@ http:
 
 # Caching configuration
 caching:
-  # Parquet file caching
-  # parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
-  # parquetMemCacheQueryPathDuration: "5h"
+  # File caching
+  # fileCacheSize: "20%"                    # Deprecated alias: parquetMemCacheSize; alias bare numbers mean MB
+  # parquetMemCacheQueryPathDuration: "5h"  # Deprecated Helm key retained for compatibility
   # parquetMemCachePrunePercentage: 0.1
   # parquetMemCachePruneInterval: "1s"
   # disableParquetMemCache: false

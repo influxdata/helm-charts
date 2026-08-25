@@ -100,15 +100,20 @@ spec:
             - name: INFLUXDB3_PACKAGE_MANAGER
               value: {{ . | quote }}
             {{- end }}
-            {{- with .Values.processingEngine.memory }}
-            {{- if .execMemPoolBytes }}
+            {{- $memory := .Values.processingEngine.memory | default dict }}
+            {{- if get $memory "execMemPoolSize" }}
+            - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
+              value: {{ get $memory "execMemPoolSize" | quote }}
+            {{- else if get $memory "execMemPoolBytes" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
-              value: {{ .execMemPoolBytes | quote }}
+              value: {{ get $memory "execMemPoolBytes" | quote }}
             {{- end }}
-            {{- if .forceSnapshotMemThreshold }}
+            {{- if get $memory "forceSnapshotMemSize" }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+              value: {{ get $memory "forceSnapshotMemSize" | quote }}
+            {{- else if get $memory "forceSnapshotMemThreshold" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ .forceSnapshotMemThreshold | quote }}
-            {{- end }}
+              value: {{ get $memory "forceSnapshotMemThreshold" | quote }}
             {{- end }}
             {{- with .Values.processingEngine.datafusion }}
             {{- if .numThreads }}

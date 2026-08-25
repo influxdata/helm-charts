@@ -260,6 +260,10 @@ For local testing where all pods run on the same Kubernetes node, you can set
 `objectStorage.file.persistence.accessMode=ReadWriteOnce` to use a
 local-path style StorageClass.
 
+`objectStorage.cacheEndpoint` is deprecated and has no effect with InfluxDB
+3.11+. It is retained for compatibility with existing values and will be
+removed in a future chart release.
+
 #### Resource Configuration
 
 Configure resources per component:
@@ -450,6 +454,14 @@ processingEngine:
 5. **Processing**: Processor nodes execute plugins on data writes, schedules, or HTTP requests
 
 ## Upgrading
+
+### Upgrade from InfluxDB 3.10
+
+Chart 0.10.0 upgrades InfluxDB 3 Enterprise to 3.11.2. Existing clusters stay
+on the Parquet storage engine until the separate PachaTree migration is enabled.
+Follow [UPGRADING-3.10-TO-3.11.md](UPGRADING-3.10-TO-3.11.md) for the version
+upgrade, compatibility notes, migration acknowledgement, verification, and
+downgrade limitations.
 
 ### Upgrade from InfluxDB 3.9
 
@@ -649,7 +661,9 @@ logs:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `acknowledgeCatalogMigration` | One-time acknowledgement for an upgrade without the catalog format v3 marker | `false` |
+| `acknowledgePachaTreeMigration` | Acknowledge and start migration of an existing Parquet cluster to PachaTree | `false` |
 | `cluster.id` | Cluster identifier | `cluster-01` |
+| `cluster.waitForRunningIngester` | Startup wait time for an ingester | `""` |
 | `image.registry` | Image registry | `docker.io` |
 | `image.repository` | Image repository | `influxdb` |
 | `image.tag` | Image tag override (defaults to `<appVersion>-enterprise` when empty) | `""` |

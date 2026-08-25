@@ -311,20 +311,20 @@ License environment (shared across components)
 {{- if or .Values.license.existingSecret (or .Values.license.email .Values.license.file) }}
 {{- $licenseType := .Values.license.type | default "trial" -}}
 {{- if and (eq $licenseType "trial") (or .Values.license.email .Values.license.existingSecret) }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
+- name: INFLUXDB3_LICENSE_EMAIL
   valueFrom:
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
 {{- end }}
 {{- if .Values.license.file }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+- name: INFLUXDB3_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- else if and .Values.license.existingSecret (eq $licenseType "commercial") }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+- name: INFLUXDB3_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- end }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
+- name: INFLUXDB3_LICENSE_TYPE
   value: {{ $licenseType | quote }}
 {{- end }}
 {{- end }}
