@@ -124,7 +124,8 @@ if [ -n "$kube_context" ]; then
 fi
 
 query_until_contains() {
-  local expected=$1
+  local expected
+  local found_all
   local timeout=15
   local deadline=$((SECONDS + timeout))
   local query_output=
@@ -140,7 +141,14 @@ query_until_contains() {
       --token "$auth_token" \
       --format csv \
       'SELECT * FROM upgrade_measurement ORDER BY time'); then
-      if printf '%s\n' "$query_output" | grep -Fq "$expected"; then
+      found_all=true
+      for expected in "$@"; do
+        if ! printf '%s\n' "$query_output" | grep -Fq "$expected"; then
+          found_all=false
+          break
+        fi
+      done
+      if [ "$found_all" = true ]; then
         printf '%s\n' "$query_output"
         return 0
       fi
@@ -149,8 +157,8 @@ query_until_contains() {
     [ "$SECONDS" -lt "$deadline" ] && sleep 1
   done
 
-  printf 'Query result did not contain %s after %s seconds\n' \
-    "$expected" "$timeout" >&2
+  printf 'Query result did not contain all expected values (%s) after %s seconds\n' \
+    "$*" "$timeout" >&2
   return 1
 }
 
@@ -158,6 +166,9 @@ wait_for_pacha_tree_migration() {
   local timeout=60
   local deadline=$((SECONDS + timeout))
   local status_output=
+  local status_query='SELECT node_id, mode, status FROM system.upgrade_parquet_node'
+
+  log "Checking system.upgrade_parquet_node: at least one migration node must be present and every node must report status=completed (timeout: ${timeout}s)"
 
   while [ "$SECONDS" -lt "$deadline" ]; do
     if status_output=$("${kubectl_command[@]}" exec \
@@ -167,12 +178,12 @@ wait_for_pacha_tree_migration() {
       --database _internal \
       --token "$auth_token" \
       --format csv \
-      'SELECT status FROM system.upgrade_parquet_node'); then
+      "$status_query"); then
       if printf '%s\n' "$status_output" | awk -F, '
         NR == 1 { next }
         NF {
           count++
-          if ($1 != "completed") {
+          if ($3 != "completed") {
             incomplete = 1
           }
         }
@@ -214,6 +225,11 @@ cleanup() {
       s3 rm "s3://$bucket" --recursive --no-cli-pager
     aws --endpoint-url "$s3_endpoint" \
       s3api delete-bucket --bucket "$bucket" --no-cli-pager
+  fi
+
+  if [ "$status" -ne 0 ]; then
+    printf '\n==> Upgrade verification failed (exit status %s)\n' \
+      "$status" >&2
   fi
 
   exit "$status"
@@ -308,7 +324,6 @@ helm upgrade "$release" "$chart_dir" \
   --wait \
   --timeout 15m
 
-log "Waiting for PachaTree migration completion"
 wait_for_pacha_tree_migration
 
 log "Writing post-upgrade data"
@@ -320,7 +335,10 @@ log "Writing post-upgrade data"
   'upgrade_measurement,source=chart-0.10.0-pachatree value=100i 1724493720000000000'
 
 log "Post-upgrade query result"
-post_upgrade_query=$(query_until_contains 'chart-0.10.0-pachatree')
+post_upgrade_query=$(query_until_contains \
+  'chart-0.9.2' \
+  'chart-0.10.0-parquet' \
+  'chart-0.10.0-pachatree')
 printf '%s\n' "$post_upgrade_query"
 
 printf '%s\n' "$post_upgrade_query" |
