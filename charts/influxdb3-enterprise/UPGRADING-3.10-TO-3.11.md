@@ -34,7 +34,7 @@ acknowledgePachaTreeMigration: false
 ## Upgrade to chart 0.10.0
 
 For a multi-node deployment, follow the official
-[staged Helm rollout procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/#perform-a-rolling-upgrade)
+[staged Helm rollout procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/#multi-node-upgrade-procedure)
 using chart version `0.10.0`.
 
 After all StatefulSets finish rolling, verify the nodes from a querier pod:
