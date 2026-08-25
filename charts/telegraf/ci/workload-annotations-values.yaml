@@ -1,0 +1,3 @@
+annotations:
+  pulumi.com/skipAwait: "true"
+  example.com/release: "{{ .Release.Name }}"

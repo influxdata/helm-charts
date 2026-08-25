@@ -4,6 +4,10 @@ metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+{{ tpl (toYaml .) $ | indent 4 }}
+  {{- end }}
 spec:
   selector:
     matchLabels:

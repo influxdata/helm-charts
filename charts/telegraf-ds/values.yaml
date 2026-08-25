@@ -16,6 +16,10 @@ resources:
   limits:
     memory: 2Gi
     cpu: 1
+## Annotations to add to the DaemonSet object itself.
+## Use podAnnotations below to annotate the pods.
+annotations: {}
+
 ## Pod annotations
 podAnnotations: {}
 ## Pod labels
