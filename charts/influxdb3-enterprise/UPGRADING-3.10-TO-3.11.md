@@ -4,6 +4,13 @@ Chart 0.10.0 upgrades InfluxDB 3 Enterprise from 3.10.5 to 3.11.2. Upgrade the
 binary first with the existing Parquet storage engine, verify the cluster, and
 then decide separately whether to migrate to PachaTree.
 
+Do not enable PachaTree migration during the initial 3.11 rollout. InfluxDB
+rejects the combined operation with:
+
+```text
+The Parquet compactor node must be run before initiating PachaTree upgrade
+```
+
 See the official [upgrade](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/),
 [storage engine](https://docs.influxdata.com/influxdb3/enterprise/reference/internals/storage-engine/),
 and [release](https://docs.influxdata.com/influxdb3/enterprise/release-notes/)
