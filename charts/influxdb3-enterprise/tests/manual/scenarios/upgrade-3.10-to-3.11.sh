@@ -210,26 +210,38 @@ bucket_created=false
 
 cleanup() {
   status=$?
+  cleanup_status=0
   trap - EXIT INT TERM
   set +e
 
   if [ "$namespace_created" = true ]; then
     log "Deleting namespace: $namespace"
-    "${kubectl_command[@]}" delete namespace "$namespace" \
-      --ignore-not-found --wait=true
+    if ! "${kubectl_command[@]}" delete namespace "$namespace" \
+      --ignore-not-found --wait=true; then
+      cleanup_status=1
+    fi
   fi
 
   if [ "$bucket_created" = true ]; then
     log "Deleting temporary S3 bucket: $bucket"
-    aws --endpoint-url "$s3_endpoint" \
-      s3 rm "s3://$bucket" --recursive --no-cli-pager
-    aws --endpoint-url "$s3_endpoint" \
-      s3api delete-bucket --bucket "$bucket" --no-cli-pager
+    if ! aws --endpoint-url "$s3_endpoint" \
+      s3 rm "s3://$bucket" --recursive --no-cli-pager; then
+      cleanup_status=1
+    fi
+    if ! aws --endpoint-url "$s3_endpoint" \
+      s3api delete-bucket --bucket "$bucket" --no-cli-pager; then
+      cleanup_status=1
+    fi
   fi
 
   if [ "$status" -ne 0 ]; then
     printf '\n==> Upgrade verification failed (exit status %s)\n' \
       "$status" >&2
+  fi
+
+  if [ "$cleanup_status" -ne 0 ]; then
+    printf '\n==> Cleanup failed; manual cleanup may be required\n' >&2
+    [ "$status" -ne 0 ] || status=$cleanup_status
   fi
 
   exit "$status"
@@ -340,11 +352,6 @@ post_upgrade_query=$(query_until_contains \
   'chart-0.10.0-parquet' \
   'chart-0.10.0-pachatree')
 printf '%s\n' "$post_upgrade_query"
-
-printf '%s\n' "$post_upgrade_query" |
-  grep -Fq 'chart-0.9.2'
-printf '%s\n' "$post_upgrade_query" | grep -Fq 'chart-0.10.0-parquet'
-printf '%s\n' "$post_upgrade_query" | grep -Fq 'chart-0.10.0-pachatree'
 
 log "Final Helm and pod status"
 helm list "${helm_context[@]}" --namespace "$namespace"
