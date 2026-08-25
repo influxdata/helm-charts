@@ -9,6 +9,7 @@ values_file="$manual_dir/values-s3.yaml"
 license_file=
 admin_token_file="$manual_dir/admin-token.example.json"
 kube_context=
+s3_endpoint=
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -22,6 +23,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --context)
       kube_context=$2
+      shift 2
+      ;;
+    --s3-endpoint)
+      s3_endpoint=$2
       shift 2
       ;;
     *)
@@ -67,13 +72,15 @@ auth_token=$(sed -n \
   exit 1
 }
 
-s3_endpoint=$(awk '
-  $1 == "endpoint:" {
-    gsub(/"/, "", $2)
-    print $2
-    exit
-  }
-' "$values_file")
+if [ -z "$s3_endpoint" ]; then
+  s3_endpoint=$(awk '
+    $1 == "endpoint:" {
+      gsub(/"/, "", $2)
+      print $2
+      exit
+    }
+  ' "$values_file")
+fi
 [ -n "$s3_endpoint" ] || {
   echo "No S3 endpoint found in $values_file" >&2
   exit 1
@@ -238,6 +245,7 @@ helm install "$release" influxdata/influxdb3-enterprise \
   --namespace "$namespace" \
   --version 0.9.2 \
   --values "$values_file" \
+  --set-string objectStorage.s3.endpoint="$s3_endpoint" \
   --set-string objectStorage.bucket="$bucket" \
   --set-string cluster.id="$cluster_id" \
   --set license.type=commercial \
@@ -277,6 +285,20 @@ for component in ingester querier compactor processor; do
   printf '%s\n' "$version_output" | grep -Fq 'InfluxDB 3 Enterprise, 3.11.2'
 done
 
+log "Verifying baseline data on InfluxDB 3.11.2 / Parquet"
+query_until_contains 'chart-0.9.2'
+
+log "Writing data on InfluxDB 3.11.2 / Parquet"
+"${kubectl_command[@]}" exec --namespace "$namespace" "$ingester_pod" -- \
+  influxdb3 write \
+  --host "$ingester_host" \
+  --database upgrade_test \
+  --token "$auth_token" \
+  'upgrade_measurement,source=chart-0.10.0-parquet value=99i 1724493660000000000'
+
+log "Verifying new Parquet data"
+query_until_contains 'chart-0.10.0-parquet'
+
 log "Starting PachaTree migration"
 helm upgrade "$release" "$chart_dir" \
   "${helm_context[@]}" \
@@ -295,15 +317,16 @@ log "Writing post-upgrade data"
   --host "$ingester_host" \
   --database upgrade_test \
   --token "$auth_token" \
-  'upgrade_measurement,source=chart-0.10.0 value=100i 1724493660000000000'
+  'upgrade_measurement,source=chart-0.10.0-pachatree value=100i 1724493720000000000'
 
 log "Post-upgrade query result"
-post_upgrade_query=$(query_until_contains 'chart-0.10.0')
+post_upgrade_query=$(query_until_contains 'chart-0.10.0-pachatree')
 printf '%s\n' "$post_upgrade_query"
 
 printf '%s\n' "$post_upgrade_query" |
   grep -Fq 'chart-0.9.2'
-printf '%s\n' "$post_upgrade_query" | grep -Fq 'chart-0.10.0'
+printf '%s\n' "$post_upgrade_query" | grep -Fq 'chart-0.10.0-parquet'
+printf '%s\n' "$post_upgrade_query" | grep -Fq 'chart-0.10.0-pachatree'
 
 log "Final Helm and pod status"
 helm list "${helm_context[@]}" --namespace "$namespace"
