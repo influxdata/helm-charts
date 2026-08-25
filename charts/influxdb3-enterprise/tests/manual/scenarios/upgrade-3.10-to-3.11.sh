@@ -96,6 +96,7 @@ aws_secret_key=$(awk '
 
 export AWS_ACCESS_KEY_ID=$aws_access_key
 export AWS_SECRET_ACCESS_KEY=$aws_secret_key
+export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
 
 run_id=$(date -u +%Y%m%d%H%M%S)-$$
 namespace=influxdb3-upgrade-"$run_id"
