@@ -28,6 +28,7 @@ Save the current release values:
 export RELEASE=influxdb3-enterprise
 export NAMESPACE=influxdb3
 export VALUES_FILE=./my-values.yaml
+export INFLUXDB3_AUTH_TOKEN="<admin-token>"
 
 helm get values "$RELEASE" -n "$NAMESPACE" -o yaml > pre-3.11-values.yaml
 ```
