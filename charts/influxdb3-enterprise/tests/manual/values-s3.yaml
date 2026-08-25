@@ -1,0 +1,72 @@
+acknowledgeCatalogMigration: true
+acknowledgePachaTreeMigration: false
+
+objectStorage:
+  type: s3
+  bucket: "set-by-manual-test"
+  s3:
+    # Example endpoint (Apache Ozone)
+    endpoint: "http://ozone-s3g-rest.ozone.svc.cluster.local:9878"
+    # Allow HTTP connections
+    allowHttp: true
+    # Credentials (default, change in production)
+    accessKeyId: "changeit"      # test-only value
+    secretAccessKey: "changeit"  # test-only value
+    # For production, use existing secret:
+    # existingSecret: "ozone-credentials"
+
+serviceAccount:
+  automountServiceAccountToken: false
+
+license:
+  type: commercial
+
+ingester:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  persistence:
+    size: "5Gi"
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+compactor:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+processingEngine:
+  enabled: true
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  pluginDir: "/plugins"
+  persistence:
+    enabled: true
+    size: "5Gi"
+    storageClass: "local-path"
+    accessMode: ReadWriteOnce
+
+ingress:
+  host: "localhost"
