@@ -45,6 +45,12 @@ For a multi-node deployment, follow the official
 [staged Helm rollout procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/#multi-node-upgrade-procedure)
 using chart version `0.10.0`.
 
+Chart 0.10.0 emits both preferred 3.11 environment-variable names and their
+pre-3.11 aliases for settings supported by earlier chart versions. This keeps
+pods pinned to 3.10 correctly configured if they restart during the staged
+rollout. InfluxDB 3.11 uses the preferred names and logs deprecation warnings
+for the aliases.
+
 After all StatefulSets finish rolling, verify the nodes from a querier pod:
 
 ```bash

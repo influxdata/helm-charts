@@ -24,11 +24,14 @@ metadata:
 data:
   # Cluster configuration (env-style)
   INFLUXDB3_CLUSTER_ID: {{ .Values.cluster.id | quote }}
+  INFLUXDB3_ENTERPRISE_CLUSTER_ID: {{ .Values.cluster.id | quote }}
   {{- if .Values.cluster.replicationInterval }}
   INFLUXDB3_REPLICATION_INTERVAL: {{ .Values.cluster.replicationInterval | quote }}
+  INFLUXDB3_ENTERPRISE_REPLICATION_INTERVAL: {{ .Values.cluster.replicationInterval | quote }}
   {{- end }}
   {{- if .Values.cluster.catalogSyncInterval }}
   INFLUXDB3_CATALOG_SYNC_INTERVAL: {{ .Values.cluster.catalogSyncInterval | quote }}
+  INFLUXDB3_ENTERPRISE_CATALOG_SYNC_INTERVAL: {{ .Values.cluster.catalogSyncInterval | quote }}
   {{- end }}
   {{- $waitForRunningIngester := "" }}
   {{- if get .Values.cluster "waitForRunningIngester" }}
@@ -38,6 +41,7 @@ data:
   {{- end }}
   {{- if $waitForRunningIngester }}
   INFLUXDB3_WAIT_FOR_RUNNING_INGESTER: {{ $waitForRunningIngester | quote }}
+  INFLUXDB3_ENTERPRISE_WAIT_FOR_RUNNING_INGESTOR: {{ $waitForRunningIngester | quote }}
   {{- end }}
   {{- if $upgradePachaTree }}
   INFLUXDB3_UPGRADE_PACHA_TREE: "true"
@@ -51,6 +55,7 @@ data:
   {{- end }}
   {{- if .Values.security.auth.disabled }}
   INFLUXDB3_WITHOUT_AUTH: {{ ternary "true" "false" .Values.security.auth.disabled | quote }}
+  INFLUXDB3_START_WITHOUT_AUTH: {{ ternary "true" "false" .Values.security.auth.disabled | quote }}
   {{- end }}
   {{- if .Values.security.auth.disableAuthz }}
   INFLUXDB3_DISABLE_AUTHZ: {{ join "," .Values.security.auth.disableAuthz | quote }}
@@ -77,6 +82,7 @@ data:
   INFLUXDB3_OBJECT_STORE: {{ .Values.objectStorage.type | quote }}
   {{- if eq .Values.objectStorage.type "file" }}
   INFLUXDB3_DATA_DIR: {{ .Values.objectStorage.file.dataDir | quote }}
+  INFLUXDB3_DB_DIR: {{ .Values.objectStorage.file.dataDir | quote }}
   {{- else }}
   INFLUXDB3_BUCKET: {{ .Values.objectStorage.bucket | quote }}
   {{- end }}
@@ -144,11 +150,13 @@ data:
   {{- with .Values.caching }}
   {{- if .fileCacheSize }}
   INFLUXDB3_FILE_CACHE_SIZE: {{ .fileCacheSize | quote }}
+  INFLUXDB3_PARQUET_MEM_CACHE_SIZE: {{ .fileCacheSize | quote }}
   {{- else if .parquetMemCacheSize }}
   INFLUXDB3_PARQUET_MEM_CACHE_SIZE: {{ .parquetMemCacheSize | quote }}
   {{- end }}
   {{- if .parquetMemCacheQueryPathDuration }}
   INFLUXDB3_FILE_CACHE_RECENCY: {{ .parquetMemCacheQueryPathDuration | quote }}
+  INFLUXDB3_PARQUET_MEM_CACHE_QUERY_PATH_DURATION: {{ .parquetMemCacheQueryPathDuration | quote }}
   {{- end }}
   {{- if .parquetMemCachePrunePercentage }}
   INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE: {{ .parquetMemCachePrunePercentage | quote }}
@@ -158,18 +166,21 @@ data:
   {{- end }}
   {{- if hasKey . "disableParquetMemCache" }}
   INFLUXDB3_DISABLE_FILE_CACHE: {{ ternary "true" "false" .disableParquetMemCache | quote }}
+  INFLUXDB3_DISABLE_PARQUET_MEM_CACHE: {{ ternary "true" "false" .disableParquetMemCache | quote }}
   {{- end }}
   {{- if .preemptiveCacheAge }}
   INFLUXDB3_PREEMPTIVE_CACHE_AGE: {{ .preemptiveCacheAge | quote }}
   {{- end }}
   {{- if hasKey . "lastValueCacheDisableFromHistory" }}
   INFLUXDB3_LAST_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .lastValueCacheDisableFromHistory | quote }}
+  INFLUXDB3_ENTERPRISE_LAST_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .lastValueCacheDisableFromHistory | quote }}
   {{- end }}
   {{- if .lastCacheEvictionInterval }}
   INFLUXDB3_LAST_CACHE_EVICTION_INTERVAL: {{ .lastCacheEvictionInterval | quote }}
   {{- end }}
   {{- if hasKey . "distinctValueCacheDisableFromHistory" }}
   INFLUXDB3_DISTINCT_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .distinctValueCacheDisableFromHistory | quote }}
+  INFLUXDB3_ENTERPRISE_DISTINCT_VALUE_CACHE_DISABLE_FROM_HISTORY: {{ ternary "true" "false" .distinctValueCacheDisableFromHistory | quote }}
   {{- end }}
   {{- if .distinctCacheEvictionInterval }}
   INFLUXDB3_DISTINCT_CACHE_EVICTION_INTERVAL: {{ .distinctCacheEvictionInterval | quote }}
@@ -186,12 +197,15 @@ data:
   {{- with .Values.resourceLimits }}
   {{- if .numDatabases }}
   INFLUXDB3_NUM_DATABASE_LIMIT: {{ .numDatabases }}
+  INFLUXDB3_ENTERPRISE_NUM_DATABASE_LIMIT: {{ .numDatabases }}
   {{- end }}
   {{- if .numTables }}
   INFLUXDB3_NUM_TABLE_LIMIT: {{ .numTables }}
+  INFLUXDB3_ENTERPRISE_NUM_TABLE_LIMIT: {{ .numTables }}
   {{- end }}
   {{- if .numColumnsPerTable }}
   INFLUXDB3_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .numColumnsPerTable }}
+  INFLUXDB3_ENTERPRISE_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .numColumnsPerTable }}
   {{- end }}
   {{- end }}
 
@@ -224,6 +238,7 @@ data:
   {{- end }}
   {{- if .queryLogSize }}
   INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ .queryLogSize }}
+  INFLUXDB3_QUERY_LOG_SIZE: {{ .queryLogSize }}
   {{- end }}
   {{- end }}
 
@@ -258,6 +273,7 @@ data:
   # Telemetry
   {{- with .Values.telemetry }}
   INFLUXDB3_DISABLE_TELEMETRY_UPLOAD: {{ .disableUpload | quote }}
+  INFLUXDB3_TELEMETRY_DISABLE_UPLOAD: {{ .disableUpload | quote }}
   {{- if .endpoint }}
   INFLUXDB3_TELEMETRY_ENDPOINT: {{ .endpoint | quote }}
   {{- end }}
