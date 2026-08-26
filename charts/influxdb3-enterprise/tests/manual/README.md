@@ -3,9 +3,9 @@
 Prerequisites:
 
 - Bash 3.2 or later
-- Helm, kubectl, and AWS CLI
+- Helm and kubectl
 - a running Kubernetes cluster
-- a running S3-compatible store configured by `values-s3.yaml`
+- a running S3-compatible store reachable from the cluster and configured by `values-s3.yaml`
 - an InfluxData commercial license stored outside the repository
 
 Run an upgrade scenario:

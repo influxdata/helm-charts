@@ -10,6 +10,7 @@ license_file=
 admin_token_file="$manual_dir/admin-token.example.json"
 kube_context=
 s3_endpoint=
+aws_cli_image=public.ecr.aws/aws-cli/aws-cli:2.36.30
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -42,7 +43,7 @@ log() {
 
 log "Validating prerequisites"
 
-for command in aws helm kubectl awk grep sed; do
+for command in helm kubectl awk grep sed; do
   command -v "$command" >/dev/null || {
     echo "Required command not found: $command" >&2
     exit 1
@@ -101,9 +102,7 @@ aws_secret_key=$(awk '
   }
 ' "$values_file")
 
-export AWS_ACCESS_KEY_ID=$aws_access_key
-export AWS_SECRET_ACCESS_KEY=$aws_secret_key
-export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+aws_region=${AWS_DEFAULT_REGION:-us-east-1}
 
 run_id=$(date -u +%Y%m%d%H%M%S)-$$
 namespace=influxdb3-upgrade-"$run_id"
@@ -122,6 +121,23 @@ if [ -n "$kube_context" ]; then
   kubectl_command=(kubectl --context "$kube_context")
   helm_context=(--kube-context "$kube_context")
 fi
+
+run_aws() {
+  local pod_name=$1
+  shift
+
+  "${kubectl_command[@]}" run "$pod_name" \
+    --namespace "$namespace" \
+    --image "$aws_cli_image" \
+    --restart=Never \
+    --rm \
+    --attach=true \
+    --pod-running-timeout=5m \
+    --env="AWS_ACCESS_KEY_ID=$aws_access_key" \
+    --env="AWS_SECRET_ACCESS_KEY=$aws_secret_key" \
+    --env="AWS_DEFAULT_REGION=$aws_region" \
+    --command -- aws "$@"
+}
 
 query_until_contains() {
   local expected
@@ -214,22 +230,34 @@ cleanup() {
   trap - EXIT INT TERM
   set +e
 
-  if [ "$namespace_created" = true ]; then
-    log "Deleting namespace: $namespace"
-    if ! "${kubectl_command[@]}" delete namespace "$namespace" \
-      --ignore-not-found --wait=true; then
+  if [ "$namespace_created" = true ] &&
+    helm status "$release" "${helm_context[@]}" \
+      --namespace "$namespace" >/dev/null 2>&1; then
+    log "Stopping InfluxDB workloads"
+    if ! helm uninstall "$release" "${helm_context[@]}" \
+      --namespace "$namespace" \
+      --wait \
+      --timeout 5m; then
       cleanup_status=1
     fi
   fi
 
   if [ "$bucket_created" = true ]; then
     log "Deleting temporary S3 bucket: $bucket"
-    if ! aws --endpoint-url "$s3_endpoint" \
+    if ! run_aws "$release-s3-empty" --endpoint-url "$s3_endpoint" \
       s3 rm "s3://$bucket" --recursive --no-cli-pager; then
       cleanup_status=1
     fi
-    if ! aws --endpoint-url "$s3_endpoint" \
+    if ! run_aws "$release-s3-delete" --endpoint-url "$s3_endpoint" \
       s3api delete-bucket --bucket "$bucket" --no-cli-pager; then
+      cleanup_status=1
+    fi
+  fi
+
+  if [ "$namespace_created" = true ]; then
+    log "Deleting namespace: $namespace"
+    if ! "${kubectl_command[@]}" delete namespace "$namespace" \
+      --ignore-not-found --wait=true; then
       cleanup_status=1
     fi
   fi
@@ -250,15 +278,16 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT TERM
 
-log "Creating temporary S3 bucket: $bucket"
-aws --endpoint-url "$s3_endpoint" \
-  s3api create-bucket --bucket "$bucket" --no-cli-pager
-bucket_created=true
-
-log "Creating namespace and test Secrets: $namespace"
+log "Creating namespace: $namespace"
 "${kubectl_command[@]}" create namespace "$namespace"
 namespace_created=true
 
+log "Creating temporary S3 bucket: $bucket"
+run_aws "$release-s3-create" --endpoint-url "$s3_endpoint" \
+  s3api create-bucket --bucket "$bucket" --no-cli-pager
+bucket_created=true
+
+log "Creating test Secrets"
 "${kubectl_command[@]}" create secret generic "$license_secret" \
   --namespace "$namespace" \
   --from-file=license-file="$license_file"
