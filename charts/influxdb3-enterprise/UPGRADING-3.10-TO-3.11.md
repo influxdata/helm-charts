@@ -82,9 +82,10 @@ use separate acknowledgements.
 
 ## Migrate an existing cluster to PachaTree
 
-New clusters created by InfluxDB 3.11 use PachaTree automatically. Clusters
-created by 3.10 or earlier remain on the Parquet engine until this migration is
-explicitly enabled.
+`acknowledgePachaTreeMigration` is for clusters created by InfluxDB 3.10 or
+earlier, which remain on the Parquet engine until the migration is explicitly
+enabled. New clusters created by InfluxDB 3.11 use PachaTree automatically and
+do not need this acknowledgement.
 
 The migration is one-way for normal chart operation. It consumes additional
 CPU and memory while existing Parquet files are converted, and data written in
