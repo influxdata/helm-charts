@@ -1,2 +1,5 @@
 objectStorage:
   type: memory
+
+serviceAccount:
+  automountServiceAccountToken: false
