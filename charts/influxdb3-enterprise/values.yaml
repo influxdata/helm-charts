@@ -593,7 +593,7 @@ security:
 # HTTP server configuration
 http:
   # bind: "0.0.0.0:8181"
-  # maxRequestSize: 10485760          # 10MB default
+  # maxRequestSize: 10485760          # Bare bytes for 3.10 compatibility; 3.11.2+ also accepts "10mb"
 
 # Caching configuration
 caching:

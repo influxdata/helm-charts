@@ -22,6 +22,10 @@ Back up the cluster's object storage and verify that the backup can be restored.
 If your values set `image.tag`, remove the override or change it to
 `3.11.2-enterprise`; otherwise Helm continues deploying the overridden image.
 
+If `http.maxRequestSize` is set, keep it as a bare byte count, for example
+`10485760`, until every pod runs InfluxDB 3.11.2. InfluxDB 3.10.5 rejects
+unit-suffixed values such as `10mb`.
+
 Save the current release values:
 
 ```bash

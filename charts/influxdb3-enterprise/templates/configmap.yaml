@@ -74,7 +74,7 @@ data:
   INFLUXDB3_HTTP_BIND_ADDR: {{ .bind | quote }}
   {{- end }}
   {{- if .maxRequestSize }}
-  INFLUXDB3_MAX_HTTP_REQUEST_SIZE: {{ .maxRequestSize | int | quote }}
+  INFLUXDB3_MAX_HTTP_REQUEST_SIZE: {{ .maxRequestSize | quote }}
   {{- end }}
   {{- end }}
 
