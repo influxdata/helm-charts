@@ -72,6 +72,10 @@ spec:
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
             {{- end }}
+            {{- if hasKey .Values.querier "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.querier.numCores | quote }}
+            {{- end }}
             {{- $memory := .Values.querier.memory | default dict }}
             {{- if get $memory "execMemPoolSize" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
@@ -101,6 +105,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
+            {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.querier) | nindent 12 }}
             {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.querier) | nindent 12 }}
           ports:

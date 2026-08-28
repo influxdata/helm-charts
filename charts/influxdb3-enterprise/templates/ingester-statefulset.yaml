@@ -84,6 +84,10 @@ spec:
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
             {{- end }}
+            {{- if hasKey .Values.ingester "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.ingester.numCores | quote }}
+            {{- end }}
             {{- with .Values.ingester.wal }}
             {{- if .flushInterval }}
             - name: INFLUXDB3_WAL_FLUSH_INTERVAL
@@ -135,6 +139,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
+            {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.ingester) | nindent 12 }}
             {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.ingester) | nindent 12 }}
           ports:

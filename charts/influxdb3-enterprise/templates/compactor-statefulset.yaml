@@ -77,6 +77,10 @@ spec:
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
             {{- end }}
+            {{- if hasKey .Values.compactor "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.compactor.numCores | quote }}
+            {{- end }}
             {{- with .Values.compactor.compaction }}
             {{- if .gen2Duration }}
             - name: INFLUXDB3_COMPACTION_GEN2_DURATION
@@ -132,6 +136,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
+            {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.compactor) | nindent 12 }}
             {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.compactor) | nindent 12 }}
           ports:

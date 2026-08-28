@@ -170,6 +170,62 @@ license:
 # InfluxDB 3 Enterprise supports specialized nodes for different workloads.
 # Each component can be scaled independently based on your requirements.
 
+# PachaTree tuning (3.11+). Settings are rendered into ingester, querier,
+# and compactor pods. Processing Engine pods do not consume these settings.
+# Related existing settings:
+# - cluster.replicationInterval
+# - ingester.wal.flushInterval
+# - caching.fileCacheSize, parquetMemCacheQueryPathDuration,
+#   and disableParquetMemCache
+# engine:
+#   pachaTree:
+#     # Shared storage-engine settings
+#     enginePathPrefix: ""
+#     maxTotalColumns: 10000000
+#     enableRetention: true
+#     disableHybridQuery: false
+#     enableAutoDvc: false
+#     autoDvcMaxCardinality: 100000
+#     autoDvcRefreshInterval: "10m"
+#     upgradePollInterval: "5s"
+#     fileCacheEvictAfter: "24h"
+#
+#     # Ingester settings
+#     walFlushConcurrency: 2
+#     walBufferSize: "15mb"
+#     walSnapshotsToKeep: 5
+#     snapshotSize: "250mb"
+#     snapshotDuration: "10s"       # Also used by querier replica buffering
+#     maxConcurrentSnapshots: 5
+#     mergeThresholdSize: "62mb"
+#     gen0MaxRowsPerFile: 10000000
+#     gen0MaxFileSize: "100mb"
+#
+#     # Querier replication settings
+#     walReplicaRecoveryConcurrency: 8
+#     walReplicaSteadyConcurrency: 8
+#     walReplicaQueueLength: 100
+#     walReplicaRecoveryTailSkipLimit: 128
+#     replicaGen0LoadConcurrency: 16
+#     replicaMaxBufferSize: "50%"
+#
+#     # Compactor settings
+#     shardCount: 1
+#     compactorInputSizeBudget: "2gb"
+#     finalCompactionAge: "4h"
+#     compactorCleanupCooldown: "10m"
+#     l1TailTargetSize: "600mb"
+#     l1TargetFileSize: "25mb"
+#     l1PromotionCount: 3
+#     l2TailTargetSize: "1200mb"
+#     l2TargetFileSize: "40mb"
+#     l2PromotionCount: 3
+#     l3TailTargetSize: "2500mb"
+#     l3TargetFileSize: "75mb"
+#     l3PromotionCount: 4
+#     l4TailTargetSize: "50gb"
+#     l4TargetFileSize: "125mb"
+
 # Ingester nodes - Handle data writes
 ingester:
   enabled: true
@@ -185,6 +241,7 @@ ingester:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for ingester pods. Overrides top-level extraEnv entries with the same name.
@@ -289,6 +346,7 @@ querier:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for querier pods. Overrides top-level extraEnv entries with the same name.
@@ -380,6 +438,7 @@ compactor:
       memory: "4Gi"
 
   # Thread configuration
+  # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for compactor pods. Overrides top-level extraEnv entries with the same name.
@@ -465,6 +524,7 @@ processingEngine:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for Processing Engine pods. Overrides top-level extraEnv entries with the same name.
@@ -487,6 +547,8 @@ processingEngine:
   pluginDir: "/plugins"               # Local directory that contains Python plugins and their test files.
   # pluginRepo: "https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/"  # URL of remote plugin repository
   # packageManager: "discover"        # discover, pip, uv, or disabled
+  # disablePackageManagement: false   # Takes precedence over packageManager when true
+  # asyncTriggerConcurrencyLimit: 8   # Max concurrent async trigger invocations (default: unlimited)
 
   # Persistent storage for plugins
   persistence:
@@ -594,6 +656,10 @@ security:
 http:
   # bind: "0.0.0.0:8181"
   # maxRequestSize: 10485760          # Bare bytes for 3.10 compatibility; 3.11.2+ also accepts "10mb"
+
+# Graceful shutdown configuration
+# shutdown:
+#   timeout: "30s"
 
 # Caching configuration
 caching:

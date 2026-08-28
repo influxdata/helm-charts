@@ -78,6 +78,12 @@ data:
   {{- end }}
   {{- end }}
 
+  # Graceful shutdown
+  {{- $shutdown := .Values.shutdown | default dict }}
+  {{- if hasKey $shutdown "timeout" }}
+  INFLUXDB3_SHUTDOWN_TIMEOUT: {{ get $shutdown "timeout" | quote }}
+  {{- end }}
+
   # Object storage (non-secret)
   INFLUXDB3_OBJECT_STORE: {{ .Values.objectStorage.type | quote }}
   {{- if eq .Values.objectStorage.type "file" }}

@@ -662,6 +662,8 @@ logs:
 |-----------|-------------|---------|
 | `acknowledgeCatalogMigration` | One-time acknowledgement for an upgrade without the catalog format v3 marker | `false` |
 | `acknowledgePachaTreeMigration` | Acknowledge and start migration of an existing Parquet cluster to PachaTree | `false` |
+| `engine.pachaTree.*` | Optional PachaTree tuning for ingester, querier, and compactor pods; see `values.yaml` for role-specific options | not set |
+| `shutdown.timeout` | Graceful connection-drain timeout | not set (server default `30s`) |
 | `cluster.id` | Cluster identifier | `cluster-01` |
 | `cluster.waitForRunningIngester` | Startup wait time for an ingester | `""` |
 | `image.registry` | Image registry | `docker.io` |
@@ -710,6 +712,13 @@ logs:
 | `querier.replicas` | Number of querier replicas | `2` |
 | `compactor.replicas` | Number of compactor replicas | `1` (fixed) |
 | `processingEngine.enabled` | Enable Processing Engine | `false` |
+| `ingester.numCores` | Cores available to each ingester | not set |
+| `querier.numCores` | Cores available to each querier | not set |
+| `compactor.numCores` | Cores available to the compactor | not set |
+| `processingEngine.numCores` | Cores available to each Processing Engine pod | not set |
+| `processingEngine.packageManager` | Package-manager selection retained for compatibility | not set |
+| `processingEngine.disablePackageManagement` | Reject package-install API calls; takes precedence over `packageManager` when true | not set |
+| `processingEngine.asyncTriggerConcurrencyLimit` | Maximum concurrent asynchronous trigger invocations | not set (unlimited) |
 | `ingester.extraEnv` | Extra environment variables applied only to ingester pods | `[]` |
 | `querier.extraEnv` | Extra environment variables applied only to querier pods | `[]` |
 | `compactor.extraEnv` | Extra environment variables applied only to compactor pods | `[]` |

@@ -84,6 +84,10 @@ spec:
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
             {{- end }}
+            {{- if hasKey .Values.processingEngine "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.processingEngine.numCores | quote }}
+            {{- end }}
             {{- with .Values.processingEngine.pluginDir }}
             - name: INFLUXDB3_PLUGIN_DIR
               value: {{ . | quote }}
@@ -99,6 +103,14 @@ spec:
             {{- with .Values.processingEngine.packageManager }}
             - name: INFLUXDB3_PACKAGE_MANAGER
               value: {{ . | quote }}
+            {{- end }}
+            {{- if hasKey .Values.processingEngine "disablePackageManagement" }}
+            - name: INFLUXDB3_DISABLE_PACKAGE_MANAGEMENT
+              value: {{ ternary "true" "false" .Values.processingEngine.disablePackageManagement | quote }}
+            {{- end }}
+            {{- if hasKey .Values.processingEngine "asyncTriggerConcurrencyLimit" }}
+            - name: INFLUXDB3_ASYNC_TRIGGER_CONCURRENCY_LIMIT
+              value: {{ .Values.processingEngine.asyncTriggerConcurrencyLimit | quote }}
             {{- end }}
             {{- $memory := .Values.processingEngine.memory | default dict }}
             {{- if get $memory "execMemPoolSize" }}
