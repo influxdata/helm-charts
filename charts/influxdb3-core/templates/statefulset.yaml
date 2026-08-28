@@ -35,6 +35,9 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "influxdb3-core.serviceAccountName" . }}
+      {{- if not (kindIs "invalid" .Values.serviceAccount.automountServiceAccountToken) }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
