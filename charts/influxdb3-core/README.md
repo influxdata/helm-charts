@@ -262,6 +262,7 @@ Remote object-store data is not deleted by uninstalling the chart.
 | `ingress.enabled` | Create HTTP and Flight ingresses | `false` |
 | `serviceMonitor.enabled` | Create a Prometheus Operator ServiceMonitor | `false` |
 | `serviceMonitor.tlsConfig` | Prometheus Operator TLS settings for metrics scraping | `{}` |
+| `serviceAccount.automountServiceAccountToken` | Configure automatic mounting of the Kubernetes service account token in the pod and the created ServiceAccount | `not set` |
 | `updateStrategy.type` | StatefulSet update strategy | `RollingUpdate` |
 
 See `values.yaml` for the complete parameter list.
