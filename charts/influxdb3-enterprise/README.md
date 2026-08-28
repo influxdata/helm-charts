@@ -675,7 +675,7 @@ logs:
 | `security.auth.adminToken.file` | Path to offline admin token file; mutually exclusive with `security.auth.adminToken.existingSecret` | `""` |
 | `security.auth.permissionTokens.existingSecret` | Secret with offline permission tokens key `permission-tokens.json` | `""` |
 | `security.auth.permissionTokens.file` | Path to offline permission tokens file; mutually exclusive with `security.auth.permissionTokens.existingSecret` | `""` |
-| `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND`) | `""` |
+| `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR`) | `""` |
 | `serviceAccount.automountServiceAccountToken` | Configure automatic mounting of the Kubernetes service account token in component pods and the created ServiceAccount | `not set` |
 | `extraEnv` | Extra environment variables applied to all components | `[]` |
 
