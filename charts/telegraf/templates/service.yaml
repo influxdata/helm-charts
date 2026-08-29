@@ -98,7 +98,7 @@ spec:
     {{- if eq $key "prometheus_client" }}
   - port: {{ trimPrefix ":" $value.listen | int64 }}
     targetPort: {{ trimPrefix ":" $value.listen | int64 }}
-    name: "prometheus-client"
+    name: {{ printf "%s-%s" "prometheus-client" (regexFind "[0-9]+$" $value.listen) }}
     {{- end }}
   {{- end -}}
   {{- end }}
