@@ -9,6 +9,8 @@ image:
   pullPolicy: IfNotPresent
 podAnnotations: {}
 podLabels: {}
+deploymentAnnotations: {}
+configmapAnnotations: {}
 imagePullSecrets: []
 ## Configure args passed to Telegraf containers
 args: []
