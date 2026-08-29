@@ -136,6 +136,10 @@ podAnnotations: {}
 # Labels to be added to InfluxDB pods
 podLabels: {}
 
+## Configure priorityClass for InfluxDB Statefulset
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#priorityclass
+priorityClassName: ""
+
 ingress:
   enabled: false
   tls: false
