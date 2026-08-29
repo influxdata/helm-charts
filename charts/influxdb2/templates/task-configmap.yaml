@@ -1,0 +1,14 @@
+{{- if .Values.createBucketsAndTask.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-task-config
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+{{- range .Values.createBucketsAndTask.tasks }}
+  {{ .name }}.flux: |+
+{{ .script | nindent 4 }}
+{{- end }}
+{{- end }}
