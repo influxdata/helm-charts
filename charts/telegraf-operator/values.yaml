@@ -5,6 +5,7 @@ image:
   sidecarImage: "docker.io/library/telegraf:1.22"
 
 classes:
+  create: true
   secretName: "telegraf-operator-classes"
   default: "infra"
   data:
