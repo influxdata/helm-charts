@@ -105,3 +105,28 @@ env:
         name: my-secret
         key: my-key
 ```
+
+
+## Configure the chart
+
+### Backup part
+
+The following table lists configurable parameters, their descriptions, and their default values stored in `values.yaml`.
+
+| Parameter | Description | Default |
+|---|---|---|
+| backup.enabled | Enable backups, if `true` must configure one of the storage providers | `false` |
+| backup.gcs | Google Cloud Storage config | `nil`
+| backup.azure | Azure Blob Storage config | `nil`
+| backup.s3 | Amazon S3 (or compatible) config | `nil`
+| backup.schedule | Schedule to run jobs in cron format | `0 0 * * *` |
+| backup.host | Google Cloud Storage config | `nil`
+| backup.startingDeadlineSeconds | Deadline in seconds for starting the job if it misses its scheduled time for any reason | `nil` |
+| backup.annotations | Annotations for backup cronjob | {} |
+| backup.podAnnotations | Annotations for backup cronjob pods | {} |
+| backup.persistence.enabled | Boolean to enable and disable persistance | false |
+| backup.persistence.storageClass | If set to "-", storageClassName: "", which disables dynamic provisioning. If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner.  (gp2 on AWS, standard on GKE, AWS & OpenStack |  |
+| backup.persistence.annotations | Annotations for volumeClaimTemplates | nil |
+| backup.persistence.accessMode | Access mode for the volume | ReadWriteOnce |
+| backup.persistence.size | Storage size | 8Gi |
+| backup.resources | Resources requests and limits for `backup` pods | `ephemeral-storage: 8Gi` |
