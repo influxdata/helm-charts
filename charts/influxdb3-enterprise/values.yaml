@@ -683,6 +683,23 @@ caching:
   # tableIndexCacheMaxEntries: 1000
   # tableIndexCacheConcurrencyLimit: 8
 
+# Compacted-data startup: bounds the state a node loads before serving traffic.
+# Parquet engine only; a fully migrated PachaTree node ignores both.
+
+compactedData:
+  # Skip loading the compacted-data file index into memory. Queries stay
+  # correct and time-range pruning still applies, but equality-predicate
+  # queries scan more files. The setting applies to the whole node, so a
+  # compactor started with it also skips index merges for new generations.
+  # Use when nodes cannot start because the index has grown close to the
+  # container memory limit.
+  # skipFileIndex: false
+
+  # Concurrent downloads while loading compaction summaries (server default 20).
+  # Lower it when memory is tight during startup or the object store throttles
+  # the load; raise it for faster startup on hosts with more network headroom.
+  # loadConcurrencyLimit: 20
+
 # Resource limits
 # resourceLimits:
 #   numDatabases: 100                 # Max databases

@@ -77,6 +77,13 @@ kubectl logs -n influxdb3 influxdb3-enterprise-ingester-0 --previous
 
 ### Pods Not Ready
 
+A pod that stays `0/1` for many minutes, or is OOM-killed while its log shows
+normal startup activity, is usually loading its compacted-data file index rather
+than failing a probe. Widening the probe window does not shorten that load; see
+the Compacted-Data Startup section of the chart README for the two options that
+bound it.
+
+
 **Symptoms:**
 ```bash
 NAME                                  READY   STATUS    RESTARTS   AGE
