@@ -731,13 +731,13 @@ probes:
 
   # Startup probe settings
   # Protects container during initialization. Once successful, never runs again.
-  # Allows slower startup without delaying successful readiness detection.
-  # 10s initial + (30 × 5s) = 160s total.
+  # 10s initial + (184 - 1) × 5s = 925s before the container is restarted.
+  # Nodes replay from object storage on boot, so startup scales with data size.
   startup:
     initialDelaySeconds: 10
     periodSeconds: 5                  # Check every 5 seconds
     timeoutSeconds: 5
-    failureThreshold: 30
+    failureThreshold: 184
 
   # Liveness probe settings
   # Only starts checking AFTER startup probe succeeds

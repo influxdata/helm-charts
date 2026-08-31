@@ -282,6 +282,39 @@ ingester:
     numThreads: 20
 ```
 
+#### Health Probes
+
+All components share one probe configuration. The startup probe guards the
+initialization window; liveness and readiness start only once it succeeds.
+
+```yaml
+probes:
+  startup:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 184   # 10s + (184 - 1) × 5s = 925s
+```
+
+Nodes replay from object storage on boot, so startup scales with how much data a
+node reads back, and clusters with a large history have been reported to need
+more than 12 minutes. Two things follow from a window this wide.
+
+`helm install` and `helm upgrade` with `--wait` default to a five-minute
+timeout, which is shorter than the startup they are waiting for. Pass
+`--timeout 20m` to match, or the release fails while the pods are still booting
+normally.
+
+Once the startup probe succeeds, the liveness probe takes over with a much
+narrower window (`3 × 10s`). A node that answers `/health` and then blocks
+during later startup work can still be restarted; raise
+`probes.liveness.failureThreshold` if that happens.
+
+Two alternatives shorten the startup itself rather than tolerating it:
+[Compacted-Data Startup](#compacted-data-startup) bounds the file-index load,
+and `ingester.persistence` keeps the WAL on a local volume instead of replaying
+it from object storage.
+
 #### TLS
 
 Enable TLS with inline cert/key or an existing secret:
@@ -606,6 +639,19 @@ Check events:
 kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0
 ```
 
+A pod that restarts during startup while its logs show normal activity was
+either killed by the startup probe or ran out of memory. Both exit with code
+137, so check which before changing anything:
+
+```bash
+kubectl get pod -n influxdb3 influxdb3-enterprise-ingester-0 \
+  -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}'
+```
+
+`OOMKilled` means raise the memory limit. `Error` together with a
+`Startup probe failed` event means the probe window is too short; see
+[Health Probes](#health-probes).
+
 #### License Issues
 
 Verify license configuration:
@@ -680,6 +726,12 @@ logs:
 | `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR`) | `""` |
 | `serviceAccount.automountServiceAccountToken` | Configure automatic mounting of the Kubernetes service account token in component pods and the created ServiceAccount | `not set` |
 | `extraEnv` | Extra environment variables applied to all components | `[]` |
+| `probes.enabled` | Enable liveness, readiness, and startup probes on all components | `true` |
+| `probes.startup.initialDelaySeconds` | Delay before the first startup check | `10` |
+| `probes.startup.periodSeconds` | Interval between startup checks | `5` |
+| `probes.startup.timeoutSeconds` | Timeout of a single startup check | `5` |
+| `probes.startup.failureThreshold` | Failed startup checks before the pod is killed | `184` |
+| `probes.liveness.*` / `probes.readiness.*` | Liveness and readiness timings; see `values.yaml` | see `values.yaml` |
 
 ### Object Storage Parameters
 
