@@ -102,6 +102,12 @@ Getting started:
 
 Documentation: https://docs.influxdata.com/influxdb3/enterprise/
 
+{{- $objectStorage := .Values.objectStorage | default dict }}
+{{- if get $objectStorage "cacheEndpoint" }}
+
+WARNING: objectStorage.cacheEndpoint is deprecated and has no effect with InfluxDB 3.11+. Remove it from your values before a future chart release.
+{{- end }}
+
 {{- if not (or .Values.license.email .Values.license.file .Values.license.existingSecret) }}
 
 ⚠️  WARNING: No license configured!

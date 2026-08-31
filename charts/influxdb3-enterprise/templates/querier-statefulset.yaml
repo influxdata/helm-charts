@@ -72,15 +72,24 @@ spec:
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
             {{- end }}
-            {{- with .Values.querier.memory }}
-            {{- if .execMemPoolBytes }}
+            {{- if hasKey .Values.querier "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.querier.numCores | quote }}
+            {{- end }}
+            {{- $memory := .Values.querier.memory | default dict }}
+            {{- if get $memory "execMemPoolSize" }}
+            - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
+              value: {{ get $memory "execMemPoolSize" | quote }}
+            {{- else if get $memory "execMemPoolBytes" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
-              value: {{ .execMemPoolBytes | quote }}
+              value: {{ get $memory "execMemPoolBytes" | quote }}
             {{- end }}
-            {{- if .forceSnapshotMemThreshold }}
+            {{- if get $memory "forceSnapshotMemSize" }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+              value: {{ get $memory "forceSnapshotMemSize" | quote }}
+            {{- else if get $memory "forceSnapshotMemThreshold" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ .forceSnapshotMemThreshold | quote }}
-            {{- end }}
+              value: {{ get $memory "forceSnapshotMemThreshold" | quote }}
             {{- end }}
             {{- with .Values.querier.datafusion }}
             {{- if .numThreads }}
@@ -96,6 +105,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
+            {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.querier) | nindent 12 }}
             {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.querier) | nindent 12 }}
           ports:

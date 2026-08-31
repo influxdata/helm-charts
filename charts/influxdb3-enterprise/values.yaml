@@ -26,6 +26,11 @@ imagePullSecrets: []
 # Follow UPGRADING-3.9-TO-3.10.md before setting this to true.
 acknowledgeCatalogMigration: false
 
+# Acknowledge and start the PachaTree migration on an existing cluster.
+# Follow UPGRADING-3.10-TO-3.11.md before setting this to true.
+# It is safe to leave enabled after the migration completes.
+acknowledgePachaTreeMigration: false
+
 # Cluster configuration - all nodes must share the same cluster ID
 cluster:
   # Unique identifier for the cluster (must be different from any node-id)
@@ -34,7 +39,7 @@ cluster:
   # Cluster management settings for multi-node coordination
 #  replicationInterval: "250ms"      # Data replication interval between nodes
 #  catalogSyncInterval: "10s"        # Catalog synchronization interval
-#  waitForRunningIngestor: "10s"     # Startup wait time for ingestor
+#  waitForRunningIngester: "10s"     # Startup wait; deprecated alias: waitForRunningIngestor
 
 # ============================================================================
 # Object Storage Configuration
@@ -57,7 +62,7 @@ objectStorage:
   # requestTimeout: ""              # Object store request timeout (optional, server default: 30s)
   # maxRetries: ""                  # Object store retry attempts (optional)
   # retryTimeout: ""                # Object store retry timeout (optional)
-  # cacheEndpoint: ""               # Object store cache endpoint (optional)
+  # cacheEndpoint: ""               # Deprecated: ignored by InfluxDB 3.11+
   # tlsAllowInsecure: false         # Skip object-store TLS cert verification (testing only)
   # tlsCa:
   #   certPath: ""                  # Path to custom CA PEM file for object-store TLS verification
@@ -165,6 +170,62 @@ license:
 # InfluxDB 3 Enterprise supports specialized nodes for different workloads.
 # Each component can be scaled independently based on your requirements.
 
+# PachaTree tuning (3.11+). Settings are rendered into ingester, querier,
+# and compactor pods. Processing Engine pods do not consume these settings.
+# Related existing settings:
+# - cluster.replicationInterval
+# - ingester.wal.flushInterval
+# - caching.fileCacheSize, parquetMemCacheQueryPathDuration,
+#   and disableParquetMemCache
+# engine:
+#   pachaTree:
+#     # Shared storage-engine settings
+#     enginePathPrefix: ""
+#     maxTotalColumns: 10000000
+#     enableRetention: true
+#     disableHybridQuery: false
+#     enableAutoDvc: false
+#     autoDvcMaxCardinality: 100000
+#     autoDvcRefreshInterval: "10m"
+#     upgradePollInterval: "5s"
+#     fileCacheEvictAfter: "24h"
+#
+#     # Ingester settings
+#     walFlushConcurrency: 2
+#     walBufferSize: "15mb"
+#     walSnapshotsToKeep: 5
+#     snapshotSize: "250mb"
+#     snapshotDuration: "10s"       # Also used by querier replica buffering
+#     maxConcurrentSnapshots: 5
+#     mergeThresholdSize: "62mb"
+#     gen0MaxRowsPerFile: 10000000
+#     gen0MaxFileSize: "100mb"
+#
+#     # Querier replication settings
+#     walReplicaRecoveryConcurrency: 8
+#     walReplicaSteadyConcurrency: 8
+#     walReplicaQueueLength: 100
+#     walReplicaRecoveryTailSkipLimit: 128
+#     replicaGen0LoadConcurrency: 16
+#     replicaMaxBufferSize: "50%"
+#
+#     # Compactor settings
+#     shardCount: 1
+#     compactorInputSizeBudget: "2gb"
+#     finalCompactionAge: "4h"
+#     compactorCleanupCooldown: "10m"
+#     l1TailTargetSize: "600mb"
+#     l1TargetFileSize: "25mb"
+#     l1PromotionCount: 3
+#     l2TailTargetSize: "1200mb"
+#     l2TargetFileSize: "40mb"
+#     l2PromotionCount: 3
+#     l3TailTargetSize: "2500mb"
+#     l3TargetFileSize: "75mb"
+#     l3PromotionCount: 4
+#     l4TailTargetSize: "50gb"
+#     l4TargetFileSize: "125mb"
+
 # Ingester nodes - Handle data writes
 ingester:
   enabled: true
@@ -180,6 +241,7 @@ ingester:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for ingester pods. Overrides top-level extraEnv entries with the same name.
@@ -189,8 +251,8 @@ ingester:
 
   # Memory tuning
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -284,6 +346,7 @@ querier:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for querier pods. Overrides top-level extraEnv entries with the same name.
@@ -293,8 +356,8 @@ querier:
 
   # Memory tuning
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -375,6 +438,7 @@ compactor:
       memory: "4Gi"
 
   # Thread configuration
+  # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for compactor pods. Overrides top-level extraEnv entries with the same name.
@@ -384,8 +448,8 @@ compactor:
 
   # Memory tuning
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -460,6 +524,7 @@ processingEngine:
       memory: "8Gi"
 
   # Thread configuration
+  # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
   # Extra environment variables for Processing Engine pods. Overrides top-level extraEnv entries with the same name.
@@ -469,8 +534,8 @@ processingEngine:
 
   # Memory tuning
   # memory:
-  #   execMemPoolBytes: "20%"            # --exec-mem-pool-bytes
-  #   forceSnapshotMemThreshold: "50%"   # --force-snapshot-mem-threshold
+  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -482,6 +547,8 @@ processingEngine:
   pluginDir: "/plugins"               # Local directory that contains Python plugins and their test files.
   # pluginRepo: "https://raw.githubusercontent.com/influxdata/influxdb3_plugins/main/"  # URL of remote plugin repository
   # packageManager: "discover"        # discover, pip, uv, or disabled
+  # disablePackageManagement: false   # Takes precedence over packageManager when true
+  # asyncTriggerConcurrencyLimit: 8   # Max concurrent async trigger invocations (default: unlimited)
 
   # Persistent storage for plugins
   persistence:
@@ -588,13 +655,17 @@ security:
 # HTTP server configuration
 http:
   # bind: "0.0.0.0:8181"
-  # maxRequestSize: 10485760          # 10MB default
+  # maxRequestSize: 10485760          # Bare bytes for 3.10 compatibility; 3.11.2+ also accepts "10mb"
+
+# Graceful shutdown configuration
+# shutdown:
+#   timeout: "30s"
 
 # Caching configuration
 caching:
-  # Parquet file caching
-  # parquetMemCacheSize: "20%"        # Or absolute like "4096" (MB)
-  # parquetMemCacheQueryPathDuration: "5h"
+  # File caching
+  # fileCacheSize: "20%"                    # Deprecated alias: parquetMemCacheSize; alias bare numbers mean MB
+  # parquetMemCacheQueryPathDuration: "5h"  # Deprecated Helm key retained for compatibility
   # parquetMemCachePrunePercentage: 0.1
   # parquetMemCachePruneInterval: "1s"
   # disableParquetMemCache: false

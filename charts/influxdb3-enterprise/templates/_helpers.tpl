@@ -311,20 +311,20 @@ License environment (shared across components)
 {{- if or .Values.license.existingSecret (or .Values.license.email .Values.license.file) }}
 {{- $licenseType := .Values.license.type | default "trial" -}}
 {{- if and (eq $licenseType "trial") (or .Values.license.email .Values.license.existingSecret) }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
+- name: INFLUXDB3_LICENSE_EMAIL
   valueFrom:
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
 {{- end }}
 {{- if .Values.license.file }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+- name: INFLUXDB3_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- else if and .Values.license.existingSecret (eq $licenseType "commercial") }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
+- name: INFLUXDB3_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- end }}
-- name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
+- name: INFLUXDB3_LICENSE_TYPE
   value: {{ $licenseType | quote }}
 {{- end }}
 {{- end }}
@@ -418,6 +418,61 @@ https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#disab
 - name: INFLUXDB3_UNSET_VARS
   value: "INFLUXDB3_PLUGIN_DIR"
 {{- end -}}
+{{- end }}
+
+{{/*
+PachaTree environment variables shared by storage roles.
+*/}}
+{{- define "influxdb3-enterprise.pachaTreeEnv" -}}
+{{- $engine := .Values.engine | default dict -}}
+{{- $pachaTree := get $engine "pachaTree" | default dict -}}
+{{- range $mapping := list
+  (list "enginePathPrefix" "INFLUXDB3_ENGINE_PATH_PREFIX")
+  (list "maxTotalColumns" "INFLUXDB3_MAX_TOTAL_COLUMNS")
+  (list "enableRetention" "INFLUXDB3_ENABLE_RETENTION")
+  (list "disableHybridQuery" "INFLUXDB3_DISABLE_HYBRID_QUERY")
+  (list "enableAutoDvc" "INFLUXDB3_ENABLE_AUTO_DVC")
+  (list "autoDvcMaxCardinality" "INFLUXDB3_AUTO_DVC_MAX_CARDINALITY")
+  (list "autoDvcRefreshInterval" "INFLUXDB3_AUTO_DVC_REFRESH_INTERVAL")
+  (list "upgradePollInterval" "INFLUXDB3_UPGRADE_POLL_INTERVAL")
+  (list "fileCacheEvictAfter" "INFLUXDB3_FILE_CACHE_EVICT_AFTER")
+  (list "walFlushConcurrency" "INFLUXDB3_WAL_FLUSH_CONCURRENCY")
+  (list "walBufferSize" "INFLUXDB3_WAL_BUFFER_SIZE")
+  (list "walSnapshotsToKeep" "INFLUXDB3_WAL_SNAPSHOTS_TO_KEEP")
+  (list "snapshotSize" "INFLUXDB3_SNAPSHOT_SIZE")
+  (list "snapshotDuration" "INFLUXDB3_SNAPSHOT_DURATION")
+  (list "maxConcurrentSnapshots" "INFLUXDB3_MAX_CONCURRENT_SNAPSHOTS")
+  (list "mergeThresholdSize" "INFLUXDB3_MERGE_THRESHOLD_SIZE")
+  (list "gen0MaxRowsPerFile" "INFLUXDB3_GEN0_MAX_ROWS_PER_FILE")
+  (list "gen0MaxFileSize" "INFLUXDB3_GEN0_MAX_FILE_SIZE")
+  (list "walReplicaRecoveryConcurrency" "INFLUXDB3_WAL_REPLICA_RECOVERY_CONCURRENCY")
+  (list "walReplicaSteadyConcurrency" "INFLUXDB3_WAL_REPLICA_STEADY_CONCURRENCY")
+  (list "walReplicaQueueLength" "INFLUXDB3_WAL_REPLICA_QUEUE_LENGTH")
+  (list "walReplicaRecoveryTailSkipLimit" "INFLUXDB3_WAL_REPLICA_RECOVERY_TAIL_SKIP_LIMIT")
+  (list "replicaGen0LoadConcurrency" "INFLUXDB3_REPLICA_SNAPSHOT_MANIFEST_LOAD_CONCURRENCY")
+  (list "replicaMaxBufferSize" "INFLUXDB3_REPLICA_MAX_BUFFER_SIZE")
+  (list "shardCount" "INFLUXDB3_SHARD_COUNT")
+  (list "compactorInputSizeBudget" "INFLUXDB3_COMPACTOR_INPUT_SIZE_BUDGET")
+  (list "finalCompactionAge" "INFLUXDB3_FINAL_COMPACTION_AGE")
+  (list "compactorCleanupCooldown" "INFLUXDB3_COMPACTOR_CLEANUP_COOLDOWN")
+  (list "l1TailTargetSize" "INFLUXDB3_L1_TAIL_TARGET_SIZE")
+  (list "l1TargetFileSize" "INFLUXDB3_L1_TARGET_FILE_SIZE")
+  (list "l1PromotionCount" "INFLUXDB3_L1_PROMOTION_COUNT")
+  (list "l2TailTargetSize" "INFLUXDB3_L2_TAIL_TARGET_SIZE")
+  (list "l2TargetFileSize" "INFLUXDB3_L2_TARGET_FILE_SIZE")
+  (list "l2PromotionCount" "INFLUXDB3_L2_PROMOTION_COUNT")
+  (list "l3TailTargetSize" "INFLUXDB3_L3_TAIL_TARGET_SIZE")
+  (list "l3TargetFileSize" "INFLUXDB3_L3_TARGET_FILE_SIZE")
+  (list "l3PromotionCount" "INFLUXDB3_L3_PROMOTION_COUNT")
+  (list "l4TailTargetSize" "INFLUXDB3_L4_TAIL_TARGET_SIZE")
+  (list "l4TargetFileSize" "INFLUXDB3_L4_TARGET_FILE_SIZE")
+}}
+{{- $key := index $mapping 0 -}}
+{{- if hasKey $pachaTree $key }}
+- name: {{ index $mapping 1 }}
+  value: {{ get $pachaTree $key | quote }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{/*

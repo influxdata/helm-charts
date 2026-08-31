@@ -84,6 +84,10 @@ spec:
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
             {{- end }}
+            {{- if hasKey .Values.processingEngine "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.processingEngine.numCores | quote }}
+            {{- end }}
             {{- with .Values.processingEngine.pluginDir }}
             - name: INFLUXDB3_PLUGIN_DIR
               value: {{ . | quote }}
@@ -100,15 +104,28 @@ spec:
             - name: INFLUXDB3_PACKAGE_MANAGER
               value: {{ . | quote }}
             {{- end }}
-            {{- with .Values.processingEngine.memory }}
-            {{- if .execMemPoolBytes }}
+            {{- if hasKey .Values.processingEngine "disablePackageManagement" }}
+            - name: INFLUXDB3_DISABLE_PACKAGE_MANAGEMENT
+              value: {{ ternary "true" "false" .Values.processingEngine.disablePackageManagement | quote }}
+            {{- end }}
+            {{- if hasKey .Values.processingEngine "asyncTriggerConcurrencyLimit" }}
+            - name: INFLUXDB3_ASYNC_TRIGGER_CONCURRENCY_LIMIT
+              value: {{ .Values.processingEngine.asyncTriggerConcurrencyLimit | quote }}
+            {{- end }}
+            {{- $memory := .Values.processingEngine.memory | default dict }}
+            {{- if get $memory "execMemPoolSize" }}
+            - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
+              value: {{ get $memory "execMemPoolSize" | quote }}
+            {{- else if get $memory "execMemPoolBytes" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
-              value: {{ .execMemPoolBytes | quote }}
+              value: {{ get $memory "execMemPoolBytes" | quote }}
             {{- end }}
-            {{- if .forceSnapshotMemThreshold }}
+            {{- if get $memory "forceSnapshotMemSize" }}
+            - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+              value: {{ get $memory "forceSnapshotMemSize" | quote }}
+            {{- else if get $memory "forceSnapshotMemThreshold" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ .forceSnapshotMemThreshold | quote }}
-            {{- end }}
+              value: {{ get $memory "forceSnapshotMemThreshold" | quote }}
             {{- end }}
             {{- with .Values.processingEngine.datafusion }}
             {{- if .numThreads }}

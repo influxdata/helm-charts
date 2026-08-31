@@ -260,6 +260,10 @@ For local testing where all pods run on the same Kubernetes node, you can set
 `objectStorage.file.persistence.accessMode=ReadWriteOnce` to use a
 local-path style StorageClass.
 
+`objectStorage.cacheEndpoint` is deprecated and has no effect with InfluxDB
+3.11+. It is retained for compatibility with existing values and will be
+removed in a future chart release.
+
 #### Resource Configuration
 
 Configure resources per component:
@@ -450,6 +454,14 @@ processingEngine:
 5. **Processing**: Processor nodes execute plugins on data writes, schedules, or HTTP requests
 
 ## Upgrading
+
+### Upgrade from InfluxDB 3.10
+
+Chart 0.10.0 upgrades InfluxDB 3 Enterprise to 3.11.2. Existing clusters stay
+on the Parquet storage engine until the separate PachaTree migration is enabled.
+Follow [UPGRADING-3.10-TO-3.11.md](UPGRADING-3.10-TO-3.11.md) for the version
+upgrade, compatibility notes, migration acknowledgement, verification, and
+downgrade limitations.
 
 ### Upgrade from InfluxDB 3.9
 
@@ -649,7 +661,11 @@ logs:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `acknowledgeCatalogMigration` | One-time acknowledgement for an upgrade without the catalog format v3 marker | `false` |
+| `acknowledgePachaTreeMigration` | Acknowledge and start migration of an existing Parquet cluster to PachaTree | `false` |
+| `engine.pachaTree.*` | Optional PachaTree tuning for ingester, querier, and compactor pods; see `values.yaml` for role-specific options | not set |
+| `shutdown.timeout` | Graceful connection-drain timeout | not set (server default `30s`) |
 | `cluster.id` | Cluster identifier | `cluster-01` |
+| `cluster.waitForRunningIngester` | Startup wait time for an ingester | `""` |
 | `image.registry` | Image registry | `docker.io` |
 | `image.repository` | Image repository | `influxdb` |
 | `image.tag` | Image tag override (defaults to `<appVersion>-enterprise` when empty) | `""` |
@@ -661,7 +677,7 @@ logs:
 | `security.auth.adminToken.file` | Path to offline admin token file; mutually exclusive with `security.auth.adminToken.existingSecret` | `""` |
 | `security.auth.permissionTokens.existingSecret` | Secret with offline permission tokens key `permission-tokens.json` | `""` |
 | `security.auth.permissionTokens.file` | Path to offline permission tokens file; mutually exclusive with `security.auth.permissionTokens.existingSecret` | `""` |
-| `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND`) | `""` |
+| `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR`) | `""` |
 | `serviceAccount.automountServiceAccountToken` | Configure automatic mounting of the Kubernetes service account token in component pods and the created ServiceAccount | `not set` |
 | `extraEnv` | Extra environment variables applied to all components | `[]` |
 
@@ -696,6 +712,13 @@ logs:
 | `querier.replicas` | Number of querier replicas | `2` |
 | `compactor.replicas` | Number of compactor replicas | `1` (fixed) |
 | `processingEngine.enabled` | Enable Processing Engine | `false` |
+| `ingester.numCores` | Cores available to each ingester | not set |
+| `querier.numCores` | Cores available to each querier | not set |
+| `compactor.numCores` | Cores available to the compactor | not set |
+| `processingEngine.numCores` | Cores available to each Processing Engine pod | not set |
+| `processingEngine.packageManager` | Package-manager selection retained for compatibility | not set |
+| `processingEngine.disablePackageManagement` | Reject package-install API calls; takes precedence over `packageManager` when true | not set |
+| `processingEngine.asyncTriggerConcurrencyLimit` | Maximum concurrent asynchronous trigger invocations | not set (unlimited) |
 | `ingester.extraEnv` | Extra environment variables applied only to ingester pods | `[]` |
 | `querier.extraEnv` | Extra environment variables applied only to querier pods | `[]` |
 | `compactor.extraEnv` | Extra environment variables applied only to compactor pods | `[]` |
