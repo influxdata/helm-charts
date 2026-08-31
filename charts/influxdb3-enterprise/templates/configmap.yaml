@@ -197,6 +197,19 @@ data:
   {{- if .tableIndexCacheConcurrencyLimit }}
   INFLUXDB3_TABLE_INDEX_CACHE_CONCURRENCY_LIMIT: {{ .tableIndexCacheConcurrencyLimit | quote }}
   {{- end }}
+
+  {{- end }}
+
+  # Compacted-data startup
+  {{- with .Values.compactedData }}
+  {{- if kindIs "bool" .skipFileIndex }}
+  INFLUXDB3_COMPACTED_DATA_SKIP_FILE_INDEX: {{ ternary "true" "false" .skipFileIndex | quote }}
+  INFLUXDB3_ENTERPRISE_COMPACTED_DATA_SKIP_FILE_INDEX: {{ ternary "true" "false" .skipFileIndex | quote }}
+  {{- end }}
+  {{- if hasKey . "loadConcurrencyLimit" }}
+  INFLUXDB3_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT: {{ .loadConcurrencyLimit | quote }}
+  INFLUXDB3_ENTERPRISE_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT: {{ .loadConcurrencyLimit | quote }}
+  {{- end }}
   {{- end }}
 
   # Resource limits

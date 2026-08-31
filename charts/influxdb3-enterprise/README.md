@@ -282,6 +282,63 @@ ingester:
     numThreads: 20
 ```
 
+#### Compacted-Data Startup
+
+Before a node serves traffic it loads compaction state, including a file index
+that maps indexed column values to Parquet files. On clusters with a large
+compaction history that load can dominate startup: nodes take tens of minutes to
+answer `/health`, or run out of memory before they finish.
+
+```yaml
+compactedData:
+  skipFileIndex: true       # skip the in-memory file index
+  loadConcurrencyLimit: 8   # concurrent downloads while loading (server default 20)
+```
+
+`skipFileIndex` trades query-time file pruning for a bounded memory footprint at
+startup. Queries stay correct and time-range pruning still applies, but
+equality-predicate queries scan more files. The setting applies to the whole
+node, so a compactor started with it also skips index merges for newly compacted
+generations. Exempting a single component means overriding both spellings in its
+`extraEnv`, because the ConfigMap supplies both.
+`loadConcurrencyLimit` bounds the memory buffered by in-flight downloads; lower
+it when memory is tight during startup, raise it for faster startup where there
+is network headroom.
+
+Both options predate 3.11 under their `INFLUXDB3_ENTERPRISE_` names
+(`loadConcurrencyLimit` since 3.9.8 and 3.10.3, `skipFileIndex` since 3.9.9 and
+3.10.4), and the chart emits those alongside the 3.11 spelling, so a release
+works against either. On an image older than those patch releases the variable
+is simply unknown and the server ignores it without a message, so check the
+running version if the option appears to have no effect.
+
+**They apply to clusters on the Parquet storage engine only.** The file index is
+a Parquet mechanism, so once a node has fully adopted PachaTree the machinery
+that reads these options is never built and the server ignores them, logging
+that they can be removed. They stay live throughout the migration itself. In
+practice that means they help exactly where the problem occurs - a cluster still
+on Parquet, or one part-way through the upgrade - and are redundant on a cluster
+that has completed it.
+
+The option is per-node and fully reversible: the index is still written to object
+storage during compaction, so removing the option and restarting loads it as
+before. The index also keeps growing while the option is on, so it buys time
+rather than fixing anything.
+
+That reason is the indexing strategy rather than the node configuration. Every
+table is indexed: by default on `time` and every tag column, from generation 2
+of compaction onwards. An index outgrows memory when a table has many tags, or
+tags with high cardinality, and all of them are indexed whether queries use them
+or not.
+
+The fix is to narrow the strategy, not to remove it. `influxdb3 create
+file_index` defines a custom index over a chosen subset of columns, which is
+smaller than the default. Note that `influxdb3 delete file_index` does the
+opposite of what its name suggests: it drops a custom strategy and reverts to
+the default over every tag, which can be larger. Nothing in this chart governs
+this; see
+[Manage file indexes](https://docs.influxdata.com/influxdb3/enterprise/admin/file-index/).
+
 #### TLS
 
 Enable TLS with inline cert/key or an existing secret:
@@ -606,6 +663,10 @@ Check events:
 kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0
 ```
 
+A node that stays `0/1` for a long time, or is OOM-killed before it answers
+`/health`, is usually loading its compaction file index. See
+[Compacted-Data Startup](#compacted-data-startup).
+
 #### License Issues
 
 Verify license configuration:
@@ -680,6 +741,8 @@ logs:
 | `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR`) | `""` |
 | `serviceAccount.automountServiceAccountToken` | Configure automatic mounting of the Kubernetes service account token in component pods and the created ServiceAccount | `not set` |
 | `extraEnv` | Extra environment variables applied to all components | `[]` |
+| `compactedData.skipFileIndex` | Skip loading the compacted-data file index into memory | not set (server default `false`) |
+| `compactedData.loadConcurrencyLimit` | Concurrent downloads while loading compaction summaries | not set (server default `20`) |
 
 ### Object Storage Parameters
 
