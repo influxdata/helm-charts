@@ -4,7 +4,7 @@ metadata:
   name: {{ include "telegraf.fullname" . }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
-  {{- with .Values.annotations }}
+  {{- with .Values.deploymentAnnotations }}
   annotations:
 {{ tpl (toYaml .) $ | indent 4 }}
   {{- end }}

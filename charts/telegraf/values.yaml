@@ -9,7 +9,7 @@ image:
   pullPolicy: IfNotPresent
 ## Annotations to add to the Deployment object itself.
 ## Use podAnnotations below to annotate the pods.
-annotations: {}
+deploymentAnnotations: {}
 podAnnotations: {}
 podLabels: {}
 imagePullSecrets: []
