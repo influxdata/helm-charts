@@ -700,22 +700,21 @@ A node that stays `0/1` for a long time, or is OOM-killed before it answers
 
 #### License Issues
 
-Verify license configuration:
-```bash
-kubectl get secret -n influxdb3 influxdb3-enterprise-license -o yaml
-```
-
 `failed to read license file from path: Is a directory (os error 21)` means the
-secret named in `license.existingSecret` has no `license-file` key, so the mount
-produced an empty directory. Check the key name:
+chart mounted nothing at `/etc/influxdb/license`. The volume is declared
+`optional`, so this happens both when the secret named in
+`license.existingSecret` does not exist in the release namespace and when it
+exists without a `license-file` key. Check for both:
 
 ```bash
 kubectl -n influxdb3 get secret SECRET_NAME \
   -o go-template='{{range $k,$v := .data}}{{$k}}{{"\n"}}{{end}}'
 ```
 
-That prints key names only. Avoid `-o yaml` or `-o jsonpath='{.data}'` here: both
-print the base64-encoded licence along with the keys.
+A `NotFound` error means the secret is missing or lives in another namespace;
+output without `license-file` means the key is wrong. The command prints key
+names only - avoid `-o yaml` and `-o jsonpath='{.data}'`, which print the
+base64-encoded licence itself.
 
 The `no commercial license found in object store` line that follows is a
 fallback after the failed read, not a separate problem. See

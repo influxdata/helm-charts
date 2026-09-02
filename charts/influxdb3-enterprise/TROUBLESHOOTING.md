@@ -108,8 +108,10 @@ kubectl exec -n influxdb3 influxdb3-enterprise-querier-0 -- curl -s http://local
 
 ## License Issues
 
-`failed to read license file from path: Is a directory (os error 21)` means the
-secret in `license.existingSecret` has no `license-file` key. The chart mounts
+`failed to read license file from path: Is a directory (os error 21)` means
+nothing was mounted at `/etc/influxdb/license`. The volume is optional, so this
+covers both a secret that does not exist in the release namespace and one
+without a `license-file` key. The chart mounts
 that key at `/etc/influxdb/license`; with any other key the mount is an empty
 directory. Recreate the secret with `--from-file=license-file=...` and confirm
 `license.type` is `commercial`. The `no commercial license found in object
