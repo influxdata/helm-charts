@@ -310,10 +310,8 @@ narrower window (`3 × 10s`). A node that answers `/health` and then blocks
 during later startup work can still be restarted; raise
 `probes.liveness.failureThreshold` if that happens.
 
-Two alternatives shorten the startup itself rather than tolerating it:
-[Compacted-Data Startup](#compacted-data-startup) bounds the file-index load,
-and `ingester.persistence` keeps the WAL on a local volume instead of replaying
-it from object storage.
+This widens the window rather than shortening the startup. If nodes routinely
+need most of it, the boot work itself is worth investigating.
 
 #### TLS
 
@@ -640,17 +638,21 @@ kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0
 ```
 
 A pod that restarts during startup while its logs show normal activity was
-either killed by the startup probe or ran out of memory. Both exit with code
-137, so check which before changing anything:
+either killed by the startup probe or ran out of memory. Read the termination
+reason and the events rather than the exit code:
 
 ```bash
 kubectl get pod -n influxdb3 influxdb3-enterprise-ingester-0 \
   -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}'
+kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i probe
 ```
 
 `OOMKilled` means raise the memory limit. `Error` together with a
 `Startup probe failed` event means the probe window is too short; see
-[Health Probes](#health-probes).
+[Health Probes](#health-probes). Exit code 137 is one possible signature of a
+probe kill, not proof of one: kubelet asks the runtime to terminate first and
+honours `terminationGracePeriodSeconds`, so a process that exits during that
+window reports a different code, and 137 is also what an OOM kill produces.
 
 #### License Issues
 
