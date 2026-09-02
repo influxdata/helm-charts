@@ -649,8 +649,12 @@ secret named in `license.existingSecret` has no `license-file` key, so the mount
 produced an empty directory. Check the key name:
 
 ```bash
-kubectl get secret -n influxdb3 SECRET_NAME -o jsonpath='{.data}' | tr ',' '\n'
+kubectl -n influxdb3 get secret SECRET_NAME \
+  -o go-template='{{range $k,$v := .data}}{{$k}}{{"\n"}}{{end}}'
 ```
+
+That prints key names only. Avoid `-o yaml` or `-o jsonpath='{.data}'` here: both
+print the base64-encoded licence along with the keys.
 
 The `no commercial license found in object store` line that follows is a
 fallback after the failed read, not a separate problem. See
