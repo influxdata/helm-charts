@@ -731,7 +731,8 @@ probes:
 
   # Startup probe settings
   # Protects container during initialization. Once successful, never runs again.
-  # 10s initial + (184 - 1) × 5s = 925s before the container is restarted.
+  # 10s initial + (184 - 1) × 5s = 925s before the startup probe triggers
+  # termination; the restart itself follows terminationGracePeriodSeconds.
   # Nodes replay from object storage on boot, so startup scales with data size.
   startup:
     initialDelaySeconds: 10

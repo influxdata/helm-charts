@@ -293,7 +293,7 @@ probes:
     initialDelaySeconds: 10
     periodSeconds: 5
     timeoutSeconds: 5
-    failureThreshold: 184   # 10s + (184 - 1) × 5s = 925s
+    failureThreshold: 184   # 10s + (184 - 1) × 5s = 925s to termination
 ```
 
 Nodes replay from object storage on boot, so startup scales with how much data a
@@ -637,22 +637,25 @@ Check events:
 kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0
 ```
 
-A pod that restarts during startup while its logs show normal activity was
-either killed by the startup probe or ran out of memory. Read the termination
-reason and the events rather than the exit code:
+A pod that restarts during startup while its logs show normal activity is most
+often killed by the startup probe or out of memory, though an externally killed
+container can have other causes. Read the termination reason and the kill event
+rather than the exit code:
 
 ```bash
 kubectl get pod -n influxdb3 influxdb3-enterprise-ingester-0 \
   -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}'
-kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i probe
+kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i killing
 ```
 
-`OOMKilled` means raise the memory limit. `Error` together with a
-`Startup probe failed` event means the probe window is too short; see
-[Health Probes](#health-probes). Exit code 137 is one possible signature of a
-probe kill, not proof of one: kubelet asks the runtime to terminate first and
-honours `terminationGracePeriodSeconds`, so a process that exits during that
-window reports a different code, and 137 is also what an OOM kill produces.
+`OOMKilled` means raise the memory limit. A `Killing` event reading
+`failed startup probe, will be restarted` means the probe window is too short;
+see [Health Probes](#health-probes). Use that event rather than
+`Startup probe failed`, which kubelet records for every failed attempt including
+those below `failureThreshold`. Exit code 137 is one possible signature, not
+proof: kubelet asks the runtime to terminate first and honours
+`terminationGracePeriodSeconds`, so a process that exits during that window
+reports a different code, and 137 is also what an OOM kill produces.
 
 #### License Issues
 
