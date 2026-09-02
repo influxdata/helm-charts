@@ -202,7 +202,10 @@ data:
 
   # Compacted-data startup
   {{- with .Values.compactedData }}
-  {{- if kindIs "bool" .skipFileIndex }}
+  {{- if hasKey . "skipFileIndex" }}
+  {{- if not (kindIs "bool" .skipFileIndex) }}
+  {{- fail (printf "compactedData.skipFileIndex must be an unquoted boolean (true or false), got %s: %v" (kindOf .skipFileIndex) .skipFileIndex) }}
+  {{- end }}
   INFLUXDB3_COMPACTED_DATA_SKIP_FILE_INDEX: {{ ternary "true" "false" .skipFileIndex | quote }}
   INFLUXDB3_ENTERPRISE_COMPACTED_DATA_SKIP_FILE_INDEX: {{ ternary "true" "false" .skipFileIndex | quote }}
   {{- end }}
