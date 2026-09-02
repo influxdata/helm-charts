@@ -100,6 +100,37 @@ At minimum, you must configure:
        host: ""
    ```
 
+### Commercial License
+
+Store the license in a secret and point the chart at it.
+
+1. Create a Kubernetes secret from the license file. The key must be
+   `license-file`:
+   ```bash
+   kubectl -n influxdb3 create secret generic influxdb3-license \
+     --from-file=license-file=/path/to/license.jwt
+   ```
+
+2. Configure the chart:
+   ```yaml
+   license:
+     type: commercial
+     existingSecret: influxdb3-license
+   ```
+
+Notes:
+- Secret key must be `license-file`. The chart mounts that key at
+  `/etc/influxdb/license`. With any other key the mount produces an empty
+  directory and the server logs `failed to read license file from path: Is a
+  directory (os error 21)`.
+- `--from-file=/path/to/license.jwt` without the `license-file=` prefix names
+  the key after the file and hits exactly that case.
+- `license.type` must be `commercial`. It defaults to `trial`, and a trial
+  release reads only `license-email` from the secret and never sets the license
+  file path.
+- The chart does not read a license from object storage. A message about no
+  license found there follows a failed file read; it is not the cause.
+
 ### Preconfigured Admin Token
 
 Use this when you want the cluster to start with a known offline-generated admin token.
@@ -673,6 +704,22 @@ Verify license configuration:
 ```bash
 kubectl get secret -n influxdb3 influxdb3-enterprise-license -o yaml
 ```
+
+`failed to read license file from path: Is a directory (os error 21)` means the
+secret named in `license.existingSecret` has no `license-file` key, so the mount
+produced an empty directory. Check the key name:
+
+```bash
+kubectl -n influxdb3 get secret SECRET_NAME \
+  -o go-template='{{range $k,$v := .data}}{{$k}}{{"\n"}}{{end}}'
+```
+
+That prints key names only. Avoid `-o yaml` or `-o jsonpath='{.data}'` here: both
+print the base64-encoded licence along with the keys.
+
+The `no commercial license found in object store` line that follows is a
+fallback after the failed read, not a separate problem. See
+[Commercial License](#commercial-license).
 
 #### Object Storage Connection
 
