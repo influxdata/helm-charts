@@ -7,6 +7,9 @@ image:
   repo: "docker.io/library/telegraf"
   tag: "1.39-alpine"
   pullPolicy: IfNotPresent
+## Annotations to add to the Deployment object itself.
+## Use podAnnotations below to annotate the pods.
+deploymentAnnotations: {}
 podAnnotations: {}
 podLabels: {}
 imagePullSecrets: []
