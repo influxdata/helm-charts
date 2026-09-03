@@ -282,6 +282,37 @@ ingester:
     numThreads: 20
 ```
 
+#### Health Probes
+
+All components share one probe configuration. The startup probe guards the
+initialization window; liveness and readiness start only once it succeeds.
+
+```yaml
+probes:
+  startup:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 184   # 10s + (184 - 1) × 5s = 925s to termination
+```
+
+Nodes replay from object storage on boot, so startup scales with how much data a
+node reads back, and clusters with a large history have been reported to need
+more than 12 minutes. Two things follow from a window this wide.
+
+`helm install` and `helm upgrade` with `--wait` default to a five-minute
+timeout, which is shorter than the startup they are waiting for. Pass
+`--timeout 20m` to match, or the release fails while the pods are still booting
+normally.
+
+Once the startup probe succeeds, the liveness probe takes over with a much
+narrower window (`3 × 10s`). A node that answers `/health` and then blocks
+during later startup work can still be restarted; raise
+`probes.liveness.failureThreshold` if that happens.
+
+This widens the window rather than shortening the startup. If nodes routinely
+need most of it, the boot work itself is worth investigating.
+
 #### TLS
 
 Enable TLS with inline cert/key or an existing secret:
@@ -606,6 +637,26 @@ Check events:
 kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0
 ```
 
+A pod that restarts during startup while its logs show normal activity is most
+often killed by the startup probe or out of memory, though an externally killed
+container can have other causes. Read the termination reason and the kill event
+rather than the exit code:
+
+```bash
+kubectl get pod -n influxdb3 influxdb3-enterprise-ingester-0 \
+  -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}'
+kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0 | grep -i killing
+```
+
+`OOMKilled` means raise the memory limit. A `Killing` event reading
+`failed startup probe, will be restarted` means the probe window is too short;
+see [Health Probes](#health-probes). Use that event rather than
+`Startup probe failed`, which kubelet records for every failed attempt including
+those below `failureThreshold`. Exit code 137 is one possible signature, not
+proof: kubelet asks the runtime to terminate first and honours
+`terminationGracePeriodSeconds`, so a process that exits during that window
+reports a different code, and 137 is also what an OOM kill produces.
+
 #### License Issues
 
 Verify license configuration:
@@ -680,6 +731,12 @@ logs:
 | `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR`) | `""` |
 | `serviceAccount.automountServiceAccountToken` | Configure automatic mounting of the Kubernetes service account token in component pods and the created ServiceAccount | `not set` |
 | `extraEnv` | Extra environment variables applied to all components | `[]` |
+| `probes.enabled` | Enable liveness, readiness, and startup probes on all components | `true` |
+| `probes.startup.initialDelaySeconds` | Delay before the first startup check | `10` |
+| `probes.startup.periodSeconds` | Interval between startup checks | `5` |
+| `probes.startup.timeoutSeconds` | Timeout of a single startup check | `5` |
+| `probes.startup.failureThreshold` | Failed startup checks before the pod is killed | `184` |
+| `probes.liveness.*` / `probes.readiness.*` | Liveness and readiness timings; see `values.yaml` | see `values.yaml` |
 
 ### Object Storage Parameters
 
