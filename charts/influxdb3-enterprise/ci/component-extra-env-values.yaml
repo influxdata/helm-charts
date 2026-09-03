@@ -80,3 +80,7 @@ processingEngine:
       value: "processor-only"
   persistence:
     enabled: false
+
+compactedData:
+  skipFileIndex: false
+  loadConcurrencyLimit: 8
