@@ -1,0 +1,53 @@
+# Example: five-node InfluxDB 3 Enterprise cluster with Explorer support.
+# Replace placeholder license, token, and session secrets before deploying.
+
+license:
+  type: trial
+  email: "user@example.com"
+
+# Local filesystem object storage is useful for a single-node dev Kubernetes
+# environment. Use S3, Azure Blob, or Google Cloud Storage for production.
+objectStorage:
+  type: file
+  file:
+    persistence:
+      accessMode: ReadWriteMany
+      size: 100Gi
+
+ingress:
+  enabled: false
+
+# Default five-node layout: 2 ingesters + 2 queriers + 1 compactor.
+ingester:
+  replicas: 2
+
+querier:
+  replicas: 2
+
+compactor:
+  replicas: 1
+
+# Integrated Explorer Web UI served by the Enterprise querier process.
+webui:
+  enabled: true
+  sessionSecret: "REPLACE_WITH_WEBUI_SESSION_SECRET"
+  defaultConnection:
+    enabled: true
+    database: "explorer_demo"
+    apiToken: "REPLACE_WITH_ADMIN_TOKEN"
+    serverName: "InfluxDB 3 Enterprise"
+
+# Standalone Explorer companion deployment. This is the recommended path when
+# the first Explorer connection must be pre-populated by Helm.
+explorer:
+  enabled: true
+  sessionSecret: "REPLACE_WITH_EXPLORER_SESSION_SECRET"
+  mode: admin
+  service:
+    type: ClusterIP
+    port: 8888
+  defaultConnection:
+    enabled: true
+    database: "explorer_demo"
+    apiToken: "REPLACE_WITH_ADMIN_TOKEN"
+    serverName: "InfluxDB 3 Enterprise"
