@@ -610,6 +610,92 @@ processingEngine:
       partition: 0                  # Start updating from pod 0
 
 # ============================================================================
+# Explorer / Web UI Configuration
+# ============================================================================
+
+# Integrated Explorer Web UI hosted by the InfluxDB 3 Enterprise process.
+# In Enterprise 3.11+, --mode=all does not include the Web UI. Enabling this
+# adds "webui" to the querier serve mode and requires a session secret.
+webui:
+  enabled: false
+
+  # Required when webui.enabled=true unless existingSecret is set.
+  # Existing secret must contain key: session-secret
+  sessionSecret: ""
+  existingSecret: ""
+
+  # Optional OpenAI-compatible endpoint for Explorer AI chat.
+  openaiBaseUrl: ""
+
+  # Optional first-connection defaults. The chart mounts config.json using the
+  # documented Explorer shape and exposes DEFAULT_* environment variables.
+  # Note: local validation with Enterprise 3.11.2 showed the standalone
+  # Explorer image consumes this preconfiguration reliably; the integrated
+  # Enterprise Web UI currently accepts the mounted/env values but may still ask
+  # the user to configure the first server.
+  defaultConnection:
+    enabled: false
+    # Existing secret must contain key: config.json. DEFAULT_* keys are optional.
+    existingSecret: ""
+    server: "http://127.0.0.1:8181"
+    database: ""
+    apiToken: ""
+    serverName: ""
+
+# Optional standalone Explorer deployment. Use this when you want Helm to
+# preconfigure an Explorer connection to this cluster at startup.
+explorer:
+  enabled: false
+  replicas: 1
+  mode: admin                         # query or admin
+
+  image:
+    registry: docker.io
+    repository: influxdata/influxdb3-ui
+    tag: "1.9.0"
+    pullPolicy: IfNotPresent
+
+  # Required when explorer.enabled=true unless existingSecret is set.
+  # Existing secret must contain key: session-secret
+  sessionSecret: ""
+  existingSecret: ""
+
+  databaseUrl: "/db/sqlite.db"
+
+  initContainer:
+    image: busybox:1.36
+
+  service:
+    type: ClusterIP
+    port: 8888
+    annotations: {}
+
+  resources: {}
+  extraEnv: []
+  podAnnotations: {}
+  podLabels: {}
+
+  # Explorer runs as uid/gid 1500. The initContainer prepares writable emptyDir
+  # volumes for /db and /app-root/config.
+  podSecurityContext:
+    fsGroup: 1500
+  securityContext: {}
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  defaultConnection:
+    enabled: false
+    # Existing secret must contain key: config.json.
+    existingSecret: ""
+    # Empty server defaults to the in-cluster querier service URL.
+    server: ""
+    database: ""
+    apiToken: ""
+    serverName: ""
+
+# ============================================================================
 # Advanced Configuration (Shared across all components)
 # ============================================================================
 

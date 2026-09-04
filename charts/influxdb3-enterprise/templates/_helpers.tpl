@@ -98,6 +98,107 @@ License secret name
 {{- end }}
 
 {{/*
+Integrated Web UI session secret name
+*/}}
+{{- define "influxdb3-enterprise.webuiSecretName" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- get $webui "existingSecret" | default (printf "%s-webui" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Integrated Web UI default connection config secret name
+*/}}
+{{- define "influxdb3-enterprise.webuiConfigSecretName" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- $connection := get $webui "defaultConnection" | default dict -}}
+{{- get $connection "existingSecret" | default (printf "%s-webui-config" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Standalone Explorer session secret name
+*/}}
+{{- define "influxdb3-enterprise.explorerSecretName" -}}
+{{- $explorer := .Values.explorer | default dict -}}
+{{- get $explorer "existingSecret" | default (printf "%s-explorer" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Standalone Explorer default connection config secret name
+*/}}
+{{- define "influxdb3-enterprise.explorerConfigSecretName" -}}
+{{- $explorer := .Values.explorer | default dict -}}
+{{- $connection := get $explorer "defaultConnection" | default dict -}}
+{{- get $connection "existingSecret" | default (printf "%s-explorer-config" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Standalone Explorer image reference
+*/}}
+{{- define "influxdb3-enterprise.explorer.image" -}}
+{{- $image := .Values.explorer.image | default dict -}}
+{{- $registry := get $image "registry" | default "docker.io" -}}
+{{- $repository := get $image "repository" | default "influxdata/influxdb3-ui" -}}
+{{- $tag := get $image "tag" | default "1.9.0" -}}
+{{- printf "%s/%s:%s" $registry $repository $tag -}}
+{{- end }}
+
+{{/*
+Querier mode. Integrated Explorer must be explicitly added in Enterprise 3.11+.
+*/}}
+{{- define "influxdb3-enterprise.querierMode" -}}
+{{- if .Values.webui.enabled -}}query,webui{{- else -}}query{{- end -}}
+{{- end }}
+
+{{/*
+Integrated Web UI serve flags
+*/}}
+{{- define "influxdb3-enterprise.webuiArgs" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- if get $webui "enabled" }}
+- --webui-session-secret=$(INFLUXDB3_WEBUI_SESSION_SECRET)
+{{- if get $webui "openaiBaseUrl" }}
+- --webui-openai-base-url=$(INFLUXDB3_WEBUI_OPENAI_BASE_URL)
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Default connection target for integrated Web UI.
+*/}}
+{{- define "influxdb3-enterprise.webuiDefaultConnectionServer" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- $connection := get $webui "defaultConnection" | default dict -}}
+{{- get $connection "server" | default "http://127.0.0.1:8181" -}}
+{{- end }}
+
+{{/*
+Default connection name for integrated Web UI.
+*/}}
+{{- define "influxdb3-enterprise.webuiDefaultConnectionServerName" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- $connection := get $webui "defaultConnection" | default dict -}}
+{{- get $connection "serverName" | default (printf "%s integrated Web UI" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Default connection target for standalone Explorer.
+*/}}
+{{- define "influxdb3-enterprise.explorerDefaultConnectionServer" -}}
+{{- $explorer := .Values.explorer | default dict -}}
+{{- $connection := get $explorer "defaultConnection" | default dict -}}
+{{- get $connection "server" | default (printf "http://%s-querier.%s.svc.cluster.local:%v" (include "influxdb3-enterprise.fullname" .) .Release.Namespace .Values.querier.service.port) -}}
+{{- end }}
+
+{{/*
+Default connection name for standalone Explorer.
+*/}}
+{{- define "influxdb3-enterprise.explorerDefaultConnectionServerName" -}}
+{{- $explorer := .Values.explorer | default dict -}}
+{{- $connection := get $explorer "defaultConnection" | default dict -}}
+{{- get $connection "serverName" | default (printf "%s Enterprise" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
 Require acknowledgement of the InfluxDB 3.10 catalog migration.
 */}}
 {{- define "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" -}}
@@ -133,6 +234,54 @@ Validate license type
 {{- $valid := list "trial" "commercial" -}}
 {{- if not (has $type $valid) -}}
 {{- fail (printf "Invalid license.type: %s. Must be one of: %s" $type (join ", " $valid)) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Validate integrated Web UI config
+*/}}
+{{- define "influxdb3-enterprise.validateWebuiConfig" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- if get $webui "enabled" -}}
+{{- if not .Values.querier.enabled -}}
+{{- fail "webui.enabled=true requires querier.enabled=true because the integrated Web UI is served by querier pods." -}}
+{{- end -}}
+{{- $sessionSecret := get $webui "sessionSecret" | default "" -}}
+{{- $existingSecret := get $webui "existingSecret" | default "" -}}
+{{- if not (or $sessionSecret $existingSecret) -}}
+{{- fail "webui.enabled=true requires webui.sessionSecret or webui.existingSecret. Existing secret must contain key: session-secret." -}}
+{{- end -}}
+{{- $connection := get $webui "defaultConnection" | default dict -}}
+{{- if and (get $connection "enabled") (not (get $connection "existingSecret" | default "")) (not (get $connection "apiToken" | default "")) -}}
+{{- fail "webui.defaultConnection.enabled=true requires webui.defaultConnection.apiToken or webui.defaultConnection.existingSecret." -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Validate standalone Explorer config
+*/}}
+{{- define "influxdb3-enterprise.validateExplorerConfig" -}}
+{{- $explorer := .Values.explorer | default dict -}}
+{{- if get $explorer "enabled" -}}
+{{- $mode := get $explorer "mode" | default "query" -}}
+{{- if not (has $mode (list "query" "admin")) -}}
+{{- fail (printf "Invalid explorer.mode: %s. Must be one of: query, admin" $mode) -}}
+{{- end -}}
+{{- $sessionSecret := get $explorer "sessionSecret" | default "" -}}
+{{- $existingSecret := get $explorer "existingSecret" | default "" -}}
+{{- if not (or $sessionSecret $existingSecret) -}}
+{{- fail "explorer.enabled=true requires explorer.sessionSecret or explorer.existingSecret. Existing secret must contain key: session-secret." -}}
+{{- end -}}
+{{- $connection := get $explorer "defaultConnection" | default dict -}}
+{{- if get $connection "enabled" -}}
+{{- if and (not (get $connection "server" | default "")) (not .Values.querier.enabled) -}}
+{{- fail "explorer.defaultConnection.enabled=true requires explorer.defaultConnection.server when querier.enabled=false." -}}
+{{- end -}}
+{{- if and (not (get $connection "existingSecret" | default "")) (not (get $connection "apiToken" | default "")) -}}
+{{- fail "explorer.defaultConnection.enabled=true requires explorer.defaultConnection.apiToken or explorer.defaultConnection.existingSecret." -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end }}
 
@@ -374,6 +523,53 @@ Pod name environment for stable StatefulSet node IDs
 {{- end }}
 
 {{/*
+Integrated Web UI environment for querier pods
+*/}}
+{{- define "influxdb3-enterprise.webuiEnv" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- if get $webui "enabled" }}
+- name: INFLUXDB3_WEBUI_SESSION_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.webuiSecretName" . }}
+      key: session-secret
+{{- if get $webui "openaiBaseUrl" }}
+- name: INFLUXDB3_WEBUI_OPENAI_BASE_URL
+  value: {{ get $webui "openaiBaseUrl" | quote }}
+{{- end }}
+{{- $connection := get $webui "defaultConnection" | default dict -}}
+{{- if get $connection "enabled" }}
+- name: CONFIG_PATH
+  value: "/app-root/config/config.json"
+- name: DEFAULT_INFLUX_SERVER
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
+      key: DEFAULT_INFLUX_SERVER
+      optional: true
+- name: DEFAULT_INFLUX_DATABASE
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
+      key: DEFAULT_INFLUX_DATABASE
+      optional: true
+- name: DEFAULT_API_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
+      key: DEFAULT_API_TOKEN
+      optional: true
+- name: DEFAULT_SERVER_NAME
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
+      key: DEFAULT_SERVER_NAME
+      optional: true
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Global plus component-specific extra environment variables.
 Component-specific entries override global entries with the same name.
 */}}
@@ -611,6 +807,19 @@ Shared volume mounts (license/TLS/GCS and user extras)
 {{- end }}
 
 {{/*
+Integrated Web UI config volume mount
+*/}}
+{{- define "influxdb3-enterprise.webuiVolumeMounts" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- $connection := get $webui "defaultConnection" | default dict -}}
+{{- if and (get $webui "enabled") (get $connection "enabled") }}
+- name: webui-config
+  mountPath: /app-root/config
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{/*
 Admin token volume mounts
 */}}
 {{- define "influxdb3-enterprise.adminTokenVolumeMounts" -}}
@@ -723,6 +932,22 @@ Shared volumes (license/TLS/GCS and user extras)
 {{- end }}
 {{- with .Values.extraVolumes }}
 {{ toYaml . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Integrated Web UI config volume
+*/}}
+{{- define "influxdb3-enterprise.webuiVolumes" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- $connection := get $webui "defaultConnection" | default dict -}}
+{{- if and (get $webui "enabled") (get $connection "enabled") }}
+- name: webui-config
+  secret:
+    secretName: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
+    items:
+      - key: config.json
+        path: config.json
 {{- end }}
 {{- end }}
 

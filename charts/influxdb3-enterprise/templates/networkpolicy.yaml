@@ -179,6 +179,17 @@ spec:
         - protocol: TCP
           port: 8181
     {{- end }}
+    {{- if .Values.explorer.enabled }}
+    # Allow standalone Explorer to connect to queriers
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: explorer
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
     # Allow Prometheus to scrape metrics
     {{- if .Values.networkPolicy.ingress.fromPrometheus }}
     - from:

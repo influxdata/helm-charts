@@ -15,6 +15,12 @@ Components deployed:
 {{- if .Values.processingEngine.enabled }}
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
 {{- end }}
+{{- if .Values.webui.enabled }}
+  ✓ Integrated Explorer Web UI: enabled on queriers
+{{- end }}
+{{- if .Values.explorer.enabled }}
+  ✓ Standalone Explorer: {{ .Values.explorer.replicas }} replica(s)
+{{- end }}
 
 {{- $security := .Values.security | default dict }}
 {{- $auth := get $security "auth" | default dict }}
@@ -74,6 +80,16 @@ Access endpoints:
   Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
   Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
 {{- end }}
+{{- if .Values.webui.enabled }}
+{{- if .Values.ingress.enabled }}
+  Integrated Explorer Web UI: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
+{{- else }}
+  Integrated Explorer Web UI: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
+{{- if .Values.explorer.enabled }}
+  Standalone Explorer: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-explorer {{ .Values.explorer.service.port }}:{{ .Values.explorer.service.port }} -n {{ .Release.Namespace }}
+{{- end }}
 
 Getting started:
 
@@ -101,6 +117,13 @@ Getting started:
      influxdb3 query mydb "SELECT * FROM measurement"
 
 Documentation: https://docs.influxdata.com/influxdb3/enterprise/
+{{- if and .Values.webui.enabled .Values.webui.defaultConnection.enabled }}
+
+NOTE: The integrated Enterprise Web UI is enabled and receives the documented
+Explorer default connection config. If Enterprise 3.11.2 still shows the first
+server setup screen, use explorer.enabled=true for the standalone Explorer
+deployment; local validation showed that path consumes config.json reliably.
+{{- end }}
 
 {{- $objectStorage := .Values.objectStorage | default dict }}
 {{- if get $objectStorage "cacheEndpoint" }}
