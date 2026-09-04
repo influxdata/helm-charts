@@ -1,0 +1,148 @@
+{{- $explorer := .Values.explorer | default dict -}}
+{{- $connection := get $explorer "defaultConnection" | default dict -}}
+{{- if get $explorer "enabled" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-explorer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: explorer
+spec:
+  replicas: {{ get $explorer "replicas" | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: explorer
+  template:
+    metadata:
+      annotations:
+        checksum/explorer-secret: {{ include (print $.Template.BasePath "/secret-explorer.yaml") . | sha256sum }}
+        checksum/explorer-config: {{ include (print $.Template.BasePath "/secret-explorer-config.yaml") . | sha256sum }}
+        {{- with .Values.explorer.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "influxdb3-enterprise.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: explorer
+        {{- with .Values.explorer.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "influxdb3-enterprise.serviceAccountName" . }}
+      {{- if not (kindIs "invalid" .Values.serviceAccount.automountServiceAccountToken) }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.explorer.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: prepare-explorer-volumes
+          image: {{ .Values.explorer.initContainer.image | quote }}
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+              mkdir -p /db /work-config
+              {{- if get $connection "enabled" }}
+              cp /config-src/config.json /work-config/config.json
+              {{- end }}
+              chown -R 1500:1500 /db /work-config
+              chmod 700 /db
+              chmod 755 /work-config
+              {{- if get $connection "enabled" }}
+              chmod 644 /work-config/config.json
+              {{- end }}
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+          volumeMounts:
+            - name: explorer-db
+              mountPath: /db
+            - name: explorer-config
+              mountPath: /work-config
+            {{- if get $connection "enabled" }}
+            - name: explorer-config-source
+              mountPath: /config-src
+              readOnly: true
+            {{- end }}
+      containers:
+        - name: explorer
+          {{- with .Values.explorer.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: {{ include "influxdb3-enterprise.explorer.image" . }}
+          imagePullPolicy: {{ .Values.explorer.image.pullPolicy }}
+          args:
+            - {{ printf "--mode=%s" (.Values.explorer.mode | default "query") | quote }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: SESSION_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influxdb3-enterprise.explorerSecretName" . }}
+                  key: session-secret
+            - name: DATABASE_URL
+              value: {{ .Values.explorer.databaseUrl | quote }}
+            {{- with .Values.explorer.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.explorer.resources | nindent 12 }}
+          volumeMounts:
+            - name: explorer-db
+              mountPath: /db
+            - name: explorer-config
+              mountPath: /app-root/config
+      {{- with .Values.explorer.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.explorer.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.explorer.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: explorer-db
+          emptyDir: {}
+        - name: explorer-config
+          emptyDir: {}
+        {{- if get $connection "enabled" }}
+        - name: explorer-config-source
+          secret:
+            secretName: {{ include "influxdb3-enterprise.explorerConfigSecretName" . }}
+            items:
+              - key: config.json
+                path: config.json
+        {{- end }}
+{{- end }}

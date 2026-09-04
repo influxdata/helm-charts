@@ -24,6 +24,13 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
         checksum/license: {{ include "influxdb3-enterprise.licenseChecksum" . }}
+        {{- if .Values.webui.enabled }}
+        checksum/webui-secret: {{ include (print $.Template.BasePath "/secret-webui.yaml") . | sha256sum }}
+        {{- $webuiConnection := .Values.webui.defaultConnection | default dict }}
+        {{- if get $webuiConnection "enabled" }}
+        checksum/webui-config: {{ include (print $.Template.BasePath "/secret-webui-config.yaml") . | sha256sum }}
+        {{- end }}
+        {{- end }}
         {{- with .Values.querier.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -57,7 +64,8 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - serve
-            - --mode=query
+            - --mode={{ include "influxdb3-enterprise.querierMode" . }}
+            {{- include "influxdb3-enterprise.webuiArgs" . | nindent 12 }}
             - --node-id=$(POD_NAME)
           envFrom:
             - configMapRef:
@@ -68,6 +76,7 @@ spec:
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.webuiEnv" . | nindent 12 }}
             {{- with .Values.querier.numIOThreads }}
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}
@@ -119,6 +128,7 @@ spec:
             {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
             {{ include "influxdb3-enterprise.adminTokenVolumeMounts" . | nindent 12 }}
             {{ include "influxdb3-enterprise.permissionTokensVolumeMounts" . | nindent 12 }}
+            {{ include "influxdb3-enterprise.webuiVolumeMounts" . | nindent 12 }}
       {{- with .Values.querier.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -135,4 +145,5 @@ spec:
         {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
         {{ include "influxdb3-enterprise.adminTokenVolumes" . | nindent 8 }}
         {{ include "influxdb3-enterprise.permissionTokensVolumes" . | nindent 8 }}
+        {{ include "influxdb3-enterprise.webuiVolumes" . | nindent 8 }}
 {{- end }}

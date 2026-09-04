@@ -1,0 +1,65 @@
+license:
+  type: trial
+  email: ci@example.com
+
+objectStorage:
+  type: file
+  file:
+    persistence:
+      accessMode: ReadWriteOnce
+      size: 5Gi
+
+ingress:
+  enabled: false
+
+networkPolicy:
+  enabled: true
+
+ingester:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+compactor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+webui:
+  enabled: true
+  sessionSecret: "ci-webui-session-secret"
+  defaultConnection:
+    enabled: true
+    database: "explorer_demo"
+    apiToken: "apiv3_ci_admin_token"
+    serverName: "Helm Integrated Explorer"
+
+explorer:
+  enabled: true
+  sessionSecret: "ci-explorer-session-secret"
+  mode: admin
+  defaultConnection:
+    enabled: true
+    database: "explorer_demo"
+    apiToken: "apiv3_ci_admin_token"
+    serverName: "Helm Standalone Explorer"
