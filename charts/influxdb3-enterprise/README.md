@@ -307,7 +307,7 @@ normally.
 
 Once the startup probe succeeds, the liveness probe takes over with a much
 narrower window (`3 × 10s`). A node that answers `/health` and then blocks
-during later startup work can still be restarted; raise
+during later startup work can still have its container restarted; raise
 `probes.liveness.failureThreshold` if that happens.
 
 This widens the window rather than shortening the startup. If nodes routinely
@@ -637,10 +637,10 @@ Check events:
 kubectl describe pod -n influxdb3 influxdb3-enterprise-ingester-0
 ```
 
-A pod that restarts during startup while its logs show normal activity is most
-often killed by the startup probe or out of memory, though an externally killed
-container can have other causes. Read the termination reason and the kill event
-rather than the exit code:
+A container that restarts during startup while its logs show normal activity is
+most often terminated by the startup probe or out of memory, though an
+externally killed container can have other causes. Read the termination reason
+and the kill event rather than the exit code:
 
 ```bash
 kubectl get pod -n influxdb3 influxdb3-enterprise-ingester-0 \
@@ -735,7 +735,7 @@ logs:
 | `probes.startup.initialDelaySeconds` | Delay before the first startup check | `10` |
 | `probes.startup.periodSeconds` | Interval between startup checks | `5` |
 | `probes.startup.timeoutSeconds` | Timeout of a single startup check | `5` |
-| `probes.startup.failureThreshold` | Failed startup checks before the pod is killed | `184` |
+| `probes.startup.failureThreshold` | Failed startup checks before container termination is triggered | `184` |
 | `probes.liveness.*` / `probes.readiness.*` | Liveness and readiness timings; see `values.yaml` | see `values.yaml` |
 
 ### Object Storage Parameters
