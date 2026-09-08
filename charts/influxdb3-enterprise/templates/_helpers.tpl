@@ -759,3 +759,54 @@ Permission tokens volumes
         path: permission-tokens.json
 {{- end }}
 {{- end }}
+
+{{/*
+Termination grace period, shared by every workload.
+
+Returns the value or an empty string, so a release that does not set one keeps
+the Kubernetes default of 30s and renders no field at all.
+*/}}
+{{- define "influxdb3-enterprise.terminationGracePeriodValue" -}}
+{{- $shutdown := .Values.shutdown | default dict -}}
+{{- if hasKey $shutdown "terminationGracePeriodSeconds" -}}
+{{- get $shutdown "terminationGracePeriodSeconds" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Reject a drain that outlives the pod, and a grace period Kubernetes will not take.
+
+kubelet sends SIGKILL once terminationGracePeriodSeconds expires, so a longer
+shutdown.timeout never finishes draining. Durations built from whole h/m/s parts
+are compared; any other spelling the server accepts is left alone rather than
+guessed at.
+*/}}
+{{- define "influxdb3-enterprise.validateShutdownConfig" -}}
+{{- $shutdown := .Values.shutdown | default dict -}}
+{{- if hasKey $shutdown "terminationGracePeriodSeconds" -}}
+{{- $graceRaw := get $shutdown "terminationGracePeriodSeconds" | toString -}}
+{{- if not (regexMatch "^[0-9]+$" $graceRaw) -}}
+{{- fail (printf "shutdown.terminationGracePeriodSeconds must be a whole number of seconds, got %q. Kubernetes rejects anything else." $graceRaw) -}}
+{{- end -}}
+{{- if hasKey $shutdown "timeout" -}}
+{{- $raw := get $shutdown "timeout" | toString -}}
+{{- $grace := $graceRaw | int64 -}}
+{{- $seconds := -1 -}}
+{{- if regexMatch "^([0-9]+h)?([0-9]+m)?([0-9]+s)?$" $raw -}}
+{{- $total := 0 -}}
+{{- range $part := regexFindAll "[0-9]+[hms]" $raw -1 -}}
+{{- $n := trimSuffix "h" (trimSuffix "m" (trimSuffix "s" $part)) | int64 -}}
+{{- if hasSuffix "h" $part -}}{{- $total = add $total (mul $n 3600) -}}
+{{- else if hasSuffix "m" $part -}}{{- $total = add $total (mul $n 60) -}}
+{{- else -}}{{- $total = add $total $n -}}{{- end -}}
+{{- end -}}
+{{- if gt (len (regexFindAll "[0-9]+[hms]" $raw -1)) 0 -}}
+{{- $seconds = $total -}}
+{{- end -}}
+{{- end -}}
+{{- if and (ge $seconds 0) (gt $seconds $grace) -}}
+{{- fail (printf "shutdown.timeout (%s) is longer than shutdown.terminationGracePeriodSeconds (%d): kubelet sends SIGKILL before the drain can finish. Raise the grace period past the timeout, or shorten the timeout." $raw $grace) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}

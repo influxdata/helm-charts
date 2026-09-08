@@ -711,7 +711,7 @@ compactedData:
 #   gen1LookbackDuration: "24h"       # Lookback for gen1 Parquet files
 #   retentionCheckInterval: "30m"     # How often to check retention policies
 #   deleteGracePeriod: "24h"          # Grace period before permanent deletion
-#   hardDeleteDefaultDuration: "90d"  # Default hard delete duration
+#   hardDeleteDefaultDuration: "90d"  # Deprecated: ignored by InfluxDB 3.11+
 
 # Logs configuration
 # logs:
@@ -736,6 +736,21 @@ compactedData:
 # telemetry:
 #   disableUpload: false              # Set true to opt-out of InfluxData telemetry
 #   endpoint: ""                      # Custom telemetry endpoint
+
+# ============================================================================
+# Graceful Shutdown
+# ============================================================================
+# The server drains active connections before exiting; kubelet sends SIGKILL
+# once terminationGracePeriodSeconds expires, so the grace period has to outlast
+# the drain or the drain never finishes. Both default to 30s, which leaves no
+# margin - raise the grace period first when lengthening the timeout.
+
+shutdown:
+  # Connection-drain timeout (--shutdown-timeout, 3.11+). "0s" skips the drain.
+  # timeout: "30s"
+
+  # Applied to every workload. Unset keeps the Kubernetes default of 30s.
+  # terminationGracePeriodSeconds: 60
 
 # ============================================================================
 # Probes Configuration
