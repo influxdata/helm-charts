@@ -759,3 +759,92 @@ Permission tokens volumes
         path: permission-tokens.json
 {{- end }}
 {{- end }}
+
+{{/*
+Convert a size value to bytes.
+
+Accepts InfluxDB size units (b, kb, mb, gb, tb - binary multiples), Kubernetes
+quantities (Ki, Mi, Gi, Ti and K, M, G, T), a bare number read as bytes, or a
+percentage of "ref".
+
+Input: dict with "value" and "ref"; "ref" is in bytes and only percentages need it.
+Returns bytes, or an empty string when the value cannot be parsed.
+*/}}
+{{- define "influxdb3-enterprise.toBytes" -}}
+{{- $v := .value | toString | trim | lower -}}
+{{- $ref := .ref | default 0 | float64 -}}
+{{- if eq $v "" -}}
+{{- else if hasSuffix "%" $v -}}
+{{- $pct := trimSuffix "%" $v -}}
+{{- if and (regexMatch "^[0-9]+(\\.[0-9]+)?$" $pct) (gt $ref 0.0) -}}
+{{- divf (mulf (float64 $pct) $ref) 100.0 | int64 -}}
+{{- end -}}
+{{- else -}}
+{{- $num := regexFind "^[0-9]+(\\.[0-9]+)?" $v -}}
+{{- $unit := regexFind "[a-z]*$" $v -}}
+{{- $mult := dict "" 1 "b" 1 "kb" 1024 "mb" 1048576 "gb" 1073741824 "tb" 1099511627776 "ki" 1024 "mi" 1048576 "gi" 1073741824 "ti" 1099511627776 "k" 1000 "m" 1000000 "g" 1000000000 "t" 1000000000000 -}}
+{{- if and $num (hasKey $mult $unit) -}}
+{{- mulf (float64 $num) (float64 (get $mult $unit)) | int64 -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Human-readable byte count, for error messages.
+*/}}
+{{- define "influxdb3-enterprise.humanBytes" -}}
+{{- $b := . | float64 -}}
+{{- if ge $b 1073741824.0 -}}
+{{- printf "%.1fGB" (divf $b 1073741824.0) -}}
+{{- else if ge $b 1048576.0 -}}
+{{- printf "%.1fMB" (divf $b 1048576.0) -}}
+{{- else -}}
+{{- printf "%dB" ($b | int64) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Reject a memory size the server will not take.
+
+InfluxDB accepts b, kb, mb, gb and tb - all binary, 1024-based - or a whole
+percentage, with optional whitespace before the suffix. Bare numbers were
+rejected in 3.11 because they used to mean megabytes, and Kubernetes suffixes
+such as Gi are not in the server's table at all, so both reach the container and
+crash-loop it. The deprecated aliases keep the old lenient parsing and are not
+checked.
+
+Whether the configured sizes add up to more than the container can hold is the
+server's call, not the chart's: it sums them only for query-only nodes, using
+its own set of reservations, and warns rather than refusing to start. See the
+Memory Budget section of the README.
+*/}}
+{{- define "influxdb3-enterprise.validateMemorySize" -}}
+{{- $key := .key -}}
+{{- $raw := .value | toString | trim | lower -}}
+{{- if ne $raw "" -}}
+{{- if hasSuffix "%" $raw -}}
+{{- $pct := trimSuffix "%" $raw | trim -}}
+{{- if not (regexMatch "^[0-9]+$" $pct) -}}
+{{- fail (printf "%s must be a whole percentage such as \"20%%\", got %q." $key .value) -}}
+{{- end -}}
+{{- if gt ($pct | int64) 100 -}}
+{{- fail (printf "%s must be between 0 and 100 percent, got %q." $key .value) -}}
+{{- end -}}
+{{- else if not (regexMatch "^[0-9]+ ?(kb|mb|gb|tb|b)$" $raw) -}}
+{{- fail (printf "%s must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got %q. Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start." $key .value) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Check every memory size a release sets, whatever its limits look like.
+*/}}
+{{- define "influxdb3-enterprise.validateMemorySizes" -}}
+{{- $caching := .Values.caching | default dict -}}
+{{- include "influxdb3-enterprise.validateMemorySize" (dict "key" "caching.fileCacheSize" "value" (get $caching "fileCacheSize" | default "")) -}}
+{{- range $name := list "ingester" "querier" "compactor" "processingEngine" -}}
+{{- $memory := get (get $.Values $name | default dict) "memory" | default dict -}}
+{{- include "influxdb3-enterprise.validateMemorySize" (dict "key" (printf "%s.memory.execMemPoolSize" $name) "value" (get $memory "execMemPoolSize" | default "")) -}}
+{{- include "influxdb3-enterprise.validateMemorySize" (dict "key" (printf "%s.memory.forceSnapshotMemSize" $name) "value" (get $memory "forceSnapshotMemSize" | default "")) -}}
+{{- end -}}
+{{- end }}

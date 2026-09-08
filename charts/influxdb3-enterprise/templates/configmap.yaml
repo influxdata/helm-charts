@@ -7,6 +7,7 @@
 {{- include "influxdb3-enterprise.validateObjectStoreTlsCa" . }}
 {{- include "influxdb3-enterprise.validateAdminTokenConfig" . }}
 {{- include "influxdb3-enterprise.validatePermissionTokensConfig" . }}
+{{- include "influxdb3-enterprise.validateMemorySizes" . }}
 {{- $existing := lookup "v1" "ConfigMap" .Release.Namespace (include "influxdb3-enterprise.configMapName" .) | default dict }}
 {{- $recordedFormat := dig "metadata" "annotations" "influxdata.com/catalog-format" "" $existing }}
 {{- $upgradePachaTree := eq (toString (get .Values "acknowledgePachaTreeMigration")) "true" }}
