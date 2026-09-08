@@ -760,48 +760,7 @@ Permission tokens volumes
 {{- end }}
 {{- end }}
 
-{{/*
-Convert a size value to bytes.
 
-Accepts InfluxDB size units (b, kb, mb, gb, tb - binary multiples), Kubernetes
-quantities (Ki, Mi, Gi, Ti and K, M, G, T), a bare number read as bytes, or a
-percentage of "ref".
-
-Input: dict with "value" and "ref"; "ref" is in bytes and only percentages need it.
-Returns bytes, or an empty string when the value cannot be parsed.
-*/}}
-{{- define "influxdb3-enterprise.toBytes" -}}
-{{- $v := .value | toString | trim | lower -}}
-{{- $ref := .ref | default 0 | float64 -}}
-{{- if eq $v "" -}}
-{{- else if hasSuffix "%" $v -}}
-{{- $pct := trimSuffix "%" $v -}}
-{{- if and (regexMatch "^[0-9]+(\\.[0-9]+)?$" $pct) (gt $ref 0.0) -}}
-{{- divf (mulf (float64 $pct) $ref) 100.0 | int64 -}}
-{{- end -}}
-{{- else -}}
-{{- $num := regexFind "^[0-9]+(\\.[0-9]+)?" $v -}}
-{{- $unit := regexFind "[a-z]*$" $v -}}
-{{- $mult := dict "" 1 "b" 1 "kb" 1024 "mb" 1048576 "gb" 1073741824 "tb" 1099511627776 "ki" 1024 "mi" 1048576 "gi" 1073741824 "ti" 1099511627776 "k" 1000 "m" 1000000 "g" 1000000000 "t" 1000000000000 -}}
-{{- if and $num (hasKey $mult $unit) -}}
-{{- mulf (float64 $num) (float64 (get $mult $unit)) | int64 -}}
-{{- end -}}
-{{- end -}}
-{{- end }}
-
-{{/*
-Human-readable byte count, for error messages.
-*/}}
-{{- define "influxdb3-enterprise.humanBytes" -}}
-{{- $b := . | float64 -}}
-{{- if ge $b 1073741824.0 -}}
-{{- printf "%.1fGB" (divf $b 1073741824.0) -}}
-{{- else if ge $b 1048576.0 -}}
-{{- printf "%.1fMB" (divf $b 1048576.0) -}}
-{{- else -}}
-{{- printf "%dB" ($b | int64) -}}
-{{- end -}}
-{{- end }}
 
 {{/*
 Reject a memory size the server will not take.
@@ -846,5 +805,9 @@ Check every memory size a release sets, whatever its limits look like.
 {{- $memory := get (get $.Values $name | default dict) "memory" | default dict -}}
 {{- include "influxdb3-enterprise.validateMemorySize" (dict "key" (printf "%s.memory.execMemPoolSize" $name) "value" (get $memory "execMemPoolSize" | default "")) -}}
 {{- include "influxdb3-enterprise.validateMemorySize" (dict "key" (printf "%s.memory.forceSnapshotMemSize" $name) "value" (get $memory "forceSnapshotMemSize" | default "")) -}}
+{{- end -}}
+{{- $pacha := get (get .Values "engine" | default dict) "pachaTree" | default dict -}}
+{{- range $k := list "replicaMaxBufferSize" "walBufferSize" "snapshotSize" "mergeThresholdSize" "compactorInputSizeBudget" -}}
+{{- include "influxdb3-enterprise.validateMemorySize" (dict "key" (printf "engine.pachaTree.%s" $k) "value" (get $pacha $k | default "")) -}}
 {{- end -}}
 {{- end }}
