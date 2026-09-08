@@ -81,7 +81,7 @@ data:
 
   # Graceful shutdown
   {{- $shutdown := .Values.shutdown | default dict }}
-  {{- if hasKey $shutdown "timeout" }}
+  {{- if and (hasKey $shutdown "timeout") (not (kindIs "invalid" (get $shutdown "timeout"))) }}
   INFLUXDB3_SHUTDOWN_TIMEOUT: {{ get $shutdown "timeout" | quote }}
   {{- end }}
 
