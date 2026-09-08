@@ -267,7 +267,9 @@ data:
 
   # Tracing
   {{- with .Values.traces }}
+  {{- if .exporter }}
   INFLUXDB3_TRACES_EXPORTER: {{ .exporter | quote }}
+  {{- end }}
   {{- with .jaeger }}
   {{- if .agentHost }}
   INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_HOST: {{ .agentHost | quote }}
@@ -295,8 +297,10 @@ data:
 
   # Telemetry
   {{- with .Values.telemetry }}
+  {{- if hasKey . "disableUpload" }}
   INFLUXDB3_DISABLE_TELEMETRY_UPLOAD: {{ .disableUpload | quote }}
   INFLUXDB3_TELEMETRY_DISABLE_UPLOAD: {{ .disableUpload | quote }}
+  {{- end }}
   {{- if .endpoint }}
   INFLUXDB3_TELEMETRY_ENDPOINT: {{ .endpoint | quote }}
   {{- end }}

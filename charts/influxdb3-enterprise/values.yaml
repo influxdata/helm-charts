@@ -657,10 +657,6 @@ http:
   # bind: "0.0.0.0:8181"
   # maxRequestSize: 10485760          # Bare bytes for 3.10 compatibility; 3.11.2+ also accepts "10mb"
 
-# Graceful shutdown configuration
-# shutdown:
-#   timeout: "30s"
-
 # Caching configuration
 caching:
   # File caching
@@ -746,11 +742,14 @@ compactedData:
 # margin - raise the grace period first when lengthening the timeout.
 
 shutdown:
-  # Connection-drain timeout (--shutdown-timeout, 3.11+). "0s" skips the drain.
-  # timeout: "30s"
+  # Connection-drain timeout (--shutdown-timeout). Honoured on 3.9.12+ and
+  # 3.11+; released 3.10.x does not have it. "0s" skips the drain.
+  # timeout: "60s"
 
-  # Applied to every workload. Unset keeps the Kubernetes default of 30s.
-  # terminationGracePeriodSeconds: 60
+  # Applied to the ingester, querier, compactor and processor pods. Unset keeps
+  # the Kubernetes default of 30. 0 means kubelet kills immediately, with no
+  # drain and no chance to flush.
+  # terminationGracePeriodSeconds: 90
 
 # ============================================================================
 # Probes Configuration

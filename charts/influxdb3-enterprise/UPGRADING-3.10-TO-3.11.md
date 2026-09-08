@@ -150,6 +150,23 @@ Helm note when it is set. Remove it before a future chart release.
 `dataLifecycle.hardDeleteDefaultDuration` remains accepted. InfluxDB 3.11.2
 logs that it is deprecated and has no effect.
 
-InfluxDB 3.11 removes the Prometheus `db` label from metrics. Review dashboards
-and alerts that select or group by this label; see the official
+### Metrics
+
+InfluxDB 3.11 removes the Prometheus `db` label from four metrics, verified
+against the 3.10.5 and 3.11.2 sources:
+
+| Metric | Note |
+|---|---|
+| `influxdb3_write_lines_total` | now a single label-less series |
+| `influxdb3_write_bytes_total` | now a single label-less series |
+| `influxdb3_write_lines_rejected_total` | now a single label-less series |
+| `influxdb3_compactions_total` | keeps `status`, loses `db` |
+
+Per-database breakdowns are no longer available from these counters at all, so a
+query like `sum by (db) (rate(influxdb3_write_lines_total[5m]))` has to drop the
+`by (db)` and becomes cluster-wide. Review dashboards and alerts that select or
+group by the label before upgrading.
+
+`influxdb3_last_values_cache_query_duration` is unaffected on Enterprise; the
+label was only ever present in the Core build of that cache. See the official
 [release notes](https://docs.influxdata.com/influxdb3/enterprise/release-notes/).

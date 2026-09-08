@@ -761,52 +761,58 @@ Permission tokens volumes
 {{- end }}
 
 {{/*
-Termination grace period, shared by every workload.
+Termination grace period for the ingester, querier, compactor and processor pods.
 
-Returns the value or an empty string, so a release that does not set one keeps
-the Kubernetes default of 30s and renders no field at all.
+Returns the value or an empty string. An absent or null key renders no field, so
+the Kubernetes default of 30s still applies.
 */}}
 {{- define "influxdb3-enterprise.terminationGracePeriodValue" -}}
 {{- $shutdown := .Values.shutdown | default dict -}}
 {{- if hasKey $shutdown "terminationGracePeriodSeconds" -}}
-{{- get $shutdown "terminationGracePeriodSeconds" -}}
+{{- $v := get $shutdown "terminationGracePeriodSeconds" -}}
+{{- if not (kindIs "invalid" $v) -}}
+{{- $v -}}
+{{- end -}}
 {{- end -}}
 {{- end }}
 
 {{/*
-Reject a drain that outlives the pod, and a grace period Kubernetes will not take.
+Reject a drain that outlives the pod.
 
 kubelet sends SIGKILL once terminationGracePeriodSeconds expires, so a longer
-shutdown.timeout never finishes draining. Durations built from whole h/m/s parts
-are compared; any other spelling the server accepts is left alone rather than
-guessed at.
+shutdown.timeout never finishes draining. Both sides default to 30, and the
+comparison uses those defaults, so setting either key alone is still checked.
+Durations are built from whole h/m/s parts; the server takes nothing else.
 */}}
 {{- define "influxdb3-enterprise.validateShutdownConfig" -}}
 {{- $shutdown := .Values.shutdown | default dict -}}
-{{- if hasKey $shutdown "terminationGracePeriodSeconds" -}}
-{{- $graceRaw := get $shutdown "terminationGracePeriodSeconds" | toString -}}
+{{- $grace := 30 -}}
+{{- if and (hasKey $shutdown "terminationGracePeriodSeconds") (not (kindIs "invalid" (get $shutdown "terminationGracePeriodSeconds"))) -}}
+{{- $graceVal := get $shutdown "terminationGracePeriodSeconds" -}}
+{{- $graceRaw := $graceVal | toString -}}
 {{- if not (regexMatch "^[0-9]+$" $graceRaw) -}}
 {{- fail (printf "shutdown.terminationGracePeriodSeconds must be a whole number of seconds, got %q. Kubernetes rejects anything else." $graceRaw) -}}
 {{- end -}}
-{{- if hasKey $shutdown "timeout" -}}
-{{- $raw := get $shutdown "timeout" | toString -}}
-{{- $grace := $graceRaw | int64 -}}
-{{- $seconds := -1 -}}
-{{- if regexMatch "^([0-9]+h)?([0-9]+m)?([0-9]+s)?$" $raw -}}
+{{- $grace = $graceRaw | int64 -}}
+{{- end -}}
+{{- $seconds := 30 -}}
+{{- if and (hasKey $shutdown "timeout") (not (kindIs "invalid" (get $shutdown "timeout"))) -}}
+{{- $timeoutVal := get $shutdown "timeout" -}}
+{{- $raw := $timeoutVal | toString -}}
+{{- $parts := regexFindAll "[0-9]+[hms]" $raw -1 -}}
+{{- if or (eq (len $parts) 0) (ne $raw (join "" $parts)) -}}
+{{- fail (printf "shutdown.timeout must be a duration built from whole hour, minute and second parts, such as \"90s\", \"2m\" or \"1m30s\", got %q. The server rejects anything else and the pod will not start." $raw) -}}
+{{- end -}}
 {{- $total := 0 -}}
-{{- range $part := regexFindAll "[0-9]+[hms]" $raw -1 -}}
+{{- range $part := $parts -}}
 {{- $n := trimSuffix "h" (trimSuffix "m" (trimSuffix "s" $part)) | int64 -}}
 {{- if hasSuffix "h" $part -}}{{- $total = add $total (mul $n 3600) -}}
 {{- else if hasSuffix "m" $part -}}{{- $total = add $total (mul $n 60) -}}
 {{- else -}}{{- $total = add $total $n -}}{{- end -}}
 {{- end -}}
-{{- if gt (len (regexFindAll "[0-9]+[hms]" $raw -1)) 0 -}}
 {{- $seconds = $total -}}
 {{- end -}}
-{{- end -}}
-{{- if and (ge $seconds 0) (gt $seconds $grace) -}}
-{{- fail (printf "shutdown.timeout (%s) is longer than shutdown.terminationGracePeriodSeconds (%d): kubelet sends SIGKILL before the drain can finish. Raise the grace period past the timeout, or shorten the timeout." $raw $grace) -}}
-{{- end -}}
-{{- end -}}
+{{- if gt $seconds $grace -}}
+{{- fail (printf "shutdown.timeout resolves to %ds, longer than shutdown.terminationGracePeriodSeconds (%d): kubelet sends SIGKILL before the drain can finish. Both default to 30 when unset. Raise the grace period past the timeout, or shorten the timeout." $seconds $grace) -}}
 {{- end -}}
 {{- end }}
