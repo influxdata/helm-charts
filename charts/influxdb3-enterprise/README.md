@@ -401,6 +401,28 @@ the default over every tag, which can be larger. Nothing in this chart governs
 this; see
 [Manage file indexes](https://docs.influxdata.com/influxdb3/enterprise/admin/file-index/).
 
+#### Graceful Shutdown
+
+On SIGTERM the server drains active connections before exiting. kubelet sends
+SIGKILL once `terminationGracePeriodSeconds` expires, so the grace period has to
+outlast the drain.
+
+```yaml
+shutdown:
+  timeout: "60s"                    # --shutdown-timeout, 3.11+
+  terminationGracePeriodSeconds: 90 # applied to every workload
+```
+
+Both default to 30 seconds, the server's and Kubernetes', which leaves no
+margin: a drain that runs the full timeout is cut off at the moment it would
+finish. Raise the grace period before lengthening the timeout. The chart rejects
+a `timeout` longer than the grace period rather than letting the drain be killed
+silently, and `"0s"` skips the drain altogether.
+
+`shutdown.timeout` is a 3.11 option with no earlier spelling, so on a 3.9 or
+3.10 image the variable is unknown and ignored. `terminationGracePeriodSeconds`
+is a Kubernetes field and works on any version.
+
 #### TLS
 
 Enable TLS with inline cert/key or an existing secret:
@@ -512,6 +534,19 @@ serviceMonitor:
   additionalLabels:
     prometheus: kube-prometheus
 ```
+
+**InfluxDB 3.11 removed the `db` label from several metrics**, so dashboards and
+alerts that group or filter by it break on upgrade and silently return no
+series. Affected are the write counters `influxdb3_write_lines_total` and
+`influxdb3_write_bytes_total`, the compaction counter `influxdb3_compactions`
+(which keeps its `status` label), the PachaTree `influxdb3_ingest_*` metrics and
+`influxdb3_last_values_cache_query_duration`.
+
+The counters are now single label-less series, so per-database breakdowns are no
+longer available from them at all; a query like
+`sum by (db) (rate(influxdb3_write_lines_total[5m]))` has to drop the `by (db)`
+and becomes cluster-wide. Check dashboards and alert rules for `db` before
+upgrading.
 
 ### Processing Engine
 
@@ -822,6 +857,13 @@ logs:
 | `acknowledgePachaTreeMigration` | Acknowledge and start migration of an existing Parquet cluster to PachaTree | `false` |
 | `engine.pachaTree.*` | Optional PachaTree tuning for ingester, querier, and compactor pods; see `values.yaml` for role-specific options | not set |
 | `shutdown.timeout` | Graceful connection-drain timeout | not set (server default `30s`) |
+| `shutdown.terminationGracePeriodSeconds` | Pod termination grace period, applied to every workload | not set (Kubernetes default `30`) |
+| `resourceLimits.numDatabases` / `numTables` / `numColumnsPerTable` | Catalog limits | not set (server defaults) |
+| `dataLifecycle.gen1LookbackDuration` / `retentionCheckInterval` / `deleteGracePeriod` | Retention and deletion timings | not set (server defaults) |
+| `dataLifecycle.hardDeleteDefaultDuration` | Deprecated; ignored by InfluxDB 3.11+ | not set |
+| `logs.logFilter` / `logDestination` / `logFormat` / `queryLogSize` | Logging overrides | not set (server defaults) |
+| `traces.exporter` / `traces.jaeger.*` | Jaeger trace export | not set (`none`) |
+| `telemetry.disableUpload` / `telemetry.endpoint` | InfluxData telemetry opt-out and endpoint | not set |
 | `cluster.id` | Cluster identifier | `cluster-01` |
 | `cluster.waitForRunningIngester` | Startup wait time for an ingester | `""` |
 | `image.registry` | Image registry | `docker.io` |
