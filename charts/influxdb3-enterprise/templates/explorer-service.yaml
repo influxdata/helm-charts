@@ -1,4 +1,4 @@
-{{- if .Values.explorer.enabled }}
+{{- if get (.Values.explorer | default dict) "enabled" }}
 apiVersion: v1
 kind: Service
 metadata:

@@ -613,41 +613,12 @@ processingEngine:
 # Explorer / Web UI Configuration
 # ============================================================================
 
-# Integrated Explorer Web UI hosted by the InfluxDB 3 Enterprise process.
-# In Enterprise 3.11+, --mode=all does not include the Web UI. Enabling this
-# adds "webui" to the querier serve mode and requires a session secret.
-webui:
-  enabled: false
-
-  # Required when webui.enabled=true unless existingSecret is set.
-  # Existing secret must contain key: session-secret
-  sessionSecret: ""
-  existingSecret: ""
-
-  # Optional OpenAI-compatible endpoint for Explorer AI chat.
-  openaiBaseUrl: ""
-
-  # Optional first-connection defaults. The chart mounts config.json using the
-  # documented Explorer shape and exposes DEFAULT_* environment variables.
-  # Note: local validation with Enterprise 3.11.2 showed the standalone
-  # Explorer image consumes this preconfiguration reliably; the integrated
-  # Enterprise Web UI currently accepts the mounted/env values but may still ask
-  # the user to configure the first server.
-  defaultConnection:
-    enabled: false
-    # Existing secret must contain key: config.json. DEFAULT_* keys are optional.
-    existingSecret: ""
-    server: "http://127.0.0.1:8181"
-    database: ""
-    apiToken: ""
-    serverName: ""
-
 # Optional standalone Explorer deployment. Use this when you want Helm to
 # preconfigure an Explorer connection to this cluster at startup.
 explorer:
   enabled: false
   replicas: 1
-  mode: admin                         # query or admin
+  mode: query                         # query or admin; admin unlocks database and token management
 
   image:
     registry: docker.io
@@ -662,8 +633,30 @@ explorer:
 
   databaseUrl: "/db/sqlite.db"
 
-  initContainer:
-    image: busybox:1.36
+  # The Explorer keeps saved queries and server configurations in that SQLite
+  # file. Without a volume they are lost on every pod restart.
+  persistence:
+    enabled: false
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    storageClass: ""
+    existingClaim: ""
+
+  priorityClassName: ""
+
+  # Explorer-only volumes, on top of the global extraVolumes. A private CA for
+  # an HTTPS default connection goes here, with CA_CERT_PATH in extraEnv.
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  # Optional ingress for the standalone Explorer. It serves at /, and the query
+  # ingress already routes / to the queriers, so this needs its own host.
+  ingress:
+    enabled: false
+    host: ""
+    className: ""                     # empty falls back to ingress.className
+    annotations: {}
+    tls: []                           # own certificate; ingress.tls covers a different host
 
   service:
     type: ClusterIP
@@ -675,11 +668,19 @@ explorer:
   podAnnotations: {}
   podLabels: {}
 
-  # Explorer runs as uid/gid 1500. The initContainer prepares writable emptyDir
-  # volumes for /db and /app-root/config.
+  # Explorer runs as uid/gid 1500. fsGroup makes the /db volume writable for it.
   podSecurityContext:
     fsGroup: 1500
-  securityContext: {}
+    runAsUser: 1500
+    runAsGroup: 1500
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
 
   nodeSelector: {}
   tolerations: []
@@ -689,7 +690,10 @@ explorer:
     enabled: false
     # Existing secret must contain key: config.json.
     existingSecret: ""
-    # Empty server defaults to the in-cluster querier service URL.
+    # Any endpoint that routes both writes and queries: the chart's ingress, a
+    # Gateway, a service mesh route, a load balancer. Empty uses ingress.host
+    # when ingress.enabled is true, otherwise the querier Service, which is
+    # query-only - the Explorer can read through it but not write.
     server: ""
     database: ""
     apiToken: ""

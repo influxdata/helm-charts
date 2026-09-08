@@ -7,7 +7,7 @@
 {{- include "influxdb3-enterprise.validateObjectStoreTlsCa" . }}
 {{- include "influxdb3-enterprise.validateAdminTokenConfig" . }}
 {{- include "influxdb3-enterprise.validatePermissionTokensConfig" . }}
-{{- include "influxdb3-enterprise.validateWebuiConfig" . }}
+{{- include "influxdb3-enterprise.validateUiBooleans" . }}
 {{- include "influxdb3-enterprise.validateExplorerConfig" . }}
 {{- $existing := lookup "v1" "ConfigMap" .Release.Namespace (include "influxdb3-enterprise.configMapName" .) | default dict }}
 {{- $recordedFormat := dig "metadata" "annotations" "influxdata.com/catalog-format" "" $existing }}

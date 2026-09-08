@@ -97,105 +97,48 @@ License secret name
 {{- end }}
 {{- end }}
 
-{{/*
-Integrated Web UI session secret name
-*/}}
-{{- define "influxdb3-enterprise.webuiSecretName" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- get $webui "existingSecret" | default (printf "%s-webui" (include "influxdb3-enterprise.fullname" .)) -}}
-{{- end }}
-
-{{/*
-Integrated Web UI default connection config secret name
-*/}}
-{{- define "influxdb3-enterprise.webuiConfigSecretName" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- $connection := get $webui "defaultConnection" | default dict -}}
-{{- get $connection "existingSecret" | default (printf "%s-webui-config" (include "influxdb3-enterprise.fullname" .)) -}}
-{{- end }}
-
-{{/*
-Standalone Explorer session secret name
-*/}}
 {{- define "influxdb3-enterprise.explorerSecretName" -}}
-{{- $explorer := .Values.explorer | default dict -}}
-{{- get $explorer "existingSecret" | default (printf "%s-explorer" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- .Values.explorer.existingSecret | default (printf "%s-explorer" (include "influxdb3-enterprise.fullname" .)) -}}
 {{- end }}
 
 {{/*
 Standalone Explorer default connection config secret name
 */}}
 {{- define "influxdb3-enterprise.explorerConfigSecretName" -}}
-{{- $explorer := .Values.explorer | default dict -}}
-{{- $connection := get $explorer "defaultConnection" | default dict -}}
-{{- get $connection "existingSecret" | default (printf "%s-explorer-config" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- .Values.explorer.defaultConnection.existingSecret | default (printf "%s-explorer-config" (include "influxdb3-enterprise.fullname" .)) -}}
 {{- end }}
 
 {{/*
 Standalone Explorer image reference
 */}}
 {{- define "influxdb3-enterprise.explorer.image" -}}
-{{- $image := .Values.explorer.image | default dict -}}
-{{- $registry := get $image "registry" | default "docker.io" -}}
-{{- $repository := get $image "repository" | default "influxdata/influxdb3-ui" -}}
-{{- $tag := get $image "tag" | default "1.9.0" -}}
-{{- printf "%s/%s:%s" $registry $repository $tag -}}
+{{- $image := .Values.explorer.image -}}
+{{- printf "%s/%s:%s" $image.registry $image.repository ($image.tag | toString) -}}
 {{- end }}
 
-{{/*
-Querier mode. Integrated Explorer must be explicitly added in Enterprise 3.11+.
-*/}}
-{{- define "influxdb3-enterprise.querierMode" -}}
-{{- if .Values.webui.enabled -}}query,webui{{- else -}}query{{- end -}}
-{{- end }}
-
-{{/*
-Integrated Web UI serve flags
-*/}}
-{{- define "influxdb3-enterprise.webuiArgs" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- if get $webui "enabled" }}
-- --webui-session-secret=$(INFLUXDB3_WEBUI_SESSION_SECRET)
-{{- if get $webui "openaiBaseUrl" }}
-- --webui-openai-base-url=$(INFLUXDB3_WEBUI_OPENAI_BASE_URL)
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{/*
-Default connection target for integrated Web UI.
-*/}}
-{{- define "influxdb3-enterprise.webuiDefaultConnectionServer" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- $connection := get $webui "defaultConnection" | default dict -}}
-{{- get $connection "server" | default "http://127.0.0.1:8181" -}}
-{{- end }}
-
-{{/*
-Default connection name for integrated Web UI.
-*/}}
-{{- define "influxdb3-enterprise.webuiDefaultConnectionServerName" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- $connection := get $webui "defaultConnection" | default dict -}}
-{{- get $connection "serverName" | default (printf "%s integrated Web UI" (include "influxdb3-enterprise.fullname" .)) -}}
-{{- end }}
-
-{{/*
-Default connection target for standalone Explorer.
-*/}}
 {{- define "influxdb3-enterprise.explorerDefaultConnectionServer" -}}
-{{- $explorer := .Values.explorer | default dict -}}
-{{- $connection := get $explorer "defaultConnection" | default dict -}}
-{{- get $connection "server" | default (printf "http://%s-querier.%s.svc.cluster.local:%v" (include "influxdb3-enterprise.fullname" .) .Release.Namespace .Values.querier.service.port) -}}
+{{- $explicit := .Values.explorer.defaultConnection.server | default "" -}}
+{{- if $explicit -}}
+{{- $explicit -}}
+{{- else if .Values.ingress.enabled -}}
+{{- /* The ingress splits by path: writes reach the ingesters, queries the
+       queriers. It is the only endpoint that serves both, so the Explorer
+       gets a connection it can write through as well as read. */ -}}
+{{- $scheme := ternary "https" "http" (not (empty .Values.ingress.tls)) -}}
+{{- printf "%s://%s:%v" $scheme .Values.ingress.host .Values.ingress.port -}}
+{{- else -}}
+{{- /* No ingress: the querier Service is the only endpoint the chart can name,
+       and it is query-only, so writing through the Explorer will not work. */ -}}
+{{- $scheme := ternary "https" "http" (eq (toString (dig "tls" "enabled" false (.Values.security | default dict))) "true") -}}
+{{- printf "%s://%s-querier.%s.svc.cluster.local:%v" $scheme (include "influxdb3-enterprise.fullname" .) .Release.Namespace .Values.querier.service.port -}}
+{{- end -}}
 {{- end }}
 
 {{/*
 Default connection name for standalone Explorer.
 */}}
 {{- define "influxdb3-enterprise.explorerDefaultConnectionServerName" -}}
-{{- $explorer := .Values.explorer | default dict -}}
-{{- $connection := get $explorer "defaultConnection" | default dict -}}
-{{- get $connection "serverName" | default (printf "%s Enterprise" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- .Values.explorer.defaultConnection.serverName | default (printf "%s Enterprise" (include "influxdb3-enterprise.fullname" .)) -}}
 {{- end }}
 
 {{/*
@@ -238,49 +181,70 @@ Validate license type
 {{- end }}
 
 {{/*
-Validate integrated Web UI config
+Reject a quoted boolean on the Explorer switches.
+
+`{{ if .enabled }}` treats the string "false" as true, so a values layer that
+quotes booleans would turn on what the operator asked to keep off. Sprig `get`
+returns "" for a key that is not there, so an empty value means unset.
 */}}
-{{- define "influxdb3-enterprise.validateWebuiConfig" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- if get $webui "enabled" -}}
-{{- if not .Values.querier.enabled -}}
-{{- fail "webui.enabled=true requires querier.enabled=true because the integrated Web UI is served by querier pods." -}}
-{{- end -}}
-{{- $sessionSecret := get $webui "sessionSecret" | default "" -}}
-{{- $existingSecret := get $webui "existingSecret" | default "" -}}
-{{- if not (or $sessionSecret $existingSecret) -}}
-{{- fail "webui.enabled=true requires webui.sessionSecret or webui.existingSecret. Existing secret must contain key: session-secret." -}}
-{{- end -}}
-{{- $connection := get $webui "defaultConnection" | default dict -}}
-{{- if and (get $connection "enabled") (not (get $connection "existingSecret" | default "")) (not (get $connection "apiToken" | default "")) -}}
-{{- fail "webui.defaultConnection.enabled=true requires webui.defaultConnection.apiToken or webui.defaultConnection.existingSecret." -}}
+{{- define "influxdb3-enterprise.validateUiBooleans" -}}
+{{- $explorer := .Values.explorer | default dict -}}
+{{- $persistence := get $explorer "persistence" | default dict -}}
+{{- $connection := get $explorer "defaultConnection" | default dict -}}
+{{- $ingress := get $explorer "ingress" | default dict -}}
+{{- $flags := dict
+      "explorer.enabled" (get $explorer "enabled")
+      "explorer.persistence.enabled" (get $persistence "enabled")
+      "explorer.defaultConnection.enabled" (get $connection "enabled")
+      "explorer.ingress.enabled" (get $ingress "enabled")
+-}}
+{{- range $key, $value := $flags -}}
+{{- if and (not (kindIs "invalid" $value)) (ne (toString $value) "") (not (kindIs "bool" $value)) -}}
+{{- fail (printf "%s must be an unquoted boolean (true or false), got %s: %v" $key (kindOf $value) $value) -}}
 {{- end -}}
 {{- end -}}
 {{- end }}
 
-{{/*
-Validate standalone Explorer config
-*/}}
 {{- define "influxdb3-enterprise.validateExplorerConfig" -}}
-{{- $explorer := .Values.explorer | default dict -}}
-{{- if get $explorer "enabled" -}}
-{{- $mode := get $explorer "mode" | default "query" -}}
+{{- if get (.Values.explorer | default dict) "enabled" -}}
+{{- $explorer := .Values.explorer -}}
+{{- $connection := $explorer.defaultConnection -}}
+{{- $ingress := $explorer.ingress -}}
+{{- $mode := $explorer.mode | default "query" -}}
 {{- if not (has $mode (list "query" "admin")) -}}
 {{- fail (printf "Invalid explorer.mode: %s. Must be one of: query, admin" $mode) -}}
 {{- end -}}
-{{- $sessionSecret := get $explorer "sessionSecret" | default "" -}}
-{{- $existingSecret := get $explorer "existingSecret" | default "" -}}
-{{- if not (or $sessionSecret $existingSecret) -}}
+{{- if not (or $explorer.sessionSecret $explorer.existingSecret) -}}
 {{- fail "explorer.enabled=true requires explorer.sessionSecret or explorer.existingSecret. Existing secret must contain key: session-secret." -}}
 {{- end -}}
-{{- $connection := get $explorer "defaultConnection" | default dict -}}
-{{- if get $connection "enabled" -}}
-{{- if and (not (get $connection "server" | default "")) (not .Values.querier.enabled) -}}
+{{- if $connection.enabled -}}
+{{- if and (not $connection.server) (not .Values.querier.enabled) -}}
 {{- fail "explorer.defaultConnection.enabled=true requires explorer.defaultConnection.server when querier.enabled=false." -}}
 {{- end -}}
-{{- if and (not (get $connection "existingSecret" | default "")) (not (get $connection "apiToken" | default "")) -}}
+{{- if and (not $connection.existingSecret) (not $connection.apiToken) -}}
 {{- fail "explorer.defaultConnection.enabled=true requires explorer.defaultConnection.apiToken or explorer.defaultConnection.existingSecret." -}}
 {{- end -}}
+{{- end -}}
+{{- if $ingress.enabled -}}
+{{- if not .Values.ingress.enabled -}}
+{{- fail "explorer.ingress.enabled=true requires ingress.enabled=true; the chart renders no Ingress at all while the global switch is off." -}}
+{{- end -}}
+{{- if not $ingress.host -}}
+{{- fail "explorer.ingress.enabled=true requires explorer.ingress.host." -}}
+{{- end -}}
+{{- if eq $ingress.host (.Values.ingress.host | default "") -}}
+{{- fail (printf "explorer.ingress.host must differ from ingress.host (%s): the query ingress already routes / to the queriers, so both would claim the same host and path." $ingress.host) -}}
+{{- end -}}
+{{- end -}}
+{{- $replicas := dig "replicas" 1 $explorer | toString -}}
+{{- if not (has $replicas (list "0" "1")) -}}
+{{- fail (printf "explorer.replicas must be 0 or 1, got %q: the Explorer keeps its state in a single SQLite file, so extra replicas serve divergent saved queries and server configurations behind one Service." $replicas) -}}
+{{- end -}}
+{{- if and $connection.existingSecret (not $connection.enabled) -}}
+{{- fail "explorer.defaultConnection.existingSecret is set but explorer.defaultConnection.enabled is false, so the Secret would be ignored and the Explorer would start unconfigured." -}}
+{{- end -}}
+{{- if and $explorer.persistence.existingClaim (not $explorer.persistence.enabled) -}}
+{{- fail "explorer.persistence.existingClaim is set but explorer.persistence.enabled is false, so the claim would be ignored and the Explorer would keep its state in an emptyDir." -}}
 {{- end -}}
 {{- end -}}
 {{- end }}
@@ -522,57 +486,6 @@ Pod name environment for stable StatefulSet node IDs
       fieldPath: metadata.name
 {{- end }}
 
-{{/*
-Integrated Web UI environment for querier pods
-*/}}
-{{- define "influxdb3-enterprise.webuiEnv" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- if get $webui "enabled" }}
-- name: INFLUXDB3_WEBUI_SESSION_SECRET
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "influxdb3-enterprise.webuiSecretName" . }}
-      key: session-secret
-{{- if get $webui "openaiBaseUrl" }}
-- name: INFLUXDB3_WEBUI_OPENAI_BASE_URL
-  value: {{ get $webui "openaiBaseUrl" | quote }}
-{{- end }}
-{{- $connection := get $webui "defaultConnection" | default dict -}}
-{{- if get $connection "enabled" }}
-- name: CONFIG_PATH
-  value: "/app-root/config/config.json"
-- name: DEFAULT_INFLUX_SERVER
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
-      key: DEFAULT_INFLUX_SERVER
-      optional: true
-- name: DEFAULT_INFLUX_DATABASE
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
-      key: DEFAULT_INFLUX_DATABASE
-      optional: true
-- name: DEFAULT_API_TOKEN
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
-      key: DEFAULT_API_TOKEN
-      optional: true
-- name: DEFAULT_SERVER_NAME
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
-      key: DEFAULT_SERVER_NAME
-      optional: true
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{/*
-Global plus component-specific extra environment variables.
-Component-specific entries override global entries with the same name.
-*/}}
 {{- define "influxdb3-enterprise.componentExtraEnv" -}}
 {{- $global := .root.Values.extraEnv | default (list) -}}
 {{- $component := .component.extraEnv | default (list) -}}
@@ -807,19 +720,6 @@ Shared volume mounts (license/TLS/GCS and user extras)
 {{- end }}
 
 {{/*
-Integrated Web UI config volume mount
-*/}}
-{{- define "influxdb3-enterprise.webuiVolumeMounts" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- $connection := get $webui "defaultConnection" | default dict -}}
-{{- if and (get $webui "enabled") (get $connection "enabled") }}
-- name: webui-config
-  mountPath: /app-root/config
-  readOnly: true
-{{- end }}
-{{- end }}
-
-{{/*
 Admin token volume mounts
 */}}
 {{- define "influxdb3-enterprise.adminTokenVolumeMounts" -}}
@@ -932,22 +832,6 @@ Shared volumes (license/TLS/GCS and user extras)
 {{- end }}
 {{- with .Values.extraVolumes }}
 {{ toYaml . }}
-{{- end }}
-{{- end }}
-
-{{/*
-Integrated Web UI config volume
-*/}}
-{{- define "influxdb3-enterprise.webuiVolumes" -}}
-{{- $webui := .Values.webui | default dict -}}
-{{- $connection := get $webui "defaultConnection" | default dict -}}
-{{- if and (get $webui "enabled") (get $connection "enabled") }}
-- name: webui-config
-  secret:
-    secretName: {{ include "influxdb3-enterprise.webuiConfigSecretName" . }}
-    items:
-      - key: config.json
-        path: config.json
 {{- end }}
 {{- end }}
 

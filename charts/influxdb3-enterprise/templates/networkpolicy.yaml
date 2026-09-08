@@ -179,7 +179,7 @@ spec:
         - protocol: TCP
           port: 8181
     {{- end }}
-    {{- if .Values.explorer.enabled }}
+    {{- if get (.Values.explorer | default dict) "enabled" }}
     # Allow standalone Explorer to connect to queriers
     - from:
         - podSelector:
@@ -491,4 +491,69 @@ spec:
           port: 80
     {{- end }}
     {{- end }}
+{{- end }}
+
+{{- $explorer := .Values.explorer | default dict }}
+{{- if and .Values.networkPolicy.enabled (get $explorer "enabled") }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-explorer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: explorer
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: explorer
+  policyTypes:
+    {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
+  {{- if .Values.networkPolicy.ingress.fromIngressController }}
+  ingress:
+    # Allow traffic from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.namespaceLabel }}: {{ .Values.networkPolicy.ingress.ingressController.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.podLabelKey }}: {{ .Values.networkPolicy.ingress.ingressController.podLabelValue }}
+      ports:
+        # NetworkPolicy matches the destination pod port, not the Service port
+        - protocol: TCP
+          port: 8080
+  {{- else }}
+  # No ingress rules: with Ingress in policyTypes this denies all inbound traffic
+  # to the Explorer, which is what turning fromIngressController off asks for.
+  ingress: []
+  {{- end }}
+  {{- if has "Egress" .Values.networkPolicy.policyTypes }}
+  egress:
+    {{- if .Values.networkPolicy.egress.toDns }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.egress.dns.namespaceLabel }}: {{ .Values.networkPolicy.egress.dns.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.egress.dns.podLabelKey }}: {{ .Values.networkPolicy.egress.dns.podLabelValue }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- end }}
+    # The Explorer reaches InfluxDB over HTTP like any other client
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: querier
+      ports:
+        - protocol: TCP
+          port: 8181
+  {{- end }}
 {{- end }}

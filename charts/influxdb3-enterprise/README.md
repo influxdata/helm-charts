@@ -200,35 +200,16 @@ Notes:
 
 ## Explorer UI
 
-InfluxDB 3 Enterprise 3.11+ can serve the integrated Explorer Web UI from the Enterprise binary. The Web UI is not included in plain `--mode=all`; it must be explicitly added to the server mode, and a Web UI session secret is required.
+The chart deploys the standalone Explorer rather than the Web UI embedded in the
+server. Enterprise can serve that UI from a node whose `--mode` includes `webui`,
+but this chart always splits the roles - ingest, query, compact and process are
+separate workloads and no node runs `all` - so the embedded UI would sit on a
+query-only node. There it is read-only, since writing needs a node that accepts
+ingest, and on 3.11.2 it cannot be preconfigured at all (see issue #830), so every
+browser starts on the first-run screen and pastes an admin token. It also answers
+on the querier's own port ahead of the authentication layer. The standalone
+Explorer has none of those limits, so the chart offers that one:
 
-Enable the integrated Web UI on querier pods:
-
-```yaml
-webui:
-  enabled: true
-  sessionSecret: "replace-with-a-generated-secret"
-  # Optional: OpenAI-compatible endpoint for Explorer AI chat.
-  openaiBaseUrl: ""
-```
-
-With `webui.enabled=true`, the chart starts queriers with `--mode=query,webui` and `--webui-session-secret`. Users can reach the integrated UI through the querier Service or query Ingress.
-
-The chart can also mount the documented Explorer `config.json` shape:
-
-```yaml
-webui:
-  enabled: true
-  sessionSecret: "replace-with-a-generated-secret"
-  defaultConnection:
-    enabled: true
-    server: "http://127.0.0.1:8181"
-    database: "mydb"
-    apiToken: "apiv3_..."
-    serverName: "InfluxDB 3 Enterprise"
-```
-
-For a Helm-managed Explorer connection that is pre-populated when the UI starts, enable the standalone Explorer companion deployment:
 
 ```yaml
 explorer:
@@ -240,15 +221,36 @@ explorer:
     database: "mydb"
     apiToken: "apiv3_..."
     serverName: "InfluxDB 3 Enterprise"
+  # Saved queries and server configurations live in SQLite; without this they
+  # are lost on every pod restart.
+  persistence:
+    enabled: true
+    size: 1Gi
 ```
 
-When `explorer.defaultConnection.server` is empty, the chart points Explorer at the in-cluster querier Service. The standalone Explorer image supports `mode: query` and `mode: admin`; use an admin token for admin features such as database and token management.
+`explorer.defaultConnection.server` decides what the Explorer can do, because
+the roles are split and no single component serves both writes and queries.
+
+Set it to any endpoint that routes both. The chart's own ingress is one:
+`/api/v2/write` and `/api/v3/write_lp` reach the ingesters, the query paths reach
+the queriers, and a write from the Explorer through it lands and reads back. So
+when the value is empty and `ingress.enabled` is true, the chart fills in
+`ingress.host`.
+
+If you route traffic another way - Gateway API, a service mesh, an OpenShift
+Route, a load balancer, or an Ingress you manage outside this chart - put that
+address here. The chart cannot discover routing it did not create, so an empty
+value with `ingress.enabled: false` falls back to the querier Service. That works
+for reading and fails for writing, with `cannot write to a read-only server`, and
+no chart setting changes it: the querier does not accept writes. Point the
+Explorer at a combined endpoint, or accept that it is read-only. The image supports `mode: query` and
+`mode: admin`; use an admin token for admin features such as database and token
+management.
 
 Existing Secrets are supported:
 
-- `webui.existingSecret` and `explorer.existingSecret` must contain `session-secret`.
-- `webui.defaultConnection.existingSecret` and `explorer.defaultConnection.existingSecret` must contain `config.json`.
-- The `config.json` file uses `DEFAULT_INFLUX_SERVER`, `DEFAULT_INFLUX_DATABASE`, `DEFAULT_API_TOKEN`, and `DEFAULT_SERVER_NAME`.
+- `explorer.existingSecret` must contain `session-secret`.
+- `explorer.defaultConnection.existingSecret` must contain `config.json`.
 
 Docs:
 - Integrated Enterprise Web UI: https://docs.influxdata.com/influxdb3/enterprise/release-notes/#enterprise-2
@@ -911,25 +913,28 @@ logs:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `webui.enabled` | Enable the integrated Enterprise Explorer Web UI on querier pods by adding `webui` to the querier serve mode | `false` |
-| `webui.sessionSecret` | Session secret for the integrated Web UI; required unless `webui.existingSecret` is set | `""` |
-| `webui.existingSecret` | Existing Secret containing `session-secret` for integrated Web UI sessions | `""` |
-| `webui.openaiBaseUrl` | Optional OpenAI-compatible endpoint for Explorer AI chat (`--webui-openai-base-url`) | `""` |
-| `webui.defaultConnection.enabled` | Mount documented Explorer `config.json` defaults into querier pods | `false` |
-| `webui.defaultConnection.existingSecret` | Existing Secret containing `config.json` for integrated Web UI defaults | `""` |
-| `webui.defaultConnection.server` | Default InfluxDB server URL for integrated Web UI config | `http://127.0.0.1:8181` |
-| `webui.defaultConnection.database` | Default database name for integrated Web UI config | `""` |
-| `webui.defaultConnection.apiToken` | Default API token for integrated Web UI config; required unless using `existingSecret` | `""` |
-| `webui.defaultConnection.serverName` | Display name for integrated Web UI config | release-based name |
+| `explorer.replicas` | Standalone Explorer replicas; must be `0` or `1`, the state is a single SQLite file | `1` |
+| `explorer.mode` | `query` or `admin`; `admin` unlocks database and token management | `query` |
+| `explorer.databaseUrl` | Path to the Explorer SQLite file inside the container | `/db/sqlite.db` |
+| `explorer.persistence.enabled` | Keep the Explorer's SQLite on a PVC instead of an emptyDir | `false` |
+| `explorer.persistence.size` / `accessMode` / `storageClass` / `existingClaim` | Explorer PVC settings | `1Gi` / `ReadWriteOnce` / `""` / `""` |
+| `explorer.priorityClassName` | PriorityClass for the Explorer pod | `""` |
+| `explorer.extraVolumes` / `extraVolumeMounts` | Explorer-only volumes, added to the global `extraVolumes`; a private CA for an HTTPS default connection goes here | `[]` |
+| `explorer.ingress.enabled` | Ingress for the standalone Explorer | `false` |
+| `explorer.ingress.host` | Host for that ingress; required when enabled and must differ from `ingress.host` | `""` |
+| `explorer.ingress.className` / `annotations` / `tls` | Ingress settings; class falls back to `ingress.className`, TLS does not fall back because the host differs | `""` / `{}` / `[]` |
+| `explorer.resources` | Explorer resource requests and limits | `{}` (unset) |
+| `explorer.extraEnv` | Extra environment variables for the Explorer container | `[]` |
+| `explorer.podAnnotations` / `podLabels` | Extra metadata on the Explorer pod | `{}` |
+| `explorer.podSecurityContext` / `securityContext` | Explorer pod and container security contexts; the defaults satisfy restricted Pod Security | see `values.yaml` |
+| `explorer.nodeSelector` / `tolerations` / `affinity` | Explorer scheduling | `{}` / `[]` / `{}` |
 | `explorer.enabled` | Enable the standalone Explorer companion Deployment | `false` |
-| `explorer.replicas` | Number of standalone Explorer replicas | `1` |
-| `explorer.mode` | Standalone Explorer mode, `query` or `admin` | `admin` |
 | `explorer.image.*` | Standalone Explorer image settings | `docker.io/influxdata/influxdb3-ui:1.9.0` |
 | `explorer.sessionSecret` | Session secret for standalone Explorer; required unless `explorer.existingSecret` is set | `""` |
 | `explorer.existingSecret` | Existing Secret containing `session-secret` for standalone Explorer sessions | `""` |
-| `explorer.databaseUrl` | SQLite database path inside the Explorer container | `/db/sqlite.db` |
 | `explorer.service.type` | Standalone Explorer Service type | `ClusterIP` |
 | `explorer.service.port` | Standalone Explorer Service port | `8888` |
+| `explorer.service.annotations` | Annotations on the Explorer Service | `{}` |
 | `explorer.defaultConnection.enabled` | Create and mount documented Explorer `config.json` defaults | `false` |
 | `explorer.defaultConnection.existingSecret` | Existing Secret containing Explorer `config.json` | `""` |
 | `explorer.defaultConnection.server` | Default InfluxDB server URL; empty uses the in-cluster querier Service | `""` |
