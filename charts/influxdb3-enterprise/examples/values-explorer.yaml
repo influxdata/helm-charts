@@ -31,14 +31,6 @@ compactor:
 webui:
   enabled: true
   sessionSecret: "REPLACE_WITH_WEBUI_SESSION_SECRET"
-  defaultConnection:
-    enabled: true
-    database: "explorer_demo"
-    apiToken: "REPLACE_WITH_ADMIN_TOKEN"
-    serverName: "InfluxDB 3 Enterprise"
-
-# Standalone Explorer companion deployment. This is the recommended path when
-# the first Explorer connection must be pre-populated by Helm.
 explorer:
   enabled: true
   sessionSecret: "REPLACE_WITH_EXPLORER_SESSION_SECRET"

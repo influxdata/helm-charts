@@ -1,6 +1,6 @@
 license:
-  type: trial
-  email: ci@example.com
+  type: commercial
+  existingSecret: influxdb3-license
 
 objectStorage:
   type: file
@@ -10,7 +10,8 @@ objectStorage:
       size: 5Gi
 
 ingress:
-  enabled: false
+  enabled: true
+  host: influxdb.ci.example.com
 
 networkPolicy:
   enabled: true
@@ -48,16 +49,16 @@ compactor:
 webui:
   enabled: true
   sessionSecret: "ci-webui-session-secret"
-  defaultConnection:
-    enabled: true
-    database: "explorer_demo"
-    apiToken: "apiv3_ci_admin_token"
-    serverName: "Helm Integrated Explorer"
-
 explorer:
   enabled: true
   sessionSecret: "ci-explorer-session-secret"
   mode: admin
+  persistence:
+    enabled: true
+    size: 1Gi
+  ingress:
+    enabled: true
+    host: explorer.ci.example.com
   defaultConnection:
     enabled: true
     database: "explorer_demo"

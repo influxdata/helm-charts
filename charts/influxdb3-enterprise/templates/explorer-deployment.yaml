@@ -1,5 +1,4 @@
 {{- $explorer := .Values.explorer | default dict -}}
-{{- $connection := get $explorer "defaultConnection" | default dict -}}
 {{- if get $explorer "enabled" }}
 apiVersion: apps/v1
 kind: Deployment
@@ -10,7 +9,11 @@ metadata:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
     app.kubernetes.io/component: explorer
 spec:
-  replicas: {{ get $explorer "replicas" | default 1 }}
+  replicas: {{ .Values.explorer.replicas }}
+  {{- if .Values.explorer.persistence.enabled }}
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
@@ -35,53 +38,22 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "influxdb3-enterprise.serviceAccountName" . }}
-      {{- if not (kindIs "invalid" .Values.serviceAccount.automountServiceAccountToken) }}
-      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      # The Explorer is a separate upstream image with no need for the Kubernetes
+      # API, and it is the one workload this chart encourages exposing publicly.
+      automountServiceAccountToken: false
+      {{- with .Values.explorer.priorityClassName }}
+      priorityClassName: {{ . }}
       {{- end }}
       securityContext:
         {{- toYaml .Values.explorer.podSecurityContext | nindent 8 }}
-      initContainers:
-        - name: prepare-explorer-volumes
-          image: {{ .Values.explorer.initContainer.image | quote }}
-          command:
-            - /bin/sh
-            - -c
-          args:
-            - |
-              set -eu
-              mkdir -p /db /work-config
-              {{- if get $connection "enabled" }}
-              cp /config-src/config.json /work-config/config.json
-              {{- end }}
-              chown -R 1500:1500 /db /work-config
-              chmod 700 /db
-              chmod 755 /work-config
-              {{- if get $connection "enabled" }}
-              chmod 644 /work-config/config.json
-              {{- end }}
-          securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
-          volumeMounts:
-            - name: explorer-db
-              mountPath: /db
-            - name: explorer-config
-              mountPath: /work-config
-            {{- if get $connection "enabled" }}
-            - name: explorer-config-source
-              mountPath: /config-src
-              readOnly: true
-            {{- end }}
       containers:
         - name: explorer
-          {{- with .Values.explorer.securityContext }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- toYaml .Values.explorer.securityContext | nindent 12 }}
           image: {{ include "influxdb3-enterprise.explorer.image" . }}
           imagePullPolicy: {{ .Values.explorer.image.pullPolicy }}
           args:
-            - {{ printf "--mode=%s" (.Values.explorer.mode | default "query") | quote }}
+            - --mode={{ .Values.explorer.mode | default "query" }}
           ports:
             - name: http
               containerPort: 8080
@@ -94,9 +66,13 @@ spec:
                   key: session-secret
             - name: DATABASE_URL
               value: {{ .Values.explorer.databaseUrl | quote }}
-            {{- with .Values.explorer.extraEnv }}
-            {{- toYaml . | nindent 12 }}
+            {{- if .Values.explorer.defaultConnection.enabled }}
+            # The image's own config directory, /app-root/config, has to stay
+            # writable for its entrypoint, so the Secret is mounted elsewhere.
+            - name: CONFIG_PATH
+              value: /etc/influxdb3-explorer/config.json
             {{- end }}
+            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.explorer) | nindent 12 }}
           readinessProbe:
             httpGet:
               path: /
@@ -118,8 +94,17 @@ spec:
           volumeMounts:
             - name: explorer-db
               mountPath: /db
+            {{- if .Values.explorer.defaultConnection.enabled }}
             - name: explorer-config
-              mountPath: /app-root/config
+              mountPath: /etc/influxdb3-explorer
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.explorer.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       {{- with .Values.explorer.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -134,15 +119,24 @@ spec:
       {{- end }}
       volumes:
         - name: explorer-db
+          {{- if .Values.explorer.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.explorer.persistence.existingClaim | default (printf "%s-explorer" (include "influxdb3-enterprise.fullname" .)) }}
+          {{- else }}
           emptyDir: {}
+          {{- end }}
+        {{- if .Values.explorer.defaultConnection.enabled }}
         - name: explorer-config
-          emptyDir: {}
-        {{- if get $connection "enabled" }}
-        - name: explorer-config-source
           secret:
             secretName: {{ include "influxdb3-enterprise.explorerConfigSecretName" . }}
             items:
               - key: config.json
                 path: config.json
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.explorer.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
 {{- end }}
