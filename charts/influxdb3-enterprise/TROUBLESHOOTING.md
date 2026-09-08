@@ -77,6 +77,13 @@ kubectl logs -n influxdb3 influxdb3-enterprise-ingester-0 --previous
 
 ### Pods Not Ready
 
+A pod that stays `0/1` for many minutes, or is OOM-killed while its log shows
+normal startup activity, is usually loading its compacted-data file index rather
+than failing a probe. Widening the probe window does not shorten that load; see
+the Compacted-Data Startup section of the chart README for the two options that
+bound it.
+
+
 **Symptoms:**
 ```bash
 NAME                                  READY   STATUS    RESTARTS   AGE
@@ -100,6 +107,16 @@ kubectl exec -n influxdb3 influxdb3-enterprise-querier-0 -- curl -s http://local
 ---
 
 ## License Issues
+
+`failed to read license file from path: Is a directory (os error 21)` means
+nothing was mounted at `/etc/influxdb/license`. The volume is optional, so this
+covers both a secret that does not exist in the release namespace and one
+without a `license-file` key. The chart mounts
+that key at `/etc/influxdb/license`; with any other key the mount is an empty
+directory. Recreate the secret with `--from-file=license-file=...` and confirm
+`license.type` is `commercial`. The `no commercial license found in object
+store` line right after is a fallback, not the cause.
+
 
 ### License Email Not Accepted
 
