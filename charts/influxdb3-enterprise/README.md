@@ -415,9 +415,12 @@ shutdown:
 
 Both default to 30 seconds, the server's and Kubernetes', which leaves no
 margin: a drain that runs the full timeout is cut off at the moment it would
-finish. Raise the grace period before lengthening the timeout. The chart rejects
-a `timeout` longer than the grace period rather than letting the drain be killed
-silently, and `"0s"` skips the drain altogether.
+finish. Raise the grace period before lengthening the timeout. As soon as a
+release sets either key the chart requires the grace period to be strictly
+longer, so equal deadlines are rejected along with a `timeout` that exceeds the
+grace period. Leaving both unset keeps the 30/30 pairing, which is the product's
+own default and not something the chart can refuse to install. `"0s"` skips the
+drain altogether.
 
 `shutdown.timeout` is honoured on 3.9.12 and later 3.9 images and on 3.11+; no
 released 3.10.x has it, so there the variable is unknown and ignored.

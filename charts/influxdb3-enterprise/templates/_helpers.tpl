@@ -786,8 +786,13 @@ Durations are built from whole h/m/s parts; the server takes nothing else.
 */}}
 {{- define "influxdb3-enterprise.validateShutdownConfig" -}}
 {{- $shutdown := .Values.shutdown | default dict -}}
+{{/* Both fall back to 30, the server's drain default and kubelet's. That pairing carries no
+     margin, but it is the product's own default and cannot be a render failure; the margin is
+     required as soon as a release sets either key. */}}
+{{- $explicit := false -}}
 {{- $grace := 30 -}}
 {{- if and (hasKey $shutdown "terminationGracePeriodSeconds") (not (kindIs "invalid" (get $shutdown "terminationGracePeriodSeconds"))) -}}
+{{- $explicit = true -}}
 {{- $graceVal := get $shutdown "terminationGracePeriodSeconds" -}}
 {{- $graceRaw := $graceVal | toString -}}
 {{- if not (regexMatch "^[0-9]+$" $graceRaw) -}}
@@ -797,6 +802,7 @@ Durations are built from whole h/m/s parts; the server takes nothing else.
 {{- end -}}
 {{- $seconds := 30 -}}
 {{- if and (hasKey $shutdown "timeout") (not (kindIs "invalid" (get $shutdown "timeout"))) -}}
+{{- $explicit = true -}}
 {{- $timeoutVal := get $shutdown "timeout" -}}
 {{- $raw := $timeoutVal | toString -}}
 {{- $parts := regexFindAll "[0-9]+[hms]" $raw -1 -}}
@@ -812,7 +818,7 @@ Durations are built from whole h/m/s parts; the server takes nothing else.
 {{- end -}}
 {{- $seconds = $total -}}
 {{- end -}}
-{{- if gt $seconds $grace -}}
-{{- fail (printf "shutdown.timeout resolves to %ds, longer than shutdown.terminationGracePeriodSeconds (%d): kubelet sends SIGKILL before the drain can finish. Both default to 30 when unset. Raise the grace period past the timeout, or shorten the timeout." $seconds $grace) -}}
+{{- if or (gt $seconds $grace) (and $explicit (eq $seconds $grace)) -}}
+{{- fail (printf "shutdown.timeout resolves to %ds and shutdown.terminationGracePeriodSeconds to %d: the grace period has to outlast the drain, or kubelet sends SIGKILL before it finishes. Equal deadlines leave no margin. Both default to 30 when unset. Raise the grace period above the timeout, or shorten the timeout." $seconds $grace) -}}
 {{- end -}}
 {{- end }}

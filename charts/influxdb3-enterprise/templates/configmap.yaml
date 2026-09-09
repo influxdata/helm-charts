@@ -297,7 +297,7 @@ data:
 
   # Telemetry
   {{- with .Values.telemetry }}
-  {{- if hasKey . "disableUpload" }}
+  {{- if and (hasKey . "disableUpload") (not (kindIs "invalid" .disableUpload)) }}
   INFLUXDB3_DISABLE_TELEMETRY_UPLOAD: {{ .disableUpload | quote }}
   INFLUXDB3_TELEMETRY_DISABLE_UPLOAD: {{ .disableUpload | quote }}
   {{- end }}

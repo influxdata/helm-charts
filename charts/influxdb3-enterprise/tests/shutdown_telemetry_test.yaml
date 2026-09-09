@@ -1,0 +1,83 @@
+suite: shutdown and telemetry values
+release:
+  name: t
+  namespace: default
+tests:
+  # --- telemetry.disableUpload: false must survive, null must not render ---
+
+  - it: renders both telemetry spellings for an explicit false
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: false
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_DISABLE_TELEMETRY_UPLOAD
+          value: "false"
+      - equal:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+          value: "false"
+
+  - it: renders both telemetry spellings for an explicit true
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: true
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+          value: "true"
+
+  - it: renders no telemetry variable when the key is cleared with null
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: null
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_DISABLE_TELEMETRY_UPLOAD
+      - notExists:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+
+  # --- the grace period has to outlast the drain, not merely match it ---
+
+  - it: renders with both shutdown values unset
+    template: templates/configmap.yaml
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: rejects a timeout equal to the grace period
+    set:
+      shutdown.timeout: "30s"
+      shutdown.terminationGracePeriodSeconds: 30
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects an explicit timeout equal to the default grace period
+    set:
+      shutdown.timeout: "30s"
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a timeout longer than the grace period
+    set:
+      shutdown.timeout: "90s"
+      shutdown.terminationGracePeriodSeconds: 60
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period longer than the timeout
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "60s"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "60s"
+
+  - it: still accepts a null timeout alongside a set grace period
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: null
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
