@@ -411,6 +411,12 @@ mean megabytes - and Kubernetes suffixes such as `Gi` are not in the server's
 unit table at all. The chart rejects both at render time rather than letting the
 pod crash-loop; the deprecated aliases keep their old lenient parsing.
 
+The check covers the caching and per-component memory keys and the size options
+under `engine.pachaTree`, including the L1-L4 compaction targets. One of them
+takes no percentage: `engine.pachaTree.gen0MaxFileSize` is an absolute file size
+rather than a share of memory, so the server accepts a unit suffix there and
+rejects `50%`.
+
 ```yaml
 caching:
   fileCacheSize: "20%"

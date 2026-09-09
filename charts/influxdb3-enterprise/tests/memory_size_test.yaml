@@ -1,0 +1,128 @@
+suite: memory size validation
+release:
+  name: t
+  namespace: default
+tests:
+  # --- sizes the server parses as MemorySize: unit suffix or percentage ---
+
+  - it: rejects a bare number on a compaction target size
+    set:
+      engine.pachaTree.l1TargetFileSize: 4096
+    asserts:
+      - failedTemplate:
+          errorMessage: 'engine.pachaTree.l1TargetFileSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "4096". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.'
+
+  - it: rejects a Kubernetes quantity on a tail target size
+    set:
+      engine.pachaTree.l4TailTargetSize: 4Gi
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a unit suffix on every compaction size
+    template: templates/ingester-statefulset.yaml
+    set:
+      engine.pachaTree.l1TailTargetSize: 100mb
+      engine.pachaTree.l1TargetFileSize: 100mb
+      engine.pachaTree.l2TailTargetSize: 100mb
+      engine.pachaTree.l2TargetFileSize: 100mb
+      engine.pachaTree.l3TailTargetSize: 100mb
+      engine.pachaTree.l3TargetFileSize: 100mb
+      engine.pachaTree.l4TailTargetSize: 100mb
+      engine.pachaTree.l4TargetFileSize: 100mb
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_L4_TARGET_FILE_SIZE
+            value: "100mb"
+
+  # --- whitespace: the server trims it off the number before parsing ---
+
+  - it: accepts more than one space before the unit
+    template: templates/ingester-statefulset.yaml
+    set:
+      engine.pachaTree.walBufferSize: "5  mb"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WAL_BUFFER_SIZE
+            value: "5  mb"
+
+  - it: accepts a tab before the unit
+    template: templates/ingester-statefulset.yaml
+    set:
+      engine.pachaTree.snapshotSize: "5\tmb"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_SNAPSHOT_SIZE
+            value: "5\tmb"
+
+  # --- gen0MaxFileSize is ByteSize: unit required, percentage not accepted ---
+
+  - it: rejects a percentage on gen0MaxFileSize
+    set:
+      engine.pachaTree.gen0MaxFileSize: 50%
+    asserts:
+      - failedTemplate:
+          errorMessage: 'engine.pachaTree.gen0MaxFileSize is an absolute file size and does not take a percentage, got "50%". Use a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based).'
+
+  - it: rejects a bare number on gen0MaxFileSize
+    set:
+      engine.pachaTree.gen0MaxFileSize: 4096
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a unit suffix on gen0MaxFileSize
+    template: templates/ingester-statefulset.yaml
+    set:
+      engine.pachaTree.gen0MaxFileSize: 100mb
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_GEN0_MAX_FILE_SIZE
+            value: "100mb"
+
+  # --- percentages stay valid where the server takes them ---
+
+  - it: accepts a percentage on execMemPoolSize
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.memory.execMemPoolSize: 20%
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_EXEC_MEM_POOL_SIZE
+            value: "20%"
+
+  - it: rejects a percentage above 100
+    set:
+      ingester.memory.execMemPoolSize: 120%
+    asserts:
+      - failedTemplate: {}
+
+  # --- legacy aliases keep the pre-3.11 parsing, so the chart must not reject them ---
+
+  - it: leaves the deprecated execMemPoolBytes permissive
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.memory.execMemPoolBytes: 4096
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_EXEC_MEM_POOL_BYTES
+            value: "4096"
+
+  - it: leaves the deprecated parquetMemCacheSize permissive
+    template: templates/configmap.yaml
+    set:
+      caching.parquetMemCacheSize: 4096
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_PARQUET_MEM_CACHE_SIZE
+          value: "4096"
