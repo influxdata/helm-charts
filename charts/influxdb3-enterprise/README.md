@@ -23,7 +23,7 @@ InfluxDB 3 Enterprise is a high-performance time series database designed for pr
 - **High Availability**: Multiple replicas for ingesters and queriers
 - **Horizontal Scalability**: Scale each component independently
 - **Enterprise Features**: Processing Engine, multi-node clustering, advanced monitoring
-- **Explorer UI**: Optional integrated Web UI and standalone Explorer deployment
+- **Explorer UI**: Optional standalone Explorer deployment
 - **Production Ready**: Network policies, service monitors, resource management
 
 ## Prerequisites
@@ -204,11 +204,14 @@ The chart deploys the standalone Explorer rather than the Web UI embedded in the
 server. Enterprise can serve that UI from a node whose `--mode` includes `webui`,
 but this chart always splits the roles - ingest, query, compact and process are
 separate workloads and no node runs `all` - so the embedded UI would sit on a
-query-only node. There it is read-only, since writing needs a node that accepts
-ingest, and on 3.11.2 it cannot be preconfigured at all (see issue #830), so every
-browser starts on the first-run screen and pastes an admin token. It also answers
-on the querier's own port ahead of the authentication layer. The standalone
-Explorer has none of those limits, so the chart offers that one:
+query-only node and could not write. Roles do combine - a node started as
+`--mode=query,ingest,webui` comes up as `mode=[Query, Ingest, Webui]` and accepts
+writes - but the chart has no value for that: each workload's mode is fixed in its
+template. Two limits remain whatever roles the node carries. On 3.11.2 the embedded
+UI cannot be preconfigured (see issue #830), so every browser starts on the
+first-run screen and pastes an admin token, and it answers on the querier's own
+port ahead of the authentication layer. The standalone Explorer has neither, so
+the chart offers that one:
 
 
 ```yaml
@@ -760,7 +763,7 @@ See the `examples/` directory for complete configuration examples:
 - **values-minio.yaml**: Using MinIO AIStor storage
 - **values-google.yaml**: Using Google Cloud Storage
 - **values-azure.yaml**: Using Microsoft Azure blob storage
-- **values-explorer.yaml**: Five-node cluster with integrated Web UI and standalone Explorer preconfiguration
+- **values-explorer.yaml**: Five-node cluster with standalone Explorer preconfiguration
 
 ### Example: Production Deployment
 

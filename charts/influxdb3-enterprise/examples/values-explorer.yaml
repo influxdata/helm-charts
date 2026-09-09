@@ -27,7 +27,7 @@ querier:
 compactor:
   replicas: 1
 
-# Integrated Explorer Web UI served by the Enterprise querier process.
+# Standalone Explorer, deployed alongside the cluster.
 explorer:
   enabled: true
   sessionSecret: "REPLACE_WITH_EXPLORER_SESSION_SECRET"
