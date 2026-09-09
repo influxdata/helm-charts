@@ -24,6 +24,9 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
         checksum/license: {{ include "influxdb3-enterprise.licenseChecksum" . }}
+        {{- if get (.Values.webui | default dict) "enabled" }}
+        checksum/webui-secret: {{ include (print $.Template.BasePath "/secret-webui.yaml") . | sha256sum }}
+        {{- end }}
         {{- with .Values.querier.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -57,7 +60,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - serve
-            - --mode=query
+            - --mode={{ include "influxdb3-enterprise.querierMode" . }}
             - --node-id=$(POD_NAME)
           envFrom:
             - configMapRef:
@@ -68,6 +71,7 @@ spec:
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.webuiEnv" . | nindent 12 }}
             {{- with .Values.querier.numIOThreads }}
             - name: INFLUXDB3_NUM_IO_THREADS
               value: {{ . | quote }}

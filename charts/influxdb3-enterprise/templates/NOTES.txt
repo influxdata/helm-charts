@@ -15,6 +15,12 @@ Components deployed:
 {{- if .Values.processingEngine.enabled }}
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
 {{- end }}
+{{- if get (.Values.webui | default dict) "enabled" }}
+  ✓ Integrated Explorer Web UI: enabled on queriers
+{{- end }}
+{{- if get (.Values.explorer | default dict) "enabled" }}
+  ✓ Standalone Explorer: {{ .Values.explorer.replicas }} replica(s)
+{{- end }}
 
 {{- $security := .Values.security | default dict }}
 {{- $auth := get $security "auth" | default dict }}
@@ -74,6 +80,21 @@ Access endpoints:
   Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
   Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
 {{- end }}
+{{- if get (.Values.webui | default dict) "enabled" }}
+{{- if .Values.ingress.enabled }}
+  Integrated Explorer Web UI: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
+{{- else }}
+  Integrated Explorer Web UI: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
+{{- if get (.Values.explorer | default dict) "enabled" }}
+{{- $ei := get (.Values.explorer | default dict) "ingress" | default dict }}
+{{- if and .Values.ingress.enabled (get $ei "enabled") }}
+  Standalone Explorer: http{{ if get $ei "tls" }}s{{ end }}://{{ get $ei "host" }}
+{{- else }}
+  Standalone Explorer: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-explorer {{ .Values.explorer.service.port }}:{{ .Values.explorer.service.port }} -n {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
 
 Getting started:
 
@@ -101,6 +122,15 @@ Getting started:
      influxdb3 query mydb "SELECT * FROM measurement"
 
 Documentation: https://docs.influxdata.com/influxdb3/enterprise/
+{{- if get (.Values.webui | default dict) "enabled" }}
+
+NOTE: The integrated Web UI opens on the first-run server setup screen. Enterprise
+3.11.2 has no way to preconfigure that connection; set explorer.enabled=true for a
+standalone Explorer that can be preconfigured. See issue #830.
+
+The UI answers on the querier's own port, and every path the InfluxDB API does not
+claim now returns it without authentication.
+{{- end }}
 
 {{- $objectStorage := .Values.objectStorage | default dict }}
 {{- if get $objectStorage "cacheEndpoint" }}

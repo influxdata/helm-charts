@@ -98,6 +98,59 @@ License secret name
 {{- end }}
 
 {{/*
+Integrated Web UI session secret name
+*/}}
+{{- define "influxdb3-enterprise.webuiSecretName" -}}
+{{- .Values.webui.existingSecret | default (printf "%s-webui" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Standalone Explorer session secret name
+*/}}
+{{- define "influxdb3-enterprise.explorerSecretName" -}}
+{{- .Values.explorer.existingSecret | default (printf "%s-explorer" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Standalone Explorer default connection config secret name
+*/}}
+{{- define "influxdb3-enterprise.explorerConfigSecretName" -}}
+{{- .Values.explorer.defaultConnection.existingSecret | default (printf "%s-explorer-config" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Standalone Explorer image reference
+*/}}
+{{- define "influxdb3-enterprise.explorer.image" -}}
+{{- $image := .Values.explorer.image -}}
+{{- printf "%s/%s:%s" $image.registry $image.repository ($image.tag | toString) -}}
+{{- end }}
+
+{{/*
+Querier mode. Integrated Explorer must be explicitly added in Enterprise 3.11+.
+*/}}
+{{- define "influxdb3-enterprise.querierMode" -}}
+{{- if get (.Values.webui | default dict) "enabled" -}}query,webui{{- else -}}query{{- end -}}
+{{- end }}
+
+{{/*
+Default connection target for standalone Explorer.
+*/}}
+{{- define "influxdb3-enterprise.explorerDefaultConnectionServer" -}}
+{{- $tlsEnabled := eq (toString (dig "tls" "enabled" false (.Values.security | default dict))) "true" -}}
+{{- $scheme := ternary "https" "http" $tlsEnabled -}}
+{{- $querier := printf "%s-querier.%s.svc.cluster.local:%v" (include "influxdb3-enterprise.fullname" .) .Release.Namespace .Values.querier.service.port -}}
+{{- .Values.explorer.defaultConnection.server | default (printf "%s://%s" $scheme $querier) -}}
+{{- end }}
+
+{{/*
+Default connection name for standalone Explorer.
+*/}}
+{{- define "influxdb3-enterprise.explorerDefaultConnectionServerName" -}}
+{{- .Values.explorer.defaultConnection.serverName | default (printf "%s Enterprise" (include "influxdb3-enterprise.fullname" .)) -}}
+{{- end }}
+
+{{/*
 Require acknowledgement of the InfluxDB 3.10 catalog migration.
 */}}
 {{- define "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" -}}
@@ -133,6 +186,95 @@ Validate license type
 {{- $valid := list "trial" "commercial" -}}
 {{- if not (has $type $valid) -}}
 {{- fail (printf "Invalid license.type: %s. Must be one of: %s" $type (join ", " $valid)) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Reject a quoted boolean on the Explorer switches.
+
+`{{ if .enabled }}` treats the string "false" as true, so a values layer that
+quotes booleans would turn on what the operator asked to keep off. Sprig `get`
+returns "" for a key that is not there, so an empty value means unset.
+*/}}
+{{- define "influxdb3-enterprise.validateUiBooleans" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- $explorer := .Values.explorer | default dict -}}
+{{- $persistence := get $explorer "persistence" | default dict -}}
+{{- $connection := get $explorer "defaultConnection" | default dict -}}
+{{- $ingress := get $explorer "ingress" | default dict -}}
+{{- $flags := dict
+      "webui.enabled" (get $webui "enabled")
+      "webui.cookieSecure" (get $webui "cookieSecure")
+      "explorer.enabled" (get $explorer "enabled")
+      "explorer.persistence.enabled" (get $persistence "enabled")
+      "explorer.defaultConnection.enabled" (get $connection "enabled")
+      "explorer.ingress.enabled" (get $ingress "enabled")
+-}}
+{{- range $key, $value := $flags -}}
+{{- if and (not (kindIs "invalid" $value)) (ne (toString $value) "") (not (kindIs "bool" $value)) -}}
+{{- fail (printf "%s must be an unquoted boolean (true or false), got %s: %v" $key (kindOf $value) $value) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Validate integrated Web UI config
+*/}}
+{{- define "influxdb3-enterprise.validateWebuiConfig" -}}
+{{- if get (.Values.webui | default dict) "enabled" -}}
+{{- if not .Values.querier.enabled -}}
+{{- fail "webui.enabled=true requires querier.enabled=true because the integrated Web UI is served by querier pods." -}}
+{{- end -}}
+{{- if not (or .Values.webui.sessionSecret .Values.webui.existingSecret) -}}
+{{- fail "webui.enabled=true requires webui.sessionSecret or webui.existingSecret. Existing secret must contain key: session-secret." -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Validate standalone Explorer config
+*/}}
+{{- define "influxdb3-enterprise.validateExplorerConfig" -}}
+{{- if get (.Values.explorer | default dict) "enabled" -}}
+{{- $explorer := .Values.explorer -}}
+{{- $connection := $explorer.defaultConnection -}}
+{{- $ingress := $explorer.ingress -}}
+{{- $mode := $explorer.mode | default "query" -}}
+{{- if not (has $mode (list "query" "admin")) -}}
+{{- fail (printf "Invalid explorer.mode: %s. Must be one of: query, admin" $mode) -}}
+{{- end -}}
+{{- if not (or $explorer.sessionSecret $explorer.existingSecret) -}}
+{{- fail "explorer.enabled=true requires explorer.sessionSecret or explorer.existingSecret. Existing secret must contain key: session-secret." -}}
+{{- end -}}
+{{- if $connection.enabled -}}
+{{- if and (not $connection.server) (not .Values.querier.enabled) -}}
+{{- fail "explorer.defaultConnection.enabled=true requires explorer.defaultConnection.server when querier.enabled=false." -}}
+{{- end -}}
+{{- if and (not $connection.existingSecret) (not $connection.apiToken) -}}
+{{- fail "explorer.defaultConnection.enabled=true requires explorer.defaultConnection.apiToken or explorer.defaultConnection.existingSecret." -}}
+{{- end -}}
+{{- end -}}
+{{- if $ingress.enabled -}}
+{{- if not .Values.ingress.enabled -}}
+{{- fail "explorer.ingress.enabled=true requires ingress.enabled=true; the chart renders no Ingress at all while the global switch is off." -}}
+{{- end -}}
+{{- if not $ingress.host -}}
+{{- fail "explorer.ingress.enabled=true requires explorer.ingress.host." -}}
+{{- end -}}
+{{- if eq $ingress.host (.Values.ingress.host | default "") -}}
+{{- fail (printf "explorer.ingress.host must differ from ingress.host (%s): the query ingress already routes / to the queriers, so both would claim the same host and path." $ingress.host) -}}
+{{- end -}}
+{{- end -}}
+{{- $replicas := dig "replicas" 1 $explorer | toString -}}
+{{- if not (has $replicas (list "0" "1")) -}}
+{{- fail (printf "explorer.replicas must be 0 or 1, got %q: the Explorer keeps its state in a single SQLite file, so extra replicas serve divergent saved queries and server configurations behind one Service." $replicas) -}}
+{{- end -}}
+{{- if and $connection.existingSecret (not $connection.enabled) -}}
+{{- fail "explorer.defaultConnection.existingSecret is set but explorer.defaultConnection.enabled is false, so the Secret would be ignored and the Explorer would start unconfigured." -}}
+{{- end -}}
+{{- if and $explorer.persistence.existingClaim (not $explorer.persistence.enabled) -}}
+{{- fail "explorer.persistence.existingClaim is set but explorer.persistence.enabled is false, so the claim would be ignored and the Explorer would keep its state in an emptyDir." -}}
+{{- end -}}
 {{- end -}}
 {{- end }}
 
@@ -371,6 +513,27 @@ Pod name environment for stable StatefulSet node IDs
   valueFrom:
     fieldRef:
       fieldPath: metadata.name
+{{- end }}
+
+{{/*
+Integrated Web UI environment for querier pods
+*/}}
+{{- define "influxdb3-enterprise.webuiEnv" -}}
+{{- if get (.Values.webui | default dict) "enabled" }}
+- name: INFLUXDB3_WEBUI_SESSION_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.webuiSecretName" . }}
+      key: session-secret
+{{- with .Values.webui.openaiBaseUrl }}
+- name: INFLUXDB3_WEBUI_OPENAI_BASE_URL
+  value: {{ . | quote }}
+{{- end }}
+{{- if .Values.webui.cookieSecure }}
+- name: INFLUXDB3_WEBUI_COOKIE_SECURE
+  value: "true"
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{/*

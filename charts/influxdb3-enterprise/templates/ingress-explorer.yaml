@@ -1,0 +1,41 @@
+{{- $explorer := .Values.explorer | default dict -}}
+{{- if and .Values.ingress.enabled (get $explorer "enabled") .Values.explorer.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-explorer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingress-explorer
+  {{- with .Values.explorer.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- $class := .Values.explorer.ingress.className | default .Values.ingress.className }}
+  {{- if $class }}
+  ingressClassName: {{ $class }}
+  {{- end }}
+  {{- if .Values.explorer.ingress.tls }}
+  tls:
+    {{- range .Values.explorer.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.explorer.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-explorer
+                port:
+                  number: {{ .Values.explorer.service.port }}
+{{- end }}
