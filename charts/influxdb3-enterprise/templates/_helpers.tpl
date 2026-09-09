@@ -786,39 +786,42 @@ Durations are built from whole h/m/s parts; the server takes nothing else.
 */}}
 {{- define "influxdb3-enterprise.validateShutdownConfig" -}}
 {{- $shutdown := .Values.shutdown | default dict -}}
-{{/* Both fall back to 30, the server's drain default and kubelet's. That pairing carries no
-     margin, but it is the product's own default and cannot be a render failure; the margin is
-     required as soon as a release sets either key. */}}
-{{- $explicit := false -}}
+{{/* kubelet's default, which is what the pods get when the chart renders no value. */}}
 {{- $grace := 30 -}}
 {{- if and (hasKey $shutdown "terminationGracePeriodSeconds") (not (kindIs "invalid" (get $shutdown "terminationGracePeriodSeconds"))) -}}
-{{- $explicit = true -}}
-{{- $graceVal := get $shutdown "terminationGracePeriodSeconds" -}}
-{{- $graceRaw := $graceVal | toString -}}
+{{- $graceRaw := get $shutdown "terminationGracePeriodSeconds" | toString -}}
 {{- if not (regexMatch "^[0-9]+$" $graceRaw) -}}
 {{- fail (printf "shutdown.terminationGracePeriodSeconds must be a whole number of seconds, got %q. Kubernetes rejects anything else." $graceRaw) -}}
 {{- end -}}
 {{- $grace = $graceRaw | int64 -}}
 {{- end -}}
-{{- $seconds := 30 -}}
+{{/* Only a timeout the release sets can be compared. The server picks its own default when the
+     key is absent, and writing a default down must not change the verdict. */}}
 {{- if and (hasKey $shutdown "timeout") (not (kindIs "invalid" (get $shutdown "timeout"))) -}}
-{{- $explicit = true -}}
-{{- $timeoutVal := get $shutdown "timeout" -}}
-{{- $raw := $timeoutVal | toString -}}
-{{- $parts := regexFindAll "[0-9]+[hms]" $raw -1 -}}
-{{- if or (eq (len $parts) 0) (ne $raw (join "" $parts)) -}}
-{{- fail (printf "shutdown.timeout must be a duration built from whole hour, minute and second parts, such as \"90s\", \"2m\" or \"1m30s\", got %q. The server rejects anything else and the pod will not start." $raw) -}}
+{{- $raw := get $shutdown "timeout" | toString | trim | lower -}}
+{{/* shutdown_timeout is a humantime::Duration, so match the units humantime takes. */}}
+{{- $unit := "nsec|ns|usec|us|msec|ms|seconds|second|secs|sec|s|minutes|minute|mins|min|m|hours|hour|hrs|hr|h|days|day|d" -}}
+{{- if not (regexMatch (printf "^([0-9]+\\s*(%s)\\s*)+$" $unit) $raw) -}}
+{{- fail (printf "shutdown.timeout must be a duration the server can parse, such as \"90s\", \"2m\", \"1m30s\" or \"500ms\", got %q." $raw) -}}
 {{- end -}}
-{{- $total := 0 -}}
-{{- range $part := $parts -}}
-{{- $n := trimSuffix "h" (trimSuffix "m" (trimSuffix "s" $part)) | int64 -}}
-{{- if hasSuffix "h" $part -}}{{- $total = add $total (mul $n 3600) -}}
-{{- else if hasSuffix "m" $part -}}{{- $total = add $total (mul $n 60) -}}
-{{- else -}}{{- $total = add $total $n -}}{{- end -}}
+{{- $ms := 0 -}}
+{{- range $part := regexFindAll (printf "[0-9]+\\s*(%s)" $unit) $raw -1 -}}
+{{- $n := regexFind "[0-9]+" $part | int64 -}}
+{{- $u := regexReplaceAll "[0-9]+\\s*" $part "" -}}
+{{- if or (eq $u "ms") (eq $u "msec") -}}{{- $ms = add $ms $n -}}
+{{- else if or (hasPrefix "n" $u) (hasPrefix "u" $u) -}}
+{{/* below a millisecond: too small to move the comparison */}}
+{{- else if hasPrefix "m" $u -}}{{- $ms = add $ms (mul $n 60000) -}}
+{{- else if hasPrefix "s" $u -}}{{- $ms = add $ms (mul $n 1000) -}}
+{{- else if hasPrefix "h" $u -}}{{- $ms = add $ms (mul $n 3600000) -}}
+{{- else if hasPrefix "d" $u -}}{{- $ms = add $ms (mul $n 86400000) -}}
 {{- end -}}
-{{- $seconds = $total -}}
 {{- end -}}
-{{- if or (gt $seconds $grace) (and $explicit (eq $seconds $grace)) -}}
-{{- fail (printf "shutdown.timeout resolves to %ds and shutdown.terminationGracePeriodSeconds to %d: the grace period has to outlast the drain, or kubelet sends SIGKILL before it finishes. Equal deadlines leave no margin. Both default to 30 when unset. Raise the grace period above the timeout, or shorten the timeout." $seconds $grace) -}}
+{{/* A zero timeout skips the drain, so there is nothing for the grace period to outlast. */}}
+{{- if gt $ms 0 -}}
+{{- if not (gt (mul $grace 1000) $ms) -}}
+{{- fail (printf "shutdown.timeout (%s) is not shorter than shutdown.terminationGracePeriodSeconds (%d seconds), so kubelet sends SIGKILL before the drain finishes. Equal deadlines leave no margin. Raise the grace period above the timeout, or shorten the timeout. Left unset, the grace period is kubelet's default of 30." $raw $grace) -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end }}

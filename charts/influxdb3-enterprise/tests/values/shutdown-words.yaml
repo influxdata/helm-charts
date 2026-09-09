@@ -1,0 +1,3 @@
+shutdown:
+  timeout: "1h 30m"
+  terminationGracePeriodSeconds: 7200

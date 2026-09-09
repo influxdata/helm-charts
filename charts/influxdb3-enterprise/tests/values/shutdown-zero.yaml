@@ -1,0 +1,3 @@
+shutdown:
+  timeout: "0s"
+  terminationGracePeriodSeconds: 0
