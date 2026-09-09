@@ -54,6 +54,12 @@ env:
     value: "/hostfs/sys"
   - name: "HOST_MOUNT_PREFIX"
     value: "/hostfs"
+## Mount the host filesystem (/ at /hostfs, and /var/run/utmp) into the
+## container. Required by the default host-based input plugins (cpu, disk,
+## diskio, mem, system, ...). Can be disabled when running a custom config
+## (e.g. override_config) that does not use them.
+hostMounts: true
+
 ## Add custom volumes and mounts
 # volumes:
 # - name: telegraf-output-influxdb2
