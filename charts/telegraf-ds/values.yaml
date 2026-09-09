@@ -19,6 +19,15 @@ resources:
 ## Annotations to add to the DaemonSet object itself.
 ## Use podAnnotations below to annotate the pods.
 daemonSetAnnotations: {}
+## DaemonSet update strategy. Empty uses the Kubernetes default
+## (RollingUpdate with maxUnavailable: 1).
+# updateStrategy:
+#   type: RollingUpdate
+#   rollingUpdate:
+#     maxSurge: 0
+#     maxUnavailable: 4
+updateStrategy: {}
+
 ## Pod annotations
 podAnnotations: {}
 ## Pod labels
