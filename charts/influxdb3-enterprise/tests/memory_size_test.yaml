@@ -126,3 +126,32 @@ tests:
       - equal:
           path: data.INFLUXDB3_PARQUET_MEM_CACHE_SIZE
           value: "4096"
+
+  # --- values that are falsy in a template but still reach the pod ---
+
+  - it: rejects a zero without a unit
+    values: [values/zero-sizes.yaml]
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a boolean where a size belongs
+    values: [values/bool-size.yaml]
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects an empty string where a size belongs
+    values: [values/empty-size.yaml]
+    asserts:
+      - failedTemplate: {}
+
+  - it: reports a large byte count without scientific notation
+    values: [values/big-size.yaml]
+    asserts:
+      - failedTemplate:
+          errorMessage: 'engine.pachaTree.l1TargetFileSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "1073741824". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.'
+
+  - it: tells the user about percentages only where they are accepted
+    values: [values/gen0-bare.yaml]
+    asserts:
+      - failedTemplate:
+          errorMessage: 'engine.pachaTree.gen0MaxFileSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based), got "4096". It is an absolute file size, so a percentage is not accepted either, and bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB.'

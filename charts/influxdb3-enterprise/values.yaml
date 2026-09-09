@@ -177,6 +177,10 @@ license:
 # - ingester.wal.flushInterval
 # - caching.fileCacheSize, parquetMemCacheQueryPathDuration,
 #   and disableParquetMemCache
+#
+# The *Size and *Budget keys below take b, kb, mb, gb or tb - all 1024-based -
+# or a whole percentage; the chart rejects bare numbers and Kubernetes suffixes
+# such as Gi. gen0MaxFileSize is an absolute file size and takes no percentage.
 # engine:
 #   pachaTree:
 #     # Shared storage-engine settings
