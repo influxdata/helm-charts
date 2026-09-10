@@ -177,6 +177,10 @@ license:
 # - ingester.wal.flushInterval
 # - caching.fileCacheSize, parquetMemCacheQueryPathDuration,
 #   and disableParquetMemCache
+#
+# The *Size and *Budget keys below take b, kb, mb, gb or tb - all 1024-based -
+# or a whole percentage; the chart rejects bare numbers and Kubernetes suffixes
+# such as Gi. gen0MaxFileSize is an absolute file size and takes no percentage.
 # engine:
 #   pachaTree:
 #     # Shared storage-engine settings
@@ -249,7 +253,10 @@ ingester:
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
-  # Memory tuning
+  # Memory tuning. The keys below take b, kb, mb, gb or tb - all 1024-based - or
+  # a whole percentage of the memory limit; the chart rejects bare numbers and
+  # Kubernetes suffixes such as Gi, which the server does not parse. Their
+  # deprecated aliases keep the older, more permissive parsing.
   # memory:
   #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
   #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
@@ -354,7 +361,10 @@ querier:
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
-  # Memory tuning
+  # Memory tuning. The keys below take b, kb, mb, gb or tb - all 1024-based - or
+  # a whole percentage of the memory limit; the chart rejects bare numbers and
+  # Kubernetes suffixes such as Gi, which the server does not parse. Their
+  # deprecated aliases keep the older, more permissive parsing.
   # memory:
   #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
   #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
@@ -446,7 +456,10 @@ compactor:
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
-  # Memory tuning
+  # Memory tuning. The keys below take b, kb, mb, gb or tb - all 1024-based - or
+  # a whole percentage of the memory limit; the chart rejects bare numbers and
+  # Kubernetes suffixes such as Gi, which the server does not parse. Their
+  # deprecated aliases keep the older, more permissive parsing.
   # memory:
   #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
   #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
@@ -532,7 +545,10 @@ processingEngine:
     # - name: PROCESSOR_ONLY_VAR
     #   value: "processor-only"
 
-  # Memory tuning
+  # Memory tuning. The keys below take b, kb, mb, gb or tb - all 1024-based - or
+  # a whole percentage of the memory limit; the chart rejects bare numbers and
+  # Kubernetes suffixes such as Gi, which the server does not parse. Their
+  # deprecated aliases keep the older, more permissive parsing.
   # memory:
   #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
   #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold

@@ -759,3 +759,96 @@ Permission tokens volumes
         path: permission-tokens.json
 {{- end }}
 {{- end }}
+
+
+
+{{/*
+Reject a memory size the server will not take.
+
+InfluxDB accepts b, kb, mb, gb and tb - all binary, 1024-based - or a whole
+percentage, with optional whitespace before the suffix. Bare numbers were
+rejected in 3.11 because they used to mean megabytes, and Kubernetes suffixes
+such as Gi are not in the server's table at all, so both reach the container and
+crash-loop it. The deprecated aliases keep the old lenient parsing and are not
+checked.
+
+Whether the configured sizes add up to more than the container can hold is the
+server's call, not the chart's: it sums them only for query-only nodes, using
+its own set of reservations, and warns rather than refusing to start. See the
+Memory Budget section of the README.
+*/}}
+{{- define "influxdb3-enterprise.validateMemorySize" -}}
+{{- $key := .key -}}
+{{- $raw := .value | toString | trim | lower -}}
+{{/* Quote the value as the user wrote it. toString on a values-file number goes through %v,
+     which switches to exponent form above six digits, so integral floats are printed whole. */}}
+{{- $shown := .value | toString -}}
+{{- if and (kindIs "float64" .value) (eq (floor .value) .value) -}}
+{{- $shown = printf "%.0f" .value -}}
+{{- end -}}
+{{- $allowPercent := true -}}
+{{- if hasKey . "allowPercent" -}}
+{{- if not (kindIs "bool" .allowPercent) -}}
+{{- fail (printf "internal error: allowPercent for %s must be a bool, got %q." $key ($allowPercent | toString)) -}}
+{{- end -}}
+{{- $allowPercent = .allowPercent -}}
+{{- end -}}
+{{/* Spell out what the server takes, since the two size types differ only on percentages. */}}
+{{- $units := "a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based)" -}}
+{{- if eq $raw "" -}}
+{{- fail (printf "%s is set to an empty value. Remove the key to use the server default, or give it %s." $key $units) -}}
+{{- end -}}
+{{- if hasSuffix "%" $raw -}}
+{{- if not $allowPercent -}}
+{{- fail (printf "%s is an absolute file size and does not take a percentage, got %q. Use %s." $key $shown $units) -}}
+{{- end -}}
+{{- $pct := trimSuffix "%" $raw | trim | trimPrefix "+" -}}
+{{- if not (regexMatch "^[0-9]+$" $pct) -}}
+{{- fail (printf "%s must be a whole percentage such as \"20%%\", got %q." $key $shown) -}}
+{{- end -}}
+{{- if gt ($pct | int64) 100 -}}
+{{- fail (printf "%s must be between 0 and 100 percent, got %q." $key $shown) -}}
+{{- end -}}
+{{- else if not (regexMatch "^\\+?[0-9]+\\s*(kb|mb|gb|tb|b)$" $raw) -}}
+{{- if $allowPercent -}}
+{{- fail (printf "%s must carry %s or be a percentage, got %q. Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start." $key $units $shown) -}}
+{{- else -}}
+{{- fail (printf "%s must carry %s, got %q. It is an absolute file size, so a percentage is not accepted either, and bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB." $key $units $shown) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Check every memory size a release sets, whatever its limits look like.
+
+Only keys the release actually sets are checked, and a key cleared with null is
+left alone. Gating on truthiness instead would skip 0 and false, which are the
+values that reach the pod and stop it starting.
+*/}}
+{{- define "influxdb3-enterprise.validateMemorySizeKey" -}}
+{{- $src := .src -}}
+{{- $name := .name -}}
+{{- if and (hasKey $src $name) (not (kindIs "invalid" (get $src $name))) -}}
+{{- $args := dict "key" .key "value" (get $src $name) -}}
+{{- if hasKey . "allowPercent" -}}
+{{- $args = merge $args (dict "allowPercent" .allowPercent) -}}
+{{- end -}}
+{{- include "influxdb3-enterprise.validateMemorySize" $args -}}
+{{- end -}}
+{{- end }}
+
+{{- define "influxdb3-enterprise.validateMemorySizes" -}}
+{{- $caching := .Values.caching | default dict -}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $caching "name" "fileCacheSize" "key" "caching.fileCacheSize") -}}
+{{- range $name := list "ingester" "querier" "compactor" "processingEngine" -}}
+{{- $memory := get (get $.Values $name | default dict) "memory" | default dict -}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $memory "name" "execMemPoolSize" "key" (printf "%s.memory.execMemPoolSize" $name)) -}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $memory "name" "forceSnapshotMemSize" "key" (printf "%s.memory.forceSnapshotMemSize" $name)) -}}
+{{- end -}}
+{{- $pacha := get (get .Values "engine" | default dict) "pachaTree" | default dict -}}
+{{- range $k := list "replicaMaxBufferSize" "walBufferSize" "snapshotSize" "mergeThresholdSize" "compactorInputSizeBudget" "l1TailTargetSize" "l1TargetFileSize" "l2TailTargetSize" "l2TargetFileSize" "l3TailTargetSize" "l3TargetFileSize" "l4TailTargetSize" "l4TargetFileSize" -}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $pacha "name" $k "key" (printf "engine.pachaTree.%s" $k)) -}}
+{{- end -}}
+{{/* gen0MaxFileSize is a ByteSize: the server takes a unit there but not a percentage. */}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $pacha "name" "gen0MaxFileSize" "key" "engine.pachaTree.gen0MaxFileSize" "allowPercent" false) -}}
+{{- end }}

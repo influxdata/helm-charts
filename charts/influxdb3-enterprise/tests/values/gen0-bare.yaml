@@ -1,0 +1,3 @@
+engine:
+  pachaTree:
+    gen0MaxFileSize: 4096

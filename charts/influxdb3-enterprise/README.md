@@ -401,6 +401,47 @@ the default over every tag, which can be larger. Nothing in this chart governs
 this; see
 [Manage file indexes](https://docs.influxdata.com/influxdb3/enterprise/admin/file-index/).
 
+#### Memory Budget
+
+Sizes take `b`, `kb`, `mb`, `gb` or `tb`, all 1024-based, or a whole percentage,
+with optional whitespace before the suffix. Percentages resolve against the
+container memory limit, because the server reads the cgroup limit before falling
+back to host memory. Bare numbers have been rejected since 3.11 - they used to
+mean megabytes - and Kubernetes suffixes such as `Gi` are not in the server's
+unit table at all. The chart rejects both at render time rather than letting the
+pod crash-loop; the deprecated aliases keep their old lenient parsing.
+
+The check covers the caching and per-component memory keys and the size options
+under `engine.pachaTree`, including the L1-L4 compaction targets. One of them
+takes no percentage: `engine.pachaTree.gen0MaxFileSize` is an absolute file size
+rather than a share of memory, so the server accepts a unit suffix there and
+rejects `50%`.
+
+```yaml
+caching:
+  fileCacheSize: "20%"
+querier:
+  memory:
+    execMemPoolSize: "20%"
+```
+
+Whether the sizes add up to more than the container can hold is left to the
+server, which is stricter about where that sum is meaningful than a chart-side
+check could be. It totals the reservations only for query-only nodes, because
+ingest and compaction share buffers in ways that do not add up cleanly, and it
+counts `exec-mem-pool-size`, `file-cache-size` and `replica-max-buffer-size`.
+That last one defaults to half the memory limit, capped at 16 GiB, so a querier
+that looks half-provisioned from the values file may already be near the line.
+The server warns rather than refusing to start:
+
+```
+Configured memory reservations sum to >=90% of detected memory limit;
+consider lowering --file-cache-size, --replica-max-buffer-size, or --exec-mem-pool-size
+```
+
+Watch for that line after changing cache sizes. Note that a chart change cannot
+raise it, and the CI log-pattern check does not match on warnings.
+
 #### TLS
 
 Enable TLS with inline cert/key or an existing secret:
@@ -838,6 +879,7 @@ logs:
 | `security.auth.adminToken.recovery.httpBind` | Bind address for admin token recovery endpoint (`INFLUXDB3_ADMIN_TOKEN_RECOVERY_HTTP_BIND_ADDR`) | `""` |
 | `serviceAccount.automountServiceAccountToken` | Configure automatic mounting of the Kubernetes service account token in component pods and the created ServiceAccount | `not set` |
 | `extraEnv` | Extra environment variables applied to all components | `[]` |
+| `caching.fileCacheSize` | Parquet file cache size, counted against every component's budget | not set (server default) |
 | `probes.enabled` | Enable liveness, readiness, and startup probes on all components | `true` |
 | `probes.startup.initialDelaySeconds` | Delay before the first startup check | `10` |
 | `probes.startup.periodSeconds` | Interval between startup checks | `5` |
@@ -873,6 +915,8 @@ logs:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
+| `<component>.memory.execMemPoolSize` | Query memory pool cap; see [Memory Budget](#memory-budget) | not set (server default) |
+| `<component>.memory.forceSnapshotMemSize` | Write-buffer level that forces a snapshot | not set (server default) |
 | `ingester.replicas` | Number of ingester replicas | `2` |
 | `ingester.internode.port` | Internode gRPC port used when the Processing Engine is enabled | `8183` |
 | `querier.replicas` | Number of querier replicas | `2` |
