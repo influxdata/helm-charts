@@ -15,6 +15,9 @@ Components deployed:
 {{- if .Values.processingEngine.enabled }}
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
 {{- end }}
+{{- if get (.Values.explorer | default dict) "enabled" }}
+  ✓ Standalone Explorer: {{ .Values.explorer.replicas }} replica(s)
+{{- end }}
 
 {{- $security := .Values.security | default dict }}
 {{- $auth := get $security "auth" | default dict }}
@@ -73,6 +76,14 @@ Access endpoints:
 {{- else }}
   Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
   Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
+{{- end }}
+{{- if get (.Values.explorer | default dict) "enabled" }}
+{{- $ei := get (.Values.explorer | default dict) "ingress" | default dict }}
+{{- if and .Values.ingress.enabled (get $ei "enabled") }}
+  Standalone Explorer: http{{ if get $ei "tls" }}s{{ end }}://{{ get $ei "host" }}
+{{- else }}
+  Standalone Explorer: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-explorer {{ .Values.explorer.service.port }}:{{ .Values.explorer.service.port }} -n {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
 
 Getting started:

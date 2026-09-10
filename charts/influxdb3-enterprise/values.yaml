@@ -610,6 +610,96 @@ processingEngine:
       partition: 0                  # Start updating from pod 0
 
 # ============================================================================
+# Explorer / Web UI Configuration
+# ============================================================================
+
+# Optional standalone Explorer deployment. Use this when you want Helm to
+# preconfigure an Explorer connection to this cluster at startup.
+explorer:
+  enabled: false
+  replicas: 1
+  mode: query                         # query or admin; admin unlocks database and token management
+
+  image:
+    registry: docker.io
+    repository: influxdata/influxdb3-ui
+    tag: "1.9.0"
+    pullPolicy: IfNotPresent
+
+  # Required when explorer.enabled=true unless existingSecret is set.
+  # Existing secret must contain key: session-secret
+  sessionSecret: ""
+  existingSecret: ""
+
+  databaseUrl: "/db/sqlite.db"
+
+  # The Explorer keeps saved queries and server configurations in that SQLite
+  # file. Without a volume they are lost on every pod restart.
+  persistence:
+    enabled: false
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    storageClass: ""
+    existingClaim: ""
+
+  priorityClassName: ""
+
+  # Explorer-only volumes, on top of the global extraVolumes. A private CA for
+  # an HTTPS default connection goes here, with CA_CERT_PATH in extraEnv.
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  # Optional ingress for the standalone Explorer. It serves at /, and the query
+  # ingress already routes / to the queriers, so this needs its own host.
+  ingress:
+    enabled: false
+    host: ""
+    className: ""                     # empty falls back to ingress.className
+    annotations: {}
+    tls: []                           # own certificate; ingress.tls covers a different host
+
+  service:
+    type: ClusterIP
+    port: 8888
+    annotations: {}
+
+  resources: {}
+  extraEnv: []
+  podAnnotations: {}
+  podLabels: {}
+
+  # Explorer runs as uid/gid 1500. fsGroup makes the /db volume writable for it.
+  podSecurityContext:
+    fsGroup: 1500
+    runAsUser: 1500
+    runAsGroup: 1500
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  defaultConnection:
+    enabled: false
+    # Existing secret must contain key: config.json.
+    existingSecret: ""
+    # Any endpoint that routes both writes and queries: the chart's ingress, a
+    # Gateway, a service mesh route, a load balancer. Empty uses ingress.host
+    # when ingress.enabled is true, otherwise the querier Service, which is
+    # query-only - the Explorer can read through it but not write.
+    server: ""
+    database: ""
+    apiToken: ""
+    serverName: ""
+
+# ============================================================================
 # Advanced Configuration (Shared across all components)
 # ============================================================================
 

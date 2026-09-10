@@ -1,0 +1,116 @@
+suite: Explorer UI
+tests:
+  - it: leaves the querier alone when the UI is off
+    template: templates/querier-statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args[1]
+          value: --mode=query
+
+  - it: runs the Explorer rootless with no Kubernetes API token
+    template: templates/explorer-deployment.yaml
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+    asserts:
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop[0]
+          value: ALL
+
+  - it: mounts the default connection read-only and points the image at it
+    template: templates/explorer-deployment.yaml
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.defaultConnection.enabled: true
+      explorer.defaultConnection.apiToken: apiv3_token
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONFIG_PATH
+            value: /etc/influxdb3-explorer/config.json
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: explorer-config
+            mountPath: /etc/influxdb3-explorer
+            readOnly: true
+
+  - it: keeps the Explorer state on a volume when asked
+    template: templates/explorer-pvc.yaml
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.persistence.enabled: true
+    asserts:
+      - isKind:
+          of: PersistentVolumeClaim
+      - equal:
+          path: spec.resources.requests.storage
+          value: 1Gi
+
+  - it: refuses an existingClaim that would be ignored
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.persistence.existingClaim: mine
+    asserts:
+      - failedTemplate:
+          errorMessage: "explorer.persistence.existingClaim is set but explorer.persistence.enabled is false, so the claim would be ignored and the Explorer would keep its state in an emptyDir."
+
+  - it: allows one Explorer or none, never more
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.replicas: 2
+    asserts:
+      - failedTemplate:
+          errorMessage: 'explorer.replicas must be 0 or 1, got "2": the Explorer keeps its state in a single SQLite file, so extra replicas serve divergent saved queries and server configurations behind one Service.'
+
+  - it: renders the Explorer ingress on its own host
+    template: templates/ingress-explorer.yaml
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.ingress.enabled: true
+      explorer.ingress.host: explorer.example.com
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: explorer.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8888
+
+  - it: refuses an Explorer host that collides with the query ingress
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.ingress.enabled: true
+      explorer.ingress.host: influxdb.example.com
+    asserts:
+      - failedTemplate: {}
+
+  - it: lets the ingress controller reach the Explorer on the pod port
+    template: templates/networkpolicy.yaml
+    documentIndex: 3
+    set:
+      networkPolicy.enabled: true
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: explorer
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 8080
