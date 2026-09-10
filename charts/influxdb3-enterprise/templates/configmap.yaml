@@ -7,6 +7,7 @@
 {{- include "influxdb3-enterprise.validateObjectStoreTlsCa" . }}
 {{- include "influxdb3-enterprise.validateAdminTokenConfig" . }}
 {{- include "influxdb3-enterprise.validatePermissionTokensConfig" . }}
+{{- include "influxdb3-enterprise.validateShutdownConfig" . }}
 {{- $existing := lookup "v1" "ConfigMap" .Release.Namespace (include "influxdb3-enterprise.configMapName" .) | default dict }}
 {{- $recordedFormat := dig "metadata" "annotations" "influxdata.com/catalog-format" "" $existing }}
 {{- $upgradePachaTree := eq (toString (get .Values "acknowledgePachaTreeMigration")) "true" }}
@@ -80,7 +81,7 @@ data:
 
   # Graceful shutdown
   {{- $shutdown := .Values.shutdown | default dict }}
-  {{- if hasKey $shutdown "timeout" }}
+  {{- if and (hasKey $shutdown "timeout") (not (kindIs "invalid" (get $shutdown "timeout"))) }}
   INFLUXDB3_SHUTDOWN_TIMEOUT: {{ get $shutdown "timeout" | quote }}
   {{- end }}
 
@@ -266,7 +267,9 @@ data:
 
   # Tracing
   {{- with .Values.traces }}
+  {{- if .exporter }}
   INFLUXDB3_TRACES_EXPORTER: {{ .exporter | quote }}
+  {{- end }}
   {{- with .jaeger }}
   {{- if .agentHost }}
   INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_HOST: {{ .agentHost | quote }}
@@ -294,8 +297,10 @@ data:
 
   # Telemetry
   {{- with .Values.telemetry }}
+  {{- if and (hasKey . "disableUpload") (not (kindIs "invalid" .disableUpload)) }}
   INFLUXDB3_DISABLE_TELEMETRY_UPLOAD: {{ .disableUpload | quote }}
   INFLUXDB3_TELEMETRY_DISABLE_UPLOAD: {{ .disableUpload | quote }}
+  {{- end }}
   {{- if .endpoint }}
   INFLUXDB3_TELEMETRY_ENDPOINT: {{ .endpoint | quote }}
   {{- end }}

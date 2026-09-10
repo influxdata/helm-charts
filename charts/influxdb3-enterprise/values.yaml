@@ -657,10 +657,6 @@ http:
   # bind: "0.0.0.0:8181"
   # maxRequestSize: 10485760          # Bare bytes for 3.10 compatibility; 3.11.2+ also accepts "10mb"
 
-# Graceful shutdown configuration
-# shutdown:
-#   timeout: "30s"
-
 # Caching configuration
 caching:
   # File caching
@@ -711,7 +707,7 @@ compactedData:
 #   gen1LookbackDuration: "24h"       # Lookback for gen1 Parquet files
 #   retentionCheckInterval: "30m"     # How often to check retention policies
 #   deleteGracePeriod: "24h"          # Grace period before permanent deletion
-#   hardDeleteDefaultDuration: "90d"  # Default hard delete duration
+#   hardDeleteDefaultDuration: "90d"  # Deprecated: ignored by InfluxDB 3.11+
 
 # Logs configuration
 # logs:
@@ -736,6 +732,24 @@ compactedData:
 # telemetry:
 #   disableUpload: false              # Set true to opt-out of InfluxData telemetry
 #   endpoint: ""                      # Custom telemetry endpoint
+
+# ============================================================================
+# Graceful Shutdown
+# ============================================================================
+# The server drains active connections before exiting; kubelet sends SIGKILL
+# once terminationGracePeriodSeconds expires, so the grace period has to outlast
+# the drain or the drain never finishes. Both default to 30s, which leaves no
+# margin - raise the grace period first when lengthening the timeout.
+
+shutdown:
+  # Connection-drain timeout (--shutdown-timeout). Honoured on 3.9.12+ and
+  # 3.11+; released 3.10.x does not have it. "0s" skips the drain.
+  # timeout: "60s"
+
+  # Applied to the ingester, querier, compactor and processor pods. Unset keeps
+  # the Kubernetes default of 30. 0 means kubelet kills immediately, with no
+  # drain and no chance to flush.
+  # terminationGracePeriodSeconds: 90
 
 # ============================================================================
 # Probes Configuration

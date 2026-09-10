@@ -50,6 +50,10 @@ spec:
       {{- if .Values.compactor.priorityClassName }}
       priorityClassName: {{ .Values.compactor.priorityClassName }}
       {{- end }}
+      {{- $grace := include "influxdb3-enterprise.terminationGracePeriodValue" . }}
+      {{- if $grace }}
+      terminationGracePeriodSeconds: {{ $grace }}
+      {{- end }}
       securityContext:
         {{- toYaml .Values.compactor.podSecurityContext | nindent 8 }}
       containers:
