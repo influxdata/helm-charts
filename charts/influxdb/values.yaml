@@ -8,11 +8,12 @@ image:
   # pullSecrets:
   #   - registry-secret
 
-
 serviceAccount:
   create: true
   name:
   annotations: {}
+
+priorityClassName: ""
 
 ## Customize liveness, readiness and startup probes
 ## ref: https://docs.influxdata.com/influxdb/v1.8/tools/api/#ping-http-endpoint
@@ -261,6 +262,7 @@ backup:
     annotations:
     accessMode: ReadWriteOnce
     size: 8Gi
+  priorityClassName: ""
   schedule: "0 0 * * *"
   startingDeadlineSeconds: ""
   annotations: {}
