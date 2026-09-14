@@ -6,6 +6,8 @@ image:
   ## alternative: quay.io/influxdb/chronograf
   tag: 1.9.4
   pullPolicy: IfNotPresent
+  # pullSecrets:
+  # - my-registry-key
 
 ## Specify a service type
 ## ClusterIP is default
