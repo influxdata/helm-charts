@@ -62,3 +62,10 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Create the name of the namespace
+*/}}
+{{- define "influxdb.namespaceName" -}}
+{{- default .Release.Namespace .Values.namespace }}
+{{- end }}
