@@ -799,11 +799,25 @@ kubectl get pvc -n influxdb3 influxdb3-enterprise-object-storage
 
 ### Debug Mode
 
-Enable verbose logs:
+Enable verbose logs on every component:
 ```yaml
 logs:
-  filter: "debug"
+  logFilter: "debug"
 ```
+
+To raise one component only, set the variable in that component's `extraEnv`,
+which takes precedence over the shared value:
+```yaml
+ingester:
+  extraEnv:
+    - name: INFLUXDB3_LOG_FILTER
+      value: "debug"
+```
+
+Use `INFLUXDB3_LOG_FILTER`, not `LOG_FILTER`: when both are set the server keeps
+`INFLUXDB3_LOG_FILTER`. From 3.10 on, a `debug` filter still holds a few noisy
+modules at `info`, `influxdb3_wal` among them;
+`INFLUXDB3_DISABLE_LOG_FILTER_NOISE_REDUCTION: "true"` lifts that.
 
 ### Getting Help
 
