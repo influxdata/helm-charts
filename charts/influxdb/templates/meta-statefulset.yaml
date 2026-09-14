@@ -6,6 +6,13 @@ metadata:
   labels:
     {{- include "influxdb.labels" . | nindent 4 }}
     app.kubernetes.io/component: meta
+    {{- if .Values.statefulSetLabels }}
+{{ toYaml .Values.statefulSetLabels | indent 4 }}
+    {{- end }}
+  {{- if .Values.statefulSetAnnotations }}
+  annotations:
+{{ toYaml .Values.statefulSetAnnotations | indent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.enterprise.meta.clusterSize }}
   selector:

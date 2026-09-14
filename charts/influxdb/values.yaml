@@ -136,6 +136,12 @@ podAnnotations: {}
 # Labels to be added to InfluxDB pods
 podLabels: {}
 
+# Annotations to be added to InfluxDB statefulsets
+statefulSetAnnotations: {}
+
+# Labels to be added to InfluxDB statefulsets
+statefulSetLabels: {}
+
 ingress:
   enabled: false
   tls: false
