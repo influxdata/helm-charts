@@ -10,6 +10,8 @@ image:
 # strategy:
 #   type: Recreate
 
+strategy: {}
+
 ## Specify a service type, defaults to NodePort
 ## ref: http://kubernetes.io/docs/user-guide/services/
 ##
@@ -48,6 +50,7 @@ resources:
 ## ref: https://hub.docker.com/_/kapacitor/
 ## ref: https://docs.influxdata.com/kapacitor/latest/administration/configuration/
 ##
+envVars: {}
 # Examples below
 #
 # envVars:
@@ -63,13 +66,15 @@ resources:
 ## Set the URL of InfluxDB instance to create subscription on
 ## ref: https://docs.influxdata.com/kapacitor/v1.1/introduction/getting_started/
 ##
-# influxURL: http://influxdb-influxdb.tick:8086
+influxURL: http://influxdb-influxdb.tick:8086
 
 ## Name of an existing Secrect used to set the environment variables for the
 ## InfluxDB user and password. The expected keys in the secret are
 ## `influxdb-user` and `influxdb-password`.
 ##
 # existingSecret: influxdb-auth
+
+existingSecret: {}
 
 ## Affinity for pod assignment
 ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
@@ -108,7 +113,7 @@ sidecar:
     #   cpu: 50m
     #   memory: 50Mi
   ## skipTlsVerify Set to true to skip tls verification for kube api calls
-  # skipTlsVerify: true
+  skipTlsVerify: false
   sideload:
     enabled: false
     label: kapacitor_sideload
