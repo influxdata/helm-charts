@@ -816,8 +816,15 @@ ingester:
 
 Use `INFLUXDB3_LOG_FILTER`, not `LOG_FILTER`: when both are set the server keeps
 `INFLUXDB3_LOG_FILTER`. From 3.10 on, a `debug` filter still holds a few noisy
-modules at `info`, `influxdb3_wal` among them;
-`INFLUXDB3_DISABLE_LOG_FILTER_NOISE_REDUCTION: "true"` lifts that.
+modules at `info`, `influxdb3_wal` among them. Another `extraEnv` entry lifts that:
+```yaml
+ingester:
+  extraEnv:
+    - name: INFLUXDB3_LOG_FILTER
+      value: "debug"
+    - name: INFLUXDB3_DISABLE_LOG_FILTER_NOISE_REDUCTION
+      value: "true"
+```
 
 ### Getting Help
 
