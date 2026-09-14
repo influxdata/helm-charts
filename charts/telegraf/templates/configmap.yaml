@@ -26,4 +26,6 @@ data:
     {{- if .Values.metrics.internal.enabled }}
     [[inputs.internal]]
       collect_memstats = {{ or .Values.metrics.internal.collect_memstats (.Values.metrics.collect_memstats | default false) }}
+    {{- if .Values.config.toml }}
+    {{ .Values.config.toml | nindent 4 }}
     {{- end }}
