@@ -417,19 +417,23 @@ Both default to 30 seconds, the server's and Kubernetes', which leaves no
 margin: a drain that runs the full timeout is cut off at the moment it would
 finish. Raise the grace period before lengthening the timeout.
 
-The chart checks the pair whenever a release sets `shutdown.timeout`, and asks
-for a grace period strictly longer than it - `30s` against a grace period of 30
-is rejected along with anything longer. Setting only the grace period leaves
-nothing to compare it against, so the chart says nothing. `"0s"` skips the drain
-altogether, and then there is nothing to outlast: `0s` with a grace period of
-`0` is accepted.
+When `terminationGracePeriodSeconds` is set, the chart requires it to be longer
+than the drain: longer than `shutdown.timeout`, or than the server's 30s default
+when no timeout is set. Equal values are rejected, since they leave no margin. A
+timeout of `"0"` or `"0s"` skips the drain, so `0s` with a grace period of `0` is
+accepted.
 
-`shutdown.timeout` is a humantime duration, so `90s`, `2m`, `1m30s`, `1h 30m`
-and `500ms` all parse. Spell a skipped drain `"0s"`; a bare `0` is a number in
-YAML rather than a duration and the chart rejects it.
+`shutdown.timeout` is passed to the server as written - it is a humantime
+duration, so `90s`, `1m 30s`, `500ms` and `2 minutes` all work - and the chart
+never rejects it on its own. For the comparison it reads only `0` and whole
+hour, minute and second parts in lower case, such as `90s`, `2m` or `1h 30m`;
+other forms are passed through without being compared, so check those against
+the grace period yourself. Upper-case `M` means months to the server, not
+minutes.
 
 `shutdown.timeout` is honoured on 3.9.12 and later 3.9 images and on 3.11+; no
-released 3.10.x has it, so there the variable is unknown and ignored.
+released 3.10.x has it, so there the variable is unknown and ignored, and the
+drain waits for every connection with no time limit.
 `terminationGracePeriodSeconds` is a Kubernetes field and works on any version.
 
 #### TLS
@@ -858,7 +862,7 @@ logs:
 | `acknowledgeCatalogMigration` | One-time acknowledgement for an upgrade without the catalog format v3 marker | `false` |
 | `acknowledgePachaTreeMigration` | Acknowledge and start migration of an existing Parquet cluster to PachaTree | `false` |
 | `engine.pachaTree.*` | Optional PachaTree tuning for ingester, querier, and compactor pods; see `values.yaml` for role-specific options | not set |
-| `shutdown.timeout` | Graceful connection-drain timeout | not set (server default `30s`) |
+| `shutdown.timeout` | Graceful connection-drain timeout, a humantime duration passed through as written | not set (server default `30s`) |
 | `shutdown.terminationGracePeriodSeconds` | Grace period on the ingester, querier, compactor and processor pods; `0` means kubelet kills immediately | not set (Kubernetes default `30`) |
 | `resourceLimits.numDatabases` / `numTables` / `numColumnsPerTable` | Catalog limits | not set (server defaults) |
 | `dataLifecycle.gen1LookbackDuration` / `retentionCheckInterval` / `deleteGracePeriod` | Retention and deletion timings | not set (server defaults) |

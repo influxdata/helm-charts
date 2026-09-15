@@ -36,44 +36,51 @@ tests:
       - notExists:
           path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
 
-  # --- the grace period has to outlast the drain, not merely match it ---
+  # --- shutdown.timeout shipped in 0.10.0: whatever rendered then still renders ---
 
   - it: renders with both shutdown values unset
     template: templates/configmap.yaml
     asserts:
-      - notFailedTemplate: {}
+      - notExists:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
 
-  - it: rejects a timeout equal to the grace period
-    set:
-      shutdown.timeout: "30s"
-      shutdown.terminationGracePeriodSeconds: 30
-    asserts:
-      - failedTemplate: {}
-
-  - it: rejects an explicit timeout equal to the default grace period
+  - it: keeps the chart's own timeout example rendering
+    template: templates/configmap.yaml
     set:
       shutdown.timeout: "30s"
     asserts:
-      - failedTemplate: {}
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "30s"
 
-  - it: rejects a timeout longer than the grace period
-    set:
-      shutdown.timeout: "90s"
-      shutdown.terminationGracePeriodSeconds: 60
-    asserts:
-      - failedTemplate: {}
-
-  - it: accepts a grace period longer than the timeout
+  - it: passes a timeout longer than kubelet's default through, as the release did
     template: templates/configmap.yaml
     set:
       shutdown.timeout: "60s"
-      shutdown.terminationGracePeriodSeconds: 90
     asserts:
       - equal:
           path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
           value: "60s"
 
-  - it: still accepts a null timeout alongside a set grace period
+  - it: renders the timeout exactly as written, case included
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "1M"
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "1M"
+
+  - it: passes a bare zero through, which humantime accepts
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "0"
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "0"
+
+  - it: still renders nothing for a null timeout alongside a set grace period
     template: templates/configmap.yaml
     set:
       shutdown.timeout: null
@@ -82,52 +89,114 @@ tests:
       - notExists:
           path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
 
-  # --- durations the server takes: shutdown_timeout is humantime::Duration ---
+  # --- an explicit grace period has to outlast the drain ---
 
-  - it: accepts the sub-second duration the product's own test uses
-    template: templates/configmap.yaml
-    values: [values/shutdown-subsecond.yaml]
-    asserts:
-      - equal:
-          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
-          value: "500ms"
-
-  - it: accepts humantime's spaced and spelled-out forms
-    template: templates/configmap.yaml
-    values: [values/shutdown-words.yaml]
-    asserts:
-      - equal:
-          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
-          value: "1h 30m"
-
-  - it: rejects a duration the server cannot parse
+  - it: rejects a grace period equal to the timeout
     set:
-      shutdown.timeout: "banana"
+      shutdown.timeout: "60s"
+      shutdown.terminationGracePeriodSeconds: 60
     asserts:
       - failedTemplate: {}
 
-  # --- a skipped drain has nothing to outlast ---
+  - it: rejects a grace period shorter than the timeout
+    set:
+      shutdown.timeout: "90s"
+      shutdown.terminationGracePeriodSeconds: 60
+    asserts:
+      - failedTemplate: {}
 
-  - it: accepts the documented skip-the-drain pairing
-    template: templates/configmap.yaml
-    values: [values/shutdown-zero.yaml]
+  - it: reads spaced h/m/s parts when comparing
+    set:
+      shutdown.timeout: "1m 30s"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period longer than the timeout
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "60s"
+      shutdown.terminationGracePeriodSeconds: 90
     asserts:
       - equal:
-          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
-          value: "0s"
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 90
 
-  # --- writing a default down must not change the verdict ---
-
-  - it: accepts an explicit grace period with no timeout set
-    template: templates/configmap.yaml
-    values: [values/shutdown-grace-only.yaml]
+  - it: compares a grace period set alone with the server's 30s default
+    set:
+      shutdown.terminationGracePeriodSeconds: 10
     asserts:
-      - notExists:
-          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+      - failedTemplate: {}
 
-  - it: rejects a sub-second drain against a zero grace period
+  - it: asks for a margin over the default too
+    set:
+      shutdown.terminationGracePeriodSeconds: 30
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period set alone above the default
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.terminationGracePeriodSeconds: 31
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 31
+
+  - it: accepts a skipped drain with a zero grace period
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "0s"
+      shutdown.terminationGracePeriodSeconds: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 0
+
+  - it: rejects a zero grace period against the default drain
+    set:
+      shutdown.terminationGracePeriodSeconds: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: leaves a timeout it cannot read exactly uncompared
+    template: templates/ingester-statefulset.yaml
     set:
       shutdown.timeout: "500ms"
-      shutdown.terminationGracePeriodSeconds: 0
+      shutdown.terminationGracePeriodSeconds: 10
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 10
+
+  # --- the grace period itself is a Kubernetes integer ---
+
+  - it: renders a large grace period from a values file as an integer
+    template: templates/ingester-statefulset.yaml
+    values: [values/shutdown-grace-large.yaml]
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 1000000
+
+  - it: accepts a quoted grace period
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "60s"
+      shutdown.terminationGracePeriodSeconds: "90"
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 90
+
+  - it: rejects a fractional grace period
+    set:
+      shutdown.terminationGracePeriodSeconds: 90.5
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a negative grace period
+    set:
+      shutdown.terminationGracePeriodSeconds: -5
     asserts:
       - failedTemplate: {}
