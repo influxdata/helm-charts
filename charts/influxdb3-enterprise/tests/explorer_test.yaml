@@ -114,3 +114,142 @@ tests:
       - equal:
           path: spec.ingress[0].ports[0].port
           value: 8080
+
+  - it: lets the Explorer reach the ingress its default connection points at
+    template: templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.labels["app.kubernetes.io/component"]
+      value: explorer
+    set:
+      networkPolicy.enabled: true
+      ingress.enabled: true
+      ingress.host: influxdb.example.com
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: ingress-nginx
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: ingress-nginx
+            ports:
+              - protocol: TCP
+                port: 80
+              - protocol: TCP
+                port: 443
+
+  - it: opens no egress to the ingress controller without an ingress
+    template: templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.labels["app.kubernetes.io/component"]
+      value: explorer
+    set:
+      networkPolicy.enabled: true
+      ingress.enabled: false
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+    asserts:
+      - notContains:
+          path: spec.egress
+          any: true
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: ingress-nginx
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: ingress-nginx
+
+  - it: renders extra egress rules for an endpoint the chart cannot name
+    template: templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.labels["app.kubernetes.io/component"]
+      value: explorer
+    set:
+      networkPolicy.enabled: true
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.networkPolicy.extraEgress:
+        - to:
+            - ipBlock:
+                cidr: 203.0.113.10/32
+          ports:
+            - protocol: TCP
+              port: 443
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 203.0.113.10/32
+            ports:
+              - protocol: TCP
+                port: 443
+
+  - it: opens no egress to the ingress controller when its rules are off
+    template: templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.labels["app.kubernetes.io/component"]
+      value: explorer
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.ingress.fromIngressController: false
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+    asserts:
+      - notContains:
+          path: spec.egress
+          any: true
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: ingress-nginx
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: ingress-nginx
+
+  - it: uses the controller ports it is given
+    template: templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.labels["app.kubernetes.io/component"]
+      value: explorer
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.ingress.ingressController.podLabelValue: traefik
+      networkPolicy.ingress.ingressController.ports: [8000, 8443]
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: ingress-nginx
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: traefik
+            ports:
+              - protocol: TCP
+                port: 8000
+              - protocol: TCP
+                port: 8443
+
+  - it: refuses an extraEgress that is not a list
+    set:
+      networkPolicy.enabled: true
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.networkPolicy.extraEgress.to: foo
+    asserts:
+      - failedTemplate:
+          errorMessage: "explorer.networkPolicy.extraEgress must be a list of NetworkPolicy egress rules, got map."

@@ -250,6 +250,33 @@ Explorer at a combined endpoint, or accept that it is read-only. The image suppo
 `mode: admin`; use an admin token for admin features such as database and token
 management.
 
+The default connection is `ingress.host:ingress.port`, so set `ingress.port` to
+the port your ingress is reachable on - `80` or `443` for a standard controller
+rather than the default `8181`.
+
+With `networkPolicy.enabled`, the Explorer's egress allows DNS and the queriers.
+When `ingress.enabled` and `networkPolicy.ingress.fromIngressController` are both
+on, it also allows the ingress controller named under
+`networkPolicy.ingress.ingressController`, on the pod ports listed in its `ports`
+(`80` and `443` by default; ingress-nginx's admission webhook on `8443` stays
+closed). Anything else the connection needs goes in
+`explorer.networkPolicy.extraEgress`. A policy matches the pod the traffic ends up
+at, so for a target inside the cluster - a Gateway, a mesh ingress, an Ingress
+managed elsewhere - add a `namespaceSelector` and `podSelector` for its pods, and
+use an `ipBlock` for an address outside the cluster:
+
+```yaml
+explorer:
+  networkPolicy:
+    extraEgress:
+      - to:
+          - ipBlock:
+              cidr: 203.0.113.10/32
+        ports:
+          - protocol: TCP
+            port: 443
+```
+
 Existing Secrets are supported:
 
 - `explorer.existingSecret` must contain `session-secret`.
@@ -940,10 +967,11 @@ logs:
 | `explorer.service.annotations` | Annotations on the Explorer Service | `{}` |
 | `explorer.defaultConnection.enabled` | Create and mount documented Explorer `config.json` defaults | `false` |
 | `explorer.defaultConnection.existingSecret` | Existing Secret containing Explorer `config.json` | `""` |
-| `explorer.defaultConnection.server` | Default InfluxDB server URL; empty uses the in-cluster querier Service | `""` |
+| `explorer.defaultConnection.server` | Default InfluxDB server URL; empty uses `ingress.host` when `ingress.enabled`, otherwise the querier Service, which is read-only | `""` |
 | `explorer.defaultConnection.database` | Default database name for standalone Explorer config | `""` |
 | `explorer.defaultConnection.apiToken` | Default API token for standalone Explorer config; required unless using `existingSecret` | `""` |
 | `explorer.defaultConnection.serverName` | Display name for standalone Explorer config | release-based name |
+| `explorer.networkPolicy.extraEgress` | Extra egress rules for the Explorer's NetworkPolicy, for a connection endpoint the chart cannot name | `[]` |
 
 ### Object Storage Parameters
 
@@ -1013,7 +1041,7 @@ directly does not create or remove the corresponding Services.
 | `ingress.enabled` | Enable ingress | `true` |
 | `ingress.host` | Hostname for all ingresses (set to your domain) | `influxdb.example.com` |
 | `ingress.className` | Ingress class | `nginx` |
-| `ingress.port` | Host port referenced in NOTES | `8181` |
+| `ingress.port` | Port the ingress is reachable on; used in NOTES and in the Explorer's default connection | `8181` |
 | `ingress.tls` | TLS host/secret list | `[]` |
 | `ingress.write.annotations` | Write ingress annotations | `proxy-body-size/read-timeout` |
 | `ingress.query.annotations` | Query ingress annotations | `proxy-read-timeout` |
@@ -1032,7 +1060,8 @@ Ingress routes:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `networkPolicy.enabled` | Enable NetworkPolicies | `false` |
-| `networkPolicy.ingress.fromIngressController` | Allow ingress controller | `true` |
+| `networkPolicy.ingress.fromIngressController` | Allow the ingress controller to reach the components, and the Explorer to reach the controller | `true` |
+| `networkPolicy.ingress.ingressController.ports` | Controller pod ports the Explorer may reach | `[80, 443]` |
 | `networkPolicy.ingress.fromComponents` | Allow inter-component traffic | `true` |
 | `networkPolicy.egress.toDns` | Allow DNS | `true` |
 | `networkPolicy.egress.toObjectStorage` | Allow object storage | `true` |

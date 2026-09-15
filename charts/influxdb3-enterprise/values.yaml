@@ -649,6 +649,14 @@ explorer:
   extraVolumes: []
   extraVolumeMounts: []
 
+  # Egress rules added to the Explorer's NetworkPolicy, rendered as given. The
+  # chart allows the queriers and, with an ingress, the ingress controller. An
+  # explicit defaultConnection.server elsewhere, or an ingress host that
+  # resolves to a load balancer outside the cluster, needs its own rule here,
+  # usually an ipBlock.
+  networkPolicy:
+    extraEgress: []
+
   # Optional ingress for the standalone Explorer. It serves at /, and the query
   # ingress already routes / to the queriers, so this needs its own host.
   ingress:
@@ -944,6 +952,10 @@ networkPolicy:
       # Pod label selector for ingress controller pods
       podLabelKey: app.kubernetes.io/name
       podLabelValue: ingress-nginx
+      # Controller pod ports the Explorer may reach, HTTP and HTTPS. Pod ports, not
+      # Service ports; ingress-nginx also runs its admission webhook on 8443, which
+      # stays closed. Traefik uses 8000 and 8443.
+      ports: [80, 443]
       # Common alternatives:
       #   NGINX Ingress: app.kubernetes.io/name: ingress-nginx (default)
       #   Traefik: app.kubernetes.io/name: traefik

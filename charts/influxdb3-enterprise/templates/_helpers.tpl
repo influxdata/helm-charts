@@ -236,6 +236,18 @@ returns "" for a key that is not there, so an empty value means unset.
 {{- fail (printf "explorer.ingress.host must differ from ingress.host (%s): the query ingress already routes / to the queriers, so both would claim the same host and path." $ingress.host) -}}
 {{- end -}}
 {{- end -}}
+{{- $np := get $explorer "networkPolicy" -}}
+{{- if and $np (not (kindIs "map" $np)) -}}
+{{- fail (printf "explorer.networkPolicy must be a map, got %s." (kindOf $np)) -}}
+{{- end -}}
+{{- $extraEgress := dig "extraEgress" list ($np | default dict) -}}
+{{- if and $extraEgress (not (kindIs "slice" $extraEgress)) -}}
+{{- fail (printf "explorer.networkPolicy.extraEgress must be a list of NetworkPolicy egress rules, got %s." (kindOf $extraEgress)) -}}
+{{- end -}}
+{{- $controllerPorts := dig "ingress" "ingressController" "ports" list (.Values.networkPolicy | default dict) -}}
+{{- if and $controllerPorts (not (kindIs "slice" $controllerPorts)) -}}
+{{- fail (printf "networkPolicy.ingress.ingressController.ports must be a list of ports, got %s." (kindOf $controllerPorts)) -}}
+{{- end -}}
 {{- $replicas := dig "replicas" 1 $explorer | toString -}}
 {{- if not (has $replicas (list "0" "1")) -}}
 {{- fail (printf "explorer.replicas must be 0 or 1, got %q: the Explorer keeps its state in a single SQLite file, so extra replicas serve divergent saved queries and server configurations behind one Service." $replicas) -}}

@@ -555,5 +555,23 @@ spec:
       ports:
         - protocol: TCP
           port: 8181
+    {{- if and .Values.ingress.enabled .Values.networkPolicy.ingress.fromIngressController }}
+    # With an ingress the default connection goes through it
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.namespaceLabel }}: {{ .Values.networkPolicy.ingress.ingressController.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.podLabelKey }}: {{ .Values.networkPolicy.ingress.ingressController.podLabelValue }}
+      ports:
+        {{- range dig "ports" (list 80 443) .Values.networkPolicy.ingress.ingressController | default (list 80 443) }}
+        - protocol: TCP
+          port: {{ . }}
+        {{- end }}
+    {{- end }}
+    {{- with dig "networkPolicy" "extraEgress" list $explorer }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
 {{- end }}
