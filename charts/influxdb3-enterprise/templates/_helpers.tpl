@@ -468,7 +468,7 @@ PachaTree environment variables shared by storage roles.
   (list "l4TargetFileSize" "INFLUXDB3_L4_TARGET_FILE_SIZE")
 }}
 {{- $key := index $mapping 0 -}}
-{{- if hasKey $pachaTree $key }}
+{{- if and (hasKey $pachaTree $key) (not (kindIs "invalid" (get $pachaTree $key))) }}
 - name: {{ index $mapping 1 }}
   value: {{ get $pachaTree $key | quote }}
 {{- end }}
@@ -806,7 +806,10 @@ Memory Budget section of the README.
 {{- if not (regexMatch "^[0-9]+$" $pct) -}}
 {{- fail (printf "%s must be a whole percentage such as \"20%%\", got %q." $key $shown) -}}
 {{- end -}}
-{{- if gt ($pct | int64) 100 -}}
+{{/* Sprig int64 reads a leading zero as octal (0120 is 80) and returns 0 for a bad digit or an
+     overflow, so drop the zeros - the server ignores them - and bound the length before converting. */}}
+{{- $pct = regexReplaceAll "^0+([0-9])" $pct "${1}" -}}
+{{- if or (gt (len $pct) 3) (gt ($pct | int64) 100) -}}
 {{- fail (printf "%s must be between 0 and 100 percent, got %q." $key $shown) -}}
 {{- end -}}
 {{- else if not (regexMatch "^\\+?[0-9]+\\s*(kb|mb|gb|tb|b)$" $raw) -}}

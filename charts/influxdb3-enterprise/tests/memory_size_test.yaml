@@ -155,3 +155,49 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: 'engine.pachaTree.gen0MaxFileSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based), got "4096". It is an absolute file size, so a percentage is not accepted either, and bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB.'
+
+  # --- percentages longer than an int64 must not wrap past the range check ---
+
+  - it: rejects a percentage too long to parse
+    values: [values/pct-overflow.yaml]
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a percentage with leading zeros, as the server does
+    template: templates/ingester-statefulset.yaml
+    values: [values/pct-leading-zeros.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WAL_BUFFER_SIZE
+            value: "0050%"
+
+  # --- a key cleared with null is unset, not an empty variable ---
+
+  - it: renders no PachaTree variable for a null value
+    template: templates/ingester-statefulset.yaml
+    values: [values/pacha-null.yaml]
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_L1_TARGET_FILE_SIZE
+          any: true
+
+  # --- Sprig int64 reads a leading zero as octal: 0120 would pass as 80 ---
+
+  - it: rejects a zero-padded percentage over 100
+    values: [values/pct-octal.yaml]
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a zero-padded percentage that is not valid octal
+    template: templates/ingester-statefulset.yaml
+    values: [values/pct-nonoctal.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WAL_BUFFER_SIZE
+            value: "0099%"

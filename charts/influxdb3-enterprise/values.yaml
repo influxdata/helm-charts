@@ -39,7 +39,7 @@ cluster:
   # Cluster management settings for multi-node coordination
 #  replicationInterval: "250ms"      # Data replication interval between nodes
 #  catalogSyncInterval: "10s"        # Catalog synchronization interval
-#  waitForRunningIngester: "10s"     # Startup wait; deprecated alias: waitForRunningIngestor
+#  waitForRunningIngester: "10s"     # Startup wait; replaces deprecated waitForRunningIngestor
 
 # ============================================================================
 # Object Storage Configuration
@@ -258,8 +258,8 @@ ingester:
   # Kubernetes suffixes such as Gi, which the server does not parse. Their
   # deprecated aliases keep the older, more permissive parsing.
   # memory:
-  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
-  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
+  #   execMemPoolSize: "20%"              # Replaces deprecated execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Replaces deprecated forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -366,8 +366,8 @@ querier:
   # Kubernetes suffixes such as Gi, which the server does not parse. Their
   # deprecated aliases keep the older, more permissive parsing.
   # memory:
-  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
-  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
+  #   execMemPoolSize: "20%"              # Replaces deprecated execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Replaces deprecated forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -461,8 +461,8 @@ compactor:
   # Kubernetes suffixes such as Gi, which the server does not parse. Their
   # deprecated aliases keep the older, more permissive parsing.
   # memory:
-  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
-  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
+  #   execMemPoolSize: "20%"              # Replaces deprecated execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Replaces deprecated forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -550,8 +550,8 @@ processingEngine:
   # Kubernetes suffixes such as Gi, which the server does not parse. Their
   # deprecated aliases keep the older, more permissive parsing.
   # memory:
-  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
-  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
+  #   execMemPoolSize: "20%"              # Replaces deprecated execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Replaces deprecated forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -680,7 +680,7 @@ http:
 # Caching configuration
 caching:
   # File caching
-  # fileCacheSize: "20%"                    # Deprecated alias: parquetMemCacheSize; alias bare numbers mean MB
+  # fileCacheSize: "20%"                    # Replaces deprecated parquetMemCacheSize, whose bare numbers mean MB
   # parquetMemCacheQueryPathDuration: "5h"  # Deprecated Helm key retained for compatibility
   # parquetMemCachePrunePercentage: 0.1
   # parquetMemCachePruneInterval: "1s"
