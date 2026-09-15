@@ -748,7 +748,7 @@ shutdown:
 
   # Applied to the ingester, querier, compactor and processor pods. Unset keeps
   # the Kubernetes default of 30. 0 means kubelet kills immediately, with no
-  # drain and no chance to flush.
+  # drain and no chance to flush; Kubernetes discourages it for StatefulSets.
   # terminationGracePeriodSeconds: 90
 
 # ============================================================================

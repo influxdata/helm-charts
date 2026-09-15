@@ -403,33 +403,35 @@ this; see
 
 #### Graceful Shutdown
 
-On SIGTERM the server drains active connections before exiting. kubelet sends
-SIGKILL once `terminationGracePeriodSeconds` expires, so the grace period has to
-outlast the drain.
+On SIGTERM the server first finishes its background shutdown - catalog, WAL and
+compaction work, plugins - and then drains active connections for up to
+`shutdown.timeout`. kubelet sends SIGKILL once `terminationGracePeriodSeconds`
+expires, so the grace period has to outlast both.
 
 ```yaml
 shutdown:
-  timeout: "60s"                    # --shutdown-timeout, 3.11+
+  timeout: "60s"                    # --shutdown-timeout, 3.9.12+ and 3.11+
   terminationGracePeriodSeconds: 90 # ingester, querier, compactor, processor
 ```
 
-Both default to 30 seconds, the server's and Kubernetes', which leaves no
-margin: a drain that runs the full timeout is cut off at the moment it would
-finish. Raise the grace period before lengthening the timeout.
+Both default to 30 seconds, so with the defaults a drain that needs its full
+timeout is cut off. Raise the grace period before lengthening the timeout, and
+leave a margin beyond it.
 
 When `terminationGracePeriodSeconds` is set, the chart requires it to be longer
-than the drain: longer than `shutdown.timeout`, or than the server's 30s default
-when no timeout is set. Equal values are rejected, since they leave no margin. A
-timeout of `"0"` or `"0s"` skips the drain, so `0s` with a grace period of `0` is
-accepted.
+than `shutdown.timeout`, or at least the server's 30s default when no timeout is
+set. That is a lower bound: the chart cannot know how long the background
+shutdown takes. A timeout of `"0"` or `"0s"` skips the drain, so `0s` with a
+grace period of `0` passes the check, but Kubernetes discourages a grace period
+of `0` for StatefulSet pods - the replacement can start under the same identity
+while the old pod is still running and writing.
 
-`shutdown.timeout` is passed to the server as written - it is a humantime
-duration, so `90s`, `1m 30s`, `500ms` and `2 minutes` all work - and the chart
-never rejects it on its own. For the comparison it reads only `0` and whole
-hour, minute and second parts in lower case, such as `90s`, `2m` or `1h 30m`;
-other forms are passed through without being compared, so check those against
-the grace period yourself. Upper-case `M` means months to the server, not
-minutes.
+`shutdown.timeout` is passed to the server as written, and the chart never
+rejects it on its own. For the comparison it reads humantime's whole units,
+abbreviated or spelled out, from nanoseconds to years - `90s`, `1h 30m`,
+`2 minutes`, `1d` - with up to six digits per part. Upper-case `M` means months
+to the server, not minutes. A fraction such as `1.5h`, or anything else it cannot
+read exactly, is passed through without being compared.
 
 `shutdown.timeout` is honoured on 3.9.12 and later 3.9 images and on 3.11+; no
 released 3.10.x has it, so there the variable is unknown and ignored, and the
@@ -863,7 +865,7 @@ logs:
 | `acknowledgePachaTreeMigration` | Acknowledge and start migration of an existing Parquet cluster to PachaTree | `false` |
 | `engine.pachaTree.*` | Optional PachaTree tuning for ingester, querier, and compactor pods; see `values.yaml` for role-specific options | not set |
 | `shutdown.timeout` | Graceful connection-drain timeout, a humantime duration passed through as written | not set (server default `30s`) |
-| `shutdown.terminationGracePeriodSeconds` | Grace period on the ingester, querier, compactor and processor pods; `0` means kubelet kills immediately | not set (Kubernetes default `30`) |
+| `shutdown.terminationGracePeriodSeconds` | Grace period on the ingester, querier, compactor and processor pods; `0` means kubelet kills immediately, which Kubernetes discourages for StatefulSets | not set (Kubernetes default `30`) |
 | `resourceLimits.numDatabases` / `numTables` / `numColumnsPerTable` | Catalog limits | not set (server defaults) |
 | `dataLifecycle.gen1LookbackDuration` / `retentionCheckInterval` / `deleteGracePeriod` | Retention and deletion timings | not set (server defaults) |
 | `dataLifecycle.hardDeleteDefaultDuration` | Deprecated; ignored by InfluxDB 3.11+ | not set |
