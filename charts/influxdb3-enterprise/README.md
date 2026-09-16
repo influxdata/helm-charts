@@ -426,12 +426,12 @@ grace period of `0` passes the check, but Kubernetes discourages a grace period
 of `0` for StatefulSet pods - the replacement can start under the same identity
 while the old pod is still running and writing.
 
-`shutdown.timeout` is passed to the server as written, and the chart never
-rejects it on its own. For the comparison it reads humantime's whole units,
-abbreviated or spelled out, from nanoseconds to years - `90s`, `1h 30m`,
-`2 minutes`, `1d` - with up to six digits per part. Upper-case `M` means months
-to the server, not minutes. A fraction such as `1.5h`, or anything else it cannot
-read exactly, is passed through without being compared.
+`shutdown.timeout` is passed to the server as written, and without a grace
+period the chart never rejects it. With one, the chart has to read the timeout to
+compare them, so it must be in humantime's whole units, abbreviated or spelled
+out, from nanoseconds to years - `90s`, `1h 30m`, `2 minutes`, `1d`. Upper-case
+`M` means months to the server, not minutes. A fraction such as `1.5h` is
+rejected there; write `90m`.
 
 `shutdown.timeout` is honoured on 3.9.12 and later 3.9 images and on 3.11+; no
 released 3.10.x has it, so there the variable is unknown and ignored, and the

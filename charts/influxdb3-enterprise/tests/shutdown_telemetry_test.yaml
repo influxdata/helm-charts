@@ -162,15 +162,39 @@ tests:
     asserts:
       - failedTemplate: {}
 
-  - it: leaves a fractional timeout uncompared
-    template: templates/ingester-statefulset.yaml
+  - it: rejects a fractional timeout when a grace period is set
     set:
       shutdown.timeout: "1.5h"
       shutdown.terminationGracePeriodSeconds: 10
     asserts:
+      - failedTemplate:
+          errorMessage: 'shutdown.timeout (1.5h) cannot be compared with shutdown.terminationGracePeriodSeconds. Write it in whole units such as 90s or 1h 30m, or remove terminationGracePeriodSeconds.'
+
+  - it: rejects a timeout it cannot read when a grace period is set
+    set:
+      shutdown.timeout: "banana"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - failedTemplate: {}
+
+  - it: still passes a fractional timeout through without a grace period
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "1.5h"
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "1.5h"
+
+  - it: treats a bare zero as no drain when a grace period is set
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "0"
+      shutdown.terminationGracePeriodSeconds: 0
+    asserts:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
-          value: 10
+          value: 0
 
   # --- the grace period itself is a Kubernetes integer ---
 
@@ -268,15 +292,36 @@ tests:
     asserts:
       - failedTemplate: {}
 
-  - it: leaves a part too long to read safely uncompared
-    template: templates/ingester-statefulset.yaml
+  - it: compares a timeout with more than six digits
     set:
       shutdown.timeout: "1000000s"
       shutdown.terminationGracePeriodSeconds: 10
     asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period over a long millisecond timeout
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "1000000ms"
+      shutdown.terminationGracePeriodSeconds: 1001
+    asserts:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
-          value: 10
+          value: 1001
+
+  - it: saturates a huge timeout instead of overflowing
+    set:
+      shutdown.timeout: "999999999999999999y"
+      shutdown.terminationGracePeriodSeconds: "999999999"
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a part too long for an int64 when a grace period is set
+    set:
+      shutdown.timeout: "1000000000000000000s"
+      shutdown.terminationGracePeriodSeconds: "999999999"
+    asserts:
+      - failedTemplate: {}
 
   # --- the grace period is rendered as exactly the number that was checked ---
 

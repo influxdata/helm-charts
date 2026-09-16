@@ -787,8 +787,9 @@ Reject a grace period that ends before the drain does.
 Only terminationGracePeriodSeconds, which is new, triggers the check; shutdown.timeout
 has shipped since 0.10.0 as a pass-through, so it never fails on its own. The timeout
 is read with humantime's unit table, case-sensitive because M is months, and a form
-that table does not cover exactly, such as a fraction, is left uncompared. The check is
-a lower bound: the server finishes its background shutdown before the drain starts.
+that table does not cover exactly, such as a fraction, is rejected while a grace period
+is set. The check is a lower bound: the server finishes its background shutdown before
+the drain starts.
 */}}
 {{- define "influxdb3-enterprise.validateShutdownConfig" -}}
 {{- $shutdown := .Values.shutdown | default dict -}}
@@ -803,27 +804,40 @@ a lower bound: the server finishes its background shutdown before the drain star
 {{- $raw := get $shutdown "timeout" | toString | trim -}}
 {{/* humantime 2.3.0's units, longest spelling first so regexFindAll does not stop at m in ms. */}}
 {{- $unit := "nanos|nsec|ns|usec|us|µs|millis|msec|ms|seconds|second|secs|sec|s|minutes|minute|mins|min|m|hours|hour|hrs|hr|h|days|day|d|weeks|week|wks|wk|w|months|month|M|years|year|yrs|yr|y" -}}
-{{- if regexMatch (printf "^([0-9]{1,6} *(%s) *)+$" $unit) $raw -}}
+{{- if eq $raw "0" -}}
+{{/* humantime's bare zero: no drain */}}
+{{- else if regexMatch (printf "^([0-9]{1,18} *(%s) *)+$" $unit) $raw -}}
+{{/* Every grace period the check allows is under 1e12 ms, so a part at or above that is
+     simply longer than it; capping there keeps the int64 arithmetic from overflowing. */}}
+{{- $cap := 1000000000000 -}}
 {{- $drainMs := 0 -}}
-{{- range $part := regexFindAll (printf "[0-9]{1,6} *(%s)" $unit) $raw -1 -}}
+{{- range $part := regexFindAll (printf "[0-9]{1,18} *(%s)" $unit) $raw -1 -}}
 {{/* atoi, not int64: int64 reads a leading zero as octal */}}
 {{- $n := regexFind "^[0-9]+" $part | atoi -}}
 {{- $u := regexReplaceAll "^[0-9]+ *" $part "" -}}
-{{- if has $u (list "nanos" "nsec" "ns") -}}{{- $drainMs = add $drainMs (div (add $n 999999) 1000000) -}}
-{{- else if has $u (list "usec" "us" "µs") -}}{{- $drainMs = add $drainMs (div (add $n 999) 1000) -}}
-{{- else if has $u (list "millis" "msec" "ms") -}}{{- $drainMs = add $drainMs $n -}}
-{{- else if has $u (list "seconds" "second" "secs" "sec" "s") -}}{{- $drainMs = add $drainMs (mul $n 1000) -}}
-{{- else if has $u (list "minutes" "minute" "mins" "min" "m") -}}{{- $drainMs = add $drainMs (mul $n 60000) -}}
-{{- else if has $u (list "hours" "hour" "hrs" "hr" "h") -}}{{- $drainMs = add $drainMs (mul $n 3600000) -}}
-{{- else if has $u (list "days" "day" "d") -}}{{- $drainMs = add $drainMs (mul $n 86400000) -}}
-{{- else if has $u (list "weeks" "week" "wks" "wk" "w") -}}{{- $drainMs = add $drainMs (mul $n 604800000) -}}
-{{- else if has $u (list "months" "month" "M") -}}{{- $drainMs = add $drainMs (mul $n 2630016000) -}}
-{{- else -}}{{- $drainMs = add $drainMs (mul $n 31557600000) -}}{{- end -}}
+{{- $ms := 0 -}}
+{{- if has $u (list "nanos" "nsec" "ns") -}}{{- $ms = div (add $n 999999) 1000000 -}}
+{{- else if has $u (list "usec" "us" "µs") -}}{{- $ms = div (add $n 999) 1000 -}}
+{{- else -}}
+{{- $mult := 31557600000 -}}
+{{- if has $u (list "millis" "msec" "ms") -}}{{- $mult = 1 -}}
+{{- else if has $u (list "seconds" "second" "secs" "sec" "s") -}}{{- $mult = 1000 -}}
+{{- else if has $u (list "minutes" "minute" "mins" "min" "m") -}}{{- $mult = 60000 -}}
+{{- else if has $u (list "hours" "hour" "hrs" "hr" "h") -}}{{- $mult = 3600000 -}}
+{{- else if has $u (list "days" "day" "d") -}}{{- $mult = 86400000 -}}
+{{- else if has $u (list "weeks" "week" "wks" "wk" "w") -}}{{- $mult = 604800000 -}}
+{{- else if has $u (list "months" "month" "M") -}}{{- $mult = 2630016000 -}}
+{{- end -}}
+{{- $ms = ternary $cap (mul $n $mult) (ge $n (div $cap $mult)) -}}
+{{- end -}}
+{{- $drainMs = min (add $drainMs $ms) $cap -}}
 {{- end -}}
 {{/* A zero timeout skips the drain, so there is nothing to outlast. */}}
 {{- if and (gt $drainMs 0) (le $graceMs $drainMs) -}}
 {{- fail (printf "shutdown.terminationGracePeriodSeconds (%s) is not longer than shutdown.timeout (%s), so kubelet sends SIGKILL before the drain finishes. The server also finishes its background shutdown before the drain starts, so leave a margin beyond the timeout." $grace $raw) -}}
 {{- end -}}
+{{- else -}}
+{{- fail (printf "shutdown.timeout (%s) cannot be compared with shutdown.terminationGracePeriodSeconds. Write it in whole units such as 90s or 1h 30m, or remove terminationGracePeriodSeconds." $raw) -}}
 {{- end -}}
 {{- else if lt $graceMs 30000 -}}
 {{- fail (printf "shutdown.terminationGracePeriodSeconds (%s) is shorter than the server's default drain of 30s, so kubelet sends SIGKILL before the drain can finish. Raise it to at least 30, or set a shorter shutdown.timeout." $grace) -}}
