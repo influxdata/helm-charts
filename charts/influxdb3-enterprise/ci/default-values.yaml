@@ -59,3 +59,7 @@ processingEngine:
       memory: "4Gi"
   persistence:
     enabled: false
+
+shutdown:
+  timeout: "20s"
+  terminationGracePeriodSeconds: 60

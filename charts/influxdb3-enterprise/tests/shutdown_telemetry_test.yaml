@@ -1,0 +1,370 @@
+suite: shutdown and telemetry values
+release:
+  name: t
+  namespace: default
+tests:
+  # --- telemetry.disableUpload: false must survive, null must not render ---
+
+  - it: renders both telemetry spellings for an explicit false
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: false
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_DISABLE_TELEMETRY_UPLOAD
+          value: "false"
+      - equal:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+          value: "false"
+
+  - it: renders both telemetry spellings for an explicit true
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: true
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+          value: "true"
+
+  - it: renders no telemetry variable when the key is cleared with null
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: null
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_DISABLE_TELEMETRY_UPLOAD
+      - notExists:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+
+  # --- shutdown.timeout shipped in 0.10.0: whatever rendered then still renders ---
+
+  - it: renders with both shutdown values unset
+    template: templates/configmap.yaml
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+
+  - it: keeps the chart's own timeout example rendering
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "30s"
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "30s"
+
+  - it: passes a timeout longer than kubelet's default through, as the release did
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "60s"
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "60s"
+
+  - it: renders the timeout exactly as written, case included
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "1M"
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "1M"
+
+  - it: passes a bare zero through, which humantime accepts
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "0"
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "0"
+
+  - it: still renders nothing for a null timeout alongside a set grace period
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: null
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+
+  # --- an explicit grace period has to outlast the drain ---
+
+  - it: rejects a grace period equal to the timeout
+    set:
+      shutdown.timeout: "60s"
+      shutdown.terminationGracePeriodSeconds: 60
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a grace period shorter than the timeout
+    set:
+      shutdown.timeout: "90s"
+      shutdown.terminationGracePeriodSeconds: 60
+    asserts:
+      - failedTemplate: {}
+
+  - it: reads spaced h/m/s parts when comparing
+    set:
+      shutdown.timeout: "1m 30s"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period longer than the timeout
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "60s"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 90
+
+  - it: compares a grace period set alone with the server's 30s default
+    set:
+      shutdown.terminationGracePeriodSeconds: 10
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period equal to the default when no timeout is set
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.terminationGracePeriodSeconds: 30
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 30
+
+  - it: accepts a grace period set alone above the default
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.terminationGracePeriodSeconds: 31
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 31
+
+  - it: accepts a skipped drain with a zero grace period
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "0s"
+      shutdown.terminationGracePeriodSeconds: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 0
+
+  - it: rejects a zero grace period against the default drain
+    set:
+      shutdown.terminationGracePeriodSeconds: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a fractional timeout when a grace period is set
+    set:
+      shutdown.timeout: "1.5h"
+      shutdown.terminationGracePeriodSeconds: 10
+    asserts:
+      - failedTemplate:
+          errorMessage: 'shutdown.timeout (1.5h) cannot be compared with shutdown.terminationGracePeriodSeconds. Write it in whole units such as 90s or 1h 30m, or remove terminationGracePeriodSeconds.'
+
+  - it: rejects a timeout it cannot read when a grace period is set
+    set:
+      shutdown.timeout: "banana"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - failedTemplate: {}
+
+  - it: still passes a fractional timeout through without a grace period
+    template: templates/configmap.yaml
+    set:
+      shutdown.timeout: "1.5h"
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SHUTDOWN_TIMEOUT
+          value: "1.5h"
+
+  - it: treats a bare zero as no drain when a grace period is set
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "0"
+      shutdown.terminationGracePeriodSeconds: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 0
+
+  # --- the grace period itself is a Kubernetes integer ---
+
+  - it: renders a large grace period from a values file as an integer
+    template: templates/ingester-statefulset.yaml
+    values: [values/shutdown-grace-large.yaml]
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 1000000
+
+  - it: accepts a quoted grace period
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "60s"
+      shutdown.terminationGracePeriodSeconds: "90"
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 90
+
+  - it: rejects a fractional grace period
+    set:
+      shutdown.terminationGracePeriodSeconds: 90.5
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a negative grace period
+    set:
+      shutdown.terminationGracePeriodSeconds: -5
+    asserts:
+      - failedTemplate: {}
+
+  # --- humantime's units, case-sensitive: every one of these outlasts its grace period ---
+
+  - it: reads hours
+    set:
+      shutdown.timeout: "1h"
+      shutdown.terminationGracePeriodSeconds: 3600
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period one second over an hour
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "1h"
+      shutdown.terminationGracePeriodSeconds: 3601
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 3601
+
+  - it: reads a zero-padded part as decimal, not octal
+    set:
+      shutdown.timeout: "010s"
+      shutdown.terminationGracePeriodSeconds: 10
+    asserts:
+      - failedTemplate: {}
+
+  - it: reads upper-case M as months
+    set:
+      shutdown.timeout: "1M"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - failedTemplate: {}
+
+  - it: reads days
+    set:
+      shutdown.timeout: "1d"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - failedTemplate: {}
+
+  - it: reads spelled-out units
+    set:
+      shutdown.timeout: "2 minutes"
+      shutdown.terminationGracePeriodSeconds: 120
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period over spelled-out minutes
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "2 minutes"
+      shutdown.terminationGracePeriodSeconds: 121
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 121
+
+  - it: counts a sub-second drain against a zero grace period
+    set:
+      shutdown.timeout: "2us"
+      shutdown.terminationGracePeriodSeconds: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: compares a timeout with more than six digits
+    set:
+      shutdown.timeout: "1000000s"
+      shutdown.terminationGracePeriodSeconds: 10
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a grace period over a long millisecond timeout
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.timeout: "1000000ms"
+      shutdown.terminationGracePeriodSeconds: 1001
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 1001
+
+  - it: saturates a huge timeout instead of overflowing
+    set:
+      shutdown.timeout: "999999999999999999y"
+      shutdown.terminationGracePeriodSeconds: "999999999"
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a part too long for an int64 when a grace period is set
+    set:
+      shutdown.timeout: "1000000000000000000s"
+      shutdown.terminationGracePeriodSeconds: "999999999"
+    asserts:
+      - failedTemplate: {}
+
+  # --- the grace period is rendered as exactly the number that was checked ---
+
+  - it: renders a zero-padded grace period as decimal
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.terminationGracePeriodSeconds: "0031"
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 31
+
+  - it: accepts the largest grace period kubelet can hold
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.terminationGracePeriodSeconds: "999999999"
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 999999999
+
+  - it: rejects a grace period kubelet cannot hold
+    set:
+      shutdown.terminationGracePeriodSeconds: "1000000000"
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects an empty grace period rather than ignoring it
+    set:
+      shutdown.terminationGracePeriodSeconds: ""
+    asserts:
+      - failedTemplate: {}
+
+  - it: rejects a duration where seconds belong
+    set:
+      shutdown.terminationGracePeriodSeconds: "30s"
+    asserts:
+      - failedTemplate: {}
+
+  - it: renders no grace period field when the key is cleared with null
+    template: templates/ingester-statefulset.yaml
+    set:
+      shutdown.terminationGracePeriodSeconds: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.terminationGracePeriodSeconds

@@ -1,0 +1,2 @@
+shutdown:
+  terminationGracePeriodSeconds: 1000000
