@@ -1,0 +1,24 @@
+{{- $explorer := .Values.explorer | default dict -}}
+{{- if and (get $explorer "enabled") .Values.explorer.persistence.enabled (not .Values.explorer.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-explorer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: explorer
+spec:
+  accessModes:
+    - {{ .Values.explorer.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.explorer.persistence.size }}
+  {{- if .Values.explorer.persistence.storageClass }}
+  {{- if eq "-" .Values.explorer.persistence.storageClass }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.explorer.persistence.storageClass | quote }}
+  {{- end }}
+  {{- end }}
+{{- end }}

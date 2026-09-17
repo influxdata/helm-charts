@@ -15,6 +15,9 @@ Components deployed:
 {{- if .Values.processingEngine.enabled }}
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
 {{- end }}
+{{- if get (.Values.explorer | default dict) "enabled" }}
+  ✓ Standalone Explorer: {{ .Values.explorer.replicas }} replica(s)
+{{- end }}
 
 {{- $security := .Values.security | default dict }}
 {{- $auth := get $security "auth" | default dict }}
@@ -74,6 +77,14 @@ Access endpoints:
   Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
   Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
 {{- end }}
+{{- if get (.Values.explorer | default dict) "enabled" }}
+{{- $ei := get (.Values.explorer | default dict) "ingress" | default dict }}
+{{- if and .Values.ingress.enabled (get $ei "enabled") }}
+  Standalone Explorer: http{{ if get $ei "tls" }}s{{ end }}://{{ get $ei "host" }}
+{{- else }}
+  Standalone Explorer: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-explorer {{ .Values.explorer.service.port }}:{{ .Values.explorer.service.port }} -n {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
 
 Getting started:
 
@@ -101,6 +112,15 @@ Getting started:
      influxdb3 query mydb "SELECT * FROM measurement"
 
 Documentation: https://docs.influxdata.com/influxdb3/enterprise/
+
+{{- $explorer := .Values.explorer | default dict }}
+{{- $explorerExposed := or (and .Values.ingress.enabled (dig "ingress" "enabled" false $explorer)) (ne (dig "service" "type" "ClusterIP" $explorer) "ClusterIP") }}
+{{- if and (get $explorer "enabled") (dig "defaultConnection" "enabled" false $explorer) $explorerExposed }}
+
+WARNING: the Explorer has no login of its own. Anyone who can reach it can use the
+preconfigured connection with that API token's permissions. Restrict or authenticate
+access to it and use a least-privilege token; see "Explorer UI" in the chart README.
+{{- end }}
 
 {{- $objectStorage := .Values.objectStorage | default dict }}
 {{- if get $objectStorage "cacheEndpoint" }}

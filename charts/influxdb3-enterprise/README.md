@@ -7,6 +7,7 @@ Official Helm chart for deploying InfluxDB 3 Enterprise on Kubernetes with full 
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
+- [Explorer UI](#explorer-ui)
 - [Configuration](#configuration)
 - [Architecture](#architecture)
 - [Upgrading](#upgrading)
@@ -22,6 +23,7 @@ InfluxDB 3 Enterprise is a high-performance time series database designed for pr
 - **High Availability**: Multiple replicas for ingesters and queriers
 - **Horizontal Scalability**: Scale each component independently
 - **Enterprise Features**: Processing Engine, multi-node clustering, advanced monitoring
+- **Explorer UI**: Optional standalone Explorer deployment
 - **Production Ready**: Network policies, service monitors, resource management
 
 ## Prerequisites
@@ -195,6 +197,122 @@ Notes:
 - The chart mounts it at `/etc/influxdb/permission-tokens/permission-tokens.json`.
 - `security.auth.permissionTokens.existingSecret` and `security.auth.permissionTokens.file` are mutually exclusive.
 - See: https://docs.influxdata.com/influxdb3/enterprise/reference/config-options/#permission-tokens-file
+
+## Explorer UI
+
+The chart deploys the standalone Explorer rather than the Web UI embedded in the
+server. Enterprise can serve that UI from a node whose `--mode` includes `webui`,
+but this chart always splits the roles - ingest, query, compact and process are
+separate workloads and no node runs `all` - so the embedded UI would sit on a
+query-only node and could not write. Roles do combine - a node started as
+`--mode=query,ingest,webui` comes up as `mode=[Query, Ingest, Webui]` and accepts
+writes - but the chart has no value for that: each workload's mode is fixed in its
+template. Two limits remain whatever roles the node carries. On 3.11.2 the embedded
+UI cannot be preconfigured (see issue #830), so every browser starts on the
+first-run screen and pastes an admin token, and it answers on the querier's own
+port ahead of the authentication layer. The standalone Explorer has neither, so
+the chart offers that one:
+
+
+```yaml
+explorer:
+  enabled: true
+  sessionSecret: "replace-with-a-generated-secret"
+  mode: admin
+  defaultConnection:
+    enabled: true
+    database: "mydb"
+    apiToken: "apiv3_redacted"
+    serverName: "InfluxDB 3 Enterprise"
+  # Saved queries and server configurations live in SQLite; without this they
+  # are lost on every pod restart.
+  persistence:
+    enabled: true
+    size: 1Gi
+```
+
+`explorer.defaultConnection.server` decides what the Explorer can do, because
+the roles are split and no single component serves both writes and queries.
+
+Set it to any endpoint that routes both. The chart's own ingress is one:
+`/api/v2/write` and `/api/v3/write_lp` reach the ingesters, the query paths reach
+the queriers, and a write from the Explorer through it lands and reads back. So
+when the value is empty and `ingress.enabled` is true, the chart fills in
+`ingress.host`.
+
+If you route traffic another way - Gateway API, a service mesh, an OpenShift
+Route, a load balancer, or an Ingress you manage outside this chart - put that
+address here. The chart cannot discover routing it did not create, so an empty
+value with `ingress.enabled: false` falls back to the querier Service. That works
+for reading and fails for writing, with `cannot write to a read-only server`, and
+no chart setting changes it: the querier does not accept writes. Point the
+Explorer at a combined endpoint, or accept that it is read-only. The image supports `mode: query` and
+`mode: admin`; use an admin token for admin features such as database and token
+management.
+
+**Warning**: the Explorer has no login of its own. Anyone who can reach it - through
+`explorer.ingress`, a `LoadBalancer` or `NodePort` Service, or a port-forward - can use
+the preconfigured connection with that API token's permissions, and with `mode: admin`
+and an admin token that is full database administration. Before exposing it:
+
+- Restrict or authenticate the ingress. The chart passes `explorer.ingress.annotations`
+  through, so with ingress-nginx, for example:
+
+  ```yaml
+  explorer:
+    ingress:
+      enabled: true
+      host: explorer.example.com
+      annotations:
+        nginx.ingress.kubernetes.io/auth-type: basic
+        nginx.ingress.kubernetes.io/auth-secret: explorer-basic-auth
+        nginx.ingress.kubernetes.io/auth-realm: "InfluxDB 3 Explorer"
+        nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8"
+  ```
+
+  `explorer-basic-auth` is a Secret you create, holding an htpasswd file under the
+  key `auth`. Other controllers have their own equivalents, or put an
+  authenticating proxy in front.
+- Give the connection the least privilege that does the job: `mode: query` with a
+  token scoped to the databases people should see. Keep `mode: admin` and an admin
+  token for an Explorer that only administrators can reach.
+
+The default connection is `ingress.host:ingress.port`, so set `ingress.port` to
+the port your ingress is reachable on - `80` or `443` for a standard controller
+rather than the default `8181`.
+
+With `networkPolicy.enabled`, the Explorer's egress allows DNS and the queriers.
+When `ingress.enabled` and `networkPolicy.ingress.fromIngressController` are both
+on, it also allows the ingress controller named under
+`networkPolicy.ingress.ingressController`, on the pod ports listed in its `ports`
+(`80` and `443` by default; ingress-nginx's admission webhook on `8443` stays
+closed). Anything else the connection needs goes in
+`explorer.networkPolicy.extraEgress`. A policy matches the pod the traffic ends up
+at, so for a target inside the cluster - a Gateway, a mesh ingress, an Ingress
+managed elsewhere - add a `namespaceSelector` and `podSelector` for its pods, and
+use an `ipBlock` for an address outside the cluster:
+
+```yaml
+explorer:
+  networkPolicy:
+    extraEgress:
+      - to:
+          - ipBlock:
+              cidr: 203.0.113.10/32
+        ports:
+          - protocol: TCP
+            port: 443
+```
+
+Existing Secrets are supported:
+
+- `explorer.existingSecret` must contain `session-secret`.
+- `explorer.defaultConnection.existingSecret` must contain `config.json`.
+
+Docs:
+- Integrated Enterprise Web UI: https://docs.influxdata.com/influxdb3/enterprise/release-notes/#enterprise-2
+- Explorer preconfiguration: https://docs.influxdata.com/influxdb3/explorer/install/#pre-configure-influxdb-connections
+- Explorer modes: https://docs.influxdata.com/influxdb3/explorer/install/#choose-operational-mode
 
 ## Configuration
 
@@ -742,6 +860,7 @@ See the `examples/` directory for complete configuration examples:
 - **values-minio.yaml**: Using MinIO AIStor storage
 - **values-google.yaml**: Using Google Cloud Storage
 - **values-azure.yaml**: Using Microsoft Azure blob storage
+- **values-explorer.yaml**: Five-node cluster with standalone Explorer preconfiguration
 
 ### Example: Production Deployment
 
@@ -918,6 +1037,40 @@ ingester:
 | `compactedData.skipFileIndex` | Skip loading the compacted-data file index into memory | not set (server default `false`) |
 | `compactedData.loadConcurrencyLimit` | Concurrent downloads while loading compaction summaries | not set (server default `20`) |
 
+### Explorer Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `explorer.replicas` | Standalone Explorer replicas; must be `0` or `1`, the state is a single SQLite file | `1` |
+| `explorer.mode` | `query` or `admin`; `admin` unlocks database and token management | `query` |
+| `explorer.databaseUrl` | Path to the Explorer SQLite file inside the container | `/db/sqlite.db` |
+| `explorer.persistence.enabled` | Keep the Explorer's SQLite on a PVC instead of an emptyDir | `false` |
+| `explorer.persistence.size` / `accessMode` / `storageClass` / `existingClaim` | Explorer PVC settings | `1Gi` / `ReadWriteOnce` / `""` / `""` |
+| `explorer.priorityClassName` | PriorityClass for the Explorer pod | `""` |
+| `explorer.extraVolumes` / `extraVolumeMounts` | Explorer-only volumes, added to the global `extraVolumes`; a private CA for an HTTPS default connection goes here | `[]` |
+| `explorer.ingress.enabled` | Ingress for the standalone Explorer | `false` |
+| `explorer.ingress.host` | Host for that ingress; required when enabled and must differ from `ingress.host` | `""` |
+| `explorer.ingress.className` / `annotations` / `tls` | Ingress settings; class falls back to `ingress.className`, TLS does not fall back because the host differs | `""` / `{}` / `[]` |
+| `explorer.resources` | Explorer resource requests and limits | `{}` (unset) |
+| `explorer.extraEnv` | Extra environment variables for the Explorer container | `[]` |
+| `explorer.podAnnotations` / `podLabels` | Extra metadata on the Explorer pod | `{}` |
+| `explorer.podSecurityContext` / `securityContext` | Explorer pod and container security contexts; the defaults satisfy restricted Pod Security | see `values.yaml` |
+| `explorer.nodeSelector` / `tolerations` / `affinity` | Explorer scheduling | `{}` / `[]` / `{}` |
+| `explorer.enabled` | Enable the standalone Explorer companion Deployment | `false` |
+| `explorer.image.*` | Standalone Explorer image settings | `docker.io/influxdata/influxdb3-ui:1.9.0` |
+| `explorer.sessionSecret` | Session secret for standalone Explorer; required unless `explorer.existingSecret` is set | `""` |
+| `explorer.existingSecret` | Existing Secret containing `session-secret` for standalone Explorer sessions | `""` |
+| `explorer.service.type` | Standalone Explorer Service type | `ClusterIP` |
+| `explorer.service.port` | Standalone Explorer Service port | `8888` |
+| `explorer.service.annotations` | Annotations on the Explorer Service | `{}` |
+| `explorer.defaultConnection.enabled` | Create and mount documented Explorer `config.json` defaults | `false` |
+| `explorer.defaultConnection.existingSecret` | Existing Secret containing Explorer `config.json` | `""` |
+| `explorer.defaultConnection.server` | Default InfluxDB server URL; empty uses `ingress.host` when `ingress.enabled`, otherwise the querier Service, which is read-only | `""` |
+| `explorer.defaultConnection.database` | Default database name for standalone Explorer config | `""` |
+| `explorer.defaultConnection.apiToken` | Default API token for standalone Explorer config; required unless using `existingSecret` | `""` |
+| `explorer.defaultConnection.serverName` | Display name for standalone Explorer config | release-based name |
+| `explorer.networkPolicy.extraEgress` | Extra egress rules for the Explorer's NetworkPolicy, for a connection endpoint the chart cannot name | `[]` |
+
 ### Object Storage Parameters
 
 | Parameter | Description | Default |
@@ -986,7 +1139,7 @@ directly does not create or remove the corresponding Services.
 | `ingress.enabled` | Enable ingress | `true` |
 | `ingress.host` | Hostname for all ingresses (set to your domain) | `influxdb.example.com` |
 | `ingress.className` | Ingress class | `nginx` |
-| `ingress.port` | Host port referenced in NOTES | `8181` |
+| `ingress.port` | Port the ingress is reachable on; used in NOTES and in the Explorer's default connection | `8181` |
 | `ingress.tls` | TLS host/secret list | `[]` |
 | `ingress.write.annotations` | Write ingress annotations | `proxy-body-size/read-timeout` |
 | `ingress.query.annotations` | Query ingress annotations | `proxy-read-timeout` |
@@ -1005,7 +1158,8 @@ Ingress routes:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `networkPolicy.enabled` | Enable NetworkPolicies | `false` |
-| `networkPolicy.ingress.fromIngressController` | Allow ingress controller | `true` |
+| `networkPolicy.ingress.fromIngressController` | Allow the ingress controller to reach the components, and the Explorer to reach the controller | `true` |
+| `networkPolicy.ingress.ingressController.ports` | Controller pod ports the Explorer may reach | `[80, 443]` |
 | `networkPolicy.ingress.fromComponents` | Allow inter-component traffic | `true` |
 | `networkPolicy.egress.toDns` | Allow DNS | `true` |
 | `networkPolicy.egress.toObjectStorage` | Allow object storage | `true` |
