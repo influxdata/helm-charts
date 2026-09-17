@@ -492,6 +492,43 @@ the default over every tag, which can be larger. Nothing in this chart governs
 this; see
 [Manage file indexes](https://docs.influxdata.com/influxdb3/enterprise/admin/file-index/).
 
+#### Graceful Shutdown
+
+On SIGTERM the server first finishes its background shutdown - catalog, WAL and
+compaction work, plugins - and then drains active connections for up to
+`shutdown.timeout`. kubelet sends SIGKILL once `terminationGracePeriodSeconds`
+expires, so the grace period has to outlast both.
+
+```yaml
+shutdown:
+  timeout: "60s"                    # --shutdown-timeout, 3.9.12+ and 3.11+
+  terminationGracePeriodSeconds: 90 # ingester, querier, compactor, processor
+```
+
+Both default to 30 seconds, so with the defaults a drain that needs its full
+timeout is cut off. Raise the grace period before lengthening the timeout, and
+leave a margin beyond it.
+
+When `terminationGracePeriodSeconds` is set, the chart requires it to be longer
+than `shutdown.timeout`, or at least the server's 30s default when no timeout is
+set. That is a lower bound: the chart cannot know how long the background
+shutdown takes. A timeout of `"0"` or `"0s"` skips the drain, so `0s` with a
+grace period of `0` passes the check, but Kubernetes discourages a grace period
+of `0` for StatefulSet pods - the replacement can start under the same identity
+while the old pod is still running and writing.
+
+`shutdown.timeout` is passed to the server as written, and without a grace
+period the chart never rejects it. With one, the chart has to read the timeout to
+compare them, so it must be in humantime's whole units, abbreviated or spelled
+out, from nanoseconds to years - `90s`, `1h 30m`, `2 minutes`, `1d`. Upper-case
+`M` means months to the server, not minutes. A fraction such as `1.5h` is
+rejected there; write `90m`.
+
+`shutdown.timeout` is honoured on 3.9.12 and later 3.9 images and on 3.11+; no
+released 3.10.x has it, so there the variable is unknown and ignored, and the
+drain waits for every connection with no time limit.
+`terminationGracePeriodSeconds` is a Kubernetes field and works on any version.
+
 #### TLS
 
 Enable TLS with inline cert/key or an existing secret:
@@ -603,6 +640,12 @@ serviceMonitor:
   additionalLabels:
     prometheus: kube-prometheus
 ```
+
+**InfluxDB 3.11 removed the `db` label from several metrics**, so dashboards and
+alerts that group or filter by it break on upgrade and silently return no
+series. The affected metrics and the query change are listed in
+[UPGRADING-3.10-TO-3.11.md](UPGRADING-3.10-TO-3.11.md#metrics). Check dashboards
+and alert rules for `db` before upgrading.
 
 ### Processing Engine
 
@@ -934,7 +977,14 @@ ingester:
 | `acknowledgeCatalogMigration` | One-time acknowledgement for an upgrade without the catalog format v3 marker | `false` |
 | `acknowledgePachaTreeMigration` | Acknowledge and start migration of an existing Parquet cluster to PachaTree | `false` |
 | `engine.pachaTree.*` | Optional PachaTree tuning for ingester, querier, and compactor pods; see `values.yaml` for role-specific options | not set |
-| `shutdown.timeout` | Graceful connection-drain timeout | not set (server default `30s`) |
+| `shutdown.timeout` | Graceful connection-drain timeout, a humantime duration passed through as written | not set (server default `30s`) |
+| `shutdown.terminationGracePeriodSeconds` | Grace period on the ingester, querier, compactor and processor pods; `0` means kubelet kills immediately, which Kubernetes discourages for StatefulSets | not set (Kubernetes default `30`) |
+| `resourceLimits.numDatabases` / `numTables` / `numColumnsPerTable` | Catalog limits | not set (server defaults) |
+| `dataLifecycle.gen1LookbackDuration` / `retentionCheckInterval` / `deleteGracePeriod` | Retention and deletion timings | not set (server defaults) |
+| `dataLifecycle.hardDeleteDefaultDuration` | Deprecated; ignored by InfluxDB 3.11+ | not set |
+| `logs.logFilter` / `logDestination` / `logFormat` / `queryLogSize` | Logging overrides | not set (server defaults) |
+| `traces.exporter` / `traces.jaeger.*` | Jaeger trace export | not set (`none`) |
+| `telemetry.disableUpload` / `telemetry.endpoint` | InfluxData telemetry opt-out and endpoint | not set |
 | `cluster.id` | Cluster identifier | `cluster-01` |
 | `cluster.waitForRunningIngester` | Startup wait time for an ingester | `""` |
 | `image.registry` | Image registry | `docker.io` |

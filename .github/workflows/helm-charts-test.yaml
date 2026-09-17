@@ -99,3 +99,34 @@ jobs:
             exit 1
           fi
         if: steps.list-changed.outputs.changed == 'true'
+
+  unit-test:
+    runs-on: ubuntu-latest
+    name: unit-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+
+      # v1.1.x adds platformHooks to plugin.yaml, which Helm 3.16 cannot load
+      - name: Install helm-unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3
+
+      - name: Run helm-unittest
+        run: |
+          shopt -s nullglob
+          status=0
+          for chart in charts/*/; do
+            suites=("${chart}"tests/*_test.yaml)
+            if [[ ${#suites[@]} -eq 0 ]]; then
+              continue
+            fi
+            echo "::group::helm unittest ${chart}"
+            helm unittest "${chart}" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
