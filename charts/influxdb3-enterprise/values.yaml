@@ -659,6 +659,9 @@ explorer:
 
   # Optional ingress for the standalone Explorer. It serves at /, and the query
   # ingress already routes / to the queriers, so this needs its own host.
+  # The Explorer has no login: anyone who can reach this ingress can use the
+  # defaultConnection below with its token's permissions. Restrict or
+  # authenticate it through annotations before exposing it.
   ingress:
     enabled: false
     host: ""
@@ -704,6 +707,8 @@ explorer:
     # query-only - the Explorer can read through it but not write.
     server: ""
     database: ""
+    # Every visitor acts with this token's permissions. Prefer a token scoped to
+    # the databases they should see; an admin token only behind authentication.
     apiToken: ""
     serverName: ""
 

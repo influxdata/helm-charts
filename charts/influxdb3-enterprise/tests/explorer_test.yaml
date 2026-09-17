@@ -29,7 +29,7 @@ tests:
       explorer.enabled: true
       explorer.sessionSecret: s3cret-explorer-key-012345678
       explorer.defaultConnection.enabled: true
-      explorer.defaultConnection.apiToken: apiv3_token
+      explorer.defaultConnection.apiToken: apiv3_redacted
     asserts:
       - notExists:
           path: spec.template.spec.initContainers
@@ -253,3 +253,52 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "explorer.networkPolicy.extraEgress must be a list of NetworkPolicy egress rules, got map."
+
+  # --- the Explorer has no login: exposing a preconfigured connection needs saying ---
+
+  - it: warns when a preconfigured Explorer is exposed through its ingress
+    template: templates/NOTES.txt
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.ingress.enabled: true
+      explorer.ingress.host: explorer.example.com
+      explorer.defaultConnection.enabled: true
+      explorer.defaultConnection.apiToken: apiv3_redacted
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: the Explorer has no login of its own"
+
+  - it: warns when a preconfigured Explorer is exposed through its Service
+    template: templates/NOTES.txt
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.service.type: LoadBalancer
+      explorer.defaultConnection.enabled: true
+      explorer.defaultConnection.apiToken: apiv3_redacted
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: the Explorer has no login of its own"
+
+  - it: does not warn for an Explorer reachable only inside the cluster
+    template: templates/NOTES.txt
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.defaultConnection.enabled: true
+      explorer.defaultConnection.apiToken: apiv3_redacted
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "has no login of its own"
+
+  - it: does not warn when no connection is preconfigured
+    template: templates/NOTES.txt
+    set:
+      explorer.enabled: true
+      explorer.sessionSecret: s3cret-explorer-key-012345678
+      explorer.ingress.enabled: true
+      explorer.ingress.host: explorer.example.com
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "has no login of its own"

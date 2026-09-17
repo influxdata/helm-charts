@@ -113,6 +113,15 @@ Getting started:
 
 Documentation: https://docs.influxdata.com/influxdb3/enterprise/
 
+{{- $explorer := .Values.explorer | default dict }}
+{{- $explorerExposed := or (and .Values.ingress.enabled (dig "ingress" "enabled" false $explorer)) (ne (dig "service" "type" "ClusterIP" $explorer) "ClusterIP") }}
+{{- if and (get $explorer "enabled") (dig "defaultConnection" "enabled" false $explorer) $explorerExposed }}
+
+WARNING: the Explorer has no login of its own. Anyone who can reach it can use the
+preconfigured connection with that API token's permissions. Restrict or authenticate
+access to it and use a least-privilege token; see "Explorer UI" in the chart README.
+{{- end }}
+
 {{- $objectStorage := .Values.objectStorage | default dict }}
 {{- if get $objectStorage "cacheEndpoint" }}
 

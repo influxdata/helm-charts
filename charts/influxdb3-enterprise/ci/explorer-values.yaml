@@ -59,5 +59,5 @@ explorer:
   defaultConnection:
     enabled: true
     database: "explorer_demo"
-    apiToken: "apiv3_ci_admin_token"
+    apiToken: "apiv3_redacted"
     serverName: "Helm Standalone Explorer"

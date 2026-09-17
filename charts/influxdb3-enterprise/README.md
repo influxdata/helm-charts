@@ -222,7 +222,7 @@ explorer:
   defaultConnection:
     enabled: true
     database: "mydb"
-    apiToken: "apiv3_..."
+    apiToken: "apiv3_redacted"
     serverName: "InfluxDB 3 Enterprise"
   # Saved queries and server configurations live in SQLite; without this they
   # are lost on every pod restart.
@@ -249,6 +249,33 @@ no chart setting changes it: the querier does not accept writes. Point the
 Explorer at a combined endpoint, or accept that it is read-only. The image supports `mode: query` and
 `mode: admin`; use an admin token for admin features such as database and token
 management.
+
+**Warning**: the Explorer has no login of its own. Anyone who can reach it - through
+`explorer.ingress`, a `LoadBalancer` or `NodePort` Service, or a port-forward - can use
+the preconfigured connection with that API token's permissions, and with `mode: admin`
+and an admin token that is full database administration. Before exposing it:
+
+- Restrict or authenticate the ingress. The chart passes `explorer.ingress.annotations`
+  through, so with ingress-nginx, for example:
+
+  ```yaml
+  explorer:
+    ingress:
+      enabled: true
+      host: explorer.example.com
+      annotations:
+        nginx.ingress.kubernetes.io/auth-type: basic
+        nginx.ingress.kubernetes.io/auth-secret: explorer-basic-auth
+        nginx.ingress.kubernetes.io/auth-realm: "InfluxDB 3 Explorer"
+        nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8"
+  ```
+
+  `explorer-basic-auth` is a Secret you create, holding an htpasswd file under the
+  key `auth`. Other controllers have their own equivalents, or put an
+  authenticating proxy in front.
+- Give the connection the least privilege that does the job: `mode: query` with a
+  token scoped to the databases people should see. Keep `mode: admin` and an admin
+  token for an Explorer that only administrators can reach.
 
 The default connection is `ingress.host:ingress.port`, so set `ingress.port` to
 the port your ingress is reachable on - `80` or `443` for a standard controller
