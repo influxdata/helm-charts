@@ -55,12 +55,14 @@ spec:
               name: {{ .Values.envFromSecret }}
 {{- end }}
         volumeMounts:
+        {{- if .Values.hostMounts }}
         - name: varrunutmpro
           mountPath: /var/run/utmp
           readOnly: true
         - name: hostfsro
           mountPath: /hostfs
           readOnly: true
+        {{- end }}
         {{- if hasPrefix "unix" .Values.config.docker_endpoint }}
         - name: docker-socket
           mountPath: {{ trimPrefix "unix://" .Values.config.docker_endpoint }}
@@ -83,18 +85,22 @@ spec:
 {{ toYaml . | indent 8 }}
       {{- end }}
       volumes:
+      {{- if .Values.hostMounts }}
       - name: hostfsro
         hostPath:
           path: /
+      {{- end }}
       {{- if hasPrefix "unix" .Values.config.docker_endpoint }}
       - name: docker-socket
         hostPath:
           path: {{ trimPrefix "unix://" .Values.config.docker_endpoint }}
           type: Socket
       {{- end }}
+      {{- if .Values.hostMounts }}
       - name: varrunutmpro
         hostPath:
           path: /var/run/utmp
+      {{- end }}
       - name: config
         configMap:
           name:  {{ include "telegraf.fullname" . }}
