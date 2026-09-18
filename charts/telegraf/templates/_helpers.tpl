@@ -724,3 +724,11 @@ Get health configuration
     {{- $health | toYaml -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Compute a ConfigMap or Secret checksum from its data only, for the checksum/* pod annotations.
+The full manifest carries the helm.sh/chart label, which changes on every chart version bump.
+*/}}
+{{- define "telegraf.configMapOrSecretContentHash" -}}
+{{ pick (include (print .ctx.Template.BasePath .name) .ctx | fromYaml) "data" "stringData" | toYaml | sha256sum }}
+{{- end -}}
