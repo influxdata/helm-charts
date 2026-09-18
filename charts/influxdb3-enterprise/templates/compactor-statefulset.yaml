@@ -142,7 +142,7 @@ spec:
             {{- end }}
             {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.compactor) | nindent 12 }}
-            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.compactor) | nindent 12 }}
+            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.compactor "logs" .Values.compactor.logs) | nindent 12 }}
           ports:
             - name: http
               containerPort: 8181

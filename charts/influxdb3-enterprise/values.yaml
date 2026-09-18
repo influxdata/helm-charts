@@ -244,6 +244,14 @@ ingester:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for ingester pods only; each overrides the top-level logs.* key of
+  # the same name. Filter syntax as --log-filter, quoted (YAML reads a bare off
+  # as false); format full, pretty, json or logfmt; destination stdout or stderr.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for ingester pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
@@ -349,6 +357,14 @@ querier:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for querier pods only; each overrides the top-level logs.* key of
+  # the same name. Filter syntax as --log-filter, quoted (YAML reads a bare off
+  # as false); format full, pretty, json or logfmt; destination stdout or stderr.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for querier pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
@@ -441,6 +457,14 @@ compactor:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for compactor pods only; each overrides the top-level logs.* key of
+  # the same name. Filter syntax as --log-filter, quoted (YAML reads a bare off
+  # as false); format full, pretty, json or logfmt; destination stdout or stderr.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for compactor pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
@@ -526,6 +550,14 @@ processingEngine:
   # Thread configuration
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
+
+  # Log settings for Processing Engine pods only; each overrides the top-level logs.* key of
+  # the same name. Filter syntax as --log-filter, quoted (YAML reads a bare off
+  # as false); format full, pretty, json or logfmt; destination stdout or stderr.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
 
   # Extra environment variables for Processing Engine pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
