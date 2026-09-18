@@ -848,23 +848,30 @@ logs:
   logFilter: "debug"
 ```
 
-To raise one component only, set the variable in that component's `extraEnv`,
-which takes precedence over the shared value:
+To raise one component only, set its own `logs` block, which overrides the
+top-level `logs.*` key of the same name for that component:
 ```yaml
 ingester:
-  extraEnv:
-    - name: INFLUXDB3_LOG_FILTER
-      value: "debug"
+  logs:
+    logFilter: "debug"
 ```
 
-Use `INFLUXDB3_LOG_FILTER`, not `LOG_FILTER`: when both are set the server keeps
-`INFLUXDB3_LOG_FILTER`. From 3.10 on, a `debug` filter still holds a few noisy
-modules at `info`, `influxdb3_wal` among them. Another `extraEnv` entry lifts that:
+`logFormat` and `logDestination` work the same way per component. The chart
+checks the keys and values at render time - `logFormat` takes `full`, `pretty`,
+`json` or `logfmt`, `logDestination` takes `stdout` or `stderr` - and a value has
+to be a string: quote `"off"`, since YAML reads a bare `off` as `false`. A value
+set through the component's `extraEnv` as `INFLUXDB3_LOG_FILTER` still wins, so an
+existing entry there keeps working. The legacy `LOG_FILTER` does not work on the
+official images from 3.10 on: they set `INFLUXDB3_LOG_FILTER=info` in the image
+itself, and the server keeps the `INFLUXDB3_` name when both are present.
+
+From 3.10 on, a `debug` filter still holds a few noisy modules at `info`,
+`influxdb3_wal` among them. An `extraEnv` entry lifts that:
 ```yaml
 ingester:
+  logs:
+    logFilter: "debug"
   extraEnv:
-    - name: INFLUXDB3_LOG_FILTER
-      value: "debug"
     - name: INFLUXDB3_DISABLE_LOG_FILTER_NOISE_REDUCTION
       value: "true"
 ```
@@ -960,6 +967,10 @@ ingester:
 | `querier.extraEnv` | Extra environment variables applied only to querier pods | `[]` |
 | `compactor.extraEnv` | Extra environment variables applied only to compactor pods | `[]` |
 | `processingEngine.extraEnv` | Extra environment variables applied only to Processing Engine pods | `[]` |
+| `ingester.logs.logFilter` / `logFormat` / `logDestination` | Log settings for ingester pods only; override the top-level `logs.*` keys | not set |
+| `querier.logs.logFilter` / `logFormat` / `logDestination` | Log settings for querier pods only | not set |
+| `compactor.logs.logFilter` / `logFormat` / `logDestination` | Log settings for compactor pods only | not set |
+| `processingEngine.logs.logFilter` / `logFormat` / `logDestination` | Log settings for Processing Engine pods only | not set |
 | `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
 | `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
 

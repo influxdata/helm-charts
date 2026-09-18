@@ -1,0 +1,208 @@
+suite: per-component log settings
+release:
+  name: t
+  namespace: default
+tests:
+  - it: sets the filter on the ingester only
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+
+  - it: leaves the other components alone
+    template: templates/querier-statefulset.yaml
+    set:
+      ingester.logs.logFilter: debug
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          any: true
+          content:
+            name: INFLUXDB3_LOG_FILTER
+
+  - it: keeps the global filter in the ConfigMap next to a component override
+    template: templates/configmap.yaml
+    set:
+      logs.logFilter: info
+      querier.logs.logFilter: debug
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_LOG_FILTER
+          value: info
+
+  - it: maps format and destination on the querier
+    template: templates/querier-statefulset.yaml
+    set:
+      querier.logs.logFormat: json
+      querier.logs.logDestination: stderr
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FORMAT
+            value: json
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_DESTINATION
+            value: stderr
+
+  - it: reaches the compactor and the processor
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.logs.logFilter: trace
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: trace
+
+  - it: reaches the processor through processingEngine
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+      processingEngine.logs.logFilter: debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+
+  # --- precedence: a filter set through extraEnv keeps winning after the upgrade ---
+
+  - it: lets the component extraEnv win over the component logs key, without a duplicate
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: info
+      ingester.extraEnv:
+        - name: INFLUXDB3_LOG_FILTER
+          value: debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: info
+
+  - it: lets the component logs key win over the global extraEnv, without a duplicate
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: debug
+      extraEnv:
+        - name: INFLUXDB3_LOG_FILTER
+          value: info
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: info
+
+  - it: renders nothing for a null or empty value
+    template: templates/ingester-statefulset.yaml
+    values: [values/logs-ingester-null.yaml]
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          any: true
+          content:
+            name: INFLUXDB3_LOG_FILTER
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          any: true
+          content:
+            name: INFLUXDB3_LOG_FORMAT
+
+  - it: names the key when logs is not a map
+    set:
+      querier.logs: oops
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs must be a map with logFilter, logFormat or logDestination, got string."
+
+  # --- boundary values: YAML booleans, wrong types, unknown keys, bad values ---
+
+  - it: refuses a boolean filter, which is what an unquoted off becomes
+    values: [values/logs-boolean.yaml]
+    asserts:
+      - failedTemplate:
+          errorMessage: 'compactor.logs.logFilter must be a string, got boolean. YAML reads off, on, yes and no as booleans, so quote the value: "off".'
+
+  - it: renders a quoted off as the filter
+    template: templates/compactor-statefulset.yaml
+    values: [values/logs-off-quoted.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: "off"
+
+  - it: refuses a boolean format
+    set:
+      querier.logs.logFormat: true
+    asserts:
+      - failedTemplate: {}
+
+  - it: refuses a format the server does not have
+    set:
+      querier.logs.logFormat: yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs.logFormat must be one of full, pretty, json, logfmt, got \"yaml\"."
+
+  - it: accepts a format in any case, as the server does
+    template: templates/querier-statefulset.yaml
+    set:
+      querier.logs.logFormat: JSON
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FORMAT
+            value: JSON
+
+  - it: refuses a destination the server does not have
+    set:
+      ingester.logs.logDestination: file
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingester.logs.logDestination must be one of stdout, stderr, got \"file\"."
+
+  - it: refuses a key the block does not know
+    set:
+      ingester.logs.queryLogSize: 1000
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingester.logs.queryLogSize is not a per-component setting; the block takes logFilter, logFormat and logDestination."
+
+  - it: still emits the INFLUXDB3_ name next to a legacy LOG_FILTER in extraEnv
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: debug
+      ingester.extraEnv:
+        - name: LOG_FILTER
+          value: trace
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug

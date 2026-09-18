@@ -386,14 +386,29 @@ Component-specific entries override global entries with the same name.
 {{- $_ := set $componentNames . true -}}
 {{- end }}
 {{- end }}
+{{/* The component's log settings, when the call site passes them. Precedence, lowest first:
+     global extraEnv, these, the component's extraEnv - so a filter already set through extraEnv
+     keeps winning, and a name is emitted once. Only the INFLUXDB3_ name counts as set: the
+     official images since 3.10 carry ENV INFLUXDB3_LOG_FILTER=info, which beats a legacy
+     LOG_FILTER on the server, so deferring to that spelling would leave the image default. */}}
+{{- $logs := .logs | default dict -}}
+{{- $logsEnv := list -}}
+{{- $logsNames := dict -}}
+{{- range $pair := list (list "logFilter" "INFLUXDB3_LOG_FILTER") (list "logFormat" "INFLUXDB3_LOG_FORMAT") (list "logDestination" "INFLUXDB3_LOG_DESTINATION") }}
+{{- $value := get $logs (index $pair 0) -}}
+{{- if and (not (kindIs "invalid" $value)) (ne (toString $value) "") (not (hasKey $componentNames (index $pair 1))) }}
+{{- $logsEnv = append $logsEnv (dict "name" (index $pair 1) "value" (toString $value)) -}}
+{{- $_ := set $logsNames (index $pair 1) true -}}
+{{- end }}
+{{- end }}
 {{- $extraEnv := list -}}
 {{- range $env := $global }}
 {{- $name := $env.name | default "" -}}
-{{- if or (not $name) (not (hasKey $componentNames $name)) }}
+{{- if or (not $name) (not (or (hasKey $componentNames $name) (hasKey $logsNames $name))) }}
 {{- $extraEnv = append $extraEnv $env -}}
 {{- end }}
 {{- end }}
-{{- $extraEnv = concat $extraEnv $component -}}
+{{- $extraEnv = concat $extraEnv $logsEnv $component -}}
 {{- if $extraEnv }}
 {{- toYaml $extraEnv }}
 {{- end }}
@@ -791,6 +806,40 @@ that table does not cover exactly, such as a fraction, is rejected while a grace
 is set. The check is a lower bound: the server finishes its background shutdown before
 the drain starts.
 */}}
+{{/*
+Check the per-component logs blocks: known keys, string values, and the value sets
+trogging accepts for format and destination (closed and identical since 3.9, matched
+case-insensitively as the server does).
+*/}}
+{{- define "influxdb3-enterprise.validateComponentLogs" -}}
+{{- $kinds := dict "float64" "number" "int64" "number" "bool" "boolean" "slice" "list" "map" "map" "string" "string" -}}
+{{- range $name := list "ingester" "querier" "compactor" "processingEngine" -}}
+{{- $component := get $.Values $name | default dict -}}
+{{- if and (hasKey $component "logs") (not (kindIs "invalid" (get $component "logs"))) -}}
+{{- $logs := get $component "logs" -}}
+{{- if not (kindIs "map" $logs) -}}
+{{- fail (printf "%s.logs must be a map with logFilter, logFormat or logDestination, got %s." $name (get $kinds (kindOf $logs) | default (kindOf $logs))) -}}
+{{- end -}}
+{{- range $key, $value := $logs -}}
+{{- if not (has $key (list "logFilter" "logFormat" "logDestination")) -}}
+{{- fail (printf "%s.logs.%s is not a per-component setting; the block takes logFilter, logFormat and logDestination." $name $key) -}}
+{{- end -}}
+{{- if not (kindIs "invalid" $value) -}}
+{{- if not (kindIs "string" $value) -}}
+{{- fail (printf "%s.logs.%s must be a string, got %s. YAML reads off, on, yes and no as booleans, so quote the value: \"off\"." $name $key (get $kinds (kindOf $value) | default (kindOf $value))) -}}
+{{- end -}}
+{{- if and (eq $key "logFormat") (ne $value "") (not (has (lower $value) (list "full" "pretty" "json" "logfmt"))) -}}
+{{- fail (printf "%s.logs.logFormat must be one of full, pretty, json, logfmt, got %q." $name $value) -}}
+{{- end -}}
+{{- if and (eq $key "logDestination") (ne $value "") (not (has (lower $value) (list "stdout" "stderr"))) -}}
+{{- fail (printf "%s.logs.logDestination must be one of stdout, stderr, got %q." $name $value) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
 {{- define "influxdb3-enterprise.validateShutdownConfig" -}}
 {{- $shutdown := .Values.shutdown | default dict -}}
 {{- if and (hasKey $shutdown "terminationGracePeriodSeconds") (not (kindIs "invalid" (get $shutdown "terminationGracePeriodSeconds"))) -}}

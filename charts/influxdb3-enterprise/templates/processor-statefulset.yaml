@@ -145,7 +145,7 @@ spec:
               value: {{ .config | quote }}
             {{- end }}
             {{- end }}
-            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.processingEngine) | nindent 12 }}
+            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.processingEngine "logs" .Values.processingEngine.logs) | nindent 12 }}
           ports:
             - name: http
               containerPort: 8181
