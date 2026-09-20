@@ -857,16 +857,27 @@ ingester:
 ```
 
 `logFormat` and `logDestination` work the same way per component. The chart
-checks the keys and values at render time - `logFormat` takes `full`, `pretty`,
-`json` or `logfmt`, `logDestination` takes `stdout` or `stderr` - and a value
-has to be a string: quote `"off"`, since YAML reads a bare `off` as `false`. A
-`logFilter` with whitespace around a comma or at either end is refused as well:
-the server panics on `info, sqlx=warn` and reads `"info "` as a target name,
-which leaves the pod logging nothing. A value set through the component's
-`extraEnv` as `INFLUXDB3_LOG_FILTER` still wins, so an existing entry there
-keeps working. The legacy `LOG_FILTER` does not work on the official images from
-3.10 on: they set `INFLUXDB3_LOG_FILTER=info` in the image itself, and the
-server keeps the `INFLUXDB3_` name when both are present.
+checks the component blocks at render time: `logFormat` takes `full`, `pretty`,
+`json` or `logfmt` and `logDestination` takes `stdout` or `stderr`, both in any
+case, and every value has to be a string, so quote `"off"` - YAML reads a bare
+`off` as `false`. `queryLogSize` stays a top-level key. The top-level `logs`
+block itself is not checked, since it has shipped since 0.10.0 and a check on it
+would refuse an upgrade that renders today.
+
+A component `logFilter` containing whitespace is refused, because the server
+never reads it as written. A directive is `target=level` with no room for a
+space, so `info, sqlx=warn` panics the server and `"info "` turns into a target
+name that matches no module, after which the pod logs nothing at all. Spaces
+inside a `[span]` are still allowed.
+
+Five layers set these variables, each beating the one before it: the image's own
+`INFLUXDB3_LOG_FILTER=info`, the top-level `logs` block, the global `extraEnv`,
+the component's `logs` block, and the component's `extraEnv`. So an existing
+`INFLUXDB3_LOG_FILTER` in `extraEnv` keeps winning and needs no change, but a
+global `extraEnv` entry silently overrides the top-level `logs` block. The
+legacy `LOG_FILTER` does not work on the official images from 3.10 on: they set
+`INFLUXDB3_LOG_FILTER=info` in the image itself, and the server keeps the
+`INFLUXDB3_` name when both are present.
 
 From 3.10 on, a `debug` filter still holds a few noisy modules at `info`,
 `influxdb3_wal` among them. An `extraEnv` entry lifts that:
@@ -970,10 +981,7 @@ ingester:
 | `querier.extraEnv` | Extra environment variables applied only to querier pods | `[]` |
 | `compactor.extraEnv` | Extra environment variables applied only to compactor pods | `[]` |
 | `processingEngine.extraEnv` | Extra environment variables applied only to Processing Engine pods | `[]` |
-| `ingester.logs.logFilter` / `logFormat` / `logDestination` | Log settings for ingester pods only; override the top-level `logs.*` keys | not set |
-| `querier.logs.logFilter` / `logFormat` / `logDestination` | Log settings for querier pods only | not set |
-| `compactor.logs.logFilter` / `logFormat` / `logDestination` | Log settings for compactor pods only | not set |
-| `processingEngine.logs.logFilter` / `logFormat` / `logDestination` | Log settings for Processing Engine pods only | not set |
+| `*.logs.logFilter` / `logFormat` / `logDestination` | Log settings for one component's pods only; override the top-level `logs.*` keys of the same name | not set |
 | `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
 | `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
 

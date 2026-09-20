@@ -12,6 +12,13 @@ objectStorage:
 ingress:
   enabled: false
 
+# Set on every pod through the ConfigMap. The component logs blocks below override it
+# as container env, so the installed pods prove env beats envFrom.
+logs:
+  logFilter: "info"
+  logFormat: "full"
+  logDestination: "stdout"
+
 extraEnv:
   - name: GLOBAL_COMPONENT_OVERRIDE_TEST
     value: "global"
@@ -22,6 +29,8 @@ extraEnv:
 
 ingester:
   replicas: 1
+  logs:
+    logFilter: "info,influxdb3_wal=debug"
   resources:
     requests:
       cpu: "250m"
@@ -39,6 +48,8 @@ ingester:
 
 querier:
   replicas: 1
+  logs:
+    logFormat: "json"
   resources:
     requests:
       cpu: "250m"
@@ -52,6 +63,8 @@ querier:
 
 compactor:
   replicas: 1
+  logs:
+    logDestination: "stderr"
   resources:
     requests:
       cpu: "250m"

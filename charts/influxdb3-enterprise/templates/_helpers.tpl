@@ -386,25 +386,28 @@ Component-specific entries override global entries with the same name.
 {{- $_ := set $componentNames . true -}}
 {{- end }}
 {{- end }}
-{{/* The component's log settings, when the call site passes them. Precedence, lowest first:
-     global extraEnv, these, the component's extraEnv - so a filter already set through extraEnv
-     keeps winning, and a name is emitted once. Only the INFLUXDB3_ name counts as set: the
-     official images since 3.10 carry ENV INFLUXDB3_LOG_FILTER=info, which beats a legacy
-     LOG_FILTER on the server, so deferring to that spelling would leave the image default. */}}
-{{- $logs := .logs | default dict -}}
+{{- /* The component's logs block. Precedence, lowest first: global extraEnv, these, the
+     component's extraEnv - so a filter already set through extraEnv keeps winning, and a name
+     is emitted once. Only the INFLUXDB3_ name counts as set: the official images since 3.10
+     carry ENV INFLUXDB3_LOG_FILTER=info, which beats a legacy LOG_FILTER on the server, so
+     deferring to that spelling would leave the image default. */}}
+{{- $logs := .component.logs | default dict -}}
 {{- $logsEnv := list -}}
-{{- $logsNames := dict -}}
-{{- range $pair := list (list "logFilter" "INFLUXDB3_LOG_FILTER") (list "logFormat" "INFLUXDB3_LOG_FORMAT") (list "logDestination" "INFLUXDB3_LOG_DESTINATION") }}
-{{- $value := get $logs (index $pair 0) -}}
-{{- if and (not (kindIs "invalid" $value)) (ne (toString $value) "") (not (hasKey $componentNames (index $pair 1))) }}
-{{- $logsEnv = append $logsEnv (dict "name" (index $pair 1) "value" (toString $value)) -}}
-{{- $_ := set $logsNames (index $pair 1) true -}}
+{{- range $mapping := list
+  (list "logFilter" "INFLUXDB3_LOG_FILTER")
+  (list "logFormat" "INFLUXDB3_LOG_FORMAT")
+  (list "logDestination" "INFLUXDB3_LOG_DESTINATION") }}
+{{- $name := index $mapping 1 -}}
+{{- $value := get $logs (index $mapping 0) -}}
+{{- if and (not (kindIs "invalid" $value)) (ne (toString $value) "") (not (hasKey $componentNames $name)) }}
+{{- $logsEnv = append $logsEnv (dict "name" $name "value" (toString $value)) -}}
+{{- $_ := set $componentNames $name true -}}
 {{- end }}
 {{- end }}
 {{- $extraEnv := list -}}
 {{- range $env := $global }}
 {{- $name := $env.name | default "" -}}
-{{- if or (not $name) (not (or (hasKey $componentNames $name) (hasKey $logsNames $name))) }}
+{{- if or (not $name) (not (hasKey $componentNames $name)) }}
 {{- $extraEnv = append $extraEnv $env -}}
 {{- end }}
 {{- end }}
@@ -806,43 +809,6 @@ that table does not cover exactly, such as a fraction, is rejected while a grace
 is set. The check is a lower bound: the server finishes its background shutdown before
 the drain starts.
 */}}
-{{/*
-Check the per-component logs blocks: known keys, string values, and the value sets
-the server accepts for format and destination (closed and identical since 3.9, matched
-case-insensitively as the server does).
-*/}}
-{{- define "influxdb3-enterprise.validateComponentLogs" -}}
-{{- $kinds := dict "float64" "number" "int64" "number" "bool" "boolean" "slice" "list" "map" "map" "string" "string" -}}
-{{- range $name := list "ingester" "querier" "compactor" "processingEngine" -}}
-{{- $component := get $.Values $name | default dict -}}
-{{- if and (hasKey $component "logs") (not (kindIs "invalid" (get $component "logs"))) -}}
-{{- $logs := get $component "logs" -}}
-{{- if not (kindIs "map" $logs) -}}
-{{- fail (printf "%s.logs must be a map with logFilter, logFormat or logDestination, got %s." $name (get $kinds (kindOf $logs) | default (kindOf $logs))) -}}
-{{- end -}}
-{{- range $key, $value := $logs -}}
-{{- if not (has $key (list "logFilter" "logFormat" "logDestination")) -}}
-{{- fail (printf "%s.logs.%s is not a per-component setting; the block takes logFilter, logFormat and logDestination." $name $key) -}}
-{{- end -}}
-{{- if not (kindIs "invalid" $value) -}}
-{{- if not (kindIs "string" $value) -}}
-{{- fail (printf "%s.logs.%s must be a string, got %s. YAML reads off, on, yes and no as booleans, so quote the value: \"off\"." $name $key (get $kinds (kindOf $value) | default (kindOf $value))) -}}
-{{- end -}}
-{{- if and (eq $key "logFilter") (regexMatch `^\s|\s$|\s,|,\s` $value) -}}
-{{- fail (printf "%s.logs.logFilter has whitespace at an end or next to a comma, got %q; the server panics on it or reads it as a target name, so remove the whitespace." $name $value) -}}
-{{- end -}}
-{{- if and (eq $key "logFormat") (ne $value "") (not (has (lower $value) (list "full" "pretty" "json" "logfmt"))) -}}
-{{- fail (printf "%s.logs.logFormat must be one of full, pretty, json, logfmt, got %q." $name $value) -}}
-{{- end -}}
-{{- if and (eq $key "logDestination") (ne $value "") (not (has (lower $value) (list "stdout" "stderr"))) -}}
-{{- fail (printf "%s.logs.logDestination must be one of stdout, stderr, got %q." $name $value) -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end }}
-
 {{- define "influxdb3-enterprise.validateShutdownConfig" -}}
 {{- $shutdown := .Values.shutdown | default dict -}}
 {{- if and (hasKey $shutdown "terminationGracePeriodSeconds") (not (kindIs "invalid" (get $shutdown "terminationGracePeriodSeconds"))) -}}
@@ -893,6 +859,58 @@ case-insensitively as the server does).
 {{- end -}}
 {{- else if lt $graceMs 30000 -}}
 {{- fail (printf "shutdown.terminationGracePeriodSeconds (%s) is shorter than the server's default drain of 30s, so kubelet sends SIGKILL before the drain can finish. Raise it to at least 30, or set a shorter shutdown.timeout." $grace) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Check the per-component logs blocks: known keys, string values, and the value sets the
+server accepts for format and destination (closed and identical since 3.9, matched
+case-insensitively as the server does).
+
+logFilter is rejected for whitespace, which the server never reads as written: a directive
+is [target][=level] with no room for a space, so tracing-subscriber either fails to parse
+it and panics, or folds it into the target name and the directive matches nothing. A filter
+using the [span] form may legally contain spaces inside the brackets, so there the check
+narrows to the ends and the commas.
+
+The top-level logs block is left alone: it has shipped since 0.10.0, and a value that is
+wrong in the same way renders there today, so a check on it would refuse an upgrade that
+works now.
+*/}}
+{{- define "influxdb3-enterprise.validateComponentLogs" -}}
+{{- $kinds := dict "float64" "number" "int64" "number" "bool" "boolean" "slice" "list" "map" "map" -}}
+{{- $allowed := dict "logFormat" (list "full" "pretty" "json" "logfmt") "logDestination" (list "stdout" "stderr") -}}
+{{- $keys := list "logFilter" "logFormat" "logDestination" -}}
+{{- range $scope := list "ingester" "querier" "compactor" "processingEngine" -}}
+{{- $component := get $.Values $scope | default dict -}}
+{{- $path := printf "%s.logs" $scope -}}
+{{- if and (hasKey $component "logs") (not (kindIs "invalid" (get $component "logs"))) -}}
+{{- $logs := get $component "logs" -}}
+{{- if not (kindIs "map" $logs) -}}
+{{- fail (printf "%s must be a map with %s, got %s." $path (join ", " $keys) (get $kinds (kindOf $logs) | default "string")) -}}
+{{- end -}}
+{{- range $key, $value := $logs -}}
+{{- if not (has $key $keys) -}}
+{{- fail (printf "%s.%s is not a per-component log key; %s takes %s. queryLogSize stays in the top-level logs block." $path $key $path (join ", " $keys)) -}}
+{{- end -}}
+{{- if not (kindIs "invalid" $value) -}}
+{{- if not (kindIs "string" $value) -}}
+{{- fail (printf "%s.%s must be a string, got %s. YAML reads off, on, yes and no as booleans, so quote the value: \"off\"." $path $key (get $kinds (kindOf $value) | default "string")) -}}
+{{- end -}}
+{{- if eq $key "logFilter" -}}
+{{- /* \s is ASCII only, so name the Unicode separators the server's trim() also folds. */ -}}
+{{- $ws := "[\\s\\x{0b}\\x{85}\\p{Zs}]" -}}
+{{- $pattern := ternary (printf "^%s|%s$|%s,|,%s" $ws $ws $ws $ws) $ws (contains "[" $value) -}}
+{{- if regexMatch $pattern $value -}}
+{{- fail (printf "%s.logFilter has whitespace the server cannot read, got %q; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace." $path $value) -}}
+{{- end -}}
+{{- end -}}
+{{- if and (hasKey $allowed $key) (ne $value "") (not (has (lower $value) (get $allowed $key))) -}}
+{{- fail (printf "%s.%s must be one of %s, got %q." $path $key (join ", " (get $allowed $key)) $value) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end }}

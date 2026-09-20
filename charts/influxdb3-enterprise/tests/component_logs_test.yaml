@@ -35,6 +35,25 @@ tests:
           path: data.INFLUXDB3_LOG_FILTER
           value: info
 
+  # The ConfigMap reaches the pod through envFrom and the component value through env,
+  # which Kubernetes lets win. Assert the pod side too, or the override has no test.
+  - it: puts the component override on the pod while the global value stays in the ConfigMap
+    template: templates/querier-statefulset.yaml
+    set:
+      logs.logFilter: info
+      querier.logs.logFilter: debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: info
+
   - it: maps format and destination on the querier
     template: templates/querier-statefulset.yaml
     set:
@@ -135,7 +154,7 @@ tests:
       querier.logs: oops
     asserts:
       - failedTemplate:
-          errorMessage: "querier.logs must be a map with logFilter, logFormat or logDestination, got string."
+          errorMessage: "querier.logs must be a map with logFilter, logFormat, logDestination, got string."
 
   # --- boundary values: YAML booleans, wrong types, unknown keys, bad values ---
 
@@ -159,7 +178,26 @@ tests:
     set:
       querier.logs.logFormat: true
     asserts:
-      - failedTemplate: {}
+      - failedTemplate:
+          errorMessage: 'querier.logs.logFormat must be a string, got boolean. YAML reads off, on, yes and no as booleans, so quote the value: "off".'
+
+  - it: accepts a destination in any case, as the server does
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logDestination: STDERR
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_DESTINATION
+            value: STDERR
+
+  - it: checks the processor block too
+    set:
+      processingEngine.logs.logFormat: yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "processingEngine.logs.logFormat must be one of full, pretty, json, logfmt, got \"yaml\"."
 
   - it: refuses a format the server does not have
     set:
@@ -191,21 +229,21 @@ tests:
       querier.logs.logFilter: "info, sqlx=warn"
     asserts:
       - failedTemplate:
-          errorMessage: "querier.logs.logFilter has whitespace at an end or next to a comma, got \"info, sqlx=warn\"; the server panics on it or reads it as a target name, so remove the whitespace."
+          errorMessage: "querier.logs.logFilter has whitespace the server cannot read, got \"info, sqlx=warn\"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
 
   - it: refuses whitespace at the end of the filter, which the server reads as a target name
     set:
       ingester.logs.logFilter: "info "
     asserts:
       - failedTemplate:
-          errorMessage: "ingester.logs.logFilter has whitespace at an end or next to a comma, got \"info \"; the server panics on it or reads it as a target name, so remove the whitespace."
+          errorMessage: "ingester.logs.logFilter has whitespace the server cannot read, got \"info \"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
 
   - it: refuses a whitespace-only filter
     set:
       compactor.logs.logFilter: " "
     asserts:
       - failedTemplate:
-          errorMessage: "compactor.logs.logFilter has whitespace at an end or next to a comma, got \" \"; the server panics on it or reads it as a target name, so remove the whitespace."
+          errorMessage: "compactor.logs.logFilter has whitespace the server cannot read, got \" \"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
 
   - it: accepts a comma-separated filter without whitespace
     template: templates/querier-statefulset.yaml
@@ -223,7 +261,7 @@ tests:
       ingester.logs.queryLogSize: 1000
     asserts:
       - failedTemplate:
-          errorMessage: "ingester.logs.queryLogSize is not a per-component setting; the block takes logFilter, logFormat and logDestination."
+          errorMessage: "ingester.logs.queryLogSize is not a per-component log key; ingester.logs takes logFilter, logFormat, logDestination. queryLogSize stays in the top-level logs block."
 
   - it: still emits the INFLUXDB3_ name next to a legacy LOG_FILTER in extraEnv
     template: templates/ingester-statefulset.yaml
@@ -238,3 +276,45 @@ tests:
           content:
             name: INFLUXDB3_LOG_FILTER
             value: debug
+
+  # --- the top-level block keeps its own behaviour ---
+
+  # It has shipped since 0.10.0, so a check here would refuse an upgrade that renders today.
+  - it: leaves the top-level block unchecked
+    template: templates/configmap.yaml
+    set:
+      logs.logFilter: "info, sqlx=warn"
+      logs.queryLogSize: 1000
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_LOG_FILTER
+          value: "info, sqlx=warn"
+      - exists:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+
+  # --- whitespace the server cannot read ---
+
+  - it: refuses whitespace inside a directive
+    set:
+      querier.logs.logFilter: "info sqlx=warn"
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs.logFilter has whitespace the server cannot read, got \"info sqlx=warn\"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
+
+  - it: refuses whitespace around the equals sign
+    set:
+      querier.logs.logFilter: "info,sqlx = warn"
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs.logFilter has whitespace the server cannot read, got \"info,sqlx = warn\"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
+
+  - it: allows a space inside a span, which the directive syntax permits
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: "[my span]=debug"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: "[my span]=debug"
