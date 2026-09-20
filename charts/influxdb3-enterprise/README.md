@@ -858,12 +858,15 @@ ingester:
 
 `logFormat` and `logDestination` work the same way per component. The chart
 checks the keys and values at render time - `logFormat` takes `full`, `pretty`,
-`json` or `logfmt`, `logDestination` takes `stdout` or `stderr` - and a value has
-to be a string: quote `"off"`, since YAML reads a bare `off` as `false`. A value
-set through the component's `extraEnv` as `INFLUXDB3_LOG_FILTER` still wins, so an
-existing entry there keeps working. The legacy `LOG_FILTER` does not work on the
-official images from 3.10 on: they set `INFLUXDB3_LOG_FILTER=info` in the image
-itself, and the server keeps the `INFLUXDB3_` name when both are present.
+`json` or `logfmt`, `logDestination` takes `stdout` or `stderr` - and a value
+has to be a string: quote `"off"`, since YAML reads a bare `off` as `false`. A
+`logFilter` with whitespace around a comma or at either end is refused as well:
+the server panics on `info, sqlx=warn` and reads `"info "` as a target name,
+which leaves the pod logging nothing. A value set through the component's
+`extraEnv` as `INFLUXDB3_LOG_FILTER` still wins, so an existing entry there
+keeps working. The legacy `LOG_FILTER` does not work on the official images from
+3.10 on: they set `INFLUXDB3_LOG_FILTER=info` in the image itself, and the
+server keeps the `INFLUXDB3_` name when both are present.
 
 From 3.10 on, a `debug` filter still holds a few noisy modules at `info`,
 `influxdb3_wal` among them. An `extraEnv` entry lifts that:

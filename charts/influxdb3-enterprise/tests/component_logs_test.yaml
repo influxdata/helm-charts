@@ -52,7 +52,7 @@ tests:
             name: INFLUXDB3_LOG_DESTINATION
             value: stderr
 
-  - it: reaches the compactor and the processor
+  - it: reaches the compactor
     template: templates/compactor-statefulset.yaml
     set:
       compactor.logs.logFilter: trace
@@ -185,6 +185,38 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "ingester.logs.logDestination must be one of stdout, stderr, got \"file\"."
+
+  - it: refuses whitespace next to a comma in the filter, which panics the server
+    set:
+      querier.logs.logFilter: "info, sqlx=warn"
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs.logFilter has whitespace at an end or next to a comma, got \"info, sqlx=warn\"; the server panics on it or reads it as a target name, so remove the whitespace."
+
+  - it: refuses whitespace at the end of the filter, which the server reads as a target name
+    set:
+      ingester.logs.logFilter: "info "
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingester.logs.logFilter has whitespace at an end or next to a comma, got \"info \"; the server panics on it or reads it as a target name, so remove the whitespace."
+
+  - it: refuses a whitespace-only filter
+    set:
+      compactor.logs.logFilter: " "
+    asserts:
+      - failedTemplate:
+          errorMessage: "compactor.logs.logFilter has whitespace at an end or next to a comma, got \" \"; the server panics on it or reads it as a target name, so remove the whitespace."
+
+  - it: accepts a comma-separated filter without whitespace
+    template: templates/querier-statefulset.yaml
+    set:
+      querier.logs.logFilter: "info,sqlx=warn"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: info,sqlx=warn
 
   - it: refuses a key the block does not know
     set:

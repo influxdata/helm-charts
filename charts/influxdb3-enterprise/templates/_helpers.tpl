@@ -808,7 +808,7 @@ the drain starts.
 */}}
 {{/*
 Check the per-component logs blocks: known keys, string values, and the value sets
-trogging accepts for format and destination (closed and identical since 3.9, matched
+the server accepts for format and destination (closed and identical since 3.9, matched
 case-insensitively as the server does).
 */}}
 {{- define "influxdb3-enterprise.validateComponentLogs" -}}
@@ -827,6 +827,9 @@ case-insensitively as the server does).
 {{- if not (kindIs "invalid" $value) -}}
 {{- if not (kindIs "string" $value) -}}
 {{- fail (printf "%s.logs.%s must be a string, got %s. YAML reads off, on, yes and no as booleans, so quote the value: \"off\"." $name $key (get $kinds (kindOf $value) | default (kindOf $value))) -}}
+{{- end -}}
+{{- if and (eq $key "logFilter") (regexMatch `^\s|\s$|\s,|,\s` $value) -}}
+{{- fail (printf "%s.logs.logFilter has whitespace at an end or next to a comma, got %q; the server panics on it or reads it as a target name, so remove the whitespace." $name $value) -}}
 {{- end -}}
 {{- if and (eq $key "logFormat") (ne $value "") (not (has (lower $value) (list "full" "pretty" "json" "logfmt"))) -}}
 {{- fail (printf "%s.logs.logFormat must be one of full, pretty, json, logfmt, got %q." $name $value) -}}
