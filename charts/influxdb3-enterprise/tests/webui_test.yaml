@@ -199,3 +199,19 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: keeps an explicit zero maxUnavailable, which forbids voluntary disruption
+    template: templates/pdb.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.podDisruptionBudget.enabled: true
+      webui.replicas: 2
+      webui.podDisruptionBudget.maxUnavailable: 0
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 0
+
