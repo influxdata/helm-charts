@@ -645,19 +645,43 @@ webui:
   # numCores: 4
   # numIOThreads: 2               # Global IO threads (--num-io-threads)
 
-  # extraEnv: []
+  extraEnv: []
 
   nodeSelector: {}
-  affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: webui
+            topologyKey: kubernetes.io/hostname
   tolerations: []
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
+
+  # InfluxDB3 runs as uid=1500(influxdb3) gid=1500(influxdb3)
+  podSecurityContext:
+    fsGroup: 1500              # Ensures volumes are owned by influxdb3 group
+    runAsNonRoot: true         # Security best practice
+    runAsUser: 1500            # Run as influxdb3 user
+    runAsGroup: 1500           # Run as influxdb3 group
+
+  # Container-level security context (optional override)
   securityContext: {}
+
+  # Pod disruption budget for high availability
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1
+
   priorityClassName: ""
 
   updateStrategy:
     type: RollingUpdate
+    rollingUpdate:
+      partition: 0                  # Start updating from pod 0
 
 # ============================================================================
 # Advanced Configuration (Shared across all components)

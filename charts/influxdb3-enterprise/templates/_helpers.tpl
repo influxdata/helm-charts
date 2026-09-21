@@ -857,5 +857,8 @@ share the same value or a session breaks as soon as it lands on another pod.
 {{- if not $secret -}}
 {{- fail "webui.sessionSecret.existingSecret is required when webui.enabled is true: the server refuses to start in webui mode without a session secret, and every Web UI pod in the cluster has to share the same one." -}}
 {{- end -}}
+{{- if not (($webui.sessionSecret | default dict).key | default "") -}}
+{{- fail "webui.sessionSecret.key is empty; set the key that holds the session secret in webui.sessionSecret.existingSecret." -}}
+{{- end -}}
 {{- end -}}
 {{- end }}

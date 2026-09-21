@@ -123,3 +123,79 @@ tests:
     asserts:
       - notExists:
           path: data.INFLUXDB3_WEBUI_SESSION_SECRET
+
+  - it: runs as the influxdb3 user like every other component
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1500
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+
+  - it: gets a NetworkPolicy of its own, so it is not the one unrestricted pod
+    template: templates/networkpolicy.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      networkPolicy.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
+          value: webui
+
+  - it: gets a PDB, which the README promises for every component
+    template: templates/pdb.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.podDisruptionBudget.enabled: true
+      webui.replicas: 2
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+
+  - it: is scraped by Prometheus like every other component
+    template: templates/servicemonitor.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      serviceMonitor.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: webui
+
+  - it: refuses an empty session secret key instead of quietly defaulting
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.sessionSecret.key: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "webui.sessionSecret.key is empty; set the key that holds the session secret in webui.sessionSecret.existingSecret."
+
+  - it: emits no ServiceMonitor while serviceMonitor is off
+    template: templates/servicemonitor.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - hasDocuments:
+          count: 0
+

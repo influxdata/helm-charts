@@ -76,7 +76,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.webui.sessionSecret.existingSecret }}
-                  key: {{ .Values.webui.sessionSecret.key | default "session-secret" }}
+                  key: {{ .Values.webui.sessionSecret.key }}
             {{- if .Values.webui.cookieSecure }}
             - name: INFLUXDB3_WEBUI_COOKIE_SECURE
               value: "true"
