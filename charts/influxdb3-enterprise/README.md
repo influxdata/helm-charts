@@ -566,12 +566,27 @@ replicas will sign sessions with different keys and logins will fail on some of 
 kubectl rollout restart -n influxdb3 statefulset/influxdb3-enterprise-webui
 ```
 
-Two things to plan for. A Web UI node claims licensed cores like any other node, at
-least two, so the UI is not free against the licence. And the UI is a browser client:
-it reaches the cluster over HTTP at whatever address the user types, so it needs an
-ingress or a port-forward, and on split roles that address has to reach both an
-ingester and a querier - the chart's own ingress does, because it routes writes and
-queries separately.
+The chart does not route to the Web UI. Its ingresses send `/` and the query
+paths to the querier, the write paths to the ingester, and nothing to the UI, so
+reach it with a port-forward:
+
+```bash
+kubectl port-forward -n influxdb3 svc/influxdb3-enterprise-webui 8181:8181
+```
+
+For anything beyond a look, add your own Ingress. It needs a hostname of its own
+rather than a path under the existing one: the UI is served with `<base
+href="/">`, so a prefix such as `/explorer` breaks every asset it loads, and the
+chart's query ingress already claims `/` on `ingress.host`. Set
+`webui.cookieSecure: true` when that hostname serves https, or the browser drops
+the session cookie and login fails.
+
+Two more things to plan for. A Web UI node claims licensed cores like any other
+node, at least two, so the UI is not free against the licence: on a core-limited
+licence, enabling it can leave another component short and stuck short of Ready.
+And the UI is a browser client, so on split roles the address a user enters has
+to reach both an ingester and a querier. The chart's ingress host does, because
+it routes writes and queries separately.
 
 On 3.11 the server passes the UI no configuration. Every user lands on the first-run
 screen, enters the address and their own token, and what they enter is stored by the
