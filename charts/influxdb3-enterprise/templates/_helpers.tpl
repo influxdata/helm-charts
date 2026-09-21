@@ -1140,3 +1140,17 @@ values that reach the pod and stop it starting.
 {{/* gen0MaxFileSize is a ByteSize: the server takes a unit there but not a percentage. */}}
 {{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $pacha "name" "gen0MaxFileSize" "key" "engine.pachaTree.gen0MaxFileSize" "allowPercent" false) -}}
 {{- end }}
+=======
+Check the Web UI block. The session secret is what the server signs UI sessions with; it
+refuses to start in webui mode without one, and every Web UI pod in the cluster has to
+share the same value or a session breaks as soon as it lands on another pod.
+*/}}
+{{- define "influxdb3-enterprise.validateWebui" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- if $webui.enabled -}}
+{{- $secret := ($webui.sessionSecret | default dict).existingSecret | default "" -}}
+{{- if not $secret -}}
+{{- fail "webui.sessionSecret.existingSecret is required when webui.enabled is true: the server refuses to start in webui mode without a session secret, and every Web UI pod in the cluster has to share the same one." -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
