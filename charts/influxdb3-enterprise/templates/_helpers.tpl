@@ -844,3 +844,18 @@ the drain starts.
 {{- end -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+Check the Web UI block. The session secret is what the server signs UI sessions with; it
+refuses to start in webui mode without one, and every Web UI pod in the cluster has to
+share the same value or a session breaks as soon as it lands on another pod.
+*/}}
+{{- define "influxdb3-enterprise.validateWebui" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- if $webui.enabled -}}
+{{- $secret := ($webui.sessionSecret | default dict).existingSecret | default "" -}}
+{{- if not $secret -}}
+{{- fail "webui.sessionSecret.existingSecret is required when webui.enabled is true: the server refuses to start in webui mode without a session secret, and every Web UI pod in the cluster has to share the same one." -}}
+{{- end -}}
+{{- end -}}
+{{- end }}

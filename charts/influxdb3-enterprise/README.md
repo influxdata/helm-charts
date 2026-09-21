@@ -538,6 +538,39 @@ Non-processor pods set `INFLUXDB3_UNSET_VARS=INFLUXDB3_PLUGIN_DIR` by default to
 
 When processor pods are enabled, configure `INFLUXDB3_UNSET_VARS` with component-specific overrides for `ingester`, `querier`, and `compactor` instead of top-level `extraEnv`. Component-specific overrides do not apply to processor pods; a top-level `INFLUXDB3_UNSET_VARS` override is also applied to processor pods and can disable the Processing Engine there.
 
+#### Embedded Web UI
+
+InfluxDB 3 Explorer ships inside the server binary. Setting `webui.enabled` runs it as
+its own node in `--mode=webui`, with a Service on port 8181:
+
+```yaml
+webui:
+  enabled: true
+  sessionSecret:
+    existingSecret: influxdb3-webui
+```
+
+Create the secret first. The value signs UI sessions, and every Web UI pod in the
+cluster has to share it, or a session breaks the moment it lands on another pod:
+
+```bash
+kubectl create secret generic influxdb3-webui \
+  --from-literal=session-secret="$(openssl rand -hex 32)"
+```
+
+Two things to plan for. A Web UI node claims licensed cores like any other node, at
+least two, so the UI is not free against the licence. And the UI is a browser client:
+it reaches the cluster over HTTP at whatever address the user types, so it needs an
+ingress or a port-forward, and on split roles that address has to reach both an
+ingester and a querier - the chart's own ingress does, because it routes writes and
+queries separately.
+
+On 3.11 the server passes the UI no configuration. Every user lands on the first-run
+screen, enters the address and their own token, and what they enter is stored by the
+UI in its SQLite database in the cluster's object store, with the token in plain text.
+There is no login and nothing is shared between users. Treat access to the UI, and to
+that object-store prefix, as access to those tokens.
+
 #### Monitoring
 
 Enable Prometheus ServiceMonitor:
@@ -949,6 +982,11 @@ ingester:
 | `querier.replicas` | Number of querier replicas | `2` |
 | `compactor.replicas` | Number of compactor replicas | `1` (fixed) |
 | `processingEngine.enabled` | Enable Processing Engine | `false` |
+| `webui.enabled` | Run the embedded Web UI as its own node | `false` |
+| `webui.replicas` | Number of Web UI replicas | `1` |
+| `webui.sessionSecret.existingSecret` / `key` | Secret holding the UI session signing key; required when enabled | `""` / `session-secret` |
+| `webui.cookieSecure` | Set the Secure attribute on the UI session cookie | `false` |
+| `webui.numCores` | Licensed cores claimed by each Web UI pod, minimum 2 | not set |
 | `ingester.numCores` | Cores available to each ingester | not set |
 | `querier.numCores` | Cores available to each querier | not set |
 | `compactor.numCores` | Cores available to the compactor | not set |

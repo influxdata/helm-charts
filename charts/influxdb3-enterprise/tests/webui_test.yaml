@@ -1,0 +1,125 @@
+suite: embedded Web UI
+release:
+  name: t
+  namespace: default
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/webui-statefulset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/webui-service.yaml
+
+  - it: runs the server in webui mode when enabled
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --mode=webui
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: refuses to render without a session secret, which the server requires
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "webui.sessionSecret.existingSecret is required when webui.enabled is true: the server refuses to start in webui mode without a session secret, and every Web UI pod in the cluster has to share the same one."
+
+  - it: takes the session secret from the named secret
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_SESSION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: ui-session
+                key: session-secret
+
+  - it: honours a custom key in that secret
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.sessionSecret.key: signing-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_SESSION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: ui-session
+                key: signing-key
+
+  - it: leaves the cookie flag off until asked, since plain http would drop the cookie
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_COOKIE_SECURE
+            value: "true"
+
+  - it: sets the cookie flag when the UI is served over https
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.cookieSecure: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_COOKIE_SECURE
+            value: "true"
+
+  - it: claims licensed cores like any other node
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.numCores: 2
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_NUM_CORES
+            value: "2"
+
+  - it: serves the UI on the http port
+    template: templates/webui-service.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 8181
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: webui
+
+  - it: keeps webui out of the other components, which is where it would be silently ignored
+    template: templates/configmap.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_WEBUI_SESSION_SECRET

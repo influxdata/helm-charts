@@ -1,0 +1,122 @@
+{{- if .Values.webui.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-webui
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webui
+spec:
+  serviceName: {{ include "influxdb3-enterprise.fullname" . }}-webui
+  replicas: {{ .Values.webui.replicas }}
+  {{- if .Values.webui.updateStrategy }}
+  updateStrategy:
+    {{- toYaml .Values.webui.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: webui
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
+        checksum/license: {{ include "influxdb3-enterprise.licenseChecksum" . }}
+        {{- with .Values.webui.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "influxdb3-enterprise.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: webui
+        {{- with .Values.webui.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "influxdb3-enterprise.serviceAccountName" . }}
+      {{- if not (kindIs "invalid" .Values.serviceAccount.automountServiceAccountToken) }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      {{- end }}
+      {{- if .Values.webui.priorityClassName }}
+      priorityClassName: {{ .Values.webui.priorityClassName }}
+      {{- end }}
+      {{- $grace := include "influxdb3-enterprise.terminationGracePeriodValue" . }}
+      {{- if $grace }}
+      terminationGracePeriodSeconds: {{ $grace }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.webui.podSecurityContext | nindent 8 }}
+      containers:
+        - name: influxdb3
+          {{- with .Values.webui.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: {{ include "influxdb3-enterprise.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - serve
+            - --mode=webui
+            - --node-id=$(POD_NAME)
+          envFrom:
+            - configMapRef:
+                name: {{ include "influxdb3-enterprise.configMapName" . }}
+          env:
+            {{- include "influxdb3-enterprise.podNameEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
+            - name: INFLUXDB3_WEBUI_SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.webui.sessionSecret.existingSecret }}
+                  key: {{ .Values.webui.sessionSecret.key | default "session-secret" }}
+            {{- if .Values.webui.cookieSecure }}
+            - name: INFLUXDB3_WEBUI_COOKIE_SECURE
+              value: "true"
+            {{- end }}
+            {{- with .Values.webui.numIOThreads }}
+            - name: INFLUXDB3_NUM_IO_THREADS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if hasKey .Values.webui "numCores" }}
+            - name: INFLUXDB3_NUM_CORES
+              value: {{ .Values.webui.numCores | quote }}
+            {{- end }}
+            {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
+            {{- include "influxdb3-enterprise.nonProcessorUnsetVars" (dict "root" . "component" .Values.webui) | nindent 12 }}
+            {{- include "influxdb3-enterprise.componentExtraEnv" (dict "root" . "component" .Values.webui) | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8181
+              protocol: TCP
+          {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.webui.resources | nindent 12 }}
+          volumeMounts:
+            {{ include "influxdb3-enterprise.sharedVolumeMounts" . | nindent 12 }}
+            {{ include "influxdb3-enterprise.adminTokenVolumeMounts" . | nindent 12 }}
+            {{ include "influxdb3-enterprise.permissionTokensVolumeMounts" . | nindent 12 }}
+      {{- with .Values.webui.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webui.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webui.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
+        {{ include "influxdb3-enterprise.adminTokenVolumes" . | nindent 8 }}
+        {{ include "influxdb3-enterprise.permissionTokensVolumes" . | nindent 8 }}
+{{- end }}

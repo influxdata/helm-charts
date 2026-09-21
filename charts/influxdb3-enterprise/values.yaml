@@ -609,6 +609,56 @@ processingEngine:
     rollingUpdate:
       partition: 0                  # Start updating from pod 0
 
+# Embedded Web UI nodes - InfluxDB 3 Explorer served by the server itself (optional)
+# Runs as its own node in --mode=webui. The UI is a browser client: it talks to the
+# cluster over HTTP at whatever address the user enters, so it needs an ingress or a
+# port-forward to be reachable.
+webui:
+  enabled: false
+  replicas: 1
+
+  # Secret holding the session signing key. Required when enabled, and the same value
+  # has to be used by every Web UI pod in the cluster.
+  #   kubectl create secret generic influxdb3-webui --from-literal=session-secret="$(openssl rand -hex 32)"
+  sessionSecret:
+    existingSecret: ""
+    key: "session-secret"
+
+  # Set the Secure attribute on the UI session cookie. Turn this on when the UI is
+  # served over https; on plain http the browser drops the cookie and login breaks.
+  cookieSecure: false
+
+  service:
+    type: ClusterIP
+    port: 8181
+    annotations: {}
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+  # Licensed cores this node claims (--num-cores)
+  # numCores: 4
+  # numIOThreads: 2               # Global IO threads (--num-io-threads)
+
+  # extraEnv: []
+
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext: {}
+  priorityClassName: ""
+
+  updateStrategy:
+    type: RollingUpdate
+
 # ============================================================================
 # Advanced Configuration (Shared across all components)
 # ============================================================================
