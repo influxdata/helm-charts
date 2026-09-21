@@ -558,6 +558,14 @@ kubectl create secret generic influxdb3-webui \
   --from-literal=session-secret="$(openssl rand -hex 32)"
 ```
 
+Rotating the session secret does not restart the pods by itself, because the secret
+is one you own rather than one the chart renders. Roll them yourself afterwards, or
+replicas will sign sessions with different keys and logins will fail on some of them:
+
+```bash
+kubectl rollout restart -n influxdb3 statefulset/influxdb3-enterprise-webui
+```
+
 Two things to plan for. A Web UI node claims licensed cores like any other node, at
 least two, so the UI is not free against the licence. And the UI is a browser client:
 it reaches the cluster over HTTP at whatever address the user types, so it needs an
