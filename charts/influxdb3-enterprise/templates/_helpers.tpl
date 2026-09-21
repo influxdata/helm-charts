@@ -914,3 +914,15 @@ works now.
 {{- end -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+Render a number from a values file as a plain decimal string. Such a number is a float64,
+and toString prints 1000000 as 1e+06, which clap rejects for a usize.
+*/}}
+{{- define "influxdb3-enterprise.plainInteger" -}}
+{{- if and (kindIs "float64" .) (eq (floor .) .) -}}
+{{- printf "%.0f" . -}}
+{{- else -}}
+{{- toString . -}}
+{{- end -}}
+{{- end }}

@@ -277,6 +277,43 @@ tests:
             name: INFLUXDB3_LOG_FILTER
             value: debug
 
+  # --- queryLogSize renders as a string the API server accepts ---
+
+  - it: quotes the query log size, since ConfigMap data is a string map
+    template: templates/configmap.yaml
+    set:
+      logs.queryLogSize: 5000
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_MAX_ENTRIES
+          value: "5000"
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+          value: "5000"
+
+  - it: writes a large size in full, not in scientific notation
+    template: templates/configmap.yaml
+    values: [values/query-log-size-large.yaml]
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_MAX_ENTRIES
+          value: "1000000"
+
+  - it: keeps an explicit zero, which the server takes as a usize
+    template: templates/configmap.yaml
+    values: [values/query-log-size-zero.yaml]
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+          value: "0"
+
+  - it: renders nothing for a null size
+    template: templates/configmap.yaml
+    values: [values/query-log-size-null.yaml]
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+
   # --- the top-level block keeps its own behaviour ---
 
   # It has shipped since 0.10.0, so a check here would refuse an upgrade that renders today.

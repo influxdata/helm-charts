@@ -260,9 +260,10 @@ data:
   {{- if .logFormat }}
   INFLUXDB3_LOG_FORMAT: {{ .logFormat | quote }}
   {{- end }}
-  {{- if .queryLogSize }}
-  INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ .queryLogSize }}
-  INFLUXDB3_QUERY_LOG_SIZE: {{ .queryLogSize }}
+  {{- if and (hasKey . "queryLogSize") (not (kindIs "invalid" .queryLogSize)) }}
+  {{- $queryLogSize := include "influxdb3-enterprise.plainInteger" .queryLogSize }}
+  INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ $queryLogSize | quote }}
+  INFLUXDB3_QUERY_LOG_SIZE: {{ $queryLogSize | quote }}
   {{- end }}
   {{- end }}
 
