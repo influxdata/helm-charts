@@ -481,3 +481,112 @@ spec:
     {{- end }}
     {{- end }}
 {{- end }}
+
+{{- if and .Values.networkPolicy.enabled .Values.webui.enabled }}
+---
+# NetworkPolicy for the embedded Web UI nodes
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-webui
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webui
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: webui
+  policyTypes:
+    {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
+  ingress:
+    # Allow traffic from ingress controller
+    {{- if .Values.networkPolicy.ingress.fromIngressController }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.namespaceLabel }}: {{ .Values.networkPolicy.ingress.ingressController.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.ingressController.podLabelKey }}: {{ .Values.networkPolicy.ingress.ingressController.podLabelValue }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+    # Allow traffic from other components
+    {{- if .Values.networkPolicy.ingress.fromComponents }}
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: webui
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+    # Allow Prometheus to scrape metrics
+    {{- if .Values.networkPolicy.ingress.fromPrometheus }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.namespaceLabel }}: {{ .Values.networkPolicy.ingress.prometheus.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.ingress.prometheus.podLabelKey }}: {{ .Values.networkPolicy.ingress.prometheus.podLabelValue }}
+      ports:
+        - protocol: TCP
+          port: 8181
+    {{- end }}
+  egress:
+    # Allow DNS resolution
+    {{- if .Values.networkPolicy.egress.toDns }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.egress.dns.namespaceLabel }}: {{ .Values.networkPolicy.egress.dns.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicy.egress.dns.podLabelKey }}: {{ .Values.networkPolicy.egress.dns.podLabelValue }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- end }}
+    # Allow access to object storage
+    {{- if .Values.networkPolicy.egress.toObjectStorage }}
+    {{- if .Values.networkPolicy.egress.objectStorageCidrs }}
+    # Egress to specific object storage CIDRs (AWS S3, Azure, GCS endpoints)
+    {{- range .Values.networkPolicy.egress.objectStorageCidrs }}
+    - to:
+        - ipBlock:
+            cidr: {{ . }}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+    {{- end }}
+    {{- else }}
+    # Default: Allow egress to any destination for object storage
+    # WARNING: This is permissive. Configure objectStorageCidrs for production.
+    - ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 9000  # MinIO default
+    {{- end }}
+    {{- end }}
+    # Allow inter-component communication
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 8181
+
+{{- end }}

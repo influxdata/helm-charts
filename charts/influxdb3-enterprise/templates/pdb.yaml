@@ -66,3 +66,20 @@ spec:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: compactor
 {{- end }}
+{{- if and .Values.webui.podDisruptionBudget.enabled .Values.webui.enabled (gt (int .Values.webui.replicas) 1) }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-webui
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webui
+spec:
+  maxUnavailable: {{ .Values.webui.podDisruptionBudget.maxUnavailable | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: webui
+{{- end }}
