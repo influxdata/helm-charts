@@ -545,9 +545,9 @@ networkPolicy:
   ingress:
     fromIngressController: true
     fromComponents: true
-      egress:
-        toDns: true
-        toObjectStorage: true
+  egress:
+    toDns: true
+    toObjectStorage: true
 ```
 
 **Note**: Requires CNI plugin supporting NetworkPolicy.
