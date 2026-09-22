@@ -1009,7 +1009,8 @@ ingester:
 | `webui.replicas` | Number of Web UI replicas | `1` |
 | `webui.sessionSecret.existingSecret` / `key` | Secret holding the UI session signing key; required when enabled | `""` / `session-secret` |
 | `webui.cookieSecure` | Set the Secure attribute on the UI session cookie | `false` |
-| `webui.numCores` | Licensed cores claimed by each Web UI pod, minimum 2 | not set |
+| `webui.numCores` | Licensed cores claimed by each Web UI pod, minimum 2. Set by default, since a node left unset claims every core the machine reports | `2` |
+| `webui.extraEnv` | Extra environment variables applied only to Web UI pods; `INFLUXDB3_WEBUI_OPENAI_BASE_URL` goes here | `[]` |
 | `ingester.numCores` | Cores available to each ingester | not set |
 | `querier.numCores` | Cores available to each querier | not set |
 | `compactor.numCores` | Cores available to the compactor | not set |

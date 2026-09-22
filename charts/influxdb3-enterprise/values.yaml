@@ -641,10 +641,14 @@ webui:
       cpu: "1000m"
       memory: "2Gi"
 
-  # Licensed cores this node claims (--num-cores)
-  # numCores: 4
+  # Licensed cores this node claims (--num-cores). Set here, unlike the other
+  # components, because a node left unset claims every core the machine reports
+  # and the UI needs none of them. 2 is the server's minimum.
+  numCores: 2
   # numIOThreads: 2               # Global IO threads (--num-io-threads)
 
+  # Extra environment variables for Web UI pods only. INFLUXDB3_WEBUI_OPENAI_BASE_URL,
+  # which points the UI's ask/chat at an OpenAI-compatible endpoint, is set here.
   extraEnv: []
 
   nodeSelector: {}
