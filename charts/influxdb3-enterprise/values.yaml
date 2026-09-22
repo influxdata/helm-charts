@@ -919,6 +919,16 @@ ingress:
   # Ingress for HTTP-triggered plugins (created only if processingEngine.enabled)
   processor:
     annotations: {}
+  # Ingress for the embedded Web UI (created only if webui.enabled)
+  # Routes: / -> Web UI. The UI is served with <base href="/">, so it needs the
+  # root of its own host; ingress.query already claims / on ingress.host.
+  webui:
+    # Optional host override. If empty, uses explorer.<ingress.host>.
+    host: ""
+    # Optional TLS override. Required when host differs from ingress.host.
+    # With TLS in front, set webui.cookieSecure: true as well.
+    tls: []
+    annotations: {}
 
 # ============================================================================
 # Network Policies (optional, disabled by default)

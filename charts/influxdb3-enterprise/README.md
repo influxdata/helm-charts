@@ -566,20 +566,23 @@ replicas will sign sessions with different keys and logins will fail on some of 
 kubectl rollout restart -n influxdb3 statefulset/influxdb3-enterprise-webui
 ```
 
-The chart does not route to the Web UI. Its ingresses send `/` and the query
-paths to the querier, the write paths to the ingester, and nothing to the UI, so
-reach it with a port-forward:
+With `ingress.enabled`, the UI gets an ingress of its own at
+`explorer.<ingress.host>`, so the default host puts it at
+`explorer.influxdb.example.com` and it follows `ingress.host` when you change
+that. Point it somewhere else with `ingress.webui.host`.
+
+It needs a host rather than a path under the shared one. The UI is served with
+`<base href="/">`, so a prefix such as `/explorer` makes the browser fetch every
+asset from `/` on that host, where `ingress.query` answers instead. Set
+`webui.cookieSecure: true` once the UI host serves https, or the browser drops
+the session cookie and login fails; `ingress.webui.tls` takes a certificate for
+that host.
+
+Without an ingress, a port-forward is enough to look at it:
 
 ```bash
 kubectl port-forward -n influxdb3 svc/influxdb3-enterprise-webui 8181:8181
 ```
-
-For anything beyond a look, add your own Ingress. It needs a hostname of its own
-rather than a path under the existing one: the UI is served with `<base
-href="/">`, so a prefix such as `/explorer` breaks every asset it loads, and the
-chart's query ingress already claims `/` on `ingress.host`. Set
-`webui.cookieSecure: true` when that hostname serves https, or the browser drops
-the session cookie and login fails.
 
 Two more things to plan for. A Web UI node claims licensed cores like any other
 node, at least two, so the UI is not free against the licence: on a core-limited
@@ -587,6 +590,14 @@ licence, enabling it can leave another component short and stuck short of Ready.
 And the UI is a browser client, so on split roles the address a user enters has
 to reach both an ingester and a querier. The chart's ingress host does, because
 it routes writes and queries separately.
+
+The UI keeps its own state, and that state only moves forward. A newer server
+upgrades the SQLite it holds in the object store, and an older one cannot read
+it afterwards: the UI answers 500 and its log shows the guest failing on a
+database operation, while the database itself is fine. So rolling the image back
+to an earlier version leaves the UI broken. Delete
+`<cluster-id>/webui/sqlite.db` from the object store to recover, which costs the
+connections users saved and nothing else.
 
 On 3.11 the server passes the UI no configuration. Every user lands on the first-run
 screen, enters the address and their own token, and what they enter is stored by the
@@ -1011,6 +1022,8 @@ ingester:
 | `webui.cookieSecure` | Set the Secure attribute on the UI session cookie | `false` |
 | `webui.numCores` | Licensed cores claimed by each Web UI pod, minimum 2. Set by default, since a node left unset claims every core the machine reports | `2` |
 | `webui.extraEnv` | Extra environment variables applied only to Web UI pods; `INFLUXDB3_WEBUI_OPENAI_BASE_URL` goes here | `[]` |
+| `ingress.webui.host` | Host for the Web UI ingress | `explorer.<ingress.host>` |
+| `ingress.webui.tls` / `annotations` | TLS and annotations for the Web UI ingress | `[]` / `{}` |
 | `ingester.numCores` | Cores available to each ingester | not set |
 | `querier.numCores` | Cores available to each querier | not set |
 | `compactor.numCores` | Cores available to the compactor | not set |

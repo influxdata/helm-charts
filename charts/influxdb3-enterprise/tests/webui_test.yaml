@@ -229,3 +229,56 @@ tests:
             name: INFLUXDB3_NUM_CORES
             value: "2"
 
+  # The UI ships <base href="/">, so it cannot live under a path on the shared
+  # host, and ingress.query already claims / there.
+  - it: gets an ingress on a host of its own, derived from ingress.host
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: explorer.influxdb.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: t-influxdb3-enterprise-webui
+
+  - it: follows a changed ingress.host
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.host: influxdb.acme.com
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: explorer.influxdb.acme.com
+
+  - it: takes an explicit host override
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.webui.host: ui.acme.com
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: ui.acme.com
+
+  - it: renders no ingress while the Web UI is off
+    template: templates/ingress-webui.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders no ingress when ingress is disabled entirely
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
