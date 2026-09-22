@@ -215,3 +215,17 @@ tests:
           path: spec.maxUnavailable
           value: 0
 
+  # A node left unset claims every core the machine reports, which on a core-limited
+  # licence leaves another component short and never Ready.
+  - it: claims two licensed cores by default
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_NUM_CORES
+            value: "2"
+
