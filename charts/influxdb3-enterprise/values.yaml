@@ -638,7 +638,9 @@ webui:
       cpu: "250m"
       memory: "512Mi"
     limits:
-      cpu: "1000m"
+      # Must not be below numCores, or the runtimes oversubscribe and the node
+      # still bills the cores it claims.
+      cpu: "2000m"
       memory: "2Gi"
 
   # Licensed cores this node claims (--num-cores). Set here, unlike the other
