@@ -609,6 +609,86 @@ processingEngine:
     rollingUpdate:
       partition: 0                  # Start updating from pod 0
 
+# Embedded Web UI nodes - InfluxDB 3 Explorer served by the server itself (optional)
+# Runs as its own node in --mode=webui. The UI is a browser client: it talks to the
+# cluster over HTTP at whatever address the user enters, so it needs an ingress or a
+# port-forward to be reachable.
+webui:
+  enabled: false
+  replicas: 1
+
+  # Secret holding the session signing key. Required when enabled, and the same value
+  # has to be used by every Web UI pod in the cluster.
+  #   kubectl create secret generic influxdb3-webui --from-literal=session-secret="$(openssl rand -hex 32)"
+  sessionSecret:
+    existingSecret: ""
+    key: "session-secret"
+
+  # Set the Secure attribute on the UI session cookie. Turn this on when the UI is
+  # served over https; on plain http the browser drops the cookie and login breaks.
+  cookieSecure: false
+
+  service:
+    type: ClusterIP
+    port: 8181
+    annotations: {}
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      # Must not be below numCores, or the runtimes oversubscribe and the node
+      # still bills the cores it claims.
+      cpu: "2000m"
+      memory: "2Gi"
+
+  # Licensed cores this node claims (--num-cores). Set here, unlike the other
+  # components, because a node left unset claims every core the machine reports
+  # and the UI needs none of them. 2 is the server's minimum.
+  numCores: 2
+  # numIOThreads: 2               # Global IO threads (--num-io-threads)
+
+  # Extra environment variables for Web UI pods only. INFLUXDB3_WEBUI_OPENAI_BASE_URL,
+  # which points the UI's ask/chat at an OpenAI-compatible endpoint, is set here.
+  extraEnv: []
+
+  nodeSelector: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: webui
+            topologyKey: kubernetes.io/hostname
+  tolerations: []
+  podAnnotations: {}
+  podLabels: {}
+
+  # InfluxDB3 runs as uid=1500(influxdb3) gid=1500(influxdb3)
+  podSecurityContext:
+    fsGroup: 1500              # Ensures volumes are owned by influxdb3 group
+    runAsNonRoot: true         # Security best practice
+    runAsUser: 1500            # Run as influxdb3 user
+    runAsGroup: 1500           # Run as influxdb3 group
+
+  # Container-level security context (optional override)
+  securityContext: {}
+
+  # Pod disruption budget for high availability
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1
+
+  priorityClassName: ""
+
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0                  # Start updating from pod 0
+
 # ============================================================================
 # Advanced Configuration (Shared across all components)
 # ============================================================================
@@ -838,6 +918,16 @@ ingress:
 
   # Ingress for HTTP-triggered plugins (created only if processingEngine.enabled)
   processor:
+    annotations: {}
+  # Ingress for the embedded Web UI (created only if webui.enabled)
+  # Routes: / -> Web UI. The UI is served with <base href="/">, so it needs the
+  # root of its own host; ingress.query already claims / on ingress.host.
+  webui:
+    # Optional host override. If empty, uses explorer.<ingress.host>.
+    host: ""
+    # Optional TLS override. Required when host differs from ingress.host.
+    # With TLS in front, set webui.cookieSecure: true as well.
+    tls: []
     annotations: {}
 
 # ============================================================================

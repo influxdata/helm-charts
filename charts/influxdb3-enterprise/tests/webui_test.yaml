@@ -1,0 +1,284 @@
+suite: embedded Web UI
+release:
+  name: t
+  namespace: default
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/webui-statefulset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/webui-service.yaml
+
+  - it: runs the server in webui mode when enabled
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --mode=webui
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: refuses to render without a session secret, which the server requires
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "webui.sessionSecret.existingSecret is required when webui.enabled is true: the server refuses to start in webui mode without a session secret, and every Web UI pod in the cluster has to share the same one."
+
+  - it: takes the session secret from the named secret
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_SESSION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: ui-session
+                key: session-secret
+
+  - it: honours a custom key in that secret
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.sessionSecret.key: signing-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_SESSION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: ui-session
+                key: signing-key
+
+  - it: leaves the cookie flag off until asked, since plain http would drop the cookie
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_COOKIE_SECURE
+            value: "true"
+
+  - it: sets the cookie flag when the UI is served over https
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.cookieSecure: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_COOKIE_SECURE
+            value: "true"
+
+  - it: claims licensed cores like any other node
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.numCores: 2
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_NUM_CORES
+            value: "2"
+
+  - it: serves the UI on the http port
+    template: templates/webui-service.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 8181
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: webui
+
+  - it: keeps webui out of the other components, which is where it would be silently ignored
+    template: templates/configmap.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_WEBUI_SESSION_SECRET
+
+  - it: runs as the influxdb3 user like every other component
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1500
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+
+  - it: gets a NetworkPolicy of its own, so it is not the one unrestricted pod
+    template: templates/networkpolicy.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      networkPolicy.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
+          value: webui
+
+  - it: gets a PDB, which the README promises for every component
+    template: templates/pdb.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.podDisruptionBudget.enabled: true
+      webui.replicas: 2
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+
+  - it: is scraped by Prometheus like every other component
+    template: templates/servicemonitor.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      serviceMonitor.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: webui
+
+  - it: refuses an empty session secret key instead of quietly defaulting
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.sessionSecret.key: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "webui.sessionSecret.key is empty; set the key that holds the session secret in webui.sessionSecret.existingSecret."
+
+  - it: emits no ServiceMonitor while serviceMonitor is off
+    template: templates/servicemonitor.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: keeps an explicit zero maxUnavailable, which forbids voluntary disruption
+    template: templates/pdb.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.podDisruptionBudget.enabled: true
+      webui.replicas: 2
+      webui.podDisruptionBudget.maxUnavailable: 0
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 0
+
+  # A node left unset claims every core the machine reports, which on a core-limited
+  # licence leaves another component short and never Ready.
+  - it: claims two licensed cores by default
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_NUM_CORES
+            value: "2"
+
+  # The UI ships <base href="/">, so it cannot live under a path on the shared
+  # host, and ingress.query already claims / there.
+  - it: gets an ingress on a host of its own, derived from ingress.host
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: explorer.influxdb.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: t-influxdb3-enterprise-webui
+
+  - it: follows a changed ingress.host
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.host: influxdb.acme.com
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: explorer.influxdb.acme.com
+
+  - it: takes an explicit host override
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.webui.host: ui.acme.com
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: ui.acme.com
+
+  - it: renders no ingress while the Web UI is off
+    template: templates/ingress-webui.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders no ingress when ingress is disabled entirely
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
