@@ -497,8 +497,10 @@ kubectl get sts -n influxdb3 influxdb3-enterprise-processor \
   -o jsonpath='{.spec.template.spec.containers[0].args}'
 ```
 
-**Solution:** upgrade to chart 0.12.2 or later, which runs the processor as
-`--mode=process,query`. If you set the mode yourself, keep `query` in it.
+**Solution:** upgrade to chart 0.14.1 or later, which runs the processor as
+`--mode=process,query`. That is a command-line argument and the server prefers
+it over `INFLUXDB3_MODE`, so `extraEnv` will not change it. If you patch the
+container args or run a customised template, keep `query` in the mode.
 
 ### Plugins Not Loading
 

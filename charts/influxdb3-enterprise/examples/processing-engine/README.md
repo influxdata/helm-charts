@@ -24,7 +24,7 @@ The Processing Engine is an embedded Python virtual machine that runs inside Inf
    helm upgrade influxdb3-enterprise . -n influxdb3 -f values.yaml
    ```
 
-`scheduled-plugin.py` calls `influxdb3_local.query()`. From chart 0.12.2 the
+`scheduled-plugin.py` calls `influxdb3_local.query()`. From chart 0.14.1 the
 processor runs as `--mode=process,query` so it answers its own queries; on
 earlier charts it ran `--mode=process` alone, where that call fails on InfluxDB
 3.11 with `Cannot query: no remote query client found`.
