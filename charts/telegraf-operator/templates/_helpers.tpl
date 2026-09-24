@@ -99,6 +99,11 @@ webhooks:
     - DELETE
     resources:
     - pods
+    {{- if not (empty .Values.namespaceSelector) }}
+    scope: "Namespaced"
+    {{- end }}
+  namespaceSelector:
+    {{- toYaml .Values.namespaceSelector | nindent 4 }}
 ---
 apiVersion: v1
 kind: Secret
