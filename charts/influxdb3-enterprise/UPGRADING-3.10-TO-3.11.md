@@ -19,11 +19,12 @@ documentation.
 ## Before upgrading
 
 Back up the cluster's object storage and verify that the backup can be restored.
-If your values set `image.tag`, remove the override or change it to
-`3.11.2-enterprise`; otherwise Helm continues deploying the overridden image.
+If your values set `image.tag`, remove the override or change it to the chart's
+`appVersion` with the `-enterprise` suffix (`helm show chart` prints it);
+otherwise Helm continues deploying the overridden image.
 
 If `http.maxRequestSize` is set, keep it as a bare byte count, for example
-`10485760`, until every pod runs InfluxDB 3.11.2. InfluxDB 3.10.5 rejects
+`10485760`, until every pod runs InfluxDB 3.11.2 or later. InfluxDB 3.10.5 rejects
 unit-suffixed values such as `10mb`.
 
 Save the current release values:
@@ -69,7 +70,7 @@ kubectl exec -n "$NAMESPACE" "$QUERIER_POD" -- \
 ```
 
 Verify that every node reports `running`, every pod is ready, and every pod runs
-InfluxDB 3.11.2. Query existing data and test a new write before starting the
+the InfluxDB version in the chart's `appVersion`. Query existing data and test a new write before starting the
 storage engine migration.
 
 ### Upgrade directly from chart 0.8.x
@@ -79,7 +80,7 @@ v3 migration introduced in 3.10. Follow the backup precautions in
 [UPGRADING-3.9-TO-3.10.md](UPGRADING-3.9-TO-3.10.md) and add
 `--set acknowledgeCatalogMigration=true` to the version upgrade. Keep
 `acknowledgePachaTreeMigration=false` until the catalog migration and the
-3.11.2 deployment have both been verified.
+3.11 deployment have both been verified.
 
 Catalog migration and PachaTree migration are separate operator decisions and
 use separate acknowledgements.
