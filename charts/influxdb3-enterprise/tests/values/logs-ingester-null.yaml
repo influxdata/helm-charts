@@ -1,0 +1,4 @@
+ingester:
+  logs:
+    logFilter: null
+    logFormat: ""

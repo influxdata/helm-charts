@@ -248,6 +248,12 @@ ingester:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for ingester pods only. Overrides the top-level logs.* key of the same name.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for ingester pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
@@ -356,6 +362,12 @@ querier:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for querier pods only. Overrides the top-level logs.* key of the same name.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for querier pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
@@ -451,6 +463,12 @@ compactor:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for compactor pods only. Overrides the top-level logs.* key of the same name.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for compactor pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
@@ -539,6 +557,12 @@ processingEngine:
   # Thread configuration
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
+
+  # Log settings for Processing Engine pods only. Overrides the top-level logs.* key of the same name.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
 
   # Extra environment variables for Processing Engine pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []

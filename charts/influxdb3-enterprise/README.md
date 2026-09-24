@@ -545,9 +545,9 @@ networkPolicy:
   ingress:
     fromIngressController: true
     fromComponents: true
-      egress:
-        toDns: true
-        toObjectStorage: true
+  egress:
+    toDns: true
+    toObjectStorage: true
 ```
 
 **Note**: Requires CNI plugin supporting NetworkPolicy.
@@ -889,23 +889,44 @@ logs:
   logFilter: "debug"
 ```
 
-To raise one component only, set the variable in that component's `extraEnv`,
-which takes precedence over the shared value:
+To raise one component only, set its own `logs` block, which overrides the
+top-level `logs.*` key of the same name for that component:
 ```yaml
 ingester:
-  extraEnv:
-    - name: INFLUXDB3_LOG_FILTER
-      value: "debug"
+  logs:
+    logFilter: "debug"
 ```
 
-Use `INFLUXDB3_LOG_FILTER`, not `LOG_FILTER`: when both are set the server keeps
-`INFLUXDB3_LOG_FILTER`. From 3.10 on, a `debug` filter still holds a few noisy
-modules at `info`, `influxdb3_wal` among them. Another `extraEnv` entry lifts that:
+`logFormat` and `logDestination` work the same way per component. The chart
+checks the component blocks at render time: `logFormat` takes `full`, `pretty`,
+`json` or `logfmt` and `logDestination` takes `stdout` or `stderr`, both in any
+case, and every value has to be a string, so quote `"off"` - YAML reads a bare
+`off` as `false`. `queryLogSize` stays a top-level key. The top-level `logs`
+block itself is not checked, since it has shipped since 0.10.0 and a check on it
+would refuse an upgrade that renders today.
+
+A component `logFilter` containing whitespace is refused, because the server
+never reads it as written. A directive is `target=level` with no room for a
+space, so `info, sqlx=warn` panics the server and `"info "` turns into a target
+name that matches no module, after which the pod logs nothing at all. Spaces
+inside a `[span]` are still allowed.
+
+Five layers set these variables, each beating the one before it: the image's own
+`INFLUXDB3_LOG_FILTER=info`, the top-level `logs` block, the global `extraEnv`,
+the component's `logs` block, and the component's `extraEnv`. So an existing
+`INFLUXDB3_LOG_FILTER` in `extraEnv` keeps winning and needs no change, but a
+global `extraEnv` entry silently overrides the top-level `logs` block. The
+legacy `LOG_FILTER` does not work on the official images from 3.10 on: they set
+`INFLUXDB3_LOG_FILTER=info` in the image itself, and the server keeps the
+`INFLUXDB3_` name when both are present.
+
+From 3.10 on, a `debug` filter still holds a few noisy modules at `info`,
+`influxdb3_wal` among them. An `extraEnv` entry lifts that:
 ```yaml
 ingester:
+  logs:
+    logFilter: "debug"
   extraEnv:
-    - name: INFLUXDB3_LOG_FILTER
-      value: "debug"
     - name: INFLUXDB3_DISABLE_LOG_FILTER_NOISE_REDUCTION
       value: "true"
 ```
@@ -1004,6 +1025,7 @@ ingester:
 | `querier.extraEnv` | Extra environment variables applied only to querier pods | `[]` |
 | `compactor.extraEnv` | Extra environment variables applied only to compactor pods | `[]` |
 | `processingEngine.extraEnv` | Extra environment variables applied only to Processing Engine pods | `[]` |
+| `*.logs.logFilter` / `logFormat` / `logDestination` | Log settings for one component's pods only; override the top-level `logs.*` keys of the same name | not set |
 | `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
 | `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
 
