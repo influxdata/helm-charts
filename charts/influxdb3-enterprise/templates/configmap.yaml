@@ -8,6 +8,8 @@
 {{- include "influxdb3-enterprise.validateAdminTokenConfig" . }}
 {{- include "influxdb3-enterprise.validatePermissionTokensConfig" . }}
 {{- include "influxdb3-enterprise.validateShutdownConfig" . }}
+{{- include "influxdb3-enterprise.validateComponentLogs" . }}
+{{- include "influxdb3-enterprise.validateMemorySizes" . }}
 {{- $existing := lookup "v1" "ConfigMap" .Release.Namespace (include "influxdb3-enterprise.configMapName" .) | default dict }}
 {{- $recordedFormat := dig "metadata" "annotations" "influxdata.com/catalog-format" "" $existing }}
 {{- $upgradePachaTree := eq (toString (get .Values "acknowledgePachaTreeMigration")) "true" }}
@@ -259,9 +261,10 @@ data:
   {{- if .logFormat }}
   INFLUXDB3_LOG_FORMAT: {{ .logFormat | quote }}
   {{- end }}
-  {{- if .queryLogSize }}
-  INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ .queryLogSize }}
-  INFLUXDB3_QUERY_LOG_SIZE: {{ .queryLogSize }}
+  {{- if and (hasKey . "queryLogSize") (not (kindIs "invalid" .queryLogSize)) }}
+  {{- $queryLogSize := include "influxdb3-enterprise.plainInteger" .queryLogSize }}
+  INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ $queryLogSize | quote }}
+  INFLUXDB3_QUERY_LOG_SIZE: {{ $queryLogSize | quote }}
   {{- end }}
   {{- end }}
 

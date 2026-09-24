@@ -386,6 +386,24 @@ Component-specific entries override global entries with the same name.
 {{- $_ := set $componentNames . true -}}
 {{- end }}
 {{- end }}
+{{- /* The component's logs block. Precedence, lowest first: global extraEnv, these, the
+     component's extraEnv - so a filter already set through extraEnv keeps winning, and a name
+     is emitted once. Only the INFLUXDB3_ name counts as set: the official images since 3.10
+     carry ENV INFLUXDB3_LOG_FILTER=info, which beats a legacy LOG_FILTER on the server, so
+     deferring to that spelling would leave the image default. */}}
+{{- $logs := .component.logs | default dict -}}
+{{- $logsEnv := list -}}
+{{- range $mapping := list
+  (list "logFilter" "INFLUXDB3_LOG_FILTER")
+  (list "logFormat" "INFLUXDB3_LOG_FORMAT")
+  (list "logDestination" "INFLUXDB3_LOG_DESTINATION") }}
+{{- $name := index $mapping 1 -}}
+{{- $value := get $logs (index $mapping 0) -}}
+{{- if and (not (kindIs "invalid" $value)) (ne (toString $value) "") (not (hasKey $componentNames $name)) }}
+{{- $logsEnv = append $logsEnv (dict "name" $name "value" (toString $value)) -}}
+{{- $_ := set $componentNames $name true -}}
+{{- end }}
+{{- end }}
 {{- $extraEnv := list -}}
 {{- range $env := $global }}
 {{- $name := $env.name | default "" -}}
@@ -393,7 +411,7 @@ Component-specific entries override global entries with the same name.
 {{- $extraEnv = append $extraEnv $env -}}
 {{- end }}
 {{- end }}
-{{- $extraEnv = concat $extraEnv $component -}}
+{{- $extraEnv = concat $extraEnv $logsEnv $component -}}
 {{- if $extraEnv }}
 {{- toYaml $extraEnv }}
 {{- end }}
@@ -468,7 +486,7 @@ PachaTree environment variables shared by storage roles.
   (list "l4TargetFileSize" "INFLUXDB3_L4_TARGET_FILE_SIZE")
 }}
 {{- $key := index $mapping 0 -}}
-{{- if hasKey $pachaTree $key }}
+{{- if and (hasKey $pachaTree $key) (not (kindIs "invalid" (get $pachaTree $key))) }}
 - name: {{ index $mapping 1 }}
   value: {{ get $pachaTree $key | quote }}
 {{- end }}
@@ -843,4 +861,160 @@ the drain starts.
 {{- fail (printf "shutdown.terminationGracePeriodSeconds (%s) is shorter than the server's default drain of 30s, so kubelet sends SIGKILL before the drain can finish. Raise it to at least 30, or set a shorter shutdown.timeout." $grace) -}}
 {{- end -}}
 {{- end -}}
+{{- end }}
+
+{{/*
+Check the per-component logs blocks: known keys, string values, and the value sets the
+server accepts for format and destination (closed and identical since 3.9, matched
+case-insensitively as the server does).
+
+logFilter is rejected for whitespace, which the server never reads as written: a directive
+is [target][=level] with no room for a space, so tracing-subscriber either fails to parse
+it and panics, or folds it into the target name and the directive matches nothing. A filter
+using the [span] form may legally contain spaces inside the brackets, so there the check
+narrows to the ends and the commas.
+
+The top-level logs block is left alone: it has shipped since 0.10.0, and a value that is
+wrong in the same way renders there today, so a check on it would refuse an upgrade that
+works now.
+*/}}
+{{- define "influxdb3-enterprise.validateComponentLogs" -}}
+{{- $kinds := dict "float64" "number" "int64" "number" "bool" "boolean" "slice" "list" "map" "map" -}}
+{{- $allowed := dict "logFormat" (list "full" "pretty" "json" "logfmt") "logDestination" (list "stdout" "stderr") -}}
+{{- $keys := list "logFilter" "logFormat" "logDestination" -}}
+{{- range $scope := list "ingester" "querier" "compactor" "processingEngine" -}}
+{{- $component := get $.Values $scope | default dict -}}
+{{- $path := printf "%s.logs" $scope -}}
+{{- if and (hasKey $component "logs") (not (kindIs "invalid" (get $component "logs"))) -}}
+{{- $logs := get $component "logs" -}}
+{{- if not (kindIs "map" $logs) -}}
+{{- fail (printf "%s must be a map with %s, got %s." $path (join ", " $keys) (get $kinds (kindOf $logs) | default "string")) -}}
+{{- end -}}
+{{- range $key, $value := $logs -}}
+{{- if not (has $key $keys) -}}
+{{- fail (printf "%s.%s is not a per-component log key; %s takes %s. queryLogSize stays in the top-level logs block." $path $key $path (join ", " $keys)) -}}
+{{- end -}}
+{{- if not (kindIs "invalid" $value) -}}
+{{- if not (kindIs "string" $value) -}}
+{{- fail (printf "%s.%s must be a string, got %s. YAML reads off, on, yes and no as booleans, so quote the value: \"off\"." $path $key (get $kinds (kindOf $value) | default "string")) -}}
+{{- end -}}
+{{- if eq $key "logFilter" -}}
+{{- /* \s is ASCII only, so name the Unicode separators the server's trim() also folds. */ -}}
+{{- $ws := "[\\s\\x{0b}\\x{85}\\p{Zs}]" -}}
+{{- $pattern := ternary (printf "^%s|%s$|%s,|,%s" $ws $ws $ws $ws) $ws (contains "[" $value) -}}
+{{- if regexMatch $pattern $value -}}
+{{- fail (printf "%s.logFilter has whitespace the server cannot read, got %q; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace." $path $value) -}}
+{{- end -}}
+{{- end -}}
+{{- if and (hasKey $allowed $key) (ne $value "") (not (has (lower $value) (get $allowed $key))) -}}
+{{- fail (printf "%s.%s must be one of %s, got %q." $path $key (join ", " (get $allowed $key)) $value) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Render a number from a values file as a plain decimal string. Such a number is a float64,
+and toString prints 1000000 as 1e+06, which clap rejects for a usize.
+*/}}
+{{- define "influxdb3-enterprise.plainInteger" -}}
+{{- if and (kindIs "float64" .) (eq (floor .) .) -}}
+{{- printf "%.0f" . -}}
+{{- else -}}
+{{- toString . -}}
+{{- end -}}
+{{- end }}
+Reject a memory size the server will not take.
+
+InfluxDB accepts b, kb, mb, gb and tb - all binary, 1024-based - or a whole
+percentage, with optional whitespace before the suffix. Bare numbers were
+rejected in 3.11 because they used to mean megabytes, and Kubernetes suffixes
+such as Gi are not in the server's table at all, so both reach the container and
+crash-loop it. The deprecated aliases keep the old lenient parsing and are not
+checked.
+
+Whether the configured sizes add up to more than the container can hold is the
+server's call, not the chart's: it sums them only for query-only nodes, using
+its own set of reservations, and warns rather than refusing to start. See the
+Memory Budget section of the README.
+*/}}
+{{- define "influxdb3-enterprise.validateMemorySize" -}}
+{{- $key := .key -}}
+{{- $raw := .value | toString | trim | lower -}}
+{{/* Quote the value as the user wrote it. toString on a values-file number goes through %v,
+     which switches to exponent form above six digits, so integral floats are printed whole. */}}
+{{- $shown := .value | toString -}}
+{{- if and (kindIs "float64" .value) (eq (floor .value) .value) -}}
+{{- $shown = printf "%.0f" .value -}}
+{{- end -}}
+{{- $allowPercent := true -}}
+{{- if hasKey . "allowPercent" -}}
+{{- if not (kindIs "bool" .allowPercent) -}}
+{{- fail (printf "internal error: allowPercent for %s must be a bool, got %q." $key ($allowPercent | toString)) -}}
+{{- end -}}
+{{- $allowPercent = .allowPercent -}}
+{{- end -}}
+{{/* Spell out what the server takes, since the two size types differ only on percentages. */}}
+{{- $units := "a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based)" -}}
+{{- if eq $raw "" -}}
+{{- fail (printf "%s is set to an empty value. Remove the key to use the server default, or give it %s." $key $units) -}}
+{{- end -}}
+{{- if hasSuffix "%" $raw -}}
+{{- if not $allowPercent -}}
+{{- fail (printf "%s is an absolute file size and does not take a percentage, got %q. Use %s." $key $shown $units) -}}
+{{- end -}}
+{{- $pct := trimSuffix "%" $raw | trim | trimPrefix "+" -}}
+{{- if not (regexMatch "^[0-9]+$" $pct) -}}
+{{- fail (printf "%s must be a whole percentage such as \"20%%\", got %q." $key $shown) -}}
+{{- end -}}
+{{/* Sprig int64 reads a leading zero as octal (0120 is 80) and returns 0 for a bad digit or an
+     overflow, so drop the zeros - the server ignores them - and bound the length before converting. */}}
+{{- $pct = regexReplaceAll "^0+([0-9])" $pct "${1}" -}}
+{{- if or (gt (len $pct) 3) (gt ($pct | int64) 100) -}}
+{{- fail (printf "%s must be between 0 and 100 percent, got %q." $key $shown) -}}
+{{- end -}}
+{{- else if not (regexMatch "^\\+?[0-9]+\\s*(kb|mb|gb|tb|b)$" $raw) -}}
+{{- if $allowPercent -}}
+{{- fail (printf "%s must carry %s or be a percentage, got %q. Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start." $key $units $shown) -}}
+{{- else -}}
+{{- fail (printf "%s must carry %s, got %q. It is an absolute file size, so a percentage is not accepted either, and bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB." $key $units $shown) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Check every memory size a release sets, whatever its limits look like.
+
+Only keys the release actually sets are checked, and a key cleared with null is
+left alone. Gating on truthiness instead would skip 0 and false, which are the
+values that reach the pod and stop it starting.
+*/}}
+{{- define "influxdb3-enterprise.validateMemorySizeKey" -}}
+{{- $src := .src -}}
+{{- $name := .name -}}
+{{- if and (hasKey $src $name) (not (kindIs "invalid" (get $src $name))) -}}
+{{- $args := dict "key" .key "value" (get $src $name) -}}
+{{- if hasKey . "allowPercent" -}}
+{{- $args = merge $args (dict "allowPercent" .allowPercent) -}}
+{{- end -}}
+{{- include "influxdb3-enterprise.validateMemorySize" $args -}}
+{{- end -}}
+{{- end }}
+
+{{- define "influxdb3-enterprise.validateMemorySizes" -}}
+{{- $caching := .Values.caching | default dict -}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $caching "name" "fileCacheSize" "key" "caching.fileCacheSize") -}}
+{{- range $name := list "ingester" "querier" "compactor" "processingEngine" -}}
+{{- $memory := get (get $.Values $name | default dict) "memory" | default dict -}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $memory "name" "execMemPoolSize" "key" (printf "%s.memory.execMemPoolSize" $name)) -}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $memory "name" "forceSnapshotMemSize" "key" (printf "%s.memory.forceSnapshotMemSize" $name)) -}}
+{{- end -}}
+{{- $pacha := get (get .Values "engine" | default dict) "pachaTree" | default dict -}}
+{{- range $k := list "replicaMaxBufferSize" "walBufferSize" "snapshotSize" "mergeThresholdSize" "compactorInputSizeBudget" "l1TailTargetSize" "l1TargetFileSize" "l2TailTargetSize" "l2TargetFileSize" "l3TailTargetSize" "l3TargetFileSize" "l4TailTargetSize" "l4TargetFileSize" -}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $pacha "name" $k "key" (printf "engine.pachaTree.%s" $k)) -}}
+{{- end -}}
+{{/* gen0MaxFileSize is a ByteSize: the server takes a unit there but not a percentage. */}}
+{{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $pacha "name" "gen0MaxFileSize" "key" "engine.pachaTree.gen0MaxFileSize" "allowPercent" false) -}}
 {{- end }}

@@ -1,0 +1,357 @@
+suite: per-component log settings
+release:
+  name: t
+  namespace: default
+tests:
+  - it: sets the filter on the ingester only
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+
+  - it: leaves the other components alone
+    template: templates/querier-statefulset.yaml
+    set:
+      ingester.logs.logFilter: debug
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          any: true
+          content:
+            name: INFLUXDB3_LOG_FILTER
+
+  - it: keeps the global filter in the ConfigMap next to a component override
+    template: templates/configmap.yaml
+    set:
+      logs.logFilter: info
+      querier.logs.logFilter: debug
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_LOG_FILTER
+          value: info
+
+  # The ConfigMap reaches the pod through envFrom and the component value through env,
+  # which Kubernetes lets win. Assert the pod side too, or the override has no test.
+  - it: puts the component override on the pod while the global value stays in the ConfigMap
+    template: templates/querier-statefulset.yaml
+    set:
+      logs.logFilter: info
+      querier.logs.logFilter: debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: info
+
+  - it: maps format and destination on the querier
+    template: templates/querier-statefulset.yaml
+    set:
+      querier.logs.logFormat: json
+      querier.logs.logDestination: stderr
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FORMAT
+            value: json
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_DESTINATION
+            value: stderr
+
+  - it: reaches the compactor
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.logs.logFilter: trace
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: trace
+
+  - it: reaches the processor through processingEngine
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+      processingEngine.logs.logFilter: debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+
+  # --- precedence: a filter set through extraEnv keeps winning after the upgrade ---
+
+  - it: lets the component extraEnv win over the component logs key, without a duplicate
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: info
+      ingester.extraEnv:
+        - name: INFLUXDB3_LOG_FILTER
+          value: debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: info
+
+  - it: lets the component logs key win over the global extraEnv, without a duplicate
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: debug
+      extraEnv:
+        - name: INFLUXDB3_LOG_FILTER
+          value: info
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: info
+
+  - it: renders nothing for a null or empty value
+    template: templates/ingester-statefulset.yaml
+    values: [values/logs-ingester-null.yaml]
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          any: true
+          content:
+            name: INFLUXDB3_LOG_FILTER
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          any: true
+          content:
+            name: INFLUXDB3_LOG_FORMAT
+
+  - it: names the key when logs is not a map
+    set:
+      querier.logs: oops
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs must be a map with logFilter, logFormat, logDestination, got string."
+
+  # --- boundary values: YAML booleans, wrong types, unknown keys, bad values ---
+
+  - it: refuses a boolean filter, which is what an unquoted off becomes
+    values: [values/logs-boolean.yaml]
+    asserts:
+      - failedTemplate:
+          errorMessage: 'compactor.logs.logFilter must be a string, got boolean. YAML reads off, on, yes and no as booleans, so quote the value: "off".'
+
+  - it: renders a quoted off as the filter
+    template: templates/compactor-statefulset.yaml
+    values: [values/logs-off-quoted.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: "off"
+
+  - it: refuses a boolean format
+    set:
+      querier.logs.logFormat: true
+    asserts:
+      - failedTemplate:
+          errorMessage: 'querier.logs.logFormat must be a string, got boolean. YAML reads off, on, yes and no as booleans, so quote the value: "off".'
+
+  - it: accepts a destination in any case, as the server does
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logDestination: STDERR
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_DESTINATION
+            value: STDERR
+
+  - it: checks the processor block too
+    set:
+      processingEngine.logs.logFormat: yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "processingEngine.logs.logFormat must be one of full, pretty, json, logfmt, got \"yaml\"."
+
+  - it: refuses a format the server does not have
+    set:
+      querier.logs.logFormat: yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs.logFormat must be one of full, pretty, json, logfmt, got \"yaml\"."
+
+  - it: accepts a format in any case, as the server does
+    template: templates/querier-statefulset.yaml
+    set:
+      querier.logs.logFormat: JSON
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FORMAT
+            value: JSON
+
+  - it: refuses a destination the server does not have
+    set:
+      ingester.logs.logDestination: file
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingester.logs.logDestination must be one of stdout, stderr, got \"file\"."
+
+  - it: refuses whitespace next to a comma in the filter, which panics the server
+    set:
+      querier.logs.logFilter: "info, sqlx=warn"
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs.logFilter has whitespace the server cannot read, got \"info, sqlx=warn\"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
+
+  - it: refuses whitespace at the end of the filter, which the server reads as a target name
+    set:
+      ingester.logs.logFilter: "info "
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingester.logs.logFilter has whitespace the server cannot read, got \"info \"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
+
+  - it: refuses a whitespace-only filter
+    set:
+      compactor.logs.logFilter: " "
+    asserts:
+      - failedTemplate:
+          errorMessage: "compactor.logs.logFilter has whitespace the server cannot read, got \" \"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
+
+  - it: accepts a comma-separated filter without whitespace
+    template: templates/querier-statefulset.yaml
+    set:
+      querier.logs.logFilter: "info,sqlx=warn"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: info,sqlx=warn
+
+  - it: refuses a key the block does not know
+    set:
+      ingester.logs.queryLogSize: 1000
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingester.logs.queryLogSize is not a per-component log key; ingester.logs takes logFilter, logFormat, logDestination. queryLogSize stays in the top-level logs block."
+
+  - it: still emits the INFLUXDB3_ name next to a legacy LOG_FILTER in extraEnv
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: debug
+      ingester.extraEnv:
+        - name: LOG_FILTER
+          value: trace
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: debug
+
+  # --- queryLogSize renders as a string the API server accepts ---
+
+  - it: quotes the query log size, since ConfigMap data is a string map
+    template: templates/configmap.yaml
+    set:
+      logs.queryLogSize: 5000
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_MAX_ENTRIES
+          value: "5000"
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+          value: "5000"
+
+  - it: writes a large size in full, not in scientific notation
+    template: templates/configmap.yaml
+    values: [values/query-log-size-large.yaml]
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_MAX_ENTRIES
+          value: "1000000"
+
+  - it: keeps an explicit zero, which the server takes as a usize
+    template: templates/configmap.yaml
+    values: [values/query-log-size-zero.yaml]
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+          value: "0"
+
+  - it: renders nothing for a null size
+    template: templates/configmap.yaml
+    values: [values/query-log-size-null.yaml]
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+
+  # --- the top-level block keeps its own behaviour ---
+
+  # It has shipped since 0.10.0, so a check here would refuse an upgrade that renders today.
+  - it: leaves the top-level block unchecked
+    template: templates/configmap.yaml
+    set:
+      logs.logFilter: "info, sqlx=warn"
+      logs.queryLogSize: 1000
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_LOG_FILTER
+          value: "info, sqlx=warn"
+      - exists:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+
+  # --- whitespace the server cannot read ---
+
+  - it: refuses whitespace inside a directive
+    set:
+      querier.logs.logFilter: "info sqlx=warn"
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs.logFilter has whitespace the server cannot read, got \"info sqlx=warn\"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
+
+  - it: refuses whitespace around the equals sign
+    set:
+      querier.logs.logFilter: "info,sqlx = warn"
+    asserts:
+      - failedTemplate:
+          errorMessage: "querier.logs.logFilter has whitespace the server cannot read, got \"info,sqlx = warn\"; a directive is target=level with no space in it, so the server panics on the filter or folds the space into a target name that matches nothing. Remove the whitespace."
+
+  - it: allows a space inside a span, which the directive syntax permits
+    template: templates/ingester-statefulset.yaml
+    set:
+      ingester.logs.logFilter: "[my span]=debug"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_LOG_FILTER
+            value: "[my span]=debug"

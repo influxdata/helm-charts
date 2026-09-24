@@ -39,7 +39,7 @@ cluster:
   # Cluster management settings for multi-node coordination
 #  replicationInterval: "250ms"      # Data replication interval between nodes
 #  catalogSyncInterval: "10s"        # Catalog synchronization interval
-#  waitForRunningIngester: "10s"     # Startup wait; deprecated alias: waitForRunningIngestor
+#  waitForRunningIngester: "10s"     # Startup wait; replaces deprecated waitForRunningIngestor
 
 # ============================================================================
 # Object Storage Configuration
@@ -177,6 +177,10 @@ license:
 # - ingester.wal.flushInterval
 # - caching.fileCacheSize, parquetMemCacheQueryPathDuration,
 #   and disableParquetMemCache
+#
+# The *Size and *Budget keys below take b, kb, mb, gb or tb - all 1024-based -
+# or a whole percentage; the chart rejects bare numbers and Kubernetes suffixes
+# such as Gi. gen0MaxFileSize is an absolute file size and takes no percentage.
 # engine:
 #   pachaTree:
 #     # Shared storage-engine settings
@@ -244,15 +248,24 @@ ingester:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for ingester pods only. Overrides the top-level logs.* key of the same name.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for ingester pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
-  # Memory tuning
+  # Memory tuning. The keys below take b, kb, mb, gb or tb - all 1024-based - or
+  # a whole percentage of the memory limit; the chart rejects bare numbers and
+  # Kubernetes suffixes such as Gi, which the server does not parse. Their
+  # deprecated aliases keep the older, more permissive parsing.
   # memory:
-  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
-  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
+  #   execMemPoolSize: "20%"              # Replaces deprecated execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Replaces deprecated forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -349,15 +362,24 @@ querier:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for querier pods only. Overrides the top-level logs.* key of the same name.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for querier pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
-  # Memory tuning
+  # Memory tuning. The keys below take b, kb, mb, gb or tb - all 1024-based - or
+  # a whole percentage of the memory limit; the chart rejects bare numbers and
+  # Kubernetes suffixes such as Gi, which the server does not parse. Their
+  # deprecated aliases keep the older, more permissive parsing.
   # memory:
-  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
-  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
+  #   execMemPoolSize: "20%"              # Replaces deprecated execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Replaces deprecated forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -441,15 +463,24 @@ compactor:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for compactor pods only. Overrides the top-level logs.* key of the same name.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for compactor pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
-  # Memory tuning
+  # Memory tuning. The keys below take b, kb, mb, gb or tb - all 1024-based - or
+  # a whole percentage of the memory limit; the chart rejects bare numbers and
+  # Kubernetes suffixes such as Gi, which the server does not parse. Their
+  # deprecated aliases keep the older, more permissive parsing.
   # memory:
-  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
-  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
+  #   execMemPoolSize: "20%"              # Replaces deprecated execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Replaces deprecated forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -527,15 +558,24 @@ processingEngine:
   # numCores: 4                 # Available cores (--num-cores)
   # numIOThreads: 2             # Global IO threads (--num-io-threads)
 
+  # Log settings for Processing Engine pods only. Overrides the top-level logs.* key of the same name.
+  # logs:
+  #   logFilter: "debug"
+  #   logFormat: "json"
+  #   logDestination: "stdout"
+
   # Extra environment variables for Processing Engine pods. Overrides top-level extraEnv entries with the same name.
   extraEnv: []
     # - name: PROCESSOR_ONLY_VAR
     #   value: "processor-only"
 
-  # Memory tuning
+  # Memory tuning. The keys below take b, kb, mb, gb or tb - all 1024-based - or
+  # a whole percentage of the memory limit; the chart rejects bare numbers and
+  # Kubernetes suffixes such as Gi, which the server does not parse. Their
+  # deprecated aliases keep the older, more permissive parsing.
   # memory:
-  #   execMemPoolSize: "20%"              # Deprecated alias: execMemPoolBytes
-  #   forceSnapshotMemSize: "50%"         # Deprecated alias: forceSnapshotMemThreshold
+  #   execMemPoolSize: "20%"              # Replaces deprecated execMemPoolBytes
+  #   forceSnapshotMemSize: "50%"         # Replaces deprecated forceSnapshotMemThreshold
 
   # DataFusion configuration
   # datafusion:
@@ -660,7 +700,7 @@ http:
 # Caching configuration
 caching:
   # File caching
-  # fileCacheSize: "20%"                    # Deprecated alias: parquetMemCacheSize; alias bare numbers mean MB
+  # fileCacheSize: "20%"                    # Replaces deprecated parquetMemCacheSize, whose bare numbers mean MB
   # parquetMemCacheQueryPathDuration: "5h"  # Deprecated Helm key retained for compatibility
   # parquetMemCachePrunePercentage: 0.1
   # parquetMemCachePruneInterval: "1s"
