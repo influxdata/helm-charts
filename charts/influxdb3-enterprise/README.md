@@ -10,6 +10,7 @@ Official Helm chart for deploying InfluxDB 3 Enterprise on Kubernetes with full 
 - [Configuration](#configuration)
 - [Architecture](#architecture)
 - [Upgrading](#upgrading)
+- [Backup and Restore](#backup-and-restore)
 - [Uninstallation](#uninstallation)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
@@ -752,6 +753,101 @@ ingester:
       partition: 0
 ```
 
+## Backup and Restore
+
+The chart does not schedule backups. They are taken with the `influxdb3` CLI
+inside the compactor pod, and the product documentation is in
+[Back up and restore data](https://docs.influxdata.com/influxdb3/enterprise/admin/backup-restore/).
+The built-in commands below need the PachaTree storage engine, which every
+cluster created by InfluxDB 3.11 uses. A cluster upgraded from 3.10 has to be
+backed up by copying the object store as that page describes until the
+PachaTree migration has completed on every node. Setting
+`acknowledgePachaTreeMigration` only starts the migration, and a backup taken
+while it runs reports `completed` without the data not yet converted.
+
+With `security.tls.enabled`, add `--host https://127.0.0.1:8181` and `--tls-ca`
+or `--tls-no-verify` to every command in this section.
+
+### Create a Backup
+
+Run the commands on the compactor with the admin token. Querier pods answer
+`503` and ingester pods `404`.
+
+```bash
+kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
+  influxdb3 create backup --name base --token "$INFLUXDB3_AUTH_TOKEN"
+kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
+  influxdb3 show backups --token "$INFLUXDB3_AUTH_TOKEN"
+```
+
+`create backup` returns as soon as the backup starts; wait until `show backups`
+reports it `completed`. Once `base` is complete, `create backup --name inc-1
+--incremental --parent base` takes an incremental backup on top of it. The last
+few seconds of writes before a backup may be missing from it.
+
+Backups are stored in the cluster's own object store under
+`<cluster.id>/backups/`, below `engine.pachaTree.enginePathPrefix` when that is
+set, so they do not survive the loss of that bucket. Incremental backups are
+kept inside the directory of their full backup and need it to restore. With
+`objectStorage.type: file` the store is a PVC the chart creates, and
+`helm uninstall` deletes it together with the backups. Copy the `backups/`
+prefix elsewhere if it has to outlive the cluster.
+
+### Restore
+
+Stop clients writing to the cluster before a restore and keep them stopped
+until it has completed. Rows still buffered in an ingester when the restore
+starts can survive it, and writes accepted while it runs can be lost.
+
+```bash
+kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
+  influxdb3 create restore --backup base --token "$INFLUXDB3_AUTH_TOKEN"
+kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
+  influxdb3 show restores --token "$INFLUXDB3_AUTH_TOKEN"
+```
+
+A restore runs in place and rolls the cluster back to the backup. It replaces
+the whole catalog, tokens included: tokens created after the backup stop
+working, and tokens deleted after it are valid again. Row deletes are not
+reliably carried across a restore in either direction, least of all from an
+incremental backup, which does not record them.
+
+Once `show restores` reports `completed`, restart the queriers:
+
+```bash
+kubectl rollout restart statefulset/influxdb3-enterprise-querier -n influxdb3
+```
+
+On InfluxDB 3.11.0 through 3.11.5 queriers stop following catalog changes after
+a restore until they restart: tables created afterwards stay invisible, and
+queries can fail on files that no longer exist.
+
+If the compactor restarts while a restore is running, the restore can stay
+`in_progress`. Keep writers stopped, wait for the compactor to be ready and at
+least 30 seconds for the old restore lease to expire, then run `create restore`
+again. With `objectStorage.type: google` on 3.11 the expired lease is not taken
+over, so delete `<cluster.id>/restores/restore.lease` from the bucket first.
+
+### Restore Into a New Cluster
+
+Node IDs are the pod names, so the new release has to produce the same ones:
+the same release name, `nameOverride` and `fullnameOverride` as the old
+release, or a `fullnameOverride` that reproduces its names. Keep `cluster.id`
+and `engine.pachaTree.enginePathPrefix` the same too. Install the chart, copy
+the backup directory to the same path in the new object store, run
+`create restore` and restart the queriers as above. Once the catalog is restored, only tokens from
+the old cluster are accepted, so run `show restores` with one of those. The
+compactor and ingesters may restart once on their own after the restore.
+
+The license is not tied to the object store. A commercial license can reuse the
+same license Secret; a trial or home license lives in
+`<cluster.id>/trial_or_home_license`, which backups do not include, so copy that
+file into the new store as well.
+
+Processing Engine plugin files live on the processor's volume
+(`processingEngine.pluginDir`), not in the object store, so copy them
+separately.
+
 ## Uninstallation
 
 ### Delete the Release
@@ -762,7 +858,9 @@ helm uninstall influxdb3-enterprise --namespace influxdb3
 
 ### Clean Up PVCs
 
-PersistentVolumeClaims are not automatically deleted:
+`helm uninstall` deletes the object-storage PVC that `objectStorage.type: file`
+creates, with all data in it. PVCs created from StatefulSet volume claim
+templates, such as the processor's plugin volume, are kept:
 
 ```bash
 kubectl delete pvc -n influxdb3 -l app.kubernetes.io/instance=influxdb3-enterprise
