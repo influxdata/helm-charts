@@ -19,9 +19,11 @@ documentation.
 ## Before upgrading
 
 Back up the cluster's object storage and verify that the backup can be restored.
-If your values set `image.tag`, remove the override or change it to the chart's
-`appVersion` with the `-enterprise` suffix (`helm show chart` prints it);
-otherwise Helm continues deploying the overridden image.
+If your values set `image.tag`, remove the override or change it to the
+`appVersion` of the chart version you install, with the `-enterprise` suffix:
+`3.11.2-enterprise` for chart 0.10.0, which this guide uses. For another chart
+version, `helm show chart influxdata/influxdb3-enterprise --version <version>`
+prints it. Otherwise Helm continues deploying the overridden image.
 
 If `http.maxRequestSize` is set, keep it as a bare byte count, for example
 `10485760`, until every pod runs InfluxDB 3.11.2 or later. InfluxDB 3.10.5 rejects
@@ -70,8 +72,8 @@ kubectl exec -n "$NAMESPACE" "$QUERIER_POD" -- \
 ```
 
 Verify that every node reports `running`, every pod is ready, and every pod runs
-the InfluxDB version in the chart's `appVersion`. Query existing data and test a new write before starting the
-storage engine migration.
+the InfluxDB version of the chart you installed, 3.11.2 for chart 0.10.0. Query
+existing data and test a new write before starting the storage engine migration.
 
 ### Upgrade directly from chart 0.8.x
 
