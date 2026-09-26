@@ -481,6 +481,27 @@ kubectl logs -n ingress-nginx <ingress-controller-pod> | grep influxdb
 
 ## Processing Engine Issues
 
+### Plugin Queries Failing
+
+**Error:** `Cannot query: no remote query client found`, or after a few
+attempts `Cannot query: all remote query clients are circuit-open`
+
+**Cause:** the processor is running without `query` in its mode. It holds no
+data of its own, and on InfluxDB 3.11 a node without `query` has to ask a
+querier over internode gRPC, which the chart does not set up. On 3.10 the server
+answered in process whatever the mode was, so this appears only after upgrading.
+
+**Diagnosis:**
+```bash
+kubectl get sts -n influxdb3 influxdb3-enterprise-processor \
+  -o jsonpath='{.spec.template.spec.containers[0].args}'
+```
+
+**Solution:** upgrade to chart 0.14.1 or later, which runs the processor as
+`--mode=process,query`. That is a command-line argument and the server prefers
+it over `INFLUXDB3_MODE`, so `extraEnv` will not change it. If you patch the
+container args or run a customised template, keep `query` in the mode.
+
 ### Plugins Not Loading
 
 **Error:** `Plugin file not found`

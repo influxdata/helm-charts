@@ -881,6 +881,31 @@ For `objectStorage.type=file`, also check the shared object-storage PVC:
 kubectl get pvc -n influxdb3 influxdb3-enterprise-object-storage
 ```
 
+#### Plugin Queries Failing on Processor Pods
+
+A plugin that calls `influxdb3_local.query()` logs one of these:
+
+```
+Cannot query: no remote query client found
+Cannot query: all remote query clients are circuit-open
+```
+
+The processor needs `query` in its mode to answer its own queries. The chart runs
+it as `--mode=process,query` from 0.14.1 on; before that it ran `--mode=process`
+alone, which holds no data and has no remote query client on InfluxDB 3.11, so
+every such call failed. On 3.10 the server queried in process whatever the mode
+was, which is why the problem appears only after an upgrade. Check the mode:
+
+```bash
+kubectl get sts -n influxdb3 influxdb3-enterprise-processor \
+  -o jsonpath='{.spec.template.spec.containers[0].args}'
+```
+
+The chart passes `--mode=process,query` as a command-line argument, and the
+server takes that over `INFLUXDB3_MODE`, so the mode cannot be changed through
+`extraEnv`. If you patch the container args or run a customised template, keep
+`query` in the mode.
+
 ### Debug Mode
 
 Enable verbose logs on every component:
