@@ -292,7 +292,7 @@ TLS secret name
       key: access-key
   {{- else if $azureStorageAccount }}
 - name: AZURE_STORAGE_ACCOUNT
-  value: {{ $azureStorageAccount | quote }}
+  value: {{ include "influxdb3-enterprise.quote" $azureStorageAccount }}
   {{- if $azureAccessKey }}
 - name: AZURE_STORAGE_ACCESS_KEY
   valueFrom:
@@ -316,16 +316,22 @@ License environment (shared across components)
     secretKeyRef:
       name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
       key: license-email
+- name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "influxdb3-enterprise.licenseSecretName" . }}
+      key: license-email
 {{- end }}
-{{- if .Values.license.file }}
+{{- if or .Values.license.file (and .Values.license.existingSecret (eq $licenseType "commercial")) }}
 - name: INFLUXDB3_LICENSE_FILE
   value: "/etc/influxdb/license"
-{{- else if and .Values.license.existingSecret (eq $licenseType "commercial") }}
-- name: INFLUXDB3_LICENSE_FILE
+- name: INFLUXDB3_ENTERPRISE_LICENSE_FILE
   value: "/etc/influxdb/license"
 {{- end }}
 - name: INFLUXDB3_LICENSE_TYPE
-  value: {{ $licenseType | quote }}
+  value: {{ include "influxdb3-enterprise.quote" $licenseType }}
+- name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE
+  value: {{ include "influxdb3-enterprise.quote" $licenseType }}
 {{- end }}
 {{- end }}
 
@@ -342,7 +348,7 @@ Preconfigured admin token environment
   value: "/etc/influxdb/admin-token/admin-token.json"
 {{- else if $adminTokenFile }}
 - name: INFLUXDB3_ADMIN_TOKEN_FILE
-  value: {{ $adminTokenFile | quote }}
+  value: {{ include "influxdb3-enterprise.quote" $adminTokenFile }}
 {{- end }}
 {{- end }}
 
@@ -359,7 +365,7 @@ Preconfigured permission tokens environment
   value: "/etc/influxdb/permission-tokens/permission-tokens.json"
 {{- else if $permissionTokensFile }}
 - name: INFLUXDB3_PERMISSION_TOKENS_FILE
-  value: {{ $permissionTokensFile | quote }}
+  value: {{ include "influxdb3-enterprise.quote" $permissionTokensFile }}
 {{- end }}
 {{- end }}
 
@@ -488,7 +494,7 @@ PachaTree environment variables shared by storage roles.
 {{- $key := index $mapping 0 -}}
 {{- if and (hasKey $pachaTree $key) (not (kindIs "invalid" (get $pachaTree $key))) }}
 - name: {{ index $mapping 1 }}
-  value: {{ get $pachaTree $key | quote }}
+  value: {{ include "influxdb3-enterprise.quote" (get $pachaTree $key) }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -924,6 +930,16 @@ and toString prints 1000000 as 1e+06, which clap rejects for a usize.
 {{- printf "%.0f" . -}}
 {{- else -}}
 {{- toString . -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Quote a value for the server's environment, with numbers written in full: quote alone turns
+cluster.id 20240101 into "2.0240101e+07". A null renders nothing, as quote does.
+*/}}
+{{- define "influxdb3-enterprise.quote" -}}
+{{- if not (kindIs "invalid" .) -}}
+{{- include "influxdb3-enterprise.plainInteger" . | quote -}}
 {{- end -}}
 {{- end }}
 Reject a memory size the server will not take.

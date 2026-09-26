@@ -1,0 +1,15 @@
+license:
+  type: commercial
+  existingSecret: influxdb3-license
+ingester:
+  wal:
+    snapshotSize: 600
+    maxWriteBufferSize: 100000
+    snapshotFilesToKeep: 300
+compactor:
+  compaction:
+    gen2Duration: "20m"
+    multipliers: "3,4,6,5"
+    maxNumFilesPerPlan: 500
+    cleanupWait: "10m"
+    checkInterval: "10s"
