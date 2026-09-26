@@ -91,6 +91,8 @@ spec:
             {{- if hasKey .Values.ingester "numCores" }}
             - name: INFLUXDB3_NUM_CORES
               value: {{ include "influxdb3-enterprise.quote" .Values.ingester.numCores }}
+            - name: INFLUXDB3_ENTERPRISE_NUM_CORES
+              value: {{ include "influxdb3-enterprise.quote" .Values.ingester.numCores }}
             {{- end }}
             {{- with .Values.ingester.wal }}
             {{- if .flushInterval }}

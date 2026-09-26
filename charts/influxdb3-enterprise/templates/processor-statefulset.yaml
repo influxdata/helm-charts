@@ -91,6 +91,8 @@ spec:
             {{- if hasKey .Values.processingEngine "numCores" }}
             - name: INFLUXDB3_NUM_CORES
               value: {{ include "influxdb3-enterprise.quote" .Values.processingEngine.numCores }}
+            - name: INFLUXDB3_ENTERPRISE_NUM_CORES
+              value: {{ include "influxdb3-enterprise.quote" .Values.processingEngine.numCores }}
             {{- end }}
             {{- with .Values.processingEngine.pluginDir }}
             - name: INFLUXDB3_PLUGIN_DIR

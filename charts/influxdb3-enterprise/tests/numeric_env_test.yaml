@@ -3,14 +3,12 @@ release:
   name: t
   namespace: default
 tests:
-  # A number in a values file is a float64 and quote prints 1000000 as "1e+06",
-  # which the server rejects at startup. Every value must reach it as written.
-  - it: writes large numbers and numeric strings in full in the ConfigMap
+  # A number in a values file is a float64 and quote prints 1000000 as "1e+06".
+  # Numeric options reject that form and the node does not start.
+  - it: writes large numbers in full in the ConfigMap
     template: templates/configmap.yaml
     values: [values/large-numbers.yaml]
     asserts:
-      - equal: {path: data.INFLUXDB3_CLUSTER_ID, value: "20240101"}
-      - equal: {path: data.INFLUXDB3_ENTERPRISE_CLUSTER_ID, value: "20240101"}
       - equal: {path: data.INFLUXDB3_BUCKET, value: "12345678"}
       - equal: {path: data.INFLUXDB3_OBJECT_STORE_CONNECTION_LIMIT, value: "1000000"}
       - equal: {path: data.INFLUXDB3_OBJECT_STORE_MAX_RETRIES, value: "1000000"}
@@ -22,6 +20,24 @@ tests:
       - equal: {path: data.INFLUXDB3_ENTERPRISE_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT, value: "1000000"}
       - equal: {path: data.INFLUXDB3_TRACES_JAEGER_MAX_MSGS_PER_SECOND, value: "1000000"}
 
+  # The server takes any string as the cluster ID, so an existing release with a
+  # numeric cluster.id keeps its data under the prefix quote gave it.
+  - it: keeps the cluster ID in the form earlier releases wrote
+    template: templates/configmap.yaml
+    values: [values/large-numbers.yaml]
+    asserts:
+      - equal: {path: data.INFLUXDB3_CLUSTER_ID, value: "2.0240101e+07"}
+      - equal: {path: data.INFLUXDB3_ENTERPRISE_CLUSTER_ID, value: "2.0240101e+07"}
+
+  - it: passes strings and fractions through unchanged
+    template: templates/configmap.yaml
+    set:
+      http.maxRequestSize: "0012345678"
+      caching.parquetMemCachePrunePercentage: 0.1
+    asserts:
+      - equal: {path: data.INFLUXDB3_MAX_HTTP_REQUEST_SIZE, value: "0012345678"}
+      - equal: {path: data.INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE, value: "0.1"}
+
   - it: writes large numbers in full in the ingester environment
     template: templates/ingester-statefulset.yaml
     values: [values/large-numbers.yaml]
@@ -30,6 +46,9 @@ tests:
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_EXEC_MEM_POOL_BYTES, value: "2147483648"}}
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_NUM_DATAFUSION_THREADS, value: "1000000"}}
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_WAL_FILES_PER_SNAPSHOT, value: "1000000"}}
+      - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_WAL_SNAPSHOT_SIZE, value: "1000000"}}
+      - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_WAL_MAX_WRITE_BUFFER_SIZE, value: "1000000"}}
+      - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_NUM_WAL_FILES_TO_KEEP, value: "1000000"}}
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_WAL_MAX_BUFFERED_WRITES, value: "1000000"}}
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_SNAPSHOTTED_WAL_FILES_TO_KEEP, value: "1000000"}}
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_MAX_TOTAL_COLUMNS, value: "10000000"}}
@@ -49,6 +68,7 @@ tests:
     values: [values/large-numbers.yaml]
     asserts:
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_COMPACTION_MAX_NUM_FILES_PER_PLAN, value: "1000000"}}
+      - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_ENTERPRISE_COMPACTION_MAX_NUM_FILES_PER_PLAN, value: "1000000"}}
 
   - it: writes large numbers in full in the processor environment
     template: templates/processor-statefulset.yaml
@@ -90,6 +110,24 @@ tests:
             name: INFLUXDB3_ENTERPRISE_LICENSE_EMAIL
             valueFrom: {secretKeyRef: {name: t-influxdb3-enterprise-license, key: license-email}}
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_ENTERPRISE_LICENSE_TYPE, value: trial}}
+      - notContains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_LICENSE_FILE}, any: true}
+      - notContains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_ENTERPRISE_LICENSE_FILE}, any: true}
+
+  - it: sets the pre-3.11 core count name on every component
+    templates:
+      - templates/ingester-statefulset.yaml
+      - templates/querier-statefulset.yaml
+      - templates/compactor-statefulset.yaml
+      - templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+      ingester.numCores: 2
+      querier.numCores: 2
+      compactor.numCores: 2
+      processingEngine.numCores: 2
+    asserts:
+      - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_NUM_CORES, value: "2"}}
+      - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_ENTERPRISE_NUM_CORES, value: "2"}}
 
   - it: sets the pre-3.11 WAL names on the ingester
     template: templates/ingester-statefulset.yaml
@@ -109,8 +147,8 @@ tests:
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_ENTERPRISE_COMPACTION_CLEANUP_WAIT, value: 10m}}
       - contains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_ENTERPRISE_COMPACTION_CHECK_INTERVAL, value: 10s}}
 
-  - it: leaves the legacy names out when the setting is not used
+  - it: leaves the legacy WAL names out when the setting is not used
     template: templates/ingester-statefulset.yaml
     asserts:
       - notContains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_WAL_SNAPSHOT_SIZE}, any: true}
-      - notContains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_ENTERPRISE_LICENSE_FILE}, any: true}
+      - notContains: {path: "spec.template.spec.containers[0].env", content: {name: INFLUXDB3_ENTERPRISE_NUM_CORES}, any: true}

@@ -79,6 +79,8 @@ spec:
             {{- if hasKey .Values.querier "numCores" }}
             - name: INFLUXDB3_NUM_CORES
               value: {{ include "influxdb3-enterprise.quote" .Values.querier.numCores }}
+            - name: INFLUXDB3_ENTERPRISE_NUM_CORES
+              value: {{ include "influxdb3-enterprise.quote" .Values.querier.numCores }}
             {{- end }}
             {{- $memory := .Values.querier.memory | default dict }}
             {{- if get $memory "execMemPoolSize" }}

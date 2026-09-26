@@ -84,6 +84,8 @@ spec:
             {{- if hasKey .Values.compactor "numCores" }}
             - name: INFLUXDB3_NUM_CORES
               value: {{ include "influxdb3-enterprise.quote" .Values.compactor.numCores }}
+            - name: INFLUXDB3_ENTERPRISE_NUM_CORES
+              value: {{ include "influxdb3-enterprise.quote" .Values.compactor.numCores }}
             {{- end }}
             {{- with .Values.compactor.compaction }}
             {{- if .gen2Duration }}

@@ -26,8 +26,10 @@ metadata:
   {{- end }}
 data:
   # Cluster configuration (env-style)
-  INFLUXDB3_CLUSTER_ID: {{ include "influxdb3-enterprise.quote" .Values.cluster.id }}
-  INFLUXDB3_ENTERPRISE_CLUSTER_ID: {{ include "influxdb3-enterprise.quote" .Values.cluster.id }}
+  {{- /* Plain quote on purpose: the server takes any string here, so a numeric cluster.id
+       already names its object-store prefix in the exponent form quote produces. */}}
+  INFLUXDB3_CLUSTER_ID: {{ .Values.cluster.id | quote }}
+  INFLUXDB3_ENTERPRISE_CLUSTER_ID: {{ .Values.cluster.id | quote }}
   {{- if .Values.cluster.replicationInterval }}
   INFLUXDB3_REPLICATION_INTERVAL: {{ include "influxdb3-enterprise.quote" .Values.cluster.replicationInterval }}
   INFLUXDB3_ENTERPRISE_REPLICATION_INTERVAL: {{ include "influxdb3-enterprise.quote" .Values.cluster.replicationInterval }}
@@ -90,8 +92,9 @@ data:
   # Object storage (non-secret)
   INFLUXDB3_OBJECT_STORE: {{ include "influxdb3-enterprise.quote" .Values.objectStorage.type }}
   {{- if eq .Values.objectStorage.type "file" }}
-  INFLUXDB3_DATA_DIR: {{ include "influxdb3-enterprise.quote" .Values.objectStorage.file.dataDir }}
-  INFLUXDB3_DB_DIR: {{ include "influxdb3-enterprise.quote" .Values.objectStorage.file.dataDir }}
+  {{- /* Plain quote for the same reason as the cluster ID: the path names existing data. */}}
+  INFLUXDB3_DATA_DIR: {{ .Values.objectStorage.file.dataDir | quote }}
+  INFLUXDB3_DB_DIR: {{ .Values.objectStorage.file.dataDir | quote }}
   {{- else }}
   INFLUXDB3_BUCKET: {{ include "influxdb3-enterprise.quote" .Values.objectStorage.bucket }}
   {{- end }}
@@ -262,9 +265,8 @@ data:
   INFLUXDB3_LOG_FORMAT: {{ include "influxdb3-enterprise.quote" .logFormat }}
   {{- end }}
   {{- if and (hasKey . "queryLogSize") (not (kindIs "invalid" .queryLogSize)) }}
-  {{- $queryLogSize := include "influxdb3-enterprise.plainInteger" .queryLogSize }}
-  INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ $queryLogSize | quote }}
-  INFLUXDB3_QUERY_LOG_SIZE: {{ $queryLogSize | quote }}
+  INFLUXDB3_QUERY_LOG_MAX_ENTRIES: {{ include "influxdb3-enterprise.quote" .queryLogSize }}
+  INFLUXDB3_QUERY_LOG_SIZE: {{ include "influxdb3-enterprise.quote" .queryLogSize }}
   {{- end }}
   {{- end }}
 

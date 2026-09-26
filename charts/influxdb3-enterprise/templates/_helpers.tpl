@@ -934,14 +934,17 @@ and toString prints 1000000 as 1e+06, which clap rejects for a usize.
 {{- end }}
 
 {{/*
-Quote a value for the server's environment, with numbers written in full: quote alone turns
-cluster.id 20240101 into "2.0240101e+07". A null renders nothing, as quote does.
+Quote a value for the server's environment with a whole number written out in digits, since quote
+alone writes 1000000 from a values file as "1e+06". Values file numbers are float64, so digits
+beyond 2^53 are already rounded when the chart sees them. A null renders nothing, as quote does.
 */}}
 {{- define "influxdb3-enterprise.quote" -}}
 {{- if not (kindIs "invalid" .) -}}
 {{- include "influxdb3-enterprise.plainInteger" . | quote -}}
 {{- end -}}
 {{- end }}
+
+{{/*
 Reject a memory size the server will not take.
 
 InfluxDB accepts b, kb, mb, gb and tb - all binary, 1024-based - or a whole

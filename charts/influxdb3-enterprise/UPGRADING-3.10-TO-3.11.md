@@ -24,7 +24,9 @@ If your values set `image.tag`, remove the override or change it to
 
 If `http.maxRequestSize` is set, keep it as a bare byte count, for example
 `10485760`, until every pod runs InfluxDB 3.11.2. InfluxDB 3.10.5 rejects
-unit-suffixed values such as `10mb`.
+unit-suffixed values such as `10mb`. Before chart 0.14.4, write the count as a
+quoted string, `"10485760"`: those charts render an unquoted number of a million
+or more as `1.048576e+07`, which neither version accepts.
 
 Save the current release values:
 
@@ -49,11 +51,13 @@ For a multi-node deployment, follow the official
 [staged Helm rollout procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/#multi-node-upgrade-procedure)
 using chart version `0.10.0`.
 
-Chart 0.10.0 emits both preferred 3.11 environment-variable names and their
-pre-3.11 aliases for settings supported by earlier chart versions. This keeps
-pods pinned to 3.10 correctly configured if they restart during the staged
-rollout. InfluxDB 3.11 uses the preferred names and logs deprecation warnings
-for the aliases.
+Chart 0.10.0 emits the preferred 3.11 environment-variable names alongside
+their pre-3.11 spellings for most settings, but not for the license, `numCores`,
+`ingester.wal.*` and `compactor.compaction.*`; chart 0.14.4 adds those. A pod
+still on 3.10 ignores the missing names and falls back to server defaults, and
+on a new install it cannot find the license. A cluster that has started once
+keeps starting, because 3.10 stored the license in the object store. InfluxDB
+3.11 reads both spellings and logs nothing when they agree.
 
 After all StatefulSets finish rolling, verify the nodes from a querier pod:
 
