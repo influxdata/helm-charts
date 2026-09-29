@@ -790,8 +790,9 @@ Backups are stored in the cluster's own object store under
 set, so they do not survive the loss of that bucket. Incremental backups are
 kept inside the directory of their full backup and need it to restore. With
 `objectStorage.type: file` the store is a PVC the chart creates, and
-`helm uninstall` deletes it together with the backups. Copy the `backups/`
-prefix elsewhere if it has to outlive the cluster.
+`helm uninstall` deletes that claim; with the usual `Delete` reclaim policy the
+backups go with it. Copy the `backups/` prefix elsewhere if it has to outlive
+the cluster.
 
 ### Restore
 
@@ -826,7 +827,8 @@ If the compactor restarts while a restore is running, the restore can stay
 `in_progress`. Keep writers stopped, wait for the compactor to be ready and at
 least 30 seconds for the old restore lease to expire, then run `create restore`
 again. With `objectStorage.type: google` on 3.11 the expired lease is not taken
-over, so delete `<cluster.id>/restores/restore.lease` from the bucket first.
+over, so delete `<cluster.id>/restores/restore.lease` (below
+`engine.pachaTree.enginePathPrefix` when that is set) from the bucket first.
 
 ### Restore Into a New Cluster
 
@@ -840,7 +842,7 @@ the old cluster are accepted, so run `show restores` with one of those. The
 compactor and ingesters may restart once on their own after the restore.
 
 The license is not tied to the object store. A commercial license can reuse the
-same license Secret; a trial or home license lives in
+same license Secret; a trial license lives in
 `<cluster.id>/trial_or_home_license`, which backups do not include, so copy that
 file into the new store as well.
 
@@ -859,8 +861,9 @@ helm uninstall influxdb3-enterprise --namespace influxdb3
 ### Clean Up PVCs
 
 `helm uninstall` deletes the object-storage PVC that `objectStorage.type: file`
-creates, with all data in it. PVCs created from StatefulSet volume claim
-templates, such as the processor's plugin volume, are kept:
+creates; with the usual `Delete` reclaim policy its data goes with it. PVCs
+created from StatefulSet volume claim templates, such as the processor's plugin
+volume, are kept:
 
 ```bash
 kubectl delete pvc -n influxdb3 -l app.kubernetes.io/instance=influxdb3-enterprise
