@@ -4,6 +4,8 @@ set -euo pipefail
 scenario_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 manual_dir=$(CDPATH= cd -- "$scenario_dir/.." && pwd)
 chart_dir=$(CDPATH= cd -- "$manual_dir/../.." && pwd)
+# The upgrade targets whatever InfluxDB version the local chart ships.
+target_version=$(awk -F'"' '/^appVersion:/ {print $2}' "$chart_dir/Chart.yaml")
 
 values_file="$manual_dir/values-s3.yaml"
 license_file=
@@ -324,7 +326,7 @@ log "Writing baseline data"
   --token "$auth_token" \
   'upgrade_measurement,source=chart-0.9.2 value=92i 1724493600000000000'
 
-log "Upgrading to local chart 0.10.0 / InfluxDB 3.11.2"
+log "Upgrading to the local chart / InfluxDB $target_version"
 helm upgrade "$release" "$chart_dir" \
   "${helm_context[@]}" \
   --namespace "$namespace" \
@@ -332,20 +334,20 @@ helm upgrade "$release" "$chart_dir" \
   --wait \
   --timeout 15m
 
-log "Verifying InfluxDB 3.11.2 on every component"
+log "Verifying InfluxDB $target_version on every component"
 for component in ingester querier compactor processor; do
   component_pod="$release-influxdb3-enterprise-$component-0"
   version_output=$("${kubectl_command[@]}" exec \
     --namespace "$namespace" "$component_pod" -- \
     influxdb3 --version)
   printf '%s: %s\n' "$component_pod" "$version_output"
-  printf '%s\n' "$version_output" | grep -Fq 'InfluxDB 3 Enterprise, 3.11.2'
+  printf '%s\n' "$version_output" | grep -Fq "InfluxDB 3 Enterprise, $target_version"
 done
 
-log "Verifying baseline data on InfluxDB 3.11.2 / Parquet"
+log "Verifying baseline data on InfluxDB $target_version / Parquet"
 query_until_contains 'chart-0.9.2'
 
-log "Writing data on InfluxDB 3.11.2 / Parquet"
+log "Writing data on InfluxDB $target_version / Parquet"
 "${kubectl_command[@]}" exec --namespace "$namespace" "$ingester_pod" -- \
   influxdb3 write \
   --host "$ingester_host" \
