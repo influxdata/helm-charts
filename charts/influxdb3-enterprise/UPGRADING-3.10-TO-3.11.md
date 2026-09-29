@@ -1,8 +1,9 @@
 # Upgrade from InfluxDB 3 Enterprise 3.10 to 3.11
 
-Chart 0.10.0 upgrades InfluxDB 3 Enterprise from 3.10.5 to 3.11.2. Upgrade the
-binary first with the existing Parquet storage engine, verify the cluster, and
-then decide separately whether to migrate to PachaTree.
+Chart 0.10.0 moved InfluxDB 3 Enterprise from 3.10.5 to 3.11.2; upgrade with
+chart 0.14.4 or later, as described below. Upgrade the binary first with the
+existing Parquet storage engine, verify the cluster, and then decide separately
+whether to migrate to PachaTree.
 
 Do not enable PachaTree migration during the initial 3.11 rollout. InfluxDB
 rejects the combined operation with:
@@ -21,7 +22,7 @@ documentation.
 Back up the cluster's object storage and verify that the backup can be restored.
 If your values set `image.tag`, remove the override or change it to the
 `appVersion` of the chart version you install, with the `-enterprise` suffix:
-`3.11.2-enterprise` for chart 0.10.0, which this guide uses. For another chart
+`3.11.5-enterprise` for chart 0.14.4, which this guide uses. For another chart
 version, `helm show chart influxdata/influxdb3-enterprise --version <version>`
 prints it. Otherwise Helm continues deploying the overridden image.
 
@@ -36,6 +37,7 @@ Save the current release values:
 ```bash
 export RELEASE=influxdb3-enterprise
 export NAMESPACE=influxdb3
+export CHART_VERSION=0.14.4
 export VALUES_FILE=./my-values.yaml
 export INFLUXDB3_AUTH_TOKEN="<admin-token>"
 
@@ -48,19 +50,19 @@ Keep the migration acknowledgement disabled for the initial version upgrade:
 acknowledgePachaTreeMigration: false
 ```
 
-## Upgrade to chart 0.10.0
+## Upgrade to chart 0.14.4 or later
 
 For a multi-node deployment, follow the official
 [staged Helm rollout procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/#multi-node-upgrade-procedure)
-using chart version `0.10.0`.
+using chart version `0.14.4` or later, the version set in `CHART_VERSION`.
 
-Chart 0.10.0 emits the preferred 3.11 environment-variable names alongside
-their pre-3.11 spellings for most settings, but not for the license, `numCores`,
-`ingester.wal.*` and `compactor.compaction.*`; chart 0.14.4 adds those. A pod
-still on 3.10 ignores the missing names and falls back to server defaults, and
-on a new install it cannot find the license. A cluster that has started once
-keeps starting, because 3.10 stored the license in the object store. InfluxDB
-3.11 reads both spellings and logs nothing when they agree.
+Chart 0.14.4 emits the preferred 3.11 environment-variable names alongside
+their pre-3.11 spellings, so a pod still on 3.10 stays configured if it restarts
+during the staged rollout. InfluxDB 3.11 reads both and logs nothing when they
+agree. Charts 0.10.0 to 0.14.3 miss the pre-3.11 names for the license,
+`numCores`, `ingester.wal.*` and `compactor.compaction.*`: a pod still on 3.10
+falls back to server defaults for those settings, and a new install on 3.10
+cannot find its license.
 
 After all StatefulSets finish rolling, verify the nodes from a querier pod:
 
@@ -76,7 +78,7 @@ kubectl exec -n "$NAMESPACE" "$QUERIER_POD" -- \
 ```
 
 Verify that every node reports `running`, every pod is ready, and every pod runs
-the InfluxDB version of the chart you installed, 3.11.2 for chart 0.10.0. Query
+the InfluxDB version of the chart you installed, 3.11.5 for chart 0.14.4. Query
 existing data and test a new write before starting the storage engine migration.
 
 ### Upgrade directly from chart 0.8.x
@@ -108,18 +110,28 @@ Start the migration with a separate acknowledged upgrade:
 ```bash
 helm upgrade "$RELEASE" influxdata/influxdb3-enterprise \
   -n "$NAMESPACE" \
-  --version 0.10.0 \
+  --version "$CHART_VERSION" \
   --reuse-values \
   --set acknowledgePachaTreeMigration=true \
   --wait --timeout 30m
 ```
 
 The chart sets `INFLUXDB3_UPGRADE_PACHA_TREE=true` for every enabled component.
-Query the system tables and wait until every node reports `completed`:
+Wait until every node reports `completed`. The status table is in the
+`_internal` database; without `--database _internal` the query reports that the
+table does not exist:
 
-```sql
-SELECT * FROM system.upgrade_parquet_node;
-SELECT * FROM system.upgrade_parquet;
+```bash
+QUERIER_POD=$(kubectl get pods -n "$NAMESPACE" \
+  -l "app.kubernetes.io/instance=$RELEASE,app.kubernetes.io/component=querier" \
+  -o jsonpath='{.items[0].metadata.name}')
+
+kubectl exec -n "$NAMESPACE" "$QUERIER_POD" -- \
+  influxdb3 query \
+  --host http://127.0.0.1:8181 \
+  --token "$INFLUXDB3_AUTH_TOKEN" \
+  --database _internal \
+  "SELECT * FROM system.upgrade_parquet_node"
 ```
 
 The acknowledgement may remain enabled after completion. InfluxDB resolves the
