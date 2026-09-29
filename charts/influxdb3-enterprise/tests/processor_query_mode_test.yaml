@@ -1,0 +1,49 @@
+suite: processor query mode
+release:
+  name: t
+  namespace: default
+tests:
+  # A process-only node holds no data and has no remote query client on 3.11, so
+  # influxdb3_local.query() fails outright. Running query alongside process makes
+  # the node answer its own queries in process.
+  - it: runs the processor in process and query mode
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --mode=process,query
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: --mode=process
+
+  - it: opens no internode listener on the processor
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: --internode-bind-addr=0.0.0.0:8183
+
+  - it: leaves the querier exactly as it was
+    template: templates/querier-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - serve
+            - --mode=query
+            - --node-id=$(POD_NAME)
+
+  - it: adds no Service beyond the querier's own
+    template: templates/querier-service.yaml
+    set:
+      processingEngine.enabled: true
+      querier.replicas: 3
+    asserts:
+      - hasDocuments:
+          count: 1

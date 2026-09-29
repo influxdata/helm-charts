@@ -73,7 +73,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - serve
-            - --mode=process
+            - --mode=process,query
             - --node-id=$(POD_NAME)
           envFrom:
             - configMapRef:
