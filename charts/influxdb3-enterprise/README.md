@@ -782,8 +782,9 @@ kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
 
 `create backup` returns as soon as the backup starts; wait until `show backups`
 reports it `completed`. Once `base` is complete, `create backup --name inc-1
---incremental --parent base` takes an incremental backup on top of it. The last
-few seconds of writes before a backup may be missing from it.
+--incremental --parent base` takes an incremental backup on top of it. Writes
+from about the last 20 seconds before a backup can be missing from it, so leave
+a minute between the last writes you need and the backup.
 
 Backups are stored in the cluster's own object store under
 `<cluster.id>/backups/`, below `engine.pachaTree.enginePathPrefix` when that is
@@ -798,7 +799,9 @@ the cluster.
 
 Stop clients writing to the cluster before a restore and keep them stopped
 until it has completed. Rows still buffered in an ingester when the restore
-starts can survive it, and writes accepted while it runs can be lost.
+starts can survive it, and writes accepted while it runs can be lost. On
+InfluxDB 3.11, also wait 15 minutes after the last write before starting the
+restore; the reason is further down.
 
 ```bash
 kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
@@ -821,7 +824,18 @@ kubectl rollout restart statefulset/influxdb3-enterprise-querier -n influxdb3
 
 On InfluxDB 3.11.0 through 3.11.5 queriers stop following catalog changes after
 a restore until they restart: tables created afterwards stay invisible, and
-queries can fail on files that no longer exist.
+queries can fail on files the restore removed.
+
+On InfluxDB 3.11 the compactor can also go on deleting files it had scheduled
+for removal before the restore, including files the restored data needs. The
+restore reports `completed` and the data reads correctly, then within a few
+minutes queries fail with `error reading a body from connection` and the
+querier logs `ObjectStoreNotFound` for files under `cv2/windows/`. Restarting
+the queriers does not help. In testing on 3.11.5 this happened within ten
+minutes whenever the restore followed the last writes directly, and not when
+writes had been stopped for 15 minutes before the restore. If it has happened,
+keep writers stopped and restore the same backup again; in testing the second
+restore brought the data back and it stayed readable.
 
 If the compactor restarts while a restore is running, the restore can stay
 `in_progress`. Keep writers stopped, wait for the compactor to be ready and at

@@ -11,6 +11,7 @@ This guide helps diagnose and resolve common issues with InfluxDB 3 Enterprise d
 - [Performance Issues](#performance-issues)
 - [Ingress Issues](#ingress-issues)
 - [Processing Engine Issues](#processing-engine-issues)
+- [Backup and Restore Issues](#backup-and-restore-issues)
 
 ---
 
@@ -542,6 +543,57 @@ Install packages manually:
 kubectl exec -it -n influxdb3 influxdb3-enterprise-processor-0 -- \
   influxdb3 install package pandas --token <admin-token>
 ```
+
+---
+
+## Backup and Restore Issues
+
+See [Backup and Restore](README.md#backup-and-restore) for the procedure these
+refer to.
+
+### New Tables Missing After a Restore
+
+**Symptom:** after `show restores` reports `completed`, tables created since
+the restore do not appear in queries, or a table the restore removed is still
+listed.
+
+**Cause:** on InfluxDB 3.11.0 to 3.11.5 queriers stop following catalog
+changes after a restore.
+
+**Solution:**
+```bash
+kubectl rollout restart statefulset/influxdb3-enterprise-querier -n influxdb3
+```
+
+### Queries Fail Minutes After a Restore
+
+**Error:** the client reports `failed to read the API response bytes: error
+reading a body from connection`; the querier logs `ObjectStoreNotFound` for a
+file under `cv2/windows/`.
+
+**Cause:** on InfluxDB 3.11 the compactor deleted files it had scheduled for
+removal before the restore, and the restored data needs them. Restarting the
+queriers does not help.
+
+**Diagnosis:**
+```bash
+kubectl logs -n influxdb3 influxdb3-enterprise-querier-0 | grep ObjectStoreNotFound
+```
+
+**Solution:** keep writers stopped and restore the same backup again, then
+restart the queriers. In testing the second restore brought the data back and
+it stayed readable.
+
+**Prevention:** stop writes and wait 15 minutes before starting a restore.
+
+### Restore Stays in_progress
+
+**Symptom:** `show restores` keeps reporting `in_progress`, and the compactor
+restarted around the time the restore started.
+
+**Solution:** keep writers stopped, wait for the compactor to be ready and at
+least 30 seconds more, then run `create restore` again. It takes over the
+abandoned restore and completes.
 
 ---
 
