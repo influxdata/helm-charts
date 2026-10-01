@@ -1,0 +1,40 @@
+# Placeholder values so chart-testing can render and install the chart.
+# None of the referenced secrets, buckets or endpoints exist in the test cluster.
+
+# The Clustered package image is private and the catalog/object store are placeholders,
+# so keep the kubit operator from trying to reconcile the AppInstance.
+pause: true
+
+catalog:
+  dsn:
+    SecretName: "ci-catalog-dsn"
+    SecretKey: "dsn"
+
+objectStore:
+  bucket: "ci-bucket"
+  s3:
+    endpoint: "http://minio.default.svc:9000"
+    allowHttp: "true"
+    accessKey:
+      value: "ci-access-key"
+    secretKey:
+      value: "ci-secret-key"
+    region: "us-east-1"
+
+ingress:
+  hosts:
+    - "influxdb.example.com"
+
+admin:
+  users:
+    - firstName: "CI"
+      lastName: "User"
+      email: "ci-user@example.com"
+      id: "ci-user-id"
+  dsn:
+    valueFrom:
+      secretKeyRef:
+        name: "ci-catalog-dsn"
+        key: "dsn"
+  identityProvider: "keycloak"
+  jwksEndpoint: "https://idp.example.com/realms/ci/protocol/openid-connect/certs"
