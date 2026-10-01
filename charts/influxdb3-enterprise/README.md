@@ -765,8 +765,11 @@ PachaTree migration has completed on every node. Setting
 `acknowledgePachaTreeMigration` only starts the migration, and a backup taken
 while it runs reports `completed` without the data not yet converted.
 
-With `security.tls.enabled`, add `--host https://127.0.0.1:8181` and `--tls-ca`
-or `--tls-no-verify` to every command in this section.
+With `security.tls.enabled`, add `--host https://127.0.0.1:8181` and either
+`--tls-ca /path/to/ca.pem` or `--tls-no-verify` to every command in this
+section. The CA path must exist inside the compactor pod, and its certificate
+must be valid for the requested host. If the certificate does not cover
+`127.0.0.1`, use a hostname that it covers instead.
 
 ### Create a Backup
 
@@ -774,6 +777,8 @@ Run the commands on the compactor with the admin token. Querier pods answer
 `503` and ingester pods `404`.
 
 ```bash
+export INFLUXDB3_AUTH_TOKEN="<admin-token>"
+
 kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
   influxdb3 create backup --name base --token "$INFLUXDB3_AUTH_TOKEN"
 kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
