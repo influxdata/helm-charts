@@ -110,7 +110,8 @@ monitoringStorage:
   storageClassName: null
 
 # (Optional)
-# We currently only support the ingress NGINX ingress controller: https://github.com/kubernetes/ingress-nginx
+# By default, Kubernetes Ingress resources are created for the ingress NGINX ingress controller: https://github.com/kubernetes/ingress-nginx
+# To use Istio instead, see "Using Istio instead of ingress-nginx" under ingress.template below.
 ingress:
   hosts:
     # This is the host on which you will access Influxdb 3.0, for both reads and writes
@@ -131,6 +132,38 @@ ingress:
   # (Optional)
   # Enables specifying which 'type' of Ingress to use, alongside whether to place additional annotations
   # onto those objects, this is useful for third party software in your environment, such as cert-manager.
+  #
+  # Using Istio instead of ingress-nginx
+  # ------------------------------------
+  # Set template.kind and template.apiVersion as shown below to have Clustered create an Istio Gateway
+  # (named "clustered") in place of the Ingress resources. The VirtualService resources that route the
+  # HTTP and gRPC paths to the InfluxDB services are created for you automatically.
+  #
+  # Prerequisites and notes:
+  #   - Istio (including its CRDs and an ingress gateway deployment) must already be installed in the cluster,
+  #     it is not installed by this chart.
+  #   - ingress.hosts is used as the hosts of both the Gateway and the VirtualServices.
+  #   - ingress.http.className and ingress.grpc.className only apply to Ingress resources, leave them unset.
+  #   - Without ingress.tlsSecretName the Gateway listens on port 80 (plaintext HTTP/gRPC).
+  #     With ingress.tlsSecretName set it listens on port 443 (HTTPS, TLS mode SIMPLE) and the Secret name is used
+  #     as the Gateway's credentialName. Unlike with ingress-nginx, the Secret is not created for you and Istio reads
+  #     it from the namespace of the ingress gateway pods (e.g. istio-system), so it must already exist there.
+  #     If you are using cert-manager, create a Certificate for it yourself,
+  #     see https://istio.io/latest/docs/ops/integrations/certmanager/
+  #
+  # template:
+  #   apiVersion: networking.istio.io/v1beta1
+  #   kind: Gateway
+  #   # (Optional)
+  #   # Only used for Istio. Selects which Istio ingress gateway pods serve the created Gateway, by pod label.
+  #   # If omitted or empty, all gateway pods in the cluster will handle traffic for it.
+  #   # See https://istio.io/latest/docs/reference/config/networking/gateway/#Gateway
+  #   selector:
+  #     istio: ingressgateway
+  #   # (Optional)
+  #   # Annotations to place onto the created Gateway and its "iox" VirtualService
+  #   metadata:
+  #     annotations: {}
   template:
 
 # Customizations for the InfluxDB component resources
