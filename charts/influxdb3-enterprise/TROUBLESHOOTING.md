@@ -551,6 +551,10 @@ kubectl exec -it -n influxdb3 influxdb3-enterprise-processor-0 -- \
 See [Backup and Restore](README.md#backup-and-restore) for the procedure these
 refer to.
 
+The commands below use namespace `influxdb3` and the default release name
+`influxdb3-enterprise`. Substitute the namespace and resource names rendered
+for your release when they differ.
+
 ### New Tables Missing After a Restore
 
 **Symptom:** after `show restores` reports `completed`, tables created since
@@ -565,6 +569,11 @@ changes after a restore.
 kubectl rollout restart statefulset/influxdb3-enterprise-querier -n influxdb3
 ```
 
+This restarts every querier with the default `RollingUpdate` strategy and
+partition `0`. With `OnDelete` or a nonzero partition, delete the querier pods
+one at a time, waiting for each replacement to become Ready before deleting
+the next.
+
 ### Queries Fail Minutes After a Restore
 
 **Error:** the client reports `failed to read the API response bytes: error
@@ -577,14 +586,18 @@ queriers does not help.
 
 **Diagnosis:**
 ```bash
-kubectl logs -n influxdb3 influxdb3-enterprise-querier-0 | grep ObjectStoreNotFound
+kubectl logs -n influxdb3 \
+  -l app.kubernetes.io/instance=influxdb3-enterprise,app.kubernetes.io/component=querier \
+  --tail=-1 | grep ObjectStoreNotFound
 ```
 
 **Solution:** keep writers stopped and restore the same backup again, then
 restart the queriers. In testing the second restore brought the data back and
 it stayed readable.
 
-**Prevention:** stop writes and wait 15 minutes before starting a restore.
+**Prevention:** stop writes and wait for the configured
+`engine.pachaTree.compactorCleanupCooldown` plus five minutes before starting
+a restore. With the default `10m` cooldown, wait 15 minutes.
 
 ### Restore Stays in_progress
 
@@ -593,7 +606,10 @@ restarted around the time the restore started.
 
 **Solution:** keep writers stopped, wait for the compactor to be ready and at
 least 30 seconds more, then run `create restore` again. It takes over the
-abandoned restore and completes.
+abandoned restore and completes. With `objectStorage.type: google` on InfluxDB
+3.11, delete `<cluster.id>/restores/restore.lease` from the bucket before
+retrying because the expired lease is not taken over. The path is below
+`engine.pachaTree.enginePathPrefix` when that is set.
 
 ---
 

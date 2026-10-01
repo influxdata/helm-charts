@@ -766,10 +766,22 @@ PachaTree migration has completed on every node. Setting
 while it runs reports `completed` without the data not yet converted.
 
 With `security.tls.enabled`, add `--host https://127.0.0.1:8181` and either
-`--tls-ca /path/to/ca.pem` or `--tls-no-verify` to every command in this
-section. The CA path must exist inside the compactor pod, and its certificate
-must be valid for the requested host. If the certificate does not cover
-`127.0.0.1`, use a hostname that it covers instead.
+`--tls-ca /path/to/ca.pem` or `--tls-no-verify` to every `influxdb3` command
+in this section. The CA path must exist inside the compactor pod and contain a
+CA that trusts the server certificate. If `security.tls.existingSecret`
+contains `ca.crt`, the chart mounts it as `/etc/influxdb/tls/ca.crt`;
+otherwise, mount the CA with `extraVolumes` and `extraVolumeMounts`. When using
+`--tls-ca`, the requested hostname or IP address must appear in the server
+certificate's subject alternative names. If it does not cover `127.0.0.1`,
+use a covered hostname that resolves to the compactor, such as
+`influxdb3-enterprise-compactor.influxdb3.svc` when that name is covered.
+Query and write ingress hostnames do not work unless they route the backup
+endpoints to the compactor. `--tls-no-verify` disables certificate and
+hostname verification.
+
+The examples use namespace `influxdb3` and the default release name
+`influxdb3-enterprise`. Substitute the namespace, pod names and StatefulSet
+names rendered for your release when they differ.
 
 ### Create a Backup
 
@@ -805,8 +817,10 @@ the cluster.
 Stop clients writing to the cluster before a restore and keep them stopped
 until it has completed. Rows still buffered in an ingester when the restore
 starts can survive it, and writes accepted while it runs can be lost. On
-InfluxDB 3.11, also wait 15 minutes after the last write before starting the
-restore; the reason is further down.
+InfluxDB 3.11, wait for the configured
+`engine.pachaTree.compactorCleanupCooldown` plus five minutes after the last
+write before starting the restore. With its default value of `10m`, wait 15
+minutes; the reason is further down.
 
 ```bash
 kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
@@ -827,6 +841,11 @@ Once `show restores` reports `completed`, restart the queriers:
 kubectl rollout restart statefulset/influxdb3-enterprise-querier -n influxdb3
 ```
 
+This command restarts every querier with the default `RollingUpdate` strategy
+and partition `0`. With `OnDelete` or a nonzero partition, delete the querier
+pods one at a time, waiting for each replacement to become Ready before
+deleting the next.
+
 On InfluxDB 3.11.0 through 3.11.5 queriers stop following catalog changes after
 a restore until they restart: tables created afterwards stay invisible, and
 queries can fail on files the restore removed.
@@ -836,9 +855,11 @@ for removal before the restore, including files the restored data needs. The
 restore reports `completed` and the data reads correctly, then within a few
 minutes queries fail with `error reading a body from connection` and the
 querier logs `ObjectStoreNotFound` for files under `cv2/windows/`. Restarting
-the queriers does not help. In testing on 3.11.5 this happened within ten
-minutes whenever the restore followed the last writes directly, and not when
-writes had been stopped for 15 minutes before the restore. If it has happened,
+the queriers does not help. In testing on 3.11.5 with the default `10m` cleanup
+cooldown, this happened within ten minutes whenever the restore followed the
+last writes directly, and not when writes had been stopped for 15 minutes
+before the restore. With a custom cleanup cooldown, wait for that duration plus
+five minutes. If the failure has already happened,
 keep writers stopped and restore the same backup again; in testing the second
 restore brought the data back and it stayed readable.
 
@@ -853,17 +874,34 @@ over, so delete `<cluster.id>/restores/restore.lease` (below
 
 Node IDs are the pod names, so the new release has to produce the same ones:
 the same release name, `nameOverride` and `fullnameOverride` as the old
-release, or a `fullnameOverride` that reproduces its names. Keep `cluster.id`
-and `engine.pachaTree.enginePathPrefix` the same too. Install the chart, copy
-the backup directory to the same path in the new object store, run
-`create restore` and restart the queriers as above. Once the catalog is restored, only tokens from
-the old cluster are accepted, so run `show restores` with one of those. The
-compactor and ingesters may restart once on their own after the restore.
+release, or a `fullnameOverride` that reproduces its names. Keep the component
+enablement and replica counts the same too, because they determine which pod
+names exist. Keep `cluster.id` and `engine.pachaTree.enginePathPrefix` the same.
 
-The license is not tied to the object store. A commercial license can reuse the
-same license Secret; a trial license lives in
+For S3, Azure, or Google object storage, copy the backup directory to the same
+path in an empty destination object store before installing the chart. For
+file storage, first install the release with `ingester.enabled`,
+`querier.enabled`, `compactor.enabled`, and `processingEngine.enabled` all set
+to `false`. This creates the object-storage PVC without starting server nodes.
+Mount that claim in a temporary pod, copy the backup directory to the same
+path relative to the claim root:
+`<enginePathPrefix>/<cluster.id>/backups/<full-backup-name>`, which also
+contains its incremental backups. Omit `<enginePathPrefix>/` when it is unset.
+Remove the temporary pod, then upgrade
+the release with the original component settings.
+
+After the nodes start, run `create restore` with an admin token accepted by the
+new cluster. The restore replaces the catalog and its tokens, so that token may
+stop working while you poll `show restores`. When it does, switch to an admin
+token that existed when the backup was taken. Restart the queriers as above
+after the restore completes. The compactor and ingesters may restart once on
+their own after the restore.
+
+The license is not tied to the object store. A commercial deployment can reuse
+the same license file, but a release in another namespace or Kubernetes cluster
+needs a Secret containing that file. A trial license lives in
 `<cluster.id>/trial_or_home_license`, which backups do not include, so copy that
-file into the new store as well.
+file into the new store during staging as well.
 
 Processing Engine plugin files live on the processor's volume
 (`processingEngine.pluginDir`), not in the object store, so copy them
