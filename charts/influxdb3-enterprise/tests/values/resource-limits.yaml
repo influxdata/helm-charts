@@ -1,0 +1,4 @@
+resourceLimits:
+  numDatabases: 100
+  numTables: 10000
+  numColumnsPerTable: 500

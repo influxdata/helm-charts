@@ -86,28 +86,36 @@ spec:
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
             {{- with .Values.ingester.numIOThreads }}
             - name: INFLUXDB3_NUM_IO_THREADS
-              value: {{ . | quote }}
+              value: {{ include "influxdb3-enterprise.quote" . }}
             {{- end }}
             {{- if hasKey .Values.ingester "numCores" }}
             - name: INFLUXDB3_NUM_CORES
-              value: {{ .Values.ingester.numCores | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .Values.ingester.numCores }}
+            - name: INFLUXDB3_ENTERPRISE_NUM_CORES
+              value: {{ include "influxdb3-enterprise.quote" .Values.ingester.numCores }}
             {{- end }}
             {{- with .Values.ingester.wal }}
             {{- if .flushInterval }}
             - name: INFLUXDB3_WAL_FLUSH_INTERVAL
-              value: {{ .flushInterval | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .flushInterval }}
             {{- end }}
             {{- if .snapshotSize }}
             - name: INFLUXDB3_WAL_FILES_PER_SNAPSHOT
-              value: {{ .snapshotSize | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .snapshotSize }}
+            - name: INFLUXDB3_WAL_SNAPSHOT_SIZE
+              value: {{ include "influxdb3-enterprise.quote" .snapshotSize }}
             {{- end }}
             {{- if .maxWriteBufferSize }}
             - name: INFLUXDB3_WAL_MAX_BUFFERED_WRITES
-              value: {{ .maxWriteBufferSize | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .maxWriteBufferSize }}
+            - name: INFLUXDB3_WAL_MAX_WRITE_BUFFER_SIZE
+              value: {{ include "influxdb3-enterprise.quote" .maxWriteBufferSize }}
             {{- end }}
             {{- if .snapshotFilesToKeep }}
             - name: INFLUXDB3_SNAPSHOTTED_WAL_FILES_TO_KEEP
-              value: {{ .snapshotFilesToKeep | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .snapshotFilesToKeep }}
+            - name: INFLUXDB3_NUM_WAL_FILES_TO_KEEP
+              value: {{ include "influxdb3-enterprise.quote" .snapshotFilesToKeep }}
             {{- end }}
             {{- if hasKey . "replayFailOnError" }}
             - name: INFLUXDB3_WAL_REPLAY_FAIL_ON_ERROR
@@ -117,30 +125,30 @@ spec:
             {{- $memory := .Values.ingester.memory | default dict }}
             {{- if get $memory "execMemPoolSize" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_SIZE
-              value: {{ get $memory "execMemPoolSize" | quote }}
+              value: {{ include "influxdb3-enterprise.quote" (get $memory "execMemPoolSize") }}
             {{- else if get $memory "execMemPoolBytes" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
-              value: {{ get $memory "execMemPoolBytes" | quote }}
+              value: {{ include "influxdb3-enterprise.quote" (get $memory "execMemPoolBytes") }}
             {{- end }}
             {{- if get $memory "forceSnapshotMemSize" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
-              value: {{ get $memory "forceSnapshotMemSize" | quote }}
+              value: {{ include "influxdb3-enterprise.quote" (get $memory "forceSnapshotMemSize") }}
             {{- else if get $memory "forceSnapshotMemThreshold" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ get $memory "forceSnapshotMemThreshold" | quote }}
+              value: {{ include "influxdb3-enterprise.quote" (get $memory "forceSnapshotMemThreshold") }}
             {{- end }}
             {{- with .Values.ingester.datafusion }}
             {{- if .numThreads }}
             - name: INFLUXDB3_NUM_DATAFUSION_THREADS
-              value: {{ .numThreads | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .numThreads }}
             {{- end }}
             {{- if .maxParquetFanout }}
             - name: INFLUXDB3_DATAFUSION_MAX_PARQUET_FANOUT
-              value: {{ .maxParquetFanout | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .maxParquetFanout }}
             {{- end }}
             {{- if .config }}
             - name: INFLUXDB3_DATAFUSION_CONFIG
-              value: {{ .config | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .config }}
             {{- end }}
             {{- end }}
             {{- include "influxdb3-enterprise.pachaTreeEnv" . | nindent 12 }}
