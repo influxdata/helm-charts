@@ -822,6 +822,13 @@ InfluxDB 3.11, wait for the configured
 write before starting the restore. With its default value of `10m`, wait 15
 minutes; the reason is further down.
 
+Before starting, make sure you have an admin token that was valid when the
+backup was taken. Start the restore with a token the cluster accepts now. Once
+the restore replaces the catalog, a token created or regenerated after the
+backup stops working and `show restores` fails authentication; set
+`INFLUXDB3_AUTH_TOKEN` to the admin token that was valid when the backup was
+taken and poll again.
+
 ```bash
 kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
   influxdb3 create restore --backup base --token "$INFLUXDB3_AUTH_TOKEN"
@@ -891,11 +898,10 @@ Remove the temporary pod, then upgrade
 the release with the original component settings.
 
 After the nodes start, run `create restore` with an admin token accepted by the
-new cluster. The restore replaces the catalog and its tokens, so that token may
-stop working while you poll `show restores`. When it does, switch to an admin
-token that existed when the backup was taken. Restart the queriers as above
-after the restore completes. The compactor and ingesters may restart once on
-their own after the restore.
+new cluster, and switch to the admin token that was valid when the backup was
+taken as described in [Restore](#restore) when polling loses authentication.
+Restart the queriers as above after the restore completes. The compactor and
+ingesters may restart once on their own after the restore.
 
 The license is not tied to the object store. A commercial deployment can reuse
 the same license file, but a release in another namespace or Kubernetes cluster
