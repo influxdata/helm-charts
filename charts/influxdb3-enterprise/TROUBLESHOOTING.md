@@ -75,6 +75,11 @@ kubectl logs -n influxdb3 influxdb3-enterprise-ingester-0 --previous
     - Error: `cluster-id cannot match any node-id`
     - Solution: Ensure `cluster.id` is different from all node IDs
 
+4. **Number Written in Exponent Form**
+    - Error: `invalid value '1.048576e+07' for '--max-http-request-size ...'`, or the same for another numeric option with a value such as `1e+06`
+    - Cause: charts before 0.14.4 render unquoted whole numbers of a million or more from a values file in exponent form, which the server does not parse; for `http.maxRequestSize`, this started in chart 0.10.0
+    - Solution: upgrade to chart 0.14.4 or later, or quote the value, for example `maxRequestSize: "10485760"`
+
 ### Pods Not Ready
 
 A pod that stays `0/1` for many minutes, or is OOM-killed while its log shows

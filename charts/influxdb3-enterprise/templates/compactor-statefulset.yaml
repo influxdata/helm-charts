@@ -79,11 +79,11 @@ spec:
             {{- include "influxdb3-enterprise.permissionTokensEnv" . | nindent 12 }}
             {{- with .Values.compactor.numIOThreads }}
             - name: INFLUXDB3_NUM_IO_THREADS
-              value: {{ . | quote }}
+              value: {{ include "influxdb3-enterprise.quote" . }}
             {{- end }}
             {{- if hasKey .Values.compactor "numCores" }}
             - name: INFLUXDB3_NUM_CORES
-              value: {{ .Values.compactor.numCores | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .Values.compactor.numCores }}
             {{- end }}
             {{- with .Values.compactor.compaction }}
             {{- if .gen2Duration }}
@@ -96,7 +96,7 @@ spec:
             {{- end }}
             {{- if .maxNumFilesPerPlan }}
             - name: INFLUXDB3_COMPACTION_MAX_NUM_FILES_PER_PLAN
-              value: {{ .maxNumFilesPerPlan | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .maxNumFilesPerPlan }}
             {{- end }}
             {{- if .cleanupWait }}
             - name: INFLUXDB3_COMPACTION_CLEANUP_WAIT
@@ -117,23 +117,23 @@ spec:
               value: {{ get $memory "execMemPoolSize" | quote }}
             {{- else if get $memory "execMemPoolBytes" }}
             - name: INFLUXDB3_EXEC_MEM_POOL_BYTES
-              value: {{ get $memory "execMemPoolBytes" | quote }}
+              value: {{ include "influxdb3-enterprise.quote" (get $memory "execMemPoolBytes") }}
             {{- end }}
             {{- if get $memory "forceSnapshotMemSize" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
               value: {{ get $memory "forceSnapshotMemSize" | quote }}
             {{- else if get $memory "forceSnapshotMemThreshold" }}
             - name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
-              value: {{ get $memory "forceSnapshotMemThreshold" | quote }}
+              value: {{ include "influxdb3-enterprise.quote" (get $memory "forceSnapshotMemThreshold") }}
             {{- end }}
             {{- with .Values.compactor.datafusion }}
             {{- if .numThreads }}
             - name: INFLUXDB3_NUM_DATAFUSION_THREADS
-              value: {{ .numThreads | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .numThreads }}
             {{- end }}
             {{- if .maxParquetFanout }}
             - name: INFLUXDB3_DATAFUSION_MAX_PARQUET_FANOUT
-              value: {{ .maxParquetFanout | quote }}
+              value: {{ include "influxdb3-enterprise.quote" .maxParquetFanout }}
             {{- end }}
             {{- if .config }}
             - name: INFLUXDB3_DATAFUSION_CONFIG

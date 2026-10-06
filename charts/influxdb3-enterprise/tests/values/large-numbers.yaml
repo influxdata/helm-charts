@@ -1,0 +1,46 @@
+objectStorage:
+  type: s3
+  bucket: test-bucket
+  connectionLimit: 1000000
+  maxRetries: 1000000
+  http2MaxFrameSize: 1048576
+http:
+  maxRequestSize: 10485760
+caching:
+  parquetMemCacheSize: 1048576
+  tableIndexCacheMaxEntries: 1000000
+  tableIndexCacheConcurrencyLimit: 1000000
+compactedData:
+  loadConcurrencyLimit: 1000000
+traces:
+  exporter: jaeger
+  jaeger:
+    maxMsgsPerSecond: 1000000
+engine:
+  pachaTree:
+    maxTotalColumns: 10000000
+    gen0MaxRowsPerFile: 10000000
+    autoDvcMaxCardinality: 1000000
+    walReplicaQueueLength: 1000000
+ingester:
+  numIOThreads: 1000000
+  memory:
+    execMemPoolBytes: 1048576
+    forceSnapshotMemThreshold: 1048576
+  datafusion:
+    numThreads: 1000000
+  wal:
+    snapshotSize: 1000000
+    maxWriteBufferSize: 1000000
+    snapshotFilesToKeep: 1000000
+querier:
+  memory:
+    execMemPoolBytes: 1048576
+  datafusion:
+    maxParquetFanout: 1000000
+compactor:
+  compaction:
+    maxNumFilesPerPlan: 1000000
+processingEngine:
+  enabled: true
+  asyncTriggerConcurrencyLimit: 1000000

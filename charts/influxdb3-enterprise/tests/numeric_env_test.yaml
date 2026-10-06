@@ -1,0 +1,173 @@
+suite: numeric rendering in the server environment
+release:
+  name: t
+  namespace: default
+tests:
+  # A number in a values file is a float64 and quote prints 1000000 as "1e+06".
+  # Numeric options reject that form and the node does not start.
+  - it: writes large numbers in full in the ConfigMap
+    template: templates/configmap.yaml
+    values: [values/large-numbers.yaml]
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_OBJECT_STORE_CONNECTION_LIMIT
+          value: "1000000"
+      - equal:
+          path: data.INFLUXDB3_OBJECT_STORE_MAX_RETRIES
+          value: "1000000"
+      - equal:
+          path: data.INFLUXDB3_OBJECT_STORE_HTTP2_MAX_FRAME_SIZE
+          value: "1048576"
+      - equal:
+          path: data.INFLUXDB3_MAX_HTTP_REQUEST_SIZE
+          value: "10485760"
+      - equal:
+          path: data.INFLUXDB3_PARQUET_MEM_CACHE_SIZE
+          value: "1048576"
+      - equal:
+          path: data.INFLUXDB3_TABLE_INDEX_CACHE_MAX_ENTRIES
+          value: "1000000"
+      - equal:
+          path: data.INFLUXDB3_TABLE_INDEX_CACHE_CONCURRENCY_LIMIT
+          value: "1000000"
+      - equal:
+          path: data.INFLUXDB3_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT
+          value: "1000000"
+      - equal:
+          path: data.INFLUXDB3_ENTERPRISE_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT
+          value: "1000000"
+      - equal:
+          path: data.INFLUXDB3_TRACES_JAEGER_MAX_MSGS_PER_SECOND
+          value: "1000000"
+
+  - it: passes strings and fractions through unchanged
+    template: templates/configmap.yaml
+    set:
+      http.maxRequestSize: "0012345678"
+      caching.parquetMemCachePrunePercentage: 0.1
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_MAX_HTTP_REQUEST_SIZE
+          value: "0012345678"
+      - equal:
+          path: data.INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE
+          value: "0.1"
+
+  - it: writes large numbers in full in the ingester environment
+    template: templates/ingester-statefulset.yaml
+    values: [values/large-numbers.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_NUM_IO_THREADS
+            value: "1000000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_EXEC_MEM_POOL_BYTES
+            value: "1048576"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
+            value: "1048576"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_NUM_DATAFUSION_THREADS
+            value: "1000000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WAL_FILES_PER_SNAPSHOT
+            value: "1000000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WAL_MAX_BUFFERED_WRITES
+            value: "1000000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_SNAPSHOTTED_WAL_FILES_TO_KEEP
+            value: "1000000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_MAX_TOTAL_COLUMNS
+            value: "10000000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_GEN0_MAX_ROWS_PER_FILE
+            value: "10000000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_AUTO_DVC_MAX_CARDINALITY
+            value: "1000000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WAL_REPLICA_QUEUE_LENGTH
+            value: "1000000"
+
+  - it: writes large numbers in full in the querier environment
+    template: templates/querier-statefulset.yaml
+    values: [values/large-numbers.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_EXEC_MEM_POOL_BYTES
+            value: "1048576"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_DATAFUSION_MAX_PARQUET_FANOUT
+            value: "1000000"
+
+  - it: writes large numbers in full in the compactor environment
+    template: templates/compactor-statefulset.yaml
+    values: [values/large-numbers.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_COMPACTION_MAX_NUM_FILES_PER_PLAN
+            value: "1000000"
+
+  - it: writes large numbers in full in the processor environment
+    template: templates/processor-statefulset.yaml
+    values: [values/large-numbers.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_ASYNC_TRIGGER_CONCURRENCY_LIMIT
+            value: "1000000"
+
+  # ConfigMap data is a string map; a bare number is rejected by the API server.
+  - it: renders resource limits as strings
+    template: templates/configmap.yaml
+    values: [values/resource-limits.yaml]
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_NUM_DATABASE_LIMIT
+          value: "100"
+      - equal:
+          path: data.INFLUXDB3_ENTERPRISE_NUM_DATABASE_LIMIT
+          value: "100"
+      - equal:
+          path: data.INFLUXDB3_NUM_TABLE_LIMIT
+          value: "10000"
+      - equal:
+          path: data.INFLUXDB3_ENTERPRISE_NUM_TABLE_LIMIT
+          value: "10000"
+      - equal:
+          path: data.INFLUXDB3_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT
+          value: "500"
+      - equal:
+          path: data.INFLUXDB3_ENTERPRISE_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT
+          value: "500"
