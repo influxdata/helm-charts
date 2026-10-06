@@ -10,6 +10,7 @@ Official Helm chart for deploying InfluxDB 3 Enterprise on Kubernetes with full 
 - [Configuration](#configuration)
 - [Architecture](#architecture)
 - [Upgrading](#upgrading)
+- [Backup and Restore](#backup-and-restore)
 - [Uninstallation](#uninstallation)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
@@ -752,6 +753,166 @@ ingester:
       partition: 0
 ```
 
+## Backup and Restore
+
+The chart does not schedule backups. They are taken with the `influxdb3` CLI
+inside the compactor pod, and the product documentation is in
+[Back up and restore data](https://docs.influxdata.com/influxdb3/enterprise/admin/backup-restore/).
+The built-in commands below need the PachaTree storage engine, which every
+cluster created by InfluxDB 3.11 uses. A cluster upgraded from 3.10 has to be
+backed up by copying the object store as that page describes until the
+PachaTree migration has completed on every node. Setting
+`acknowledgePachaTreeMigration` only starts the migration, and a backup taken
+while it runs reports `completed` without the data not yet converted.
+
+With `security.tls.enabled`, add `--host https://127.0.0.1:8181` and either
+`--tls-ca /path/to/ca.pem` or `--tls-no-verify` to every `influxdb3` command
+in this section. The CA path must exist inside the compactor pod and contain a
+CA that trusts the server certificate. If `security.tls.existingSecret`
+contains `ca.crt`, the chart mounts it as `/etc/influxdb/tls/ca.crt`;
+otherwise, mount the CA with `extraVolumes` and `extraVolumeMounts`. When using
+`--tls-ca`, the requested hostname or IP address must appear in the server
+certificate's subject alternative names. If it does not cover `127.0.0.1`,
+use a covered hostname that resolves to the compactor, such as
+`influxdb3-enterprise-compactor.influxdb3.svc` when that name is covered.
+Query and write ingress hostnames do not work unless they route the backup
+endpoints to the compactor. `--tls-no-verify` disables certificate and
+hostname verification.
+
+The examples use namespace `influxdb3` and the default release name
+`influxdb3-enterprise`. Substitute the namespace, pod names and StatefulSet
+names rendered for your release when they differ.
+
+### Create a Backup
+
+Run the commands on the compactor with the admin token. Querier pods answer
+`503` and ingester pods `404`.
+
+```bash
+export INFLUXDB3_AUTH_TOKEN="<admin-token>"
+
+kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
+  influxdb3 create backup --name base --token "$INFLUXDB3_AUTH_TOKEN"
+kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
+  influxdb3 show backups --token "$INFLUXDB3_AUTH_TOKEN"
+```
+
+`create backup` returns as soon as the backup starts; wait until `show backups`
+reports it `completed`. Once `base` is complete, `create backup --name inc-1
+--incremental --parent base` takes an incremental backup on top of it. Writes
+from about the last 20 seconds before a backup can be missing from it, so leave
+a minute between the last writes you need and the backup.
+
+Backups are stored in the cluster's own object store under
+`<cluster.id>/backups/`, below `engine.pachaTree.enginePathPrefix` when that is
+set, so they do not survive the loss of that bucket. Incremental backups are
+kept inside the directory of their full backup and need it to restore. With
+`objectStorage.type: file` the store is a PVC the chart creates, and
+`helm uninstall` deletes that claim; with the usual `Delete` reclaim policy the
+backups go with it. Copy the `backups/` prefix elsewhere if it has to outlive
+the cluster.
+
+### Restore
+
+Stop clients writing to the cluster before a restore and keep them stopped
+until it has completed. Rows still buffered in an ingester when the restore
+starts can survive it, and writes accepted while it runs can be lost. On
+InfluxDB 3.11, wait for the configured
+`engine.pachaTree.compactorCleanupCooldown` plus five minutes after the last
+write before starting the restore. With its default value of `10m`, wait 15
+minutes; the reason is further down.
+
+Before starting, make sure you have an admin token that was valid when the
+backup was taken. Start the restore with a token the cluster accepts now. Once
+the restore replaces the catalog, a token created or regenerated after the
+backup stops working and `show restores` fails authentication; set
+`INFLUXDB3_AUTH_TOKEN` to the admin token that was valid when the backup was
+taken and poll again.
+
+```bash
+kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
+  influxdb3 create restore --backup base --token "$INFLUXDB3_AUTH_TOKEN"
+kubectl exec -n influxdb3 influxdb3-enterprise-compactor-0 -- \
+  influxdb3 show restores --token "$INFLUXDB3_AUTH_TOKEN"
+```
+
+A restore runs in place and rolls the cluster back to the backup. It replaces
+the whole catalog, tokens included: tokens created after the backup stop
+working, and tokens deleted after it are valid again. Row deletes are not
+reliably carried across a restore in either direction, least of all from an
+incremental backup, which does not record them.
+
+Once `show restores` reports `completed`, restart the queriers:
+
+```bash
+kubectl rollout restart statefulset/influxdb3-enterprise-querier -n influxdb3
+```
+
+This command restarts every querier with the default `RollingUpdate` strategy
+and partition `0`. With `OnDelete` or a nonzero partition, delete the querier
+pods one at a time, waiting for each replacement to become Ready before
+deleting the next.
+
+On InfluxDB 3.11.0 through 3.11.5 queriers stop following catalog changes after
+a restore until they restart: tables created afterwards stay invisible, and
+queries can fail on files the restore removed.
+
+On InfluxDB 3.11 the compactor can also go on deleting files it had scheduled
+for removal before the restore, including files the restored data needs. The
+restore reports `completed` and the data reads correctly, then within a few
+minutes queries fail with `error reading a body from connection` and the
+querier logs `ObjectStoreNotFound` for files under `cv2/windows/`. Restarting
+the queriers does not help. In testing on 3.11.5 with the default `10m` cleanup
+cooldown, this happened within ten minutes whenever the restore followed the
+last writes directly, and not when writes had been stopped for 15 minutes
+before the restore. With a custom cleanup cooldown, wait for that duration plus
+five minutes. If the failure has already happened,
+keep writers stopped and restore the same backup again; in testing the second
+restore brought the data back and it stayed readable.
+
+If the compactor restarts while a restore is running, the restore can stay
+`in_progress`. Keep writers stopped, wait for the compactor to be ready and at
+least 30 seconds for the old restore lease to expire, then run `create restore`
+again. With `objectStorage.type: google` on 3.11 the expired lease is not taken
+over, so delete `<cluster.id>/restores/restore.lease` (below
+`engine.pachaTree.enginePathPrefix` when that is set) from the bucket first.
+
+### Restore Into a New Cluster
+
+Node IDs are the pod names, so the new release has to produce the same ones:
+the same release name, `nameOverride` and `fullnameOverride` as the old
+release, or a `fullnameOverride` that reproduces its names. Keep the component
+enablement and replica counts the same too, because they determine which pod
+names exist. Keep `cluster.id` and `engine.pachaTree.enginePathPrefix` the same.
+
+For S3, Azure, or Google object storage, copy the backup directory to the same
+path in an empty destination object store before installing the chart. For
+file storage, first install the release with `ingester.enabled`,
+`querier.enabled`, `compactor.enabled`, and `processingEngine.enabled` all set
+to `false`. This creates the object-storage PVC without starting server nodes.
+Mount that claim in a temporary pod, copy the backup directory to the same
+path relative to the claim root:
+`<enginePathPrefix>/<cluster.id>/backups/<full-backup-name>`, which also
+contains its incremental backups. Omit `<enginePathPrefix>/` when it is unset.
+Remove the temporary pod, then upgrade
+the release with the original component settings.
+
+After the nodes start, run `create restore` with an admin token accepted by the
+new cluster, and switch to the admin token that was valid when the backup was
+taken as described in [Restore](#restore) when polling loses authentication.
+Restart the queriers as above after the restore completes. The compactor and
+ingesters may restart once on their own after the restore.
+
+The license is not tied to the object store. A commercial deployment can reuse
+the same license file, but a release in another namespace or Kubernetes cluster
+needs a Secret containing that file. A trial license lives in
+`<cluster.id>/trial_or_home_license`, which backups do not include, so copy that
+file into the new store during staging as well.
+
+Processing Engine plugin files live on the processor's volume
+(`processingEngine.pluginDir`), not in the object store, so copy them
+separately.
+
 ## Uninstallation
 
 ### Delete the Release
@@ -762,7 +923,10 @@ helm uninstall influxdb3-enterprise --namespace influxdb3
 
 ### Clean Up PVCs
 
-PersistentVolumeClaims are not automatically deleted:
+`helm uninstall` deletes the object-storage PVC that `objectStorage.type: file`
+creates; with the usual `Delete` reclaim policy its data goes with it. PVCs
+created from StatefulSet volume claim templates, such as the processor's plugin
+volume, are kept:
 
 ```bash
 kubectl delete pvc -n influxdb3 -l app.kubernetes.io/instance=influxdb3-enterprise
