@@ -1,0 +1,99 @@
+suite: processor configuration
+release:
+  name: t
+  namespace: default
+tests:
+  # A process-only node holds no data and has no remote query client on 3.11, so
+  # influxdb3_local.query() fails outright. Running query alongside process makes
+  # the node answer its own queries in process.
+  - it: runs the processor in process and query mode
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --mode=process,query
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: --mode=process
+
+  - it: opens no internode listener on the processor
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: --internode-bind-addr=0.0.0.0:8183
+
+  - it: leaves the querier exactly as it was
+    template: templates/querier-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - serve
+            - --mode=query
+            - --node-id=$(POD_NAME)
+
+  - it: adds no Service beyond the querier's own
+    template: templates/querier-service.yaml
+    set:
+      processingEngine.enabled: true
+      querier.replicas: 3
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: creates a plugins claim per processor by default
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: plugins
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: plugins
+            mountPath: /plugins
+
+  - it: mounts an existing plugins claim at the configured plugin directory
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+      processingEngine.pluginDir: /custom-plugins
+      processingEngine.persistence.enabled: true
+      processingEngine.persistence.existingClaim: external-plugins
+    asserts:
+      - notExists:
+          path: spec.volumeClaimTemplates
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: plugins
+            persistentVolumeClaim:
+              claimName: external-plugins
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: plugins
+            mountPath: /custom-plugins
+
+  - it: ignores an existing plugins claim when persistence is disabled
+    template: templates/processor-statefulset.yaml
+    set:
+      processingEngine.enabled: true
+      processingEngine.persistence.enabled: false
+      processingEngine.persistence.existingClaim: external-plugins
+    asserts:
+      - notExists:
+          path: spec.volumeClaimTemplates
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name == "plugins")]
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name == "plugins")]

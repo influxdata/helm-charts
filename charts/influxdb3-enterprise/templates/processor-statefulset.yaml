@@ -1,5 +1,6 @@
 {{- if .Values.processingEngine.enabled }}
 {{- $processorPersistence := .Values.processingEngine.persistence | default dict }}
+{{- $existingClaim := get $processorPersistence "existingClaim" }}
 {{- $pluginsPVCEnabled := true }}
 {{- if hasKey $processorPersistence "enabled" }}
 {{- $pluginsPVCEnabled = (get $processorPersistence "enabled") }}
@@ -178,10 +179,15 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if and $pluginsPVCEnabled $existingClaim }}
+        - name: plugins
+          persistentVolumeClaim:
+            claimName: {{ $existingClaim | quote }}
+        {{- end }}
         {{ include "influxdb3-enterprise.sharedVolumes" . | nindent 8 }}
         {{ include "influxdb3-enterprise.adminTokenVolumes" . | nindent 8 }}
         {{ include "influxdb3-enterprise.permissionTokensVolumes" . | nindent 8 }}
-  {{- if $pluginsPVCEnabled }}
+  {{- if and $pluginsPVCEnabled (not $existingClaim) }}
   volumeClaimTemplates:
     - metadata:
         name: plugins

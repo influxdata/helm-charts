@@ -593,6 +593,9 @@ processingEngine:
   # Persistent storage for plugins
   persistence:
     enabled: true
+    # Existing PVC in the release namespace; ignores storageClass, size and accessMode.
+    # Used only when persistence is enabled. All processor replicas share this claim.
+    existingClaim: ""
     storageClass: ""
     size: "5Gi"
     accessMode: ReadWriteOnce

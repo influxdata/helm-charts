@@ -663,7 +663,7 @@ Permission tokens volume mounts
 {{- end }}
 
 {{/*
-Processor plugin volume mounts (chart-managed plugins PVC or shared mounts)
+Processor plugin volume mounts (chart-managed or existing plugins PVC, or shared mounts)
 */}}
 {{- define "influxdb3-enterprise.processorPluginVolumeMounts" -}}
 {{- $pluginsPVCEnabled := true -}}

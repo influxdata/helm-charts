@@ -612,6 +612,25 @@ processingEngine:
     size: "5Gi"
 ```
 
+To use an externally managed PVC, set `processingEngine.persistence.existingClaim`:
+
+```yaml
+processingEngine:
+  enabled: true
+  persistence:
+    enabled: true
+    existingClaim: influxdb3-plugins
+```
+
+The claim must exist in the release namespace. The chart mounts it at `pluginDir`
+and does not create plugin PVCs; `storageClass`, `size`, and `accessMode` are ignored.
+All processor replicas use the same claim. For replicas on different nodes, use
+storage that supports `ReadWriteMany`. When persistence is disabled, `existingClaim`
+is ignored.
+
+Switching an existing processor StatefulSet between per-pod claims and an existing
+claim requires recreating the StatefulSet. Plan any plugin data migration separately.
+
 ## Architecture
 
 ### Deployment Topology
@@ -1271,6 +1290,7 @@ Ingress routes:
 |-----------|-------------|---------|
 | `ingester.persistence.enabled` | Deprecated compatibility value; WAL is persisted through the configured object store | `false` |
 | `processingEngine.persistence.enabled` | Enable plugins PVC | `true` |
+| `processingEngine.persistence.existingClaim` | Existing plugins PVC in the release namespace; used when persistence is enabled | `""` |
 | `objectStorage.type=file` | Creates one shared RWX object-storage PVC mounted at `objectStorage.file.dataDir` | — |
 | `objectStorage.file.persistence.accessMode` | Access mode for the file object-storage PVC | `ReadWriteMany` |
 
