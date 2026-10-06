@@ -487,7 +487,7 @@ PachaTree environment variables shared by storage roles.
 }}
 {{- $key := index $mapping 0 -}}
 {{- if and (hasKey $pachaTree $key) (not (kindIs "invalid" (get $pachaTree $key))) }}
-{{- $value := get $pachaTree $key -}}
+{{- $value := get $pachaTree $key }}
 - name: {{ index $mapping 1 }}
 {{- if eq $key "enginePathPrefix" }}
 {{- /* Preserve the existing storage prefix's string representation. */}}
