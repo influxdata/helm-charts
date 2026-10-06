@@ -628,6 +628,39 @@ All processor replicas use the same claim. For replicas on different nodes, use
 storage that supports `ReadWriteMany`. When persistence is disabled, `existingClaim`
 is ignored.
 
+If you provision only a PV, first create a PVC bound to it. Save the following as
+`plugins-pvc.yaml`, replacing the namespace and PV name. The namespace must already
+exist and match the Helm release namespace.
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: influxdb3-plugins
+  namespace: influxdb3
+spec:
+  volumeName: existing-plugins-pv
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce  # Use ReadWriteMany if processor replicas run on different nodes.
+  resources:
+    requests:
+      storage: 5Gi
+```
+
+The PV must be available or reserved for this claim. Match the PV's storage class
+and supported access mode, and request no more than its capacity. Use
+`storageClassName: ""` for a PV with no storage class.
+
+The plugin directory must be writable by UID or GID 1500 (the chart defaults),
+or by the user/group configured in `processingEngine.podSecurityContext`.
+
+Create the PVC before installing the chart:
+
+```sh
+kubectl apply -f plugins-pvc.yaml
+```
+
 Switching an existing processor StatefulSet between per-pod claims and an existing
 claim requires recreating the StatefulSet. Plan any plugin data migration separately.
 
