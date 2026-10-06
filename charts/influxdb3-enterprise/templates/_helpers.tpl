@@ -487,8 +487,14 @@ PachaTree environment variables shared by storage roles.
 }}
 {{- $key := index $mapping 0 -}}
 {{- if and (hasKey $pachaTree $key) (not (kindIs "invalid" (get $pachaTree $key))) }}
+{{- $value := get $pachaTree $key }}
 - name: {{ index $mapping 1 }}
-  value: {{ get $pachaTree $key | quote }}
+{{- if eq $key "enginePathPrefix" }}
+{{- /* Preserve the existing storage prefix's string representation. */}}
+  value: {{ $value | quote }}
+{{- else }}
+  value: {{ include "influxdb3-enterprise.quote" $value }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -912,6 +918,17 @@ works now.
 {{- end -}}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Quote a value for the server's environment with a whole number written out in digits, since quote
+alone writes 1000000 from a values file as "1e+06". Values file numbers are float64, so digits
+beyond 2^53 are already rounded when the chart sees them. A null renders nothing, as quote does.
+*/}}
+{{- define "influxdb3-enterprise.quote" -}}
+{{- if not (kindIs "invalid" .) -}}
+{{- include "influxdb3-enterprise.plainInteger" . | quote -}}
 {{- end -}}
 {{- end }}
 

@@ -77,7 +77,7 @@ data:
   INFLUXDB3_HTTP_BIND_ADDR: {{ .bind | quote }}
   {{- end }}
   {{- if .maxRequestSize }}
-  INFLUXDB3_MAX_HTTP_REQUEST_SIZE: {{ .maxRequestSize | quote }}
+  INFLUXDB3_MAX_HTTP_REQUEST_SIZE: {{ include "influxdb3-enterprise.quote" .maxRequestSize }}
   {{- end }}
   {{- end }}
 
@@ -96,13 +96,13 @@ data:
   INFLUXDB3_BUCKET: {{ .Values.objectStorage.bucket | quote }}
   {{- end }}
   {{- if .Values.objectStorage.connectionLimit }}
-  INFLUXDB3_OBJECT_STORE_CONNECTION_LIMIT: {{ .Values.objectStorage.connectionLimit | quote }}
+  INFLUXDB3_OBJECT_STORE_CONNECTION_LIMIT: {{ include "influxdb3-enterprise.quote" .Values.objectStorage.connectionLimit }}
   {{- end }}
   {{- if hasKey .Values.objectStorage "http2Only" }}
   INFLUXDB3_OBJECT_STORE_HTTP2_ONLY: {{ ternary "true" "false" .Values.objectStorage.http2Only | quote }}
   {{- end }}
   {{- if .Values.objectStorage.http2MaxFrameSize }}
-  INFLUXDB3_OBJECT_STORE_HTTP2_MAX_FRAME_SIZE: {{ .Values.objectStorage.http2MaxFrameSize | quote }}
+  INFLUXDB3_OBJECT_STORE_HTTP2_MAX_FRAME_SIZE: {{ include "influxdb3-enterprise.quote" .Values.objectStorage.http2MaxFrameSize }}
   {{- end }}
   {{- if .Values.objectStorage.requestTimeout }}
   INFLUXDB3_OBJECT_STORE_REQUEST_TIMEOUT: {{ .Values.objectStorage.requestTimeout | quote }}
@@ -117,7 +117,7 @@ data:
   INFLUXDB3_OBJECT_STORE_TLS_CA: "/etc/influxdb/object-store-ca/ca.crt"
   {{- end }}
   {{- if .Values.objectStorage.maxRetries }}
-  INFLUXDB3_OBJECT_STORE_MAX_RETRIES: {{ .Values.objectStorage.maxRetries | quote }}
+  INFLUXDB3_OBJECT_STORE_MAX_RETRIES: {{ include "influxdb3-enterprise.quote" .Values.objectStorage.maxRetries }}
   {{- end }}
   {{- if .Values.objectStorage.retryTimeout }}
   INFLUXDB3_OBJECT_STORE_RETRY_TIMEOUT: {{ .Values.objectStorage.retryTimeout | quote }}
@@ -161,14 +161,14 @@ data:
   INFLUXDB3_FILE_CACHE_SIZE: {{ .fileCacheSize | quote }}
   INFLUXDB3_PARQUET_MEM_CACHE_SIZE: {{ .fileCacheSize | quote }}
   {{- else if .parquetMemCacheSize }}
-  INFLUXDB3_PARQUET_MEM_CACHE_SIZE: {{ .parquetMemCacheSize | quote }}
+  INFLUXDB3_PARQUET_MEM_CACHE_SIZE: {{ include "influxdb3-enterprise.quote" .parquetMemCacheSize }}
   {{- end }}
   {{- if .parquetMemCacheQueryPathDuration }}
   INFLUXDB3_FILE_CACHE_RECENCY: {{ .parquetMemCacheQueryPathDuration | quote }}
   INFLUXDB3_PARQUET_MEM_CACHE_QUERY_PATH_DURATION: {{ .parquetMemCacheQueryPathDuration | quote }}
   {{- end }}
   {{- if .parquetMemCachePrunePercentage }}
-  INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE: {{ .parquetMemCachePrunePercentage | quote }}
+  INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_PERCENTAGE: {{ include "influxdb3-enterprise.quote" .parquetMemCachePrunePercentage }}
   {{- end }}
   {{- if .parquetMemCachePruneInterval }}
   INFLUXDB3_PARQUET_MEM_CACHE_PRUNE_INTERVAL: {{ .parquetMemCachePruneInterval | quote }}
@@ -195,10 +195,10 @@ data:
   INFLUXDB3_DISTINCT_CACHE_EVICTION_INTERVAL: {{ .distinctCacheEvictionInterval | quote }}
   {{- end }}
   {{- if .tableIndexCacheMaxEntries }}
-  INFLUXDB3_TABLE_INDEX_CACHE_MAX_ENTRIES: {{ .tableIndexCacheMaxEntries | quote }}
+  INFLUXDB3_TABLE_INDEX_CACHE_MAX_ENTRIES: {{ include "influxdb3-enterprise.quote" .tableIndexCacheMaxEntries }}
   {{- end }}
   {{- if .tableIndexCacheConcurrencyLimit }}
-  INFLUXDB3_TABLE_INDEX_CACHE_CONCURRENCY_LIMIT: {{ .tableIndexCacheConcurrencyLimit | quote }}
+  INFLUXDB3_TABLE_INDEX_CACHE_CONCURRENCY_LIMIT: {{ include "influxdb3-enterprise.quote" .tableIndexCacheConcurrencyLimit }}
   {{- end }}
 
   {{- end }}
@@ -213,24 +213,24 @@ data:
   INFLUXDB3_ENTERPRISE_COMPACTED_DATA_SKIP_FILE_INDEX: {{ ternary "true" "false" .skipFileIndex | quote }}
   {{- end }}
   {{- if hasKey . "loadConcurrencyLimit" }}
-  INFLUXDB3_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT: {{ .loadConcurrencyLimit | quote }}
-  INFLUXDB3_ENTERPRISE_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT: {{ .loadConcurrencyLimit | quote }}
+  INFLUXDB3_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT: {{ include "influxdb3-enterprise.quote" .loadConcurrencyLimit }}
+  INFLUXDB3_ENTERPRISE_COMPACTED_DATA_LOAD_CONCURRENCY_LIMIT: {{ include "influxdb3-enterprise.quote" .loadConcurrencyLimit }}
   {{- end }}
   {{- end }}
 
   # Resource limits
   {{- with .Values.resourceLimits }}
   {{- if .numDatabases }}
-  INFLUXDB3_NUM_DATABASE_LIMIT: {{ .numDatabases }}
-  INFLUXDB3_ENTERPRISE_NUM_DATABASE_LIMIT: {{ .numDatabases }}
+  INFLUXDB3_NUM_DATABASE_LIMIT: {{ include "influxdb3-enterprise.quote" .numDatabases }}
+  INFLUXDB3_ENTERPRISE_NUM_DATABASE_LIMIT: {{ include "influxdb3-enterprise.quote" .numDatabases }}
   {{- end }}
   {{- if .numTables }}
-  INFLUXDB3_NUM_TABLE_LIMIT: {{ .numTables }}
-  INFLUXDB3_ENTERPRISE_NUM_TABLE_LIMIT: {{ .numTables }}
+  INFLUXDB3_NUM_TABLE_LIMIT: {{ include "influxdb3-enterprise.quote" .numTables }}
+  INFLUXDB3_ENTERPRISE_NUM_TABLE_LIMIT: {{ include "influxdb3-enterprise.quote" .numTables }}
   {{- end }}
   {{- if .numColumnsPerTable }}
-  INFLUXDB3_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .numColumnsPerTable }}
-  INFLUXDB3_ENTERPRISE_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ .numColumnsPerTable }}
+  INFLUXDB3_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ include "influxdb3-enterprise.quote" .numColumnsPerTable }}
+  INFLUXDB3_ENTERPRISE_NUM_TOTAL_COLUMNS_PER_TABLE_LIMIT: {{ include "influxdb3-enterprise.quote" .numColumnsPerTable }}
   {{- end }}
   {{- end }}
 
@@ -278,7 +278,7 @@ data:
   INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_HOST: {{ .agentHost | quote }}
   {{- end }}
   {{- if .agentPort }}
-  INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_PORT: {{ .agentPort | quote }}
+  INFLUXDB3_TRACES_EXPORTER_JAEGER_AGENT_PORT: {{ include "influxdb3-enterprise.quote" .agentPort }}
   {{- end }}
   {{- if .serviceName }}
   INFLUXDB3_TRACES_EXPORTER_JAEGER_SERVICE_NAME: {{ .serviceName | quote }}
@@ -293,7 +293,7 @@ data:
   INFLUXDB3_TRACES_EXPORTER_JAEGER_TAGS: {{ .tags | quote }}
   {{- end }}
   {{- if .maxMsgsPerSecond }}
-  INFLUXDB3_TRACES_JAEGER_MAX_MSGS_PER_SECOND: {{ .maxMsgsPerSecond | quote }}
+  INFLUXDB3_TRACES_JAEGER_MAX_MSGS_PER_SECOND: {{ include "influxdb3-enterprise.quote" .maxMsgsPerSecond }}
   {{- end }}
   {{- end }}
   {{- end }}

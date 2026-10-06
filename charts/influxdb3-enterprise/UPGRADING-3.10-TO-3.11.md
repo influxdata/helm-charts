@@ -25,9 +25,12 @@ If your values set `image.tag`, remove the override or change it to the
 version, `helm show chart influxdata/influxdb3-enterprise --version <version>`
 prints it. Otherwise Helm continues deploying the overridden image.
 
-If `http.maxRequestSize` is set, keep it as a bare byte count, for example
-`10485760`, until every pod runs InfluxDB 3.11.2 or later. InfluxDB 3.10.5 rejects
-unit-suffixed values such as `10mb`.
+If `http.maxRequestSize` is set, keep it as a byte count, for example
+`"10485760"`, until every pod runs InfluxDB 3.11.2 or later. InfluxDB 3.10.5 rejects
+unit-suffixed values such as `10mb`. Quote the byte count on charts before 0.14.4:
+those charts render an unquoted `10485760` as `1.048576e+07`, which the
+server rejects. Chart 0.14.4 and later render unquoted whole numbers as
+decimal strings.
 
 Save the current release values:
 
