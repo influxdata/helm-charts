@@ -108,6 +108,12 @@ Documentation: https://docs.influxdata.com/influxdb3/enterprise/
 WARNING: objectStorage.cacheEndpoint is deprecated and has no effect with InfluxDB 3.11+. Remove it from your values before a future chart release.
 {{- end }}
 
+{{- $compaction := .Values.compactor.compaction | default dict }}
+{{- if get $compaction "maxNumFilesPerPlan" }}
+
+WARNING: compactor.compaction.maxNumFilesPerPlan is deprecated and ignored by InfluxDB 3.12+. Remove it from your values before a future chart release.
+{{- end }}
+
 {{- if not (or .Values.license.email .Values.license.file .Values.license.existingSecret) }}
 
 ⚠️  WARNING: No license configured!

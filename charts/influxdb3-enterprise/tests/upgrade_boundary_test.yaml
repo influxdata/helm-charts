@@ -1,0 +1,447 @@
+suite: versioned upgrade boundary acknowledgement
+release:
+  name: t
+  namespace: default
+kubernetesProvider:
+  scheme:
+    "v1/ConfigMap":
+      gvr:
+        version: v1
+        resource: configmaps
+      namespaced: true
+tests:
+  - it: installs 3.12 without acknowledgement and records both catalog markers
+    template: templates/configmap.yaml
+    set:
+      acknowledgeUpgrade: ""
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/catalog-format"]
+          value: v3
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.12"
+      - notExists:
+          path: metadata.annotations["influxdata.com/target-product-version"]
+      - notExists:
+          path: data.INFLUXDB3_UPGRADE_PACHA_TREE
+
+  - it: defaults an empty image override to 3.12.0-enterprise
+    template: templates/ingester-statefulset.yaml
+    set:
+      image.tag: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/influxdb:3.12.0-enterprise
+
+  - it: records the same boundary for a versioned patch image override
+    template: templates/configmap.yaml
+    set:
+      image.tag: v3.12.1-enterprise
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.12"
+
+  - it: retains a 3.11 image override without inventing 3.12 history
+    template: templates/configmap.yaml
+    set:
+      image.tag: 3.11.5-enterprise
+    asserts:
+      - notExists:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+
+  - it: does not invent catalog history for an unversioned custom image tag
+    template: templates/configmap.yaml
+    set:
+      image.tag: custom-build
+    asserts:
+      - notExists:
+          path: metadata.annotations["influxdata.com/target-product-version"]
+      - notExists:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+
+  # Plain helm template uses install state. Only --is-upgrade enables the guards.
+  - it: bypasses upgrade guards in template-only install state
+    template: templates/configmap.yaml
+    release:
+      upgrade: false
+    set:
+      acknowledgeCatalogMigration: false
+      acknowledgeUpgrade: ""
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  # Match failures across the chart: StatefulSet checksum includes also evaluate the guard.
+  # Satisfy the catalog-v3 guard separately to isolate the new acknowledgement.
+  # No lookup objects also models client-side upgrade previews.
+  - it: rejects an unacknowledged upgrade or client preview with no marker
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+
+  - it: accepts an acknowledged upgrade or client preview with no marker
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.12"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.12"
+
+  - it: fails closed when old reused values have no 3.12 acknowledgement
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: null
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+
+  - it: ignores a stale acknowledgement when the boundary is recorded
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: false
+      acknowledgeUpgrade: "3.11"
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/catalog-format: v3
+              influxdata.com/upgrade-boundary-applied: "3.12"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.12"
+
+  - it: preserves the recorded boundary with an older target override
+    template: templates/configmap.yaml
+    set:
+      image.tag: 3.11.5-enterprise
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.12"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.12"
+
+  - it: preserves the recorded boundary and removes target metadata for unknown tags
+    template: templates/configmap.yaml
+    set:
+      image.tag: custom-build
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.12"
+              influxdata.com/target-product-version: "3.12.0"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.12"
+      - notExists:
+          path: metadata.annotations["influxdata.com/target-product-version"]
+
+  - it: rejects a marker with an unexpected value
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: ""
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "false"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'influxdata.com/upgrade-boundary-applied on ConfigMap "t-influxdb3-enterprise-config" must use X.Y form; got "false".'
+
+  - it: ignores markers on another releases ConfigMap
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: ""
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: other-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.12"
+    asserts:
+      - failedTemplate: {}
+
+  - it: leaves the existing catalog-v3 acknowledgement guard independent
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: false
+      acknowledgeUpgrade: "3.12"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/catalog-format=v3 on ConfigMap "t-influxdb3-enterprise-config". Follow UPGRADING-3.9-TO-3.10.md, then set acknowledgeCatalogMigration: true for the one-time upgrade or client-side preview.'
+
+  - it: ignores a stale acknowledgement for a known older target
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.11"
+      image.tag: 3.11.5-enterprise
+    asserts:
+      - notExists:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+
+  - it: requires acknowledgement for an unknown upgrade target
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      image.tag: custom-build
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+
+  - it: does not advance the boundary for an acknowledged unknown target
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      image.tag: custom-build
+      acknowledgeUpgrade: "3.12"
+    asserts:
+      - notExists:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+
+  - it: keeps a lower recorded boundary for an acknowledged unknown target
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      image.tag: custom-build
+      acknowledgeUpgrade: "3.12"
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.11"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.11"
+
+  - it: requires acknowledgement when the recorded boundary is lower
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.9"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+
+  - it: advances a lower boundary after an acknowledged upgrade
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.12"
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.11"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.12"
+
+  - it: preserves a higher boundary without acknowledgement
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.15"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.15"
+
+  - it: preserves a higher boundary with an older target
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      image.tag: 3.11.5-enterprise
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.15"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.15"
+
+  - it: preserves a higher boundary with an unknown target
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      image.tag: custom-build
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-enterprise-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: "3.15"
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.15"
+
+  - it: allows null acknowledgement on a fresh installation
+    template: templates/configmap.yaml
+    release:
+      upgrade: false
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: null
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: "3.12"
+
+  - it: rejects boolean true as the acknowledgement
+    release:
+      upgrade: false
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: true
+    asserts:
+      - failedTemplate:
+          errorMessage: 'acknowledgeUpgrade must be a quoted string such as "3.12".'
+
+  - it: rejects boolean false as the acknowledgement
+    release:
+      upgrade: false
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: false
+    asserts:
+      - failedTemplate:
+          errorMessage: 'acknowledgeUpgrade must be a quoted string such as "3.12".'
+
+  - it: rejects a numeric abbreviated version as the acknowledgement
+    release:
+      upgrade: false
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: 3.12
+    asserts:
+      - failedTemplate:
+          errorMessage: 'acknowledgeUpgrade must be a quoted string such as "3.12".'
+
+  - it: rejects a patch version string as the acknowledgement
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.12.0"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'acknowledgeUpgrade must be empty or use X.Y form such as "3.12".'
+
+  - it: rejects a lower boundary when acknowledgement is required
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.11"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+
+  - it: rejects another boundary when acknowledgement is required
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.13"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'

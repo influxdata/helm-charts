@@ -3,8 +3,9 @@ set -euo pipefail
 
 scenario_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 manual_dir=$(CDPATH= cd -- "$scenario_dir/.." && pwd)
-target_chart=influxdata/influxdb3-enterprise
-target_chart_version=0.15.0
+chart_dir=$(CDPATH= cd -- "$manual_dir/../.." && pwd)
+source_chart=influxdata/influxdb3-enterprise
+source_chart_version=0.15.0
 
 values_file="$manual_dir/values-s3.yaml"
 license_file=
@@ -51,13 +52,24 @@ for command in helm kubectl awk grep sed; do
   }
 done
 
-# Both the binary upgrade and migration use the published 3.11 chart.
-target_version=$(helm show chart "$target_chart" --version "$target_chart_version" |
+source_version=$(helm show chart "$source_chart" --version "$source_chart_version" |
   awk '/^appVersion:/ {gsub(/"/, "", $2); print $2}')
-[ -n "$target_version" ] || {
-  echo "Could not resolve appVersion for chart $target_chart_version" >&2
-  exit 1
-}
+case "$source_version" in
+  3.11.*) ;;
+  *)
+    echo "Source chart $source_chart_version must run InfluxDB 3.11.x; got $source_version" >&2
+    exit 1
+    ;;
+esac
+
+target_version=$(awk '/^appVersion:/ {gsub(/"/, "", $2); print $2}' "$chart_dir/Chart.yaml")
+case "$target_version" in
+  3.12.*) ;;
+  *)
+    echo "The local chart must run InfluxDB 3.12.x; got $target_version" >&2
+    exit 1
+    ;;
+esac
 
 [ -n "$license_file" ] || {
   echo "--license-file is required." >&2
@@ -187,49 +199,6 @@ query_until_contains() {
   return 1
 }
 
-wait_for_pacha_tree_migration() {
-  local timeout=60
-  local deadline=$((SECONDS + timeout))
-  local status_output=
-  local status_query='SELECT node_id, mode, status FROM system.upgrade_parquet_node'
-
-  log "Checking system.upgrade_parquet_node: at least one migration node must be present and every node must report status=completed (timeout: ${timeout}s)"
-
-  while [ "$SECONDS" -lt "$deadline" ]; do
-    if status_output=$("${kubectl_command[@]}" exec \
-      --namespace "$namespace" "$ingester_pod" -- \
-      influxdb3 query \
-      --host "$querier_host" \
-      --database _internal \
-      --token "$auth_token" \
-      --format csv \
-      "$status_query"); then
-      if printf '%s\n' "$status_output" | awk -F, '
-        NR == 1 { next }
-        NF {
-          count++
-          if ($3 != "completed") {
-            incomplete = 1
-          }
-        }
-        END {
-          exit !(count > 0 && incomplete == 0)
-        }
-      '; then
-        printf '%s\n' "$status_output"
-        return 0
-      fi
-    fi
-
-    [ "$SECONDS" -lt "$deadline" ] && sleep 5
-  done
-
-  printf 'PachaTree migration did not complete after %s seconds\n' \
-    "$timeout" >&2
-  [ -n "$status_output" ] && printf '%s\n' "$status_output" >&2
-  return 1
-}
-
 namespace_created=false
 bucket_created=false
 
@@ -305,11 +274,11 @@ log "Creating test Secrets"
   --namespace "$namespace" \
   --from-file=admin-token.json="$admin_token_file"
 
-log "Installing chart 0.9.2 / InfluxDB 3.10.5"
-helm install "$release" influxdata/influxdb3-enterprise \
+log "Installing chart $source_chart_version / InfluxDB $source_version"
+helm install "$release" "$source_chart" \
   "${helm_context[@]}" \
   --namespace "$namespace" \
-  --version 0.9.2 \
+  --version "$source_chart_version" \
   --values "$values_file" \
   --set-string objectStorage.s3.endpoint="$s3_endpoint" \
   --set-string objectStorage.bucket="$bucket" \
@@ -317,8 +286,21 @@ helm install "$release" influxdata/influxdb3-enterprise \
   --set license.type=commercial \
   --set-string license.existingSecret="$license_secret" \
   --set-string security.auth.adminToken.existingSecret="$admin_secret" \
+  --set-string image.tag="$source_version-enterprise" \
+  --set acknowledgePachaTreeMigration=false \
   --wait \
   --timeout 15m
+
+log "Verifying InfluxDB $source_version on every component"
+for component in ingester querier compactor processor; do
+  component_pod="$release-influxdb3-enterprise-$component-0"
+  version_output=$("${kubectl_command[@]}" exec \
+    --namespace "$namespace" "$component_pod" -- \
+    influxdb3 --version)
+  printf '%s: %s\n' "$component_pod" "$version_output"
+  printf '%s\n' "$version_output" | grep -Fq "InfluxDB 3 Enterprise, $source_version"
+done
+
 
 log "Writing baseline data"
 "${kubectl_command[@]}" exec --namespace "$namespace" "$ingester_pod" -- \
@@ -331,14 +313,16 @@ log "Writing baseline data"
   --host "$ingester_host" \
   --database upgrade_test \
   --token "$auth_token" \
-  'upgrade_measurement,source=chart-0.9.2 value=92i 1724493600000000000'
+  "upgrade_measurement,source=influxdb-$source_version value=311i 1724493600000000000"
 
-log "Upgrading to chart $target_chart_version / InfluxDB $target_version"
-helm upgrade "$release" "$target_chart" \
-  --version "$target_chart_version" \
+log "Upgrading to the local chart / InfluxDB $target_version"
+helm upgrade "$release" "$chart_dir" \
   "${helm_context[@]}" \
   --namespace "$namespace" \
   --reuse-values \
+  --set-string image.tag="$target_version-enterprise" \
+  --set-string acknowledgeUpgrade=3.12 \
+  --set acknowledgePachaTreeMigration=false \
   --wait \
   --timeout 15m
 
@@ -352,31 +336,8 @@ for component in ingester querier compactor processor; do
   printf '%s\n' "$version_output" | grep -Fq "InfluxDB 3 Enterprise, $target_version"
 done
 
-log "Verifying baseline data on InfluxDB $target_version / Parquet"
-query_until_contains 'chart-0.9.2'
-
-log "Writing data on InfluxDB $target_version / Parquet"
-"${kubectl_command[@]}" exec --namespace "$namespace" "$ingester_pod" -- \
-  influxdb3 write \
-  --host "$ingester_host" \
-  --database upgrade_test \
-  --token "$auth_token" \
-  'upgrade_measurement,source=chart-0.10.0-parquet value=99i 1724493660000000000'
-
-log "Verifying new Parquet data"
-query_until_contains 'chart-0.10.0-parquet'
-
-log "Starting PachaTree migration"
-helm upgrade "$release" "$target_chart" \
-  --version "$target_chart_version" \
-  "${helm_context[@]}" \
-  --namespace "$namespace" \
-  --reuse-values \
-  --set acknowledgePachaTreeMigration=true \
-  --wait \
-  --timeout 15m
-
-wait_for_pacha_tree_migration
+log "Verifying baseline data on InfluxDB $target_version"
+query_until_contains "influxdb-$source_version"
 
 log "Writing post-upgrade data"
 "${kubectl_command[@]}" exec --namespace "$namespace" "$ingester_pod" -- \
@@ -384,13 +345,12 @@ log "Writing post-upgrade data"
   --host "$ingester_host" \
   --database upgrade_test \
   --token "$auth_token" \
-  'upgrade_measurement,source=chart-0.10.0-pachatree value=100i 1724493720000000000'
+  "upgrade_measurement,source=influxdb-$target_version value=312i 1724493660000000000"
 
 log "Post-upgrade query result"
 post_upgrade_query=$(query_until_contains \
-  'chart-0.9.2' \
-  'chart-0.10.0-parquet' \
-  'chart-0.10.0-pachatree')
+  "influxdb-$source_version" \
+  "influxdb-$target_version")
 printf '%s\n' "$post_upgrade_query"
 
 log "Final Helm and pod status"
