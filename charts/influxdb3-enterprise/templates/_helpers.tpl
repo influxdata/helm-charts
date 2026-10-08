@@ -108,7 +108,9 @@ the intermediate chart, and the version it provides in the validation error.
 
 {{/*
 Reject a known unsupported upgrade source. This inspects configured StatefulSet
-state only; operators must still verify the versions of every running node.
+state only. The ingester is used because every supported deployment has one and
+all components share the chart-level product image. Operators must still verify
+the versions of every running node.
 */}}
 {{- define "influxdb3-enterprise.validateUpgradeSourceVersion" -}}
 {{- if .Release.IsUpgrade -}}
