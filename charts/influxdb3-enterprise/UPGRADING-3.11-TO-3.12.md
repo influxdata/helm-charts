@@ -1,10 +1,13 @@
 # Upgrade from InfluxDB 3 Enterprise 3.11 to 3.12
 
-Chart 0.16.0 defaults to InfluxDB 3 Enterprise 3.12.0. This chart supports
-fresh 3.12 installations and upgrades from 3.11.x, including partially completed
-3.11/3.12 rollouts and subsequent 3.12 chart upgrades. Upgrade clusters running
-3.10.x or earlier to 3.11 first. Direct upgrades from those versions are outside
-this chart's support policy; the chart does not inspect source images or reject them.
+Chart 0.16.0 defaults to InfluxDB 3 Enterprise 3.12.0. This chart supports fresh
+3.12 installations and upgrades from 3.11.3 or later, including partially
+completed 3.11/3.12 rollouts and subsequent 3.12 chart upgrades. Older clusters
+must follow their supported upgrade path through chart 0.15.0 first. During a
+server-connected upgrade, the chart rejects a release whose ingester StatefulSet
+is configured for a recognizable version below 3.11.3. Missing StatefulSets,
+custom tags, image digests, and running pod versions cannot be verified, so
+verify every node yourself.
 
 Follow the official [upgrade procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/)
 and review the [3.12 release notes](https://docs.influxdata.com/influxdb3/enterprise/release-notes/#v3120).
@@ -14,7 +17,7 @@ distributed compaction at the same time.
 
 ## Before upgrading
 
-Verify `influxdb3 --version` on every pod. All source nodes must run 3.11.x;
+Verify `influxdb3 --version` on every pod. All source nodes must run 3.11.3 or later;
 the reference manual scenario uses 3.11.5. Record all pod images as well as the
 release values and current chart version:
 

@@ -98,6 +98,44 @@ License secret name
 {{- end }}
 
 {{/*
+Minimum recognizable source version supported by this chart's upgrade path.
+When a future chart requires a newer source release, advance this full version,
+the intermediate chart, and the version it provides in the validation error.
+*/}}
+{{- define "influxdb3-enterprise.minimumUpgradeSource" -}}
+3.11.3
+{{- end }}
+
+{{/*
+Reject a known unsupported upgrade source. This inspects configured StatefulSet
+state only; operators must still verify the versions of every running node.
+*/}}
+{{- define "influxdb3-enterprise.validateUpgradeSourceVersion" -}}
+{{- if .Release.IsUpgrade -}}
+{{- $name := printf "%s-ingester" (include "influxdb3-enterprise.fullname" .) -}}
+{{- $statefulSet := lookup "apps/v1" "StatefulSet" .Release.Namespace $name | default dict -}}
+{{- $containers := dig "spec" "template" "spec" "containers" (list) $statefulSet -}}
+{{- $image := "" -}}
+{{- range $container := $containers -}}
+{{- if eq (get $container "name") "influxdb3" -}}
+{{- $image = get $container "image" | default "" -}}
+{{- end -}}
+{{- end -}}
+{{- if and $image (not (contains "@" $image)) -}}
+{{- $imageName := last (splitList "/" $image) -}}
+{{- if contains ":" $imageName -}}
+{{- $tag := last (splitList ":" $imageName) -}}
+{{- $version := regexFind "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag | trimPrefix "v" -}}
+{{- $minimum := include "influxdb3-enterprise.minimumUpgradeSource" . -}}
+{{- if and $version (semverCompare (printf "<%s" $minimum) $version) -}}
+{{- fail (printf "The ingester StatefulSet is configured for InfluxDB %s. Upgrade this release to InfluxDB %s or later (chart 0.15.0 provides 3.11.5), verify every node runs the upgraded version, then upgrade to this chart." $version $minimum) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Require acknowledgement of the InfluxDB 3.10 catalog migration.
 */}}
 {{- define "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" -}}
@@ -155,7 +193,7 @@ The recorded boundary is chart configuration history, not server state.
 {{- $alreadyApplied = semverCompare (printf ">=%s" $boundaryVersion) (printf "%s.0" $recorded) -}}
 {{- end -}}
 {{- if and .Release.IsUpgrade $requiresBoundary (not $alreadyApplied) (ne $acknowledgement $boundary) -}}
-{{- fail (printf "Could not verify influxdata.com/upgrade-boundary-applied>=%s on ConfigMap %q. Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: %q for the one-time upgrade or client-side preview." $boundary $name $boundary) -}}
+{{- fail (printf "Could not verify influxdata.com/upgrade-boundary-applied>=%s on ConfigMap %q. Verify that every node runs 3.11.3 or later and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: %q for the one-time upgrade or client-side preview." $boundary $name $boundary) -}}
 {{- end -}}
 {{- end }}
 

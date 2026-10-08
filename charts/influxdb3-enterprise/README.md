@@ -713,10 +713,13 @@ claim requires recreating the StatefulSet. Plan any plugin data migration separa
 
 ### Upgrade from InfluxDB 3.11
 
-Chart 0.16.0 defaults to InfluxDB 3 Enterprise 3.12.0. Supported source clusters
-run 3.11.x on every node. Upgrade older clusters through 3.11 first; the chart
-does not enforce the source-version policy. Remove a retained `image.tag`
-override or set it to `3.12.0-enterprise`.
+Chart 0.16.0 defaults to InfluxDB 3 Enterprise 3.12.0. Existing clusters must
+run InfluxDB 3.11.3 or later on every node before upgrading. During a
+server-connected upgrade, the chart rejects a release whose ingester StatefulSet
+is configured for a recognizable version below 3.11.3. Missing StatefulSets,
+custom tags, image digests, and running pod versions cannot be verified, so
+verify every node and upgrade older clusters through chart 0.15.0 first. Remove
+a retained `image.tag` override or set it to `3.12.0-enterprise`.
 
 Follow [UPGRADING-3.11-TO-3.12.md](UPGRADING-3.11-TO-3.12.md) for backups,
 `acknowledgeUpgrade`, the ordered rollout, sweep dry-run, and rollback.

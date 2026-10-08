@@ -1,3 +1,4 @@
+{{- include "influxdb3-enterprise.validateUpgradeSourceVersion" . }}
 {{- include "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" . }}
 {{- include "influxdb3-enterprise.validateUpgradeBoundaryAcknowledgement" . }}
 {{- include "influxdb3-enterprise.validateObjectStorageType" . }}

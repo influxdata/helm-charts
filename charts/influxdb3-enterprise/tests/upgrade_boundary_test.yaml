@@ -9,6 +9,12 @@ kubernetesProvider:
         version: v1
         resource: configmaps
       namespaced: true
+    "apps/v1/StatefulSet":
+      gvr:
+        group: apps
+        version: v1
+        resource: statefulsets
+      namespaced: true
 tests:
   - it: installs 3.12 without acknowledgement and records both catalog markers
     template: templates/configmap.yaml
@@ -74,6 +80,167 @@ tests:
       - hasDocuments:
           count: 1
 
+  - it: rejects a source below the required patch before acknowledgement guards
+    template: templates/querier-statefulset.yaml
+    release:
+      upgrade: true
+    kubernetesProvider:
+      objects:
+        - apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: t-influxdb3-enterprise-ingester
+            namespace: default
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: influxdb3
+                    image: docker.io/influxdb:3.11.2-enterprise
+    asserts:
+      - failedTemplate:
+          errorMessage: The ingester StatefulSet is configured for InfluxDB 3.11.2. Upgrade this release to InfluxDB 3.11.3 or later (chart 0.15.0 provides 3.11.5), verify every node runs the upgraded version, then upgrade to this chart.
+
+  - it: accepts the minimum recognizable source
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.12"
+    kubernetesProvider:
+      objects:
+        - apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: t-influxdb3-enterprise-ingester
+            namespace: default
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: sidecar
+                    image: example.invalid/sidecar:1.0.0
+                  - name: influxdb3
+                    image: docker.io/influxdb:3.11.3-enterprise
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: accepts a recognizable 3.12 source
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.12"
+    kubernetesProvider:
+      objects:
+        - apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: t-influxdb3-enterprise-ingester
+            namespace: default
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: influxdb3
+                    image: docker.io/influxdb:3.12.0-enterprise
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: parses a source tag after a registry port
+    template: templates/querier-statefulset.yaml
+    release:
+      upgrade: true
+    kubernetesProvider:
+      objects:
+        - apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: t-influxdb3-enterprise-ingester
+            namespace: default
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: influxdb3
+                    image: registry.example.invalid:5000/influxdb:3.10.5-enterprise
+    asserts:
+      - failedTemplate:
+          errorMessage: The ingester StatefulSet is configured for InfluxDB 3.10.5. Upgrade this release to InfluxDB 3.11.3 or later (chart 0.15.0 provides 3.11.5), verify every node runs the upgraded version, then upgrade to this chart.
+
+  - it: allows a digest source because its version is unknown
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.12"
+    kubernetesProvider:
+      objects:
+        - apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: t-influxdb3-enterprise-ingester
+            namespace: default
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: influxdb3
+                    image: docker.io/influxdb@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: allows a custom source tag because its version is unknown
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    set:
+      acknowledgeCatalogMigration: true
+      acknowledgeUpgrade: "3.12"
+    kubernetesProvider:
+      objects:
+        - apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: t-influxdb3-enterprise-ingester
+            namespace: default
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: influxdb3
+                    image: docker.io/influxdb:custom-build
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: ignores a recognizable old source on a fresh installation
+    template: templates/configmap.yaml
+    release:
+      upgrade: false
+    kubernetesProvider:
+      objects:
+        - apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: t-influxdb3-enterprise-ingester
+            namespace: default
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: influxdb3
+                    image: docker.io/influxdb:3.10.5-enterprise
+    asserts:
+      - hasDocuments:
+          count: 1
+
   # Match failures across the chart: StatefulSet checksum includes also evaluate the guard.
   # Satisfy the catalog-v3 guard separately to isolate the new acknowledgement.
   # No lookup objects also models client-side upgrade previews.
@@ -85,9 +252,9 @@ tests:
       acknowledgeUpgrade: ""
     asserts:
       - failedTemplate:
-          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.3 or later and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
 
-  - it: accepts an acknowledged upgrade or client preview with no marker
+  - it: accepts an acknowledged upgrade or client preview with no marker or source StatefulSet
     template: templates/configmap.yaml
     release:
       upgrade: true
@@ -107,7 +274,7 @@ tests:
       acknowledgeUpgrade: null
     asserts:
       - failedTemplate:
-          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.3 or later and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
 
   - it: ignores a stale acknowledgement when the boundary is recorded
     template: templates/configmap.yaml
@@ -237,7 +404,7 @@ tests:
       image.tag: custom-build
     asserts:
       - failedTemplate:
-          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.3 or later and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
 
   - it: does not advance the boundary for an acknowledged unknown target
     template: templates/configmap.yaml
@@ -289,7 +456,7 @@ tests:
               influxdata.com/upgrade-boundary-applied: "3.9"
     asserts:
       - failedTemplate:
-          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.3 or later and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
 
   - it: advances a lower boundary after an acknowledged upgrade
     template: templates/configmap.yaml
@@ -434,7 +601,7 @@ tests:
       acknowledgeUpgrade: "3.11"
     asserts:
       - failedTemplate:
-          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.3 or later and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
 
   - it: rejects another boundary when acknowledgement is required
     release:
@@ -444,4 +611,4 @@ tests:
       acknowledgeUpgrade: "3.13"
     asserts:
       - failedTemplate:
-          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.x and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-enterprise-config". Verify that every node runs 3.11.3 or later and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
