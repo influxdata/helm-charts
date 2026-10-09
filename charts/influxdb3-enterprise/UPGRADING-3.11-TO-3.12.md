@@ -172,15 +172,49 @@ After commitment, Helm rollback alone is insufficient: 3.11 cannot read the live
 catalog. Follow the official [catalog recovery requirements](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/#before-you-upgrade)
 with a coordinated restore:
 
-1. Stop client writes and all InfluxDB processes, including compactors and
-   processors. Confirm all newer processes have stopped before replacing objects.
+1. Stop client writes. Scale every StatefulSet in the release to zero, then wait
+   until every release StatefulSet pod has been deleted:
+
+   ```bash
+   kubectl scale statefulset \
+     --namespace "$NAMESPACE" \
+     --selector "app.kubernetes.io/instance=$RELEASE" \
+     --replicas=0
+
+   kubectl wait --for=delete pod \
+     --namespace "$NAMESPACE" \
+     --selector "app.kubernetes.io/instance=$RELEASE,controller-revision-hash" \
+     --timeout=10m
+   ```
+
+   Confirm no StatefulSet workload pods remain before replacing objects.
 2. Restore the complete pre-upgrade catalog prefix, removing post-backup catalog
    objects. Restore referenced data objects from the full backup if necessary.
-3. Restore the saved chart values, but pin every workload to InfluxDB 3.11.3
-   or later while workloads remain stopped. Published chart 0.15.0 defaults to
-   `3.11.5-enterprise`.
-4. Start only the restored 3.11 workloads. Verify readiness, node versions,
-   pre-upgrade data, and a new write before resuming traffic.
+3. Restore the saved values and start the 3.11 workloads with every StatefulSet
+   using an unfrozen rolling-update strategy:
+
+   ```bash
+   helm upgrade "$RELEASE" influxdata/influxdb3-enterprise \
+     --namespace "$NAMESPACE" \
+     --version 0.15.0 \
+     --reset-values \
+     --values pre-3.12-values.yaml \
+     --set ingester.updateStrategy.type=RollingUpdate \
+     --set ingester.updateStrategy.rollingUpdate.partition=0 \
+     --set querier.updateStrategy.type=RollingUpdate \
+     --set querier.updateStrategy.rollingUpdate.partition=0 \
+     --set compactor.updateStrategy.type=RollingUpdate \
+     --set compactor.updateStrategy.rollingUpdate.partition=0 \
+     --set processingEngine.updateStrategy.type=RollingUpdate \
+     --set processingEngine.updateStrategy.rollingUpdate.partition=0
+   ```
+
+   Chart 0.15.0 defaults to `3.11.5-enterprise`. If
+   `pre-3.12-values.yaml` sets `image.tag`, verify that it resolves to InfluxDB
+   3.11.3 or later before running the command. The explicit strategy overrides
+   prevent a retained partition or update strategy from recreating a 3.12 pod.
+4. Verify readiness, confirm every node reports InfluxDB 3.11.3 or later, query
+   pre-upgrade data, and perform a new write before resuming traffic.
 
 Writes accepted after the backup may be lost. Never leave 3.12 processes writing
 to the restored 3.11 catalog.
