@@ -711,6 +711,48 @@ claim requires recreating the StatefulSet. Plan any plugin data migration separa
 
 ## Upgrading
 
+### Upgrade from InfluxDB 3.11
+
+Chart 0.16.0 defaults to InfluxDB 3 Enterprise 3.12.0. Existing clusters must
+run InfluxDB 3.11.3 or later on every node before upgrading. During a
+server-connected upgrade, the chart rejects a release whose ingester StatefulSet
+is configured for a recognizable version below 3.11.3. Missing StatefulSets,
+custom tags, image digests, and running pod versions cannot be verified, so
+verify every node and upgrade older clusters through chart 0.15.0 first. Remove
+a retained `image.tag` override or set it to `3.12.0-enterprise`.
+
+Follow [UPGRADING-3.11-TO-3.12.md](UPGRADING-3.11-TO-3.12.md) for backups,
+`acknowledgeUpgrade`, the ordered rollout, sweep dry-run, and rollback.
+Catalog commitment prevents restarting 3.11 against the live catalog even
+when no new features have been used. Keep storage-engine migration separate.
+
+Use `acknowledgeUpgrade: "3.12"` for the first 3.12 upgrade.
+The ConfigMap records
+`influxdata.com/upgrade-boundary-applied: "3.12"` for identifiable
+3.12+ targets. This identifies the 3.12 upgrade boundary and remains `3.12`
+for every 3.12.x image. The recorded boundary only moves forward; older and
+unknown image tags preserve an existing value, and unknown tags never create
+one. It records applied chart configuration, not backup completion, running
+binaries, or catalog commitment. Future automatic compatibility transitions
+use the same value key and annotation with a new boundary; an acknowledgement
+of an earlier boundary does not approve a later one.
+
+An upgrade to a known target below the boundary needs no new acknowledgement.
+Upgrades to 3.12+ or unknown targets require the exact boundary string unless
+the release's own ConfigMap already records that boundary or a later one.
+The existing catalog-v3 and PachaTree migration controls remain independent.
+
+Client-side 3.12 upgrade previews require both
+`--set-string acknowledgeUpgrade=3.12` and
+`acknowledgeCatalogMigration=true`; prefer `helm upgrade --dry-run=server` to
+read the live markers. Plain `helm template` and template-only GitOps
+renderers such as Argo CD bypass upgrade guards. Complete the guide before syncing.
+
+Review the guide's [behavior changes](UPGRADING-3.11-TO-3.12.md#behavior-changes)
+for query and write limits, processor execution, metrics, and sessions.
+`compactor.compaction.maxNumFilesPerPlan` remains accepted for saved values
+but is ignored by InfluxDB 3.12+ and prints a non-blocking Helm warning.
+
 ### Upgrade from InfluxDB 3.10
 
 Chart 0.10.0 upgrades InfluxDB 3 Enterprise to 3.11.2. Existing clusters stay
@@ -893,6 +935,10 @@ the whole catalog, tokens included: tokens created after the backup stop
 working, and tokens deleted after it are valid again. Row deletes are not
 reliably carried across a restore in either direction, least of all from an
 incremental backup, which does not record them.
+
+For upgraded-engine clusters on InfluxDB 3.12, the compactor holds its deletes
+while a restore runs. The pre-restore cleanup-cooldown workaround below applies
+only to InfluxDB 3.11.
 
 Once `show restores` reports `completed`, restart the queriers:
 
@@ -1185,8 +1231,9 @@ ingester:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `acknowledgeCatalogMigration` | One-time acknowledgement for an upgrade without the catalog format v3 marker | `false` |
-| `acknowledgePachaTreeMigration` | Acknowledge and start migration of an existing Parquet cluster to PachaTree | `false` |
+| `acknowledgeCatalogMigration` | One-time acknowledgement for the 3.9-to-3.10 automatic catalog v2-to-v3 migration when the catalog format v3 marker is unavailable | `false` |
+| `acknowledgePachaTreeMigration` | Acknowledge and start the optional migration of an existing Parquet cluster to the upgraded PachaTree storage engine; separate from binary upgrade | `false` |
+| `acknowledgeUpgrade` | Quoted `X.Y` upgrade boundary to acknowledge, for example `"3.12"`; empty on fresh installs or once recorded | `""` |
 | `engine.pachaTree.*` | Optional PachaTree tuning for ingester, querier, and compactor pods; see `values.yaml` for role-specific options | not set |
 | `shutdown.timeout` | Graceful connection-drain timeout, a humantime duration passed through as written | not set (server default `30s`) |
 | `shutdown.terminationGracePeriodSeconds` | Grace period on the ingester, querier, compactor and processor pods; `0` means kubelet kills immediately, which Kubernetes discourages for StatefulSets | not set (Kubernetes default `30`) |
@@ -1269,6 +1316,12 @@ ingester:
 | `*.logs.logFilter` / `logFormat` / `logDestination` | Log settings for one component's pods only; override the top-level `logs.*` keys of the same name | not set |
 | `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
 | `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
+
+InfluxDB 3.12 distributed compaction is a beta feature and is not yet supported
+by this chart. The chart runs one compactor and does not configure
+compactor-to-compactor networking. Do not set
+`INFLUXDB3_COMPACTOR_DISPATCH_TARGET=remote`; without another compact node,
+compaction waits indefinitely.
 
 ### Ingester internode Services
 

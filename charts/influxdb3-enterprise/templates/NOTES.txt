@@ -76,18 +76,28 @@ Access endpoints:
 {{- end }}
 
 Getting started:
+{{- if or (get $adminToken "existingSecret") (get $adminToken "file") }}
+
+  1. Configure authentication using the token field from your offline JSON file:
+
+     export INFLUXDB3_AUTH_TOKEN="<token-field-value>"
+{{- else }}
 
   1. Create an admin token:
 
      kubectl exec -it {{ include "influxdb3-enterprise.fullname" . }}-ingester-0 -n {{ .Release.Namespace }} -- \
         influxdb3 create token --admin
 
+     export INFLUXDB3_AUTH_TOKEN=<your-admin-token>
+{{- end }}
+
   2. Create a database:
 
-     export INFLUXDB3_AUTH_TOKEN=<your-admin-token>
 {{- if .Values.ingress.enabled }}
+
      export INFLUXDB3_HOST_URL=http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}:{{ .Values.ingress.port }}
 {{- else }}
+
      export INFLUXDB3_HOST_URL=http://localhost:8181
 {{- end }}
      influxdb3 create database mydb
@@ -106,6 +116,12 @@ Documentation: https://docs.influxdata.com/influxdb3/enterprise/
 {{- if get $objectStorage "cacheEndpoint" }}
 
 WARNING: objectStorage.cacheEndpoint is deprecated and has no effect with InfluxDB 3.11+. Remove it from your values before a future chart release.
+{{- end }}
+
+{{- $compaction := .Values.compactor.compaction | default dict }}
+{{- if get $compaction "maxNumFilesPerPlan" }}
+
+WARNING: compactor.compaction.maxNumFilesPerPlan is deprecated and ignored by InfluxDB 3.12+. Remove it from your values before a future chart release.
 {{- end }}
 
 {{- if not (or .Values.license.email .Values.license.file .Values.license.existingSecret) }}
