@@ -137,10 +137,10 @@ ingester_host="http://$release-influxdb3-enterprise-ingester:8181"
 querier_host="http://$release-influxdb3-enterprise-querier:8181"
 
 kubectl_command=(kubectl)
-helm_context=()
+helm_command=(helm)
 if [ -n "$kube_context" ]; then
   kubectl_command=(kubectl --context "$kube_context")
-  helm_context=(--kube-context "$kube_context")
+  helm_command=(helm --kube-context "$kube_context")
 fi
 
 run_aws() {
@@ -209,10 +209,10 @@ cleanup() {
   set +e
 
   if [ "$namespace_created" = true ] &&
-    helm status "$release" "${helm_context[@]}" \
+    "${helm_command[@]}" status "$release" \
       --namespace "$namespace" >/dev/null 2>&1; then
     log "Stopping InfluxDB workloads"
-    if ! helm uninstall "$release" "${helm_context[@]}" \
+    if ! "${helm_command[@]}" uninstall "$release" \
       --namespace "$namespace" \
       --wait \
       --timeout 5m; then
@@ -275,8 +275,7 @@ log "Creating test Secrets"
   --from-file=admin-token.json="$admin_token_file"
 
 log "Installing chart $source_chart_version / InfluxDB $source_version"
-helm install "$release" "$source_chart" \
-  "${helm_context[@]}" \
+"${helm_command[@]}" install "$release" "$source_chart" \
   --namespace "$namespace" \
   --version "$source_chart_version" \
   --values "$values_file" \
@@ -316,8 +315,7 @@ log "Writing baseline data"
   "upgrade_measurement,source=influxdb-$source_version value=311i 1724493600000000000"
 
 log "Upgrading to the local chart / InfluxDB $target_version"
-helm upgrade "$release" "$chart_dir" \
-  "${helm_context[@]}" \
+"${helm_command[@]}" upgrade "$release" "$chart_dir" \
   --namespace "$namespace" \
   --reuse-values \
   --set-string image.tag="$target_version-enterprise" \
@@ -354,7 +352,7 @@ post_upgrade_query=$(query_until_contains \
 printf '%s\n' "$post_upgrade_query"
 
 log "Final Helm and pod status"
-helm list "${helm_context[@]}" --namespace "$namespace"
+"${helm_command[@]}" list --namespace "$namespace"
 "${kubectl_command[@]}" get pods --namespace "$namespace"
 
 log "Upgrade verification completed successfully"

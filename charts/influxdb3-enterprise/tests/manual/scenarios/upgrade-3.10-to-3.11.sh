@@ -125,10 +125,10 @@ ingester_host="http://$release-influxdb3-enterprise-ingester:8181"
 querier_host="http://$release-influxdb3-enterprise-querier:8181"
 
 kubectl_command=(kubectl)
-helm_context=()
+helm_command=(helm)
 if [ -n "$kube_context" ]; then
   kubectl_command=(kubectl --context "$kube_context")
-  helm_context=(--kube-context "$kube_context")
+  helm_command=(helm --kube-context "$kube_context")
 fi
 
 run_aws() {
@@ -240,10 +240,10 @@ cleanup() {
   set +e
 
   if [ "$namespace_created" = true ] &&
-    helm status "$release" "${helm_context[@]}" \
+    "${helm_command[@]}" status "$release" \
       --namespace "$namespace" >/dev/null 2>&1; then
     log "Stopping InfluxDB workloads"
-    if ! helm uninstall "$release" "${helm_context[@]}" \
+    if ! "${helm_command[@]}" uninstall "$release" \
       --namespace "$namespace" \
       --wait \
       --timeout 5m; then
@@ -306,8 +306,7 @@ log "Creating test Secrets"
   --from-file=admin-token.json="$admin_token_file"
 
 log "Installing chart 0.9.2 / InfluxDB 3.10.5"
-helm install "$release" influxdata/influxdb3-enterprise \
-  "${helm_context[@]}" \
+"${helm_command[@]}" install "$release" influxdata/influxdb3-enterprise \
   --namespace "$namespace" \
   --version 0.9.2 \
   --values "$values_file" \
@@ -334,9 +333,8 @@ log "Writing baseline data"
   'upgrade_measurement,source=chart-0.9.2 value=92i 1724493600000000000'
 
 log "Upgrading to chart $target_chart_version / InfluxDB $target_version"
-helm upgrade "$release" "$target_chart" \
+"${helm_command[@]}" upgrade "$release" "$target_chart" \
   --version "$target_chart_version" \
-  "${helm_context[@]}" \
   --namespace "$namespace" \
   --reuse-values \
   --wait \
@@ -367,9 +365,8 @@ log "Verifying new Parquet data"
 query_until_contains 'chart-0.10.0-parquet'
 
 log "Starting PachaTree migration"
-helm upgrade "$release" "$target_chart" \
+"${helm_command[@]}" upgrade "$release" "$target_chart" \
   --version "$target_chart_version" \
-  "${helm_context[@]}" \
   --namespace "$namespace" \
   --reuse-values \
   --set acknowledgePachaTreeMigration=true \
@@ -394,7 +391,7 @@ post_upgrade_query=$(query_until_contains \
 printf '%s\n' "$post_upgrade_query"
 
 log "Final Helm and pod status"
-helm list "${helm_context[@]}" --namespace "$namespace"
+"${helm_command[@]}" list --namespace "$namespace"
 "${kubectl_command[@]}" get pods --namespace "$namespace"
 
 log "Upgrade verification completed successfully"
