@@ -1,0 +1,10 @@
+webui:
+  enabled: true
+  sessionSecret:
+    existingSecret: ui-session
+security:
+  userAuth:
+    type: basic
+    jwt:
+      keyId: webui-signing-1
+      existingSecret: influxdb3-user-auth

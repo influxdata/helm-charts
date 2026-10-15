@@ -21,7 +21,7 @@ spec:
   selector:
     {{- include "influxdb3-enterprise.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: ingester
-{{- if .Values.processingEngine.enabled }}
+{{- if or .Values.processingEngine.enabled (and .Values.webui .Values.webui.enabled) }}
 {{- range $ordinal := until (int .Values.ingester.replicas) }}
 {{- $podName := include "influxdb3-enterprise.ingesterPodName" (dict "root" $ "ordinal" $ordinal) }}
 ---

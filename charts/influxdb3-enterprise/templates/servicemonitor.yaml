@@ -120,7 +120,7 @@ spec:
       interval: {{ .Values.serviceMonitor.interval }}
       scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
 {{- end }}
-{{- if .Values.webui.enabled }}
+{{- if and .Values.webui .Values.webui.enabled }}
 ---
 # ServiceMonitor for the embedded Web UI
 apiVersion: monitoring.coreos.com/v1

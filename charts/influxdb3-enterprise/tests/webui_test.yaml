@@ -64,7 +64,7 @@ tests:
                 name: ui-session
                 key: signing-key
 
-  - it: leaves the cookie flag off until asked, since plain http would drop the cookie
+  - it: leaves the cookie flag off for HTTP by default
     template: templates/webui-statefulset.yaml
     set:
       webui.enabled: true
@@ -76,7 +76,7 @@ tests:
             name: INFLUXDB3_WEBUI_COOKIE_SECURE
             value: "true"
 
-  - it: sets the cookie flag when the UI is served over https
+  - it: honours an explicit secure cookie override without chart TLS
     template: templates/webui-statefulset.yaml
     set:
       webui.enabled: true
@@ -84,6 +84,41 @@ tests:
       webui.cookieSecure: true
     asserts:
       - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_COOKIE_SECURE
+            value: "true"
+
+  - it: enables secure cookies automatically for Web UI ingress TLS
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.enabled: true
+      ingress.webui.tls:
+        - hosts:
+            - explorer.influxdb.example.com
+          secretName: ui-tls
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_COOKIE_SECURE
+            value: "true"
+
+  - it: honours an explicit false cookie override with Web UI ingress TLS
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.cookieSecure: false
+      ingress.enabled: true
+      ingress.webui.tls:
+        - hosts:
+            - explorer.influxdb.example.com
+          secretName: ui-tls
+    asserts:
+      - notContains:
           path: spec.template.spec.containers[0].env
           content:
             name: INFLUXDB3_WEBUI_COOKIE_SECURE
@@ -266,8 +301,40 @@ tests:
           path: spec.rules[0].host
           value: ui.acme.com
 
+  - it: rejects a shared host when both WebUI and query ingresses are enabled
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.host: ui.acme.com
+      ingress.webui.host: ui.acme.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingress.webui.host must differ from ingress.host when the WebUI and querier ingresses are enabled; both claim /."
+
+  - it: permits a shared host and TLS when the querier is disabled
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      querier.enabled: false
+      ingress.host: ui.acme.com
+      ingress.webui.host: ui.acme.com
+      ingress.tls:
+        - hosts: [ui.acme.com]
+          secretName: shared-tls
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: ui.acme.com
+      - equal:
+          path: spec.tls[0].secretName
+          value: shared-tls
+
   - it: renders no ingress while the Web UI is off
     template: templates/ingress-webui.yaml
+    set:
+      ingress.host: ui.acme.com
+      ingress.webui.host: ui.acme.com
     asserts:
       - hasDocuments:
           count: 0
@@ -278,7 +345,573 @@ tests:
       webui.enabled: true
       webui.sessionSecret.existingSecret: ui-session
       ingress.enabled: false
+      ingress.host: ui.acme.com
+      ingress.webui.host: ui.acme.com
     asserts:
       - hasDocuments:
           count: 0
 
+  - it: advertises the ingester for Explorer routing without processors
+    template: templates/ingester-statefulset.yaml
+    values:
+      - values/webui-auth.yaml
+    set:
+      processingEngine.enabled: false
+      ingester.internode.port: 9193
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --internode-bind-addr=0.0.0.0:9193
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --conn-info=$(POD_NAME):9193
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: grpc-internode
+            containerPort: 9193
+            protocol: TCP
+
+  - it: routes each ingester advertised hostname to its own pod
+    template: templates/ingester-service.yaml
+    values:
+      - values/webui-auth.yaml
+    set:
+      processingEngine.enabled: false
+      ingester.replicas: 2
+      ingester.internode.port: 9193
+    asserts:
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: metadata.name
+          value: t-influxdb3-enterprise-ingester-0
+        documentIndex: 1
+      - equal:
+          path: spec.selector["statefulset.kubernetes.io/pod-name"]
+          value: t-influxdb3-enterprise-ingester-0
+        documentIndex: 1
+      - equal:
+          path: spec.ports[0].port
+          value: 9193
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: t-influxdb3-enterprise-ingester-1
+        documentIndex: 2
+      - equal:
+          path: spec.selector["statefulset.kubernetes.io/pod-name"]
+          value: t-influxdb3-enterprise-ingester-1
+        documentIndex: 2
+      - equal:
+          path: spec.ports[0].port
+          value: 9193
+        documentIndex: 2
+
+  - it: permits Explorer ingress to the ingester HTTP and internode endpoints
+    template: templates/networkpolicy.yaml
+    values:
+      - values/webui-auth.yaml
+    set:
+      networkPolicy.enabled: true
+      processingEngine.enabled: false
+      ingester.internode.port: 9193
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-ingester
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: webui
+            ports:
+              - protocol: TCP
+                port: 8181
+              - protocol: TCP
+                port: 9193
+
+  - it: advertises the querier for Explorer routing without processors
+    template: templates/querier-statefulset.yaml
+    values:
+      - values/webui-auth.yaml
+    set:
+      processingEngine.enabled: false
+      querier.internode.port: 9194
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --internode-bind-addr=0.0.0.0:9194
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --conn-info=$(POD_NAME):9194
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: grpc-internode
+            containerPort: 9194
+            protocol: TCP
+
+  - it: routes each querier advertised hostname to its own pod
+    template: templates/querier-service.yaml
+    values:
+      - values/webui-auth.yaml
+    set:
+      processingEngine.enabled: false
+      querier.replicas: 2
+      querier.internode.port: 9194
+    asserts:
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: metadata.name
+          value: t-influxdb3-enterprise-querier-0
+        documentIndex: 1
+      - equal:
+          path: spec.selector["statefulset.kubernetes.io/pod-name"]
+          value: t-influxdb3-enterprise-querier-0
+        documentIndex: 1
+      - equal:
+          path: spec.ports[0].port
+          value: 9194
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: t-influxdb3-enterprise-querier-1
+        documentIndex: 2
+      - equal:
+          path: spec.selector["statefulset.kubernetes.io/pod-name"]
+          value: t-influxdb3-enterprise-querier-1
+        documentIndex: 2
+      - equal:
+          path: spec.ports[0].port
+          value: 9194
+        documentIndex: 2
+
+  - it: permits Explorer ingress to the querier HTTP and internode endpoints
+    template: templates/networkpolicy.yaml
+    values:
+      - values/webui-auth.yaml
+    set:
+      networkPolicy.enabled: true
+      processingEngine.enabled: false
+      querier.internode.port: 9194
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-querier
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: webui
+            ports:
+              - protocol: TCP
+                port: 8181
+              - protocol: TCP
+                port: 9194
+
+  - it: opens no Explorer internode endpoints while both WebUI and processors are disabled
+    set:
+      webui.enabled: false
+      processingEngine.enabled: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: --internode-bind-addr=0.0.0.0:8183
+        template: templates/ingester-statefulset.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/ingester-service.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: --internode-bind-addr=0.0.0.0:8183
+        template: templates/querier-statefulset.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/querier-service.yaml
+
+  - it: supplies the user authentication signing secret to every component
+    values:
+      - values/webui-auth.yaml
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_USER_AUTH_TYPE
+            value: basic
+        template: templates/webui-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_KEY_ID
+            value: webui-signing-1
+        template: templates/webui-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/webui-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_USER_AUTH_TYPE
+            value: basic
+        template: templates/ingester-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_KEY_ID
+            value: webui-signing-1
+        template: templates/ingester-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/ingester-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_USER_AUTH_TYPE
+            value: basic
+        template: templates/querier-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_KEY_ID
+            value: webui-signing-1
+        template: templates/querier-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/querier-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_USER_AUTH_TYPE
+            value: basic
+        template: templates/compactor-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_KEY_ID
+            value: webui-signing-1
+        template: templates/compactor-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/compactor-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_USER_AUTH_TYPE
+            value: basic
+        template: templates/processor-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_KEY_ID
+            value: webui-signing-1
+        template: templates/processor-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/processor-statefulset.yaml
+
+  - it: permits Explorer egress to both internode ports when they differ
+    template: templates/networkpolicy.yaml
+    values:
+      - values/webui-auth.yaml
+    set:
+      networkPolicy.enabled: true
+      processingEngine.enabled: false
+      ingester.internode.port: 9193
+      querier.internode.port: 9194
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: ingester
+            ports:
+              - protocol: TCP
+                port: 9193
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: querier
+            ports:
+              - protocol: TCP
+                port: 9194
+
+
+  - it: applies the JWT signing Secret to every node
+    values: [values/webui-auth.yaml]
+    set:
+      processingEngine.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/ingester-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/querier-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/compactor-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/processor-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: influxdb3-user-auth
+                key: private-key.pem
+        template: templates/webui-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_USER_AUTH_TYPE
+            value: basic
+        template: templates/webui-statefulset.yaml
+
+  - it: keeps explicit extraEnv authentication overrides without duplicates
+    template: templates/webui-statefulset.yaml
+    values: [values/webui-auth.yaml]
+    set:
+      extraEnv:
+        - name: INFLUXDB3_JWT_KEY_ID
+          value: explicit-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_KEY_ID
+            value: explicit-key
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_KEY_ID
+            value: webui-signing-1
+
+  - it: preserves the legacy extraEnv authentication configuration
+    template: templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      extraEnv:
+        - name: INFLUXDB3_USER_AUTH_TYPE
+          value: basic
+        - name: INFLUXDB3_JWT_KEY_ID
+          value: legacy-key
+        - name: INFLUXDB3_JWT_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: legacy-user-auth
+              key: private-key.pem
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_USER_AUTH_TYPE
+            value: basic
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_JWT_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: legacy-user-auth
+                key: private-key.pem
+
+  - it: derives the OAuth public URI from the HTTP ingress
+    template: templates/webui-statefulset.yaml
+    values: [values/webui-oauth.yaml]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_PUBLIC_URI
+            value: http://explorer.influxdb.example.com
+
+  - it: derives the OAuth public URI from the Web UI ingress TLS
+    template: templates/webui-statefulset.yaml
+    values: [values/webui-oauth.yaml]
+    set:
+      ingress.webui.host: ui.example.com
+      ingress.webui.tls:
+        - hosts: [ui.example.com]
+          secretName: ui-tls
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_PUBLIC_URI
+            value: https://ui.example.com
+
+  - it: accepts an external HTTPS public URI and enables secure cookies
+    template: templates/webui-statefulset.yaml
+    values: [values/webui-oauth.yaml]
+    set:
+      ingress.enabled: false
+      webui.publicUri: https://external.example.com/
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_PUBLIC_URI
+            value: https://external.example.com
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_COOKIE_SECURE
+            value: "true"
+
+  - it: preserves an explicit false secure-cookie override with an HTTPS public URI
+    template: templates/webui-statefulset.yaml
+    values: [values/webui-oauth.yaml]
+    set:
+      ingress.enabled: false
+      webui.publicUri: https://external.example.com
+      webui.cookieSecure: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_COOKIE_SECURE
+            value: "true"
+
+  - it: preserves an explicit true RBAC authoring flag
+    template: templates/ingester-statefulset.yaml
+    set:
+      security.userAuth.rbacAuthoringDisabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --rbac-authoring-disabled=true
+
+  - it: preserves an explicit false RBAC authoring flag
+    template: templates/ingester-statefulset.yaml
+    set:
+      security.userAuth.rbacAuthoringDisabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --rbac-authoring-disabled=false
+
+  - it: rejects unsupported authentication methods
+    set:
+      security.userAuth.type: invalid
+    asserts:
+      - failedTemplate:
+          errorMessage: "security.userAuth.type must be none, basic, oauth, basic,oauth, or oauth,basic."
+
+  - it: rejects basic sign-in without a JWT key ID
+    set:
+      security.userAuth.type: basic
+    asserts:
+      - failedTemplate:
+          errorMessage: "security.userAuth.jwt.keyId is required for JWT signing."
+
+  - it: rejects basic sign-in without a JWT Secret
+    set:
+      security.userAuth.type: basic
+      security.userAuth.jwt.keyId: key-1
+    asserts:
+      - failedTemplate:
+          errorMessage: "security.userAuth.jwt.existingSecret is required for JWT signing."
+
+  - it: rejects OAuth without an issuer
+    set:
+      security.userAuth.type: oauth
+    asserts:
+      - failedTemplate:
+          errorMessage: "security.userAuth.oauth.issuer is required for OAuth."
+
+  - it: rejects a missing public URI without an ingress
+    values: [values/webui-oauth.yaml]
+    set:
+      ingress.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "webui.publicUri is required for Explorer OAuth sign-in when ingress.enabled is false."
+
+  - it: rejects user sign-in while all authentication is disabled
+    set:
+      security.auth.disabled: true
+      security.userAuth.type: basic
+    asserts:
+      - failedTemplate:
+          errorMessage: "security.auth.disabled must be false when security.userAuth.type enables sign-in."

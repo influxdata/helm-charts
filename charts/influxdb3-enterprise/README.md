@@ -27,8 +27,8 @@ InfluxDB 3 Enterprise is a high-performance time series database designed for pr
 
 ## Prerequisites
 
-- Kubernetes 1.23+
-- Helm 3.8+
+- Kubernetes 1.26+
+- Helm 3.14+
 - Object storage (S3, Azure Blob Storage, or Google Cloud Storage)
 - RWX PersistentVolume provisioner support when using `objectStorage.type=file`
 - InfluxDB 3 Enterprise license (trial or commercial)
@@ -592,11 +592,15 @@ webui:
     existingSecret: influxdb3-webui
 ```
 
-Create the secret first. The value signs UI sessions, and every Web UI pod in the
+When first enabling WebUI in an existing release, use
+`helm upgrade --reset-then-reuse-values` to load the new chart defaults and retain
+user overrides. Omit `--reuse-values`, which takes precedence.
+
+Create the secret in the release namespace first. The value signs UI sessions, and every Web UI pod in the
 cluster has to share it, or a session breaks the moment it lands on another pod:
 
 ```bash
-kubectl create secret generic influxdb3-webui \
+kubectl create secret generic influxdb3-webui -n influxdb3 \
   --from-literal=session-secret="$(openssl rand -hex 32)"
 ```
 
@@ -615,10 +619,11 @@ that. Point it somewhere else with `ingress.webui.host`.
 
 It needs a host rather than a path under the shared one. The UI is served with
 `<base href="/">`, so a prefix such as `/explorer` makes the browser fetch every
-asset from `/` on that host, where `ingress.query` answers instead. Set
-`webui.cookieSecure: true` once the UI host serves https, or the browser drops
-the session cookie and login fails; `ingress.webui.tls` takes a certificate for
-that host.
+asset from `/` on that host, where `ingress.query` answers instead. Secure
+cookies follow the Web UI ingress or server TLS configuration automatically;
+`ingress.webui.tls` takes a certificate for that host. The optional boolean
+`webui.cookieSecure` overrides detection; set it to `true` when HTTPS is provided
+by a proxy outside the chart.
 
 Without an ingress, a port-forward is enough to look at it:
 
@@ -626,26 +631,102 @@ Without an ingress, a port-forward is enough to look at it:
 kubectl port-forward -n influxdb3 svc/influxdb3-enterprise-webui 8181:8181
 ```
 
-Two more things to plan for. A Web UI node claims licensed cores like any other
-node, at least two, so the UI is not free against the licence: on a core-limited
-licence, enabling it can leave another component short and stuck short of Ready.
-And the UI is a browser client, so on split roles the address a user enters has
-to reach both an ingester and a querier. The chart's ingress host does, because
-it routes writes and queries separately.
+A Web UI node claims licensed cores like any other node, at least two. Include
+these cores in the cluster's licence capacity.
 
-The UI keeps its own state, and that state only moves forward. A newer server
-upgrades the SQLite it holds in the object store, and an older one cannot read
-it afterwards: the UI answers 500 and its log shows the guest failing on a
-database operation, while the database itself is fine. So rolling the image back
-to an earlier version leaves the UI broken. Delete
-`<cluster-id>/webui/sqlite.db` from the object store to recover, which costs the
-connections users saved and nothing else.
+With InfluxDB 3.12, authenticated Explorer sessions get a default connection to
+the cluster automatically. The dedicated Web UI node routes reads to queriers and
+writes to ingesters over internode gRPC. Enabling `webui` also enables the backend
+listeners and per-pod Services, including when `processingEngine.enabled` is
+`false`. `ingester.internode.port` and `querier.internode.port` default to `8183`.
+When NetworkPolicies are enabled, keep `networkPolicy.ingress.fromComponents`
+enabled for this traffic.
 
-On 3.11 the server passes the UI no configuration. Every user lands on the first-run
-screen, enters the address and their own token, and what they enter is stored by the
-UI in its SQLite database in the cluster's object store, with the token in plain text.
-There is no login and nothing is shared between users. Treat access to the UI, and to
-that object-store prefix, as access to those tokens.
+##### User authentication and the first admin
+
+User authentication is opt-in. For password sign-in, store a PKCS#1 RSA private
+key in a Secret in the release namespace. This key is separate from
+`webui.sessionSecret`; retain both Secrets across upgrades. See the
+[user authentication guide](https://docs.influxdata.com/influxdb3/enterprise/admin/security/manage-users/)
+for signing-key generation and supported authentication methods.
+
+```bash
+kubectl create secret generic influxdb3-user-auth -n influxdb3 --from-file=private-key.pem=/path/to/private-key.pem
+```
+
+`security.userAuth` applies authentication settings to every component. Existing
+global and component `extraEnv` entries override generated auth variables; remove
+old auth entries when moving to these values. Leave `security.auth.disabled` set
+to `false`:
+
+```yaml
+security:
+  auth:
+    disabled: false
+  userAuth:
+    type: basic
+    jwt:
+      keyId: webui-signing-1
+      existingSecret: influxdb3-user-auth
+      key: private-key.pem
+```
+
+There are no default admin credentials. With no users or operator token,
+Explorer offers initial-admin setup. If an operator token already exists,
+including one provided by `security.auth.adminToken`, use it to create the first
+admin. See [bootstrap the initial admin](https://docs.influxdata.com/influxdb3/enterprise/admin/security/manage-users/#bootstrap-the-initial-admin).
+
+For OAuth/OIDC, configure the identity provider:
+
+```yaml
+security:
+  userAuth:
+    type: oauth
+    oauth:
+      issuer: https://idp.example.com/
+      audience: influxdb3
+      clientId: influxdb3-explorer
+```
+
+Use `type: "basic,oauth"` with the JWT settings to offer both methods. The
+`webui.publicUri` derives from the Web UI ingress host and TLS settings; set it
+explicitly for an external proxy or when ingress is disabled. Register
+`<public-uri>/auth/callback` with the provider. See
+[Explorer SSO configuration](https://docs.influxdata.com/influxdb3/enterprise/admin/explorer-ui/#configure-sso-for-the-explorer-ui).
+
+When egress isolation is enabled, a nonempty
+`networkPolicy.egress.objectStorageCidrs` limits the WebUI policy's HTTP/HTTPS
+allowance to those ranges. For OAuth/OIDC, review identity-provider connectivity
+and add a separate NetworkPolicy to allow required provider endpoints outside
+those ranges.
+
+Custom-role authoring is disabled by default in InfluxDB 3.12. Set
+`security.userAuth.rbacAuthoringDisabled: false` to enable it.
+
+Secure cookies follow chart-configured TLS or an HTTPS `webui.publicUri`
+automatically; `webui.cookieSecure` overrides detection. See
+[Explorer access guidance](https://docs.influxdata.com/influxdb3/enterprise/admin/explorer-ui/#control-who-can-reach-explorer)
+for TLS and access-control recommendations.
+
+Explorer stores dashboards, saved queries, query history, and connections in
+SQLite synchronized to object storage. A newer image can migrate its schema;
+after an image rollback, an older Explorer can fail with HTTP 500 because it
+cannot read that database. Helm rollback does not restore the SQLite object.
+
+Before upgrading, scale the Web UI StatefulSet to zero replicas and copy
+`<cluster-id>/webui/sqlite.db`, if present, from the configured object store to a
+separate backup location using that store's copy or download tools. Then proceed
+with the upgrade and restore the configured Web UI replica count.
+
+For an image rollback, keep the Web UI stopped, copy the pre-upgrade SQLite backup
+back to the same object-store key, and start the older image. Without that backup,
+archiving and deleting the object lets Explorer recreate an empty database;
+dashboards, saved queries, query history, and connections are lost.
+
+Rolling back from 3.12 to 3.11 after the catalog commits the 3.12 feature level
+also requires restoring the pre-upgrade catalog backup. Restoring or deleting the
+UI database does not restore the catalog. See the
+[official upgrade and rollback procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/).
 
 #### Monitoring
 
@@ -1319,6 +1400,13 @@ ingester:
 | `license.email` | Email for trial licenses | `""` |
 | `license.file` | License file content (use `--set-file license.file=/path/to/file`) | `""` |
 | `license.existingSecret` | Secret with `license-email` or `license-file` | `""` |
+| `security.userAuth.type` | User sign-in methods: none, basic, oauth, or basic,oauth | `none` |
+| `security.userAuth.jwt.keyId` | JWT signing key identifier; required for basic sign-in | `""` |
+| `security.userAuth.jwt.existingSecret` / `key` | Secret holding a PKCS#1 RSA private key | `""` / `private-key.pem` |
+| `security.userAuth.oauth.issuer` / `audience` | Identity-provider issuer URL and token audience; required for OAuth | `""` |
+| `security.userAuth.oauth.clientId` | OAuth client ID; required for Explorer SSO and CLI device-code login | `""` |
+| `security.userAuth.oauth.scopes` | Comma-separated scopes for device-code login | not set (server: `openid,offline_access`) |
+| `security.userAuth.rbacAuthoringDisabled` | Set `false` to enable creation/modification of custom roles | not set (server: `true`) |
 | `security.auth.adminToken.existingSecret` | Secret with offline admin token key `admin-token.json` | `""` |
 | `security.auth.adminToken.file` | Path to offline admin token file; mutually exclusive with `security.auth.adminToken.existingSecret` | `""` |
 | `security.auth.permissionTokens.existingSecret` | Secret with offline permission tokens key `permission-tokens.json` | `""` |
@@ -1372,7 +1460,8 @@ ingester:
 | `webui.enabled` | Run the embedded Web UI as its own node | `false` |
 | `webui.replicas` | Number of Web UI replicas | `1` |
 | `webui.sessionSecret.existingSecret` / `key` | Secret holding the UI session signing key; required when enabled | `""` / `session-secret` |
-| `webui.cookieSecure` | Set the Secure attribute on the UI session cookie | `false` |
+| `webui.publicUri` | Browser-visible OAuth base URL; required without ingress | Derived from Web UI ingress |
+| `webui.cookieSecure` | Optional boolean override; otherwise follows Web UI ingress, server TLS, or an HTTPS public URI | Automatic |
 | `webui.numCores` | Licensed cores claimed by each Web UI pod, minimum 2. Set by default, since a node left unset claims every core the machine reports | `2` |
 | `webui.extraEnv` | Extra environment variables applied only to Web UI pods; `INFLUXDB3_WEBUI_OPENAI_BASE_URL` goes here | `[]` |
 | `ingress.webui.host` | Host for the Web UI ingress | `explorer.<ingress.host>` |

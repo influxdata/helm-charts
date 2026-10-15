@@ -66,7 +66,8 @@ spec:
       {{- include "influxdb3-enterprise.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: compactor
 {{- end }}
-{{- if and .Values.webui.podDisruptionBudget.enabled .Values.webui.enabled (gt (int .Values.webui.replicas) 1) }}
+{{- $webuiPDB := (.Values.webui | default dict).podDisruptionBudget | default dict }}
+{{- if and .Values.webui .Values.webui.enabled $webuiPDB.enabled (gt (int .Values.webui.replicas) 1) }}
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget

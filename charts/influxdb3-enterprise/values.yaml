@@ -333,7 +333,7 @@ ingester:
     port: 8181
     annotations: {}
 
-  # Internode gRPC communication with Processing Engine nodes
+  # Internode gRPC communication with Processing Engine and Explorer nodes
   internode:
     port: 8183
 
@@ -433,6 +433,10 @@ querier:
     type: ClusterIP
     port: 8181
     annotations: {}
+
+  # Internode gRPC communication with Explorer nodes
+  internode:
+    port: 8183
 
   # Pod disruption budget for high availability
   # Ensures minimum number of querier pods remain available during voluntary disruptions
@@ -667,9 +671,9 @@ processingEngine:
       partition: 0                  # Start updating from pod 0
 
 # Embedded Web UI nodes - InfluxDB 3 Explorer served by the server itself (optional)
-# Runs as its own node in --mode=webui. The UI is a browser client: it talks to the
-# cluster over HTTP at whatever address the user enters, so it needs an ingress or a
-# port-forward to be reachable.
+# Runs as its own node in --mode=webui. With user authentication enabled, the default
+# cluster connection routes reads and writes over internode gRPC. Use an ingress or
+# port-forward for browser access.
 webui:
   enabled: false
   replicas: 1
@@ -681,9 +685,13 @@ webui:
     existingSecret: ""
     key: "session-secret"
 
-  # Set the Secure attribute on the UI session cookie. Turn this on when the UI is
-  # served over https; on plain http the browser drops the cookie and login breaks.
-  cookieSecure: false
+  # Browser-visible URL for OAuth sign-in. Empty derives from the Web UI ingress.
+  # Required for OAuth when ingress.enabled is false.
+  publicUri: ""
+
+  # Automatically follows Web UI ingress, server TLS, or an HTTPS publicUri when unset.
+  # Uncomment to explicitly override detection, for example for an external HTTPS proxy.
+  # cookieSecure: true
 
   service:
     type: ClusterIP
@@ -788,6 +796,23 @@ security:
     permissionTokens:
       existingSecret: ""
       file: ""
+
+  # User authentication for every node (InfluxDB 3.12+). API tokens remain available.
+  userAuth:
+    # none, basic, oauth, or "basic,oauth"
+    type: none
+    jwt:
+      keyId: ""
+      # Existing Secret containing a PKCS#1 RSA private key.
+      existingSecret: ""
+      key: "private-key.pem"
+    oauth:
+      issuer: ""
+      audience: ""
+      clientId: ""
+      # scopes: "openid,offline_access"
+    # Set false to enable creation/modification of custom roles (server default: true).
+    # rbacAuthoringDisabled: false
 
 # HTTP server configuration
 http:
@@ -983,7 +1008,7 @@ ingress:
     # Optional host override. If empty, uses explorer.<ingress.host>.
     host: ""
     # Optional TLS override. Required when host differs from ingress.host.
-    # With TLS in front, set webui.cookieSecure: true as well.
+    # Secure cookies follow this TLS setting unless webui.cookieSecure is overridden.
     tls: []
     annotations: {}
 

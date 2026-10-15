@@ -1,4 +1,13 @@
 {{- if .Values.querier.enabled }}
+{{- if and .Values.webui .Values.webui.enabled }}
+{{- $replicas := int .Values.querier.replicas }}
+{{- if gt $replicas 0 }}
+{{- $lastPodName := include "influxdb3-enterprise.querierPodName" (dict "root" . "ordinal" (sub $replicas 1)) }}
+{{- if gt (len $lastPodName) 63 }}
+{{- fail (printf "Querier Pod name %q exceeds Kubernetes' 63-character hostname limit; use a shorter release name or fullnameOverride." $lastPodName) }}
+{{- end }}
+{{- end }}
+{{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -63,6 +72,11 @@ spec:
             - serve
             - --mode=query
             - --node-id=$(POD_NAME)
+            {{- include "influxdb3-enterprise.userAuthArgs" . | nindent 12 }}
+            {{- if and .Values.webui .Values.webui.enabled }}
+            - --internode-bind-addr=0.0.0.0:{{ include "influxdb3-enterprise.querierInternodePort" . }}
+            - --conn-info=$(POD_NAME):{{ include "influxdb3-enterprise.querierInternodePort" . }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.configMapName" . }}
@@ -116,6 +130,11 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
+            {{- if and .Values.webui .Values.webui.enabled }}
+            - name: grpc-internode
+              containerPort: {{ include "influxdb3-enterprise.querierInternodePort" . }}
+              protocol: TCP
+            {{- end }}
           {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.querier.resources | nindent 12 }}

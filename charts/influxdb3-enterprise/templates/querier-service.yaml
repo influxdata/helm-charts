@@ -21,4 +21,30 @@ spec:
   selector:
     {{- include "influxdb3-enterprise.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: querier
+{{- if and .Values.webui .Values.webui.enabled }}
+{{- range $ordinal := until (int .Values.querier.replicas) }}
+{{- $podName := include "influxdb3-enterprise.querierPodName" (dict "root" $ "ordinal" $ordinal) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Must exactly match the StatefulSet Pod name advertised by --conn-info.
+  name: {{ $podName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: querier
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ include "influxdb3-enterprise.querierInternodePort" $ }}
+      targetPort: grpc-internode
+      protocol: TCP
+      name: grpc-internode
+  selector:
+    {{- include "influxdb3-enterprise.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: querier
+    statefulset.kubernetes.io/pod-name: {{ $podName }}
+{{- end }}
+{{- end }}
 {{- end }}
