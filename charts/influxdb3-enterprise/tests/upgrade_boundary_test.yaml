@@ -32,14 +32,16 @@ tests:
       - notExists:
           path: data.INFLUXDB3_UPGRADE_PACHA_TREE
 
-  - it: defaults an empty image override to 3.12.0-enterprise
+  - it: defaults an empty image override to chart appVersion
     template: templates/ingester-statefulset.yaml
+    chart:
+      appVersion: "3.12.99"
     set:
       image.tag: ""
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: docker.io/influxdb:3.12.0-enterprise
+          value: docker.io/influxdb:3.12.99-enterprise
 
   - it: records the same boundary for a versioned patch image override
     template: templates/configmap.yaml
