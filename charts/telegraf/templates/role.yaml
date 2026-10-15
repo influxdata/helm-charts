@@ -7,7 +7,9 @@ kind: Role
 {{- end }}
 metadata:
   name: {{ template "telegraf.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  {{- if not .Values.rbac.clusterWide }}
+  namespace: {{ include "telegraf.namespace" . }}
+  {{- end }}
   labels:
     {{- include "telegraf.labels" . | nindent 4 }}
 rules:
