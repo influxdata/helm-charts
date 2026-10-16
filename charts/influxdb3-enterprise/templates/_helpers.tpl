@@ -98,6 +98,46 @@ License secret name
 {{- end }}
 
 {{/*
+Minimum recognizable source version supported by this chart's upgrade path.
+When a future chart requires a newer source release, advance this full version,
+the intermediate chart, and the version it provides in the validation error.
+*/}}
+{{- define "influxdb3-enterprise.minimumUpgradeSource" -}}
+3.11.3
+{{- end }}
+
+{{/*
+Reject a known unsupported upgrade source. This inspects configured StatefulSet
+state only. The ingester is used because every supported deployment has one and
+all components share the chart-level product image. Operators must still verify
+the versions of every running node.
+*/}}
+{{- define "influxdb3-enterprise.validateUpgradeSourceVersion" -}}
+{{- if .Release.IsUpgrade -}}
+{{- $name := printf "%s-ingester" (include "influxdb3-enterprise.fullname" .) -}}
+{{- $statefulSet := lookup "apps/v1" "StatefulSet" .Release.Namespace $name | default dict -}}
+{{- $containers := dig "spec" "template" "spec" "containers" (list) $statefulSet -}}
+{{- $image := "" -}}
+{{- range $container := $containers -}}
+{{- if eq (get $container "name") "influxdb3" -}}
+{{- $image = get $container "image" | default "" -}}
+{{- end -}}
+{{- end -}}
+{{- if and $image (not (contains "@" $image)) -}}
+{{- $imageName := last (splitList "/" $image) -}}
+{{- if contains ":" $imageName -}}
+{{- $tag := last (splitList ":" $imageName) -}}
+{{- $version := regexFind "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag | trimPrefix "v" -}}
+{{- $minimum := include "influxdb3-enterprise.minimumUpgradeSource" . -}}
+{{- if and $version (semverCompare (printf "<%s" $minimum) $version) -}}
+{{- fail (printf "The ingester StatefulSet is configured for InfluxDB %s. Upgrade this release to InfluxDB %s or later (chart 0.15.0 provides 3.11.5), verify every node runs the upgraded version, then upgrade to this chart." $version $minimum) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Require acknowledgement of the InfluxDB 3.10 catalog migration.
 */}}
 {{- define "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" -}}
@@ -111,6 +151,51 @@ Require acknowledgement of the InfluxDB 3.10 catalog migration.
 {{- if ne (get $annotations "influxdata.com/catalog-format") "v3" -}}
 {{- fail (printf "Could not verify influxdata.com/catalog-format=v3 on ConfigMap %q. Follow UPGRADING-3.9-TO-3.10.md, then set acknowledgeCatalogMigration: true for the one-time upgrade or client-side preview." $name) -}}
 {{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Latest automatic upgrade boundary recognized by this chart.
+Advance only for a new automatic compatibility transition, not each product release.
+*/}}
+{{- define "influxdb3-enterprise.upgradeBoundary" -}}
+3.12
+{{- end }}
+
+{{/*
+Require acknowledgement when an upgrade targets an unapplied upgrade boundary.
+The recorded boundary is chart configuration history, not server state.
+*/}}
+{{- define "influxdb3-enterprise.validateUpgradeBoundaryAcknowledgement" -}}
+{{- $boundary := include "influxdb3-enterprise.upgradeBoundary" . -}}
+{{- $boundaryVersion := printf "%s.0" $boundary -}}
+{{- $acknowledgement := get .Values "acknowledgeUpgrade" -}}
+{{- if kindIs "invalid" $acknowledgement -}}
+{{- $acknowledgement = "" -}}
+{{- end -}}
+{{- if not (kindIs "string" $acknowledgement) -}}
+{{- fail "acknowledgeUpgrade must be a quoted string such as \"3.12\"." -}}
+{{- end -}}
+{{- if and (ne $acknowledgement "") (not (regexMatch "^[0-9]+\\.[0-9]+$" $acknowledgement)) -}}
+{{- fail "acknowledgeUpgrade must be empty or use X.Y form such as \"3.12\"." -}}
+{{- end -}}
+{{- $name := include "influxdb3-enterprise.configMapName" . -}}
+{{- $configMap := lookup "v1" "ConfigMap" .Release.Namespace $name | default dict -}}
+{{- $recorded := dig "metadata" "annotations" "influxdata.com/upgrade-boundary-applied" "" $configMap -}}
+{{- if and $recorded (not (regexMatch "^[0-9]+\\.[0-9]+$" $recorded)) -}}
+{{- fail (printf "influxdata.com/upgrade-boundary-applied on ConfigMap %q must use X.Y form; got %q." $name $recorded) -}}
+{{- end -}}
+{{- $targetVersion := include "influxdb3-enterprise.targetProductVersion" . -}}
+{{- $requiresBoundary := true -}}
+{{- if $targetVersion -}}
+{{- $requiresBoundary = semverCompare (printf ">=%s-0" $boundaryVersion) $targetVersion -}}
+{{- end -}}
+{{- $alreadyApplied := false -}}
+{{- if $recorded -}}
+{{- $alreadyApplied = semverCompare (printf ">=%s" $boundaryVersion) (printf "%s.0" $recorded) -}}
+{{- end -}}
+{{- if and .Release.IsUpgrade $requiresBoundary (not $alreadyApplied) (ne $acknowledgement $boundary) -}}
+{{- fail (printf "Could not verify influxdata.com/upgrade-boundary-applied>=%s on ConfigMap %q. Verify that every node runs 3.11.3 or later and follow UPGRADING-3.11-TO-3.12.md, then set acknowledgeUpgrade: %q for the one-time upgrade or client-side preview." $boundary $name $boundary) -}}
 {{- end -}}
 {{- end }}
 
@@ -548,12 +633,20 @@ Effective image tag.
 {{- end }}
 
 {{/*
+Configured product version, when identifiable from the effective image tag.
+Unknown tags return no version; do not fall back to the chart's appVersion.
+*/}}
+{{- define "influxdb3-enterprise.targetProductVersion" -}}
+{{- $tag := include "influxdb3-enterprise.imageTag" . -}}
+{{- regexFind "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag | trimPrefix "v" -}}
+{{- end }}
+
+{{/*
 Return true only when the effective image tag clearly identifies 3.10+.
 Unknown tags fail closed by not receiving the catalog v3 marker.
 */}}
 {{- define "influxdb3-enterprise.targetUsesCatalogV3" -}}
-{{- $tag := include "influxdb3-enterprise.imageTag" . -}}
-{{- $version := regexFind "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag | trimPrefix "v" -}}
+{{- $version := include "influxdb3-enterprise.targetProductVersion" . -}}
 {{- if $version -}}
 {{- if semverCompare ">=3.10.0-0" $version -}}true{{- end -}}
 {{- end -}}

@@ -21,12 +21,22 @@ imagePullSecrets: []
 # Global Cluster Configuration
 # ============================================================================
 
-# One-time acknowledgement required when upgrading a release without the
+# One-time acknowledgement for the automatic catalog v2-to-v3 migration
+# introduced by InfluxDB 3.10. Required when upgrading a release without the
 # catalog format v3 marker.
 # Follow UPGRADING-3.9-TO-3.10.md before setting this to true.
 acknowledgeCatalogMigration: false
 
-# Acknowledge and start the PachaTree migration on an existing cluster.
+# Acknowledges an upgrade boundary: a release whose binary makes an automatic,
+# one-way change that prevents a plain rollback (3.12: catalog feature level).
+# Set it to the quoted X.Y boundary the chart asks for, once per boundary; for
+# 3.12, use "3.12". Follow UPGRADING-3.11-TO-3.12.md first.
+# Empty on fresh installs or once recorded.
+# This does not start a storage-engine migration.
+acknowledgeUpgrade: ""
+
+# Acknowledge and start the optional migration of an existing Parquet cluster
+# to the upgraded PachaTree storage engine. This is separate from binary upgrade.
 # Follow UPGRADING-3.10-TO-3.11.md before setting this to true.
 # It is safe to leave enabled after the migration completes.
 acknowledgePachaTreeMigration: false
@@ -277,7 +287,7 @@ ingester:
   # wal:
   #   flushInterval: "1s"               # How often to flush WAL
   #   snapshotSize: 600                 # WAL files per snapshot
-  #   maxWriteBufferSize: 100000        # Max buffered writes before flush
+  #   maxWriteBufferSize: 100000        # Max write requests awaiting WAL flush
   #   snapshotFilesToKeep: 300          # Snapshotted WAL files to retain
   #   replayFailOnError: false
 
@@ -470,7 +480,11 @@ compactor:
   #   logDestination: "stdout"
 
   # Extra environment variables for compactor pods. Overrides top-level extraEnv entries with the same name.
+  # On the upgraded engine, keep sweep in dry-run during the 3.12 rollback window.
+  # See UPGRADING-3.11-TO-3.12.md before the first 3.12 compactor start.
   extraEnv: []
+    # - name: INFLUXDB3_COMPACTOR_SWEEP_MODE
+    #   value: "dry-run"
     # - name: INFLUXDB3_UNSET_VARS
     #   value: "INFLUXDB3_PLUGIN_DIR"
 
@@ -493,7 +507,7 @@ compactor:
   #   gen1Duration: "10m"             # 1m, 5m, or 10m
   #   gen2Duration: "20m"
   #   multipliers: "3,4,6,5"          # Compaction level multipliers
-  #   maxNumFilesPerPlan: 500
+  #   maxNumFilesPerPlan: 500         # Deprecated: ignored by InfluxDB 3.12+
   #   cleanupWait: "10m"
   #   checkInterval: "10s"
 
