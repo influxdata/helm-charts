@@ -1,6 +1,6 @@
 # Upgrade from InfluxDB 3 Enterprise 3.11 to 3.12
 
-Chart 0.16.0 defaults to InfluxDB 3 Enterprise 3.12.0. This chart supports fresh
+Chart 0.16.0 defaults to InfluxDB 3 Enterprise 3.12.1. This chart supports fresh
 3.12 installations and upgrades from 3.11.3 or later, including partially
 completed 3.11/3.12 rollouts and subsequent 3.12 chart upgrades. Older clusters
 must follow their supported upgrade path through chart 0.15.0 first. During a
@@ -44,7 +44,7 @@ object-store backup unless catalog-only recovery has been verified for your
 engine and workload. Keep the backup outside the live prefixes that cleanup or
 restore operations can change.
 
-Remove a retained `image.tag` override or update it to `3.12.0-enterprise`.
+Remove a retained `image.tag` override or update it to `3.12.1-enterprise`.
 `--reuse-values` preserves overrides, so a new chart alone may still run 3.11.
 Check the package metadata with:
 
@@ -80,7 +80,7 @@ catalog-only restoration.
 
 Use the official [staged Helm rollout procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/#multi-node-upgrade-procedure)
 to freeze and release individual StatefulSets. Pin **every** Helm invocation to
-chart `0.16.0` and image `3.12.0-enterprise`, and apply the sweep configuration
+chart `0.16.0` and image `3.12.1-enterprise`, and apply the sweep configuration
 before releasing the compactor. Upgrade ingesters in order, then queriers, then
 the compactor. Process nodes may be upgraded separately, without changing their
 scheduling settings. A plain upgrade rolls all enabled modes concurrently.
@@ -116,7 +116,7 @@ acknowledgements:
 helm template "$RELEASE" influxdata/influxdb3-enterprise \
   --namespace "$NAMESPACE" --version 0.16.0 --is-upgrade \
   -f pre-3.12-values.yaml \
-  --set image.tag=3.12.0-enterprise \
+  --set image.tag=3.12.1-enterprise \
   --set-string acknowledgeUpgrade=3.12 \
   --set acknowledgeCatalogMigration=true
 ```
@@ -148,7 +148,7 @@ is updated and confirm it starts correctly before proceeding.
 
 After all modes roll, run `influxdb3 show nodes` from a querier with the admin
 token. Check node status by named columns rather than old column positions.
-Verify every running node reports 3.12.0, every pod is ready, existing data is
+Verify every running node reports 3.12.1, every pod is ready, existing data is
 readable, and a new write can be queried. On the upgraded engine, inspect a sweep
 pass to confirm candidates are reported without deleting them. Keep
 storage-engine migration a separate operation.
