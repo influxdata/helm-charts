@@ -1,4 +1,6 @@
+{{- include "influxdb3-enterprise.validateUpgradeSourceVersion" . }}
 {{- include "influxdb3-enterprise.validateCatalogMigrationAcknowledgement" . }}
+{{- include "influxdb3-enterprise.validateUpgradeBoundaryAcknowledgement" . }}
 {{- include "influxdb3-enterprise.validateObjectStorageType" . }}
 {{- include "influxdb3-enterprise.validateLicenseType" . }}
 {{- include "influxdb3-enterprise.validateAzureObjectStorageAuth" . }}
@@ -12,6 +14,18 @@
 {{- include "influxdb3-enterprise.validateMemorySizes" . }}
 {{- $existing := lookup "v1" "ConfigMap" .Release.Namespace (include "influxdb3-enterprise.configMapName" .) | default dict }}
 {{- $recordedFormat := dig "metadata" "annotations" "influxdata.com/catalog-format" "" $existing }}
+{{- $targetVersion := include "influxdb3-enterprise.targetProductVersion" . }}
+{{- $catalogV3 := or (eq (include "influxdb3-enterprise.targetUsesCatalogV3" .) "true") (eq $recordedFormat "v3") }}
+{{- $boundary := include "influxdb3-enterprise.upgradeBoundary" . }}
+{{- $boundaryVersion := printf "%s.0" $boundary }}
+{{- $upgradeBoundaryApplied := dig "metadata" "annotations" "influxdata.com/upgrade-boundary-applied" "" $existing }}
+{{- if $targetVersion }}
+{{- if semverCompare (printf ">=%s-0" $boundaryVersion) $targetVersion }}
+{{- if or (not $upgradeBoundaryApplied) (semverCompare (printf "<%s" $boundaryVersion) (printf "%s.0" $upgradeBoundaryApplied)) }}
+{{- $upgradeBoundaryApplied = $boundary }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- $upgradePachaTree := eq (toString (get .Values "acknowledgePachaTreeMigration")) "true" }}
 apiVersion: v1
 kind: ConfigMap
@@ -20,9 +34,14 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
-  {{- if or (eq (include "influxdb3-enterprise.targetUsesCatalogV3" .) "true") (eq $recordedFormat "v3") }}
+  {{- if or $catalogV3 $upgradeBoundaryApplied }}
   annotations:
+    {{- if $catalogV3 }}
     influxdata.com/catalog-format: "v3"
+    {{- end }}
+    {{- if $upgradeBoundaryApplied }}
+    influxdata.com/upgrade-boundary-applied: {{ $upgradeBoundaryApplied | quote }}
+    {{- end }}
   {{- end }}
 data:
   # Cluster configuration (env-style)

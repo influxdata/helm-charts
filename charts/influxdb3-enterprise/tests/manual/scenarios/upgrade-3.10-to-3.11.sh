@@ -3,9 +3,8 @@ set -euo pipefail
 
 scenario_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 manual_dir=$(CDPATH= cd -- "$scenario_dir/.." && pwd)
-chart_dir=$(CDPATH= cd -- "$manual_dir/../.." && pwd)
-# The upgrade targets whatever InfluxDB version the local chart ships.
-target_version=$(awk -F'"' '/^appVersion:/ {print $2}' "$chart_dir/Chart.yaml")
+target_chart=influxdata/influxdb3-enterprise
+target_chart_version=0.15.0
 
 values_file="$manual_dir/values-s3.yaml"
 license_file=
@@ -51,6 +50,14 @@ for command in helm kubectl awk grep sed; do
     exit 1
   }
 done
+
+# Both the binary upgrade and migration use the published 3.11 chart.
+target_version=$(helm show chart "$target_chart" --version "$target_chart_version" |
+  awk '/^appVersion:/ {gsub(/"/, "", $2); print $2}')
+[ -n "$target_version" ] || {
+  echo "Could not resolve appVersion for chart $target_chart_version" >&2
+  exit 1
+}
 
 [ -n "$license_file" ] || {
   echo "--license-file is required." >&2
@@ -118,10 +125,10 @@ ingester_host="http://$release-influxdb3-enterprise-ingester:8181"
 querier_host="http://$release-influxdb3-enterprise-querier:8181"
 
 kubectl_command=(kubectl)
-helm_context=()
+helm_command=(helm)
 if [ -n "$kube_context" ]; then
   kubectl_command=(kubectl --context "$kube_context")
-  helm_context=(--kube-context "$kube_context")
+  helm_command=(helm --kube-context "$kube_context")
 fi
 
 run_aws() {
@@ -233,10 +240,10 @@ cleanup() {
   set +e
 
   if [ "$namespace_created" = true ] &&
-    helm status "$release" "${helm_context[@]}" \
+    "${helm_command[@]}" status "$release" \
       --namespace "$namespace" >/dev/null 2>&1; then
     log "Stopping InfluxDB workloads"
-    if ! helm uninstall "$release" "${helm_context[@]}" \
+    if ! "${helm_command[@]}" uninstall "$release" \
       --namespace "$namespace" \
       --wait \
       --timeout 5m; then
@@ -299,8 +306,7 @@ log "Creating test Secrets"
   --from-file=admin-token.json="$admin_token_file"
 
 log "Installing chart 0.9.2 / InfluxDB 3.10.5"
-helm install "$release" influxdata/influxdb3-enterprise \
-  "${helm_context[@]}" \
+"${helm_command[@]}" install "$release" influxdata/influxdb3-enterprise \
   --namespace "$namespace" \
   --version 0.9.2 \
   --values "$values_file" \
@@ -326,9 +332,9 @@ log "Writing baseline data"
   --token "$auth_token" \
   'upgrade_measurement,source=chart-0.9.2 value=92i 1724493600000000000'
 
-log "Upgrading to the local chart / InfluxDB $target_version"
-helm upgrade "$release" "$chart_dir" \
-  "${helm_context[@]}" \
+log "Upgrading to chart $target_chart_version / InfluxDB $target_version"
+"${helm_command[@]}" upgrade "$release" "$target_chart" \
+  --version "$target_chart_version" \
   --namespace "$namespace" \
   --reuse-values \
   --wait \
@@ -359,8 +365,8 @@ log "Verifying new Parquet data"
 query_until_contains 'chart-0.10.0-parquet'
 
 log "Starting PachaTree migration"
-helm upgrade "$release" "$chart_dir" \
-  "${helm_context[@]}" \
+"${helm_command[@]}" upgrade "$release" "$target_chart" \
+  --version "$target_chart_version" \
   --namespace "$namespace" \
   --reuse-values \
   --set acknowledgePachaTreeMigration=true \
@@ -385,7 +391,7 @@ post_upgrade_query=$(query_until_contains \
 printf '%s\n' "$post_upgrade_query"
 
 log "Final Helm and pod status"
-helm list "${helm_context[@]}" --namespace "$namespace"
+"${helm_command[@]}" list --namespace "$namespace"
 "${kubectl_command[@]}" get pods --namespace "$namespace"
 
 log "Upgrade verification completed successfully"
