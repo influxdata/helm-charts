@@ -617,6 +617,11 @@ With `ingress.enabled`, the UI gets an ingress of its own at
 `explorer.influxdb.example.com` and it follows `ingress.host` when you change
 that. Point it somewhere else with `ingress.webui.host`.
 
+Create a DNS record for that host and configure `ingress.webui.tls` separately
+from `ingress.tls`, including when reusing a wildcard certificate. Certificate
+issuer annotations belong in `ingress.webui.annotations`. If `ingress.host` is
+empty, set an explicit `ingress.webui.host`.
+
 It needs a host rather than a path under the shared one. The UI is served with
 `<base href="/">`, so a prefix such as `/explorer` makes the browser fetch every
 asset from `/` on that host, where `ingress.query` answers instead. Secure
@@ -633,6 +638,14 @@ kubectl port-forward -n influxdb3 svc/influxdb3-enterprise-webui 8181:8181
 
 A Web UI node claims licensed cores like any other node, at least two. Include
 these cores in the cluster's licence capacity.
+
+With the default token-only authentication, enter the API ingress URL
+and an API token in Explorer, using the ingress controller's external port if
+nonstandard. That ingress routes reads to queriers and writes to ingesters.
+The endpoint must resolve and be reachable from the Web UI pod; with
+NetworkPolicies enabled, allow egress to its address and port. Without an API
+ingress, provide an equivalent endpoint or enable basic/OAuth sign-in for
+automatic routing. See [connection setup](https://docs.influxdata.com/influxdb3/enterprise/admin/explorer-ui/#default-connections-and-query-routing).
 
 With InfluxDB 3.12, authenticated Explorer sessions get a default connection to
 the cluster automatically. The dedicated Web UI node routes reads to queriers and
@@ -690,7 +703,8 @@ security:
 
 Use `type: "basic,oauth"` with the JWT settings to offer both methods. The
 `webui.publicUri` derives from the Web UI ingress host and TLS settings; set it
-explicitly for an external proxy or when ingress is disabled. Register
+explicitly for an external proxy, a nonstandard external port, or when ingress
+is disabled. Register
 `<public-uri>/auth/callback` with the provider. See
 [Explorer SSO configuration](https://docs.influxdata.com/influxdb3/enterprise/admin/explorer-ui/#configure-sso-for-the-explorer-ui).
 

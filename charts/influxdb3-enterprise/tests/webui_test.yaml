@@ -278,6 +278,8 @@ tests:
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.name
           value: t-influxdb3-enterprise-webui
+      - notExists:
+          path: metadata.annotations
 
   - it: follows a changed ingress.host
     template: templates/ingress-webui.yaml
@@ -295,6 +297,7 @@ tests:
     set:
       webui.enabled: true
       webui.sessionSecret.existingSecret: ui-session
+      ingress.host: ""
       ingress.webui.host: ui.acme.com
     asserts:
       - equal:
@@ -1038,3 +1041,136 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "security.auth.disabled must be false when security.userAuth.type enables sign-in."
+
+  - it: rejects an empty derived Web UI ingress hostname
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.host: ""
+      querier.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingress.webui.host is required when ingress.host is empty and the Web UI ingress is enabled."
+
+  - it: includes the Web UI URL, token-only setup, and additional requests in notes
+    template: templates/NOTES.txt
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+    asserts:
+      - matchRegexRaw:
+          pattern: 'Web UI: 1 replica'
+      - matchRegexRaw:
+          pattern: 'URL: http://explorer\.influxdb\.example\.com\n'
+      - matchRegexRaw:
+          pattern: "Token-only setup: enter the API ingress endpoint listed above and an API token as the connection\\. Use the ingress controller's actual external port\\."
+      - matchRegexRaw:
+          pattern: 'The endpoint must resolve and be reachable from the Web UI pod; with NetworkPolicies enabled, allow egress to its address and port\.'
+      - matchRegexRaw:
+          pattern: 'Web UI \(additional\): 1 x CPU 250m, memory 512Mi per pod'
+      - matchRegexRaw:
+          pattern: 'Web UI ingress has no TLS configuration'
+      - notMatchRegexRaw:
+          pattern: 'WARNING: Authentication is disabled'
+
+  - it: includes a port-forward and routing guidance when ingress is disabled
+    template: templates/NOTES.txt
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.enabled: false
+    asserts:
+      - matchRegexRaw:
+          pattern: 'kubectl port-forward -n default svc/t-influxdb3-enterprise-webui 8181:8181'
+      - matchRegexRaw:
+          pattern: 'Token-only setup needs one API endpoint routing reads to queriers and writes to ingesters'
+
+  - it: links first-admin setup when user sign-in is enabled
+    template: templates/NOTES.txt
+    values: [values/webui-auth.yaml]
+    asserts:
+      - matchRegexRaw:
+          pattern: 'manage-users/#bootstrap-the-initial-admin'
+      - notMatchRegexRaw:
+          pattern: 'Token-only setup'
+
+  - it: warns when authentication is explicitly disabled
+    template: templates/NOTES.txt
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      security.auth.disabled: true
+    asserts:
+      - matchRegexRaw:
+          pattern: 'WARNING: Authentication is disabled. Protect remote Explorer access'
+      - notMatchRegexRaw:
+          pattern: 'Token-only setup'
+
+  - it: uses the Web UI TLS configuration in the notes URL
+    template: templates/NOTES.txt
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.port: 443
+      ingress.webui.tls:
+        - hosts: [explorer.influxdb.example.com]
+          secretName: ui-tls
+    asserts:
+      - matchRegexRaw:
+          pattern: 'URL: https://explorer\.influxdb\.example\.com\n'
+      - notMatchRegexRaw:
+          pattern: 'Web UI ingress has no TLS configuration'
+
+  - it: tolerates missing Web UI resources and service settings in notes
+    template: templates/NOTES.txt
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.resources: null
+      webui.service: null
+      ingress.enabled: false
+    asserts:
+      - matchRegexRaw:
+          pattern: 'CPU unspecified, memory unspecified per pod'
+      - matchRegexRaw:
+          pattern: 'svc/t-influxdb3-enterprise-webui 8181:8181'
+
+  - it: tolerates missing Web UI resource requests in notes
+    template: templates/NOTES.txt
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      webui.resources.requests: null
+    asserts:
+      - matchRegexRaw:
+          pattern: 'CPU unspecified, memory unspecified per pod'
+
+  - it: ignores ingress.port when deriving the public URI in notes and OAuth configuration
+    values: [values/webui-oauth.yaml]
+    set:
+      ingress.port: 8080
+    asserts:
+      - matchRegexRaw:
+          pattern: 'URL: http://explorer\.influxdb\.example\.com\n'
+        template: templates/NOTES.txt
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_PUBLIC_URI
+            value: http://explorer.influxdb.example.com
+        template: templates/webui-statefulset.yaml
+
+  - it: uses an explicit public URI in both notes and OAuth configuration
+    values: [values/webui-oauth.yaml]
+    set:
+      webui.publicUri: https://external.example.com:9443/
+    asserts:
+      - matchRegexRaw:
+          pattern: 'URL: https://external.example.com:9443'
+        template: templates/NOTES.txt
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_WEBUI_PUBLIC_URI
+            value: https://external.example.com:9443
+        template: templates/webui-statefulset.yaml

@@ -1184,6 +1184,12 @@ share the same value or a session breaks as soon as it lands on another pod.
 {{- if and (hasKey $sessionSecret "key") (not $sessionSecret.key) -}}
 {{- fail "webui.sessionSecret.key is empty; set the key that holds the session secret in webui.sessionSecret.existingSecret." -}}
 {{- end -}}
+{{- if .Values.ingress.enabled -}}
+{{- $webuiIngress := .Values.ingress.webui | default dict -}}
+{{- if and (empty .Values.ingress.host) (empty $webuiIngress.host) -}}
+{{- fail "ingress.webui.host is required when ingress.host is empty and the Web UI ingress is enabled." -}}
+{{- end -}}
+{{- end -}}
 {{- if and .Values.ingress.enabled .Values.querier.enabled -}}
 {{- $ingress := include "influxdb3-enterprise.webuiIngress" . | fromYaml -}}
 {{- if eq $ingress.host .Values.ingress.host -}}

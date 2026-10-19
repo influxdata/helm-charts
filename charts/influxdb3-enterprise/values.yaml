@@ -1007,10 +1007,13 @@ ingress:
   webui:
     # Optional host override. If empty, uses explorer.<ingress.host>.
     host: ""
-    # Optional TLS override. Required when host differs from ingress.host.
+    # TLS for this hostname; a different host does not inherit ingress.tls.
     # Secure cookies follow this TLS setting unless webui.cookieSecure is overridden.
     tls: []
-    annotations: {}
+    # Optional ingress-nginx tuning:
+    # annotations:
+    #   nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    #   nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 
 # ============================================================================
 # Network Policies (optional, disabled by default)

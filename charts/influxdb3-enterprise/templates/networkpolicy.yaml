@@ -606,7 +606,8 @@ spec:
           port: 9000  # MinIO default
     {{- end }}
     {{- end }}
-    # Allow inter-component communication
+    # Allow HTTP to chart pods. Manually configured Explorer connections may
+    # need additional egress rules for their API endpoint and port.
     - to:
         - podSelector:
             matchLabels:
