@@ -71,7 +71,6 @@ spec:
             - serve
             - --mode=ingest
             - --node-id=$(POD_NAME)
-            {{- include "influxdb3-enterprise.userAuthArgs" . | nindent 12 }}
             {{- if or .Values.processingEngine.enabled (and .Values.webui .Values.webui.enabled) }}
             - --internode-bind-addr=0.0.0.0:{{ include "influxdb3-enterprise.ingesterInternodePort" . }}
             - --conn-info=$(POD_NAME):{{ include "influxdb3-enterprise.ingesterInternodePort" . }}

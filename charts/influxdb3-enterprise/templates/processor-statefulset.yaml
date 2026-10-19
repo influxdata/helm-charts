@@ -76,7 +76,6 @@ spec:
             - serve
             - --mode=process,query
             - --node-id=$(POD_NAME)
-            {{- include "influxdb3-enterprise.userAuthArgs" . | nindent 12 }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.configMapName" . }}

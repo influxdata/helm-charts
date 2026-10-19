@@ -1273,13 +1273,9 @@ share the same value or a session breaks as soon as it lands on another pod.
 {{- end }}
 {{- end }}
 {{- end }}
-{{- end }}
-
-{{/* The RBAC authoring setting has a CLI flag but no environment variable. */}}
-{{- define "influxdb3-enterprise.userAuthArgs" -}}
-{{- $userAuth := get (.Values.security | default dict) "userAuth" | default dict -}}
 {{- if kindIs "bool" (get $userAuth "rbacAuthoringDisabled") }}
-- {{ printf "--rbac-authoring-disabled=%v" (get $userAuth "rbacAuthoringDisabled") | quote }}
+- name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+  value: {{ get $userAuth "rbacAuthoringDisabled" | quote }}
 {{- end }}
 {{- end }}
 

@@ -853,23 +853,146 @@ tests:
             name: INFLUXDB3_WEBUI_COOKIE_SECURE
             value: "true"
 
-  - it: preserves an explicit true RBAC authoring flag
-    template: templates/ingester-statefulset.yaml
+  - it: preserves an explicit true RBAC authoring environment value on every node
+    templates:
+      - templates/ingester-statefulset.yaml
+      - templates/querier-statefulset.yaml
+      - templates/compactor-statefulset.yaml
+      - templates/processor-statefulset.yaml
+      - templates/webui-statefulset.yaml
     set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      processingEngine.enabled: true
       security.userAuth.rbacAuthoringDisabled: true
     asserts:
       - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "true"
+      - notContains:
           path: spec.template.spec.containers[0].args
           content: --rbac-authoring-disabled=true
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: --rbac-authoring-disabled=false
 
-  - it: preserves an explicit false RBAC authoring flag
-    template: templates/ingester-statefulset.yaml
+  - it: preserves an explicit false RBAC authoring environment value on every node
+    templates:
+      - templates/ingester-statefulset.yaml
+      - templates/querier-statefulset.yaml
+      - templates/compactor-statefulset.yaml
+      - templates/processor-statefulset.yaml
+      - templates/webui-statefulset.yaml
     set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      processingEngine.enabled: true
       security.userAuth.rbacAuthoringDisabled: false
     asserts:
       - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "false"
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: --rbac-authoring-disabled=true
+      - notContains:
           path: spec.template.spec.containers[0].args
           content: --rbac-authoring-disabled=false
+
+  - it: leaves the RBAC authoring server default when the value is omitted
+    templates:
+      - templates/ingester-statefulset.yaml
+      - templates/querier-statefulset.yaml
+      - templates/compactor-statefulset.yaml
+      - templates/processor-statefulset.yaml
+      - templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      processingEngine.enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "true"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "false"
+
+  - it: leaves the RBAC authoring server default when the value is null
+    templates:
+      - templates/ingester-statefulset.yaml
+      - templates/querier-statefulset.yaml
+      - templates/compactor-statefulset.yaml
+      - templates/processor-statefulset.yaml
+      - templates/webui-statefulset.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      processingEngine.enabled: true
+      security.userAuth.rbacAuthoringDisabled: null
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "true"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "false"
+
+  - it: preserves extraEnv precedence for the RBAC authoring environment value
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      security.userAuth.rbacAuthoringDisabled: false
+      extraEnv:
+        - name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+          value: "true"
+      webui.extraEnv:
+        - name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+          value: "false"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "true"
+        template: templates/ingester-statefulset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "false"
+        template: templates/ingester-statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "false"
+        template: templates/webui-statefulset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+            value: "true"
+        template: templates/webui-statefulset.yaml
+
+  - it: rejects a non-boolean RBAC authoring value
+    set:
+      security.userAuth.rbacAuthoringDisabled: "false"
+    asserts:
+      - failedTemplate:
+          errorMessage: "security.userAuth.rbacAuthoringDisabled must be a boolean."
 
   - it: rejects unsupported authentication methods
     set:
