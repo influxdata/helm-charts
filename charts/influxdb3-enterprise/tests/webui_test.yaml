@@ -1070,6 +1070,8 @@ tests:
           pattern: 'Web UI \(additional\): 1 x CPU 250m, memory 512Mi per pod'
       - matchRegexRaw:
           pattern: 'Web UI ingress has no TLS configuration'
+      - matchRegexRaw:
+          pattern: 'WARNING: Anyone who can reach Explorer can use its configured connection'
       - notMatchRegexRaw:
           pattern: 'WARNING: Authentication is disabled'
 
@@ -1084,6 +1086,20 @@ tests:
           pattern: 'kubectl port-forward -n default svc/t-influxdb3-enterprise-webui 8181:8181'
       - matchRegexRaw:
           pattern: 'Token-only setup needs one API endpoint routing reads to queriers and writes to ingesters'
+      - matchRegexRaw:
+          pattern: 'URL: http://localhost:8181\n'
+
+  - it: uses HTTPS for port-forward access when server TLS is enabled
+    template: templates/NOTES.txt
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.enabled: false
+      security.tls.enabled: true
+      security.tls.existingSecret: tls
+    asserts:
+      - matchRegexRaw:
+          pattern: 'URL: https://localhost:8181\n'
 
   - it: links first-admin setup when user sign-in is enabled
     template: templates/NOTES.txt
@@ -1091,6 +1107,8 @@ tests:
     asserts:
       - matchRegexRaw:
           pattern: 'manage-users/#bootstrap-the-initial-admin'
+      - notMatchRegexRaw:
+          pattern: 'WARNING: Anyone who can reach Explorer'
       - notMatchRegexRaw:
           pattern: 'Token-only setup'
 

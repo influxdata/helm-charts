@@ -94,11 +94,13 @@ Explorer:
 {{- end }}
 {{- else }}
   kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "influxdb3-enterprise.fullname" . }}-webui 8181:{{ dig "port" 8181 (.Values.webui.service | default dict) }}
-  URL: http://localhost:8181
+  URL: http{{ if .Values.security.tls.enabled }}s{{ end }}://localhost:8181
 {{- end }}
 {{- if .Values.security.auth.disabled }}
   WARNING: Authentication is disabled. Protect remote Explorer access with an authenticating proxy and TLS.
 {{- else if eq (get $userAuth "type" | default "none") "none" }}
+  WARNING: Anyone who can reach Explorer can use its configured connection with that token's permissions.
+  Protect remote access with an authenticating proxy and TLS, or enable basic/OAuth sign-in.
 {{- if and .Values.ingress.enabled .Values.ingress.host .Values.ingester.enabled .Values.querier.enabled }}
   Token-only setup: enter the API ingress endpoint listed above and an API token as the connection. Use the ingress controller's actual external port.
   The endpoint must resolve and be reachable from the Web UI pod; with NetworkPolicies enabled, allow egress to its address and port.

@@ -647,6 +647,9 @@ NetworkPolicies enabled, allow egress to its address and port. Without an API
 ingress, provide an equivalent endpoint or enable basic/OAuth sign-in for
 automatic routing. See [connection setup](https://docs.influxdata.com/influxdb3/enterprise/admin/explorer-ui/#default-connections-and-query-routing).
 
+Without basic/OAuth sign-in, anyone who can reach Explorer can use its configured
+connection; see [Explorer access guidance](https://docs.influxdata.com/influxdb3/enterprise/admin/explorer-ui/#control-who-can-reach-explorer).
+
 With InfluxDB 3.12, authenticated Explorer sessions get a default connection to
 the cluster automatically. The dedicated Web UI node routes reads to queriers and
 writes to ingesters over internode gRPC. Enabling `webui` also enables the backend
