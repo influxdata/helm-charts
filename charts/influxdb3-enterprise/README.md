@@ -722,24 +722,12 @@ automatically; `webui.cookieSecure` overrides detection. See
 [Explorer access guidance](https://docs.influxdata.com/influxdb3/enterprise/admin/explorer-ui/#control-who-can-reach-explorer)
 for TLS and access-control recommendations.
 
-Explorer stores dashboards, saved queries, query history, and connections in
-SQLite synchronized to object storage. A newer image can migrate its schema;
-after an image rollback, an older Explorer can fail with HTTP 500 because it
-cannot read that database. Helm rollback does not restore the SQLite object.
+Scale the Web UI StatefulSet to zero replicas before backing up or restoring
+[Explorer application data](https://docs.influxdata.com/influxdb3/enterprise/admin/explorer-ui/#explorer-application-data),
+then restore the configured replica count. `helm rollback` does not restore
+that data.
 
-Before upgrading, scale the Web UI StatefulSet to zero replicas and copy
-`<cluster-id>/webui/sqlite.db`, if present, from the configured object store to a
-separate backup location using that store's copy or download tools. Then proceed
-with the upgrade and restore the configured Web UI replica count.
-
-For an image rollback, keep the Web UI stopped, copy the pre-upgrade SQLite backup
-back to the same object-store key, and start the older image. Without that backup,
-archiving and deleting the object lets Explorer recreate an empty database;
-dashboards, saved queries, query history, and connections are lost.
-
-Rolling back from 3.12 to 3.11 after the catalog commits the 3.12 feature level
-also requires restoring the pre-upgrade catalog backup. Restoring or deleting the
-UI database does not restore the catalog. See the
+For version rollback requirements, follow the
 [official upgrade and rollback procedure](https://docs.influxdata.com/influxdb3/enterprise/admin/upgrade/).
 
 #### Monitoring
