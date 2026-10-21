@@ -1,0 +1,46 @@
+processingEngine:
+  enabled: true
+  podAnnotations:
+    prometheus.io/port: 8181
+    prometheus.io/scrape: true
+  service:
+    annotations:
+      example.com/port: 8181
+ingester:
+  podAnnotations:
+    prometheus.io/port: 8181
+    prometheus.io/scrape: true
+    example.com/large: 1000000
+  service:
+    annotations:
+      example.com/port: 8181
+querier:
+  podAnnotations:
+    prometheus.io/port: 8181
+    prometheus.io/scrape: true
+  service:
+    annotations:
+      example.com/port: 8181
+compactor:
+  podAnnotations:
+    prometheus.io/port: 8181
+    prometheus.io/scrape: true
+  service:
+    annotations:
+      example.com/port: 8181
+ingress:
+  write:
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: 600
+  query:
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: 600
+  flight:
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: 600
+  processor:
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: 600
+serviceAccount:
+  annotations:
+    example.com/flag: false

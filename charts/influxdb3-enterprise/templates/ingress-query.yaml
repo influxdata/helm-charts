@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: ingress-query
   {{- with .Values.ingress.query.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- include "influxdb3-enterprise.annotations" . | nindent 4 }}
   {{- end }}
 spec:
   {{- if .Values.ingress.className }}

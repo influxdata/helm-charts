@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: ingress-processor
   {{- with .Values.ingress.processor.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- include "influxdb3-enterprise.annotations" . | nindent 4 }}
   {{- end }}
 spec:
   {{- if .Values.ingress.className }}

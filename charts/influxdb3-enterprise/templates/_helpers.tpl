@@ -1026,6 +1026,18 @@ beyond 2^53 are already rounded when the chart sees them. A null renders nothing
 {{- end }}
 
 {{/*
+Render a user-supplied annotations map with every value as a string. The API server rejects
+a number or a boolean as an annotation value, and toYaml keeps one from a values file as is.
+*/}}
+{{- define "influxdb3-enterprise.annotations" -}}
+{{- $annotations := dict }}
+{{- range $key, $value := . }}
+{{- $_ := set $annotations $key (ternary "" (include "influxdb3-enterprise.plainInteger" $value) (kindIs "invalid" $value)) }}
+{{- end }}
+{{- toYaml $annotations }}
+{{- end }}
+
+{{/*
 Render a number from a values file as a plain decimal string. Such a number is a float64,
 and toString prints 1000000 as 1e+06, which clap rejects for a usize.
 */}}
