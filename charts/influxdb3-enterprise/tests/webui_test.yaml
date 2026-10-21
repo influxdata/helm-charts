@@ -3,6 +3,74 @@ release:
   name: t
   namespace: default
 tests:
+  - it: checks internode ports and the Explorer page from a Web UI test pod
+    template: templates/tests/test-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      processingEngine.enabled: false
+      ingester.replicas: 1
+      querier.replicas: 1
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: webui
+      - equal:
+          path: spec.containers[0].args[0]
+          value: |
+            nc -z -w 10 \
+              t-influxdb3-enterprise-ingester-0 \
+              8183
+            nc -z -w 10 \
+              t-influxdb3-enterprise-querier-0 \
+              8183
+            page=$(wget -q -T 10 -O - http://t-influxdb3-enterprise-webui:8181/)
+            printf '%s' "$page" | grep -Fq '<title>InfluxDB 3 Explorer</title>'
+
+  - it: checks only ingester internode ports when only Processing Engine is enabled
+    template: templates/tests/test-internode-grpc.yaml
+    set:
+      webui.enabled: false
+      processingEngine.enabled: true
+      ingester.replicas: 1
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: processor
+      - equal:
+          path: spec.containers[0].args[0]
+          value: |
+            nc -z -w 10 \
+              t-influxdb3-enterprise-ingester-0 \
+              8183
+
+  - it: omits both test pods when Web UI and Processing Engine are disabled
+    set:
+      webui.enabled: false
+      processingEngine.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/tests/test-internode-grpc.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/tests/test-webui.yaml
+
+  - it: preserves separate test identities when both components are enabled
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      processingEngine.enabled: true
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: processor
+        template: templates/tests/test-internode-grpc.yaml
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: webui
+        template: templates/tests/test-webui.yaml
+
   - it: renders nothing by default
     asserts:
       - hasDocuments:

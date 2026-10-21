@@ -1,0 +1,60 @@
+{{- if (.Values.webui | default dict).enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-test-webui" (include "influxdb3-enterprise.fullname" .) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webui
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: test-webui
+      image: busybox:1.37.0
+      imagePullPolicy: IfNotPresent
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      command:
+        - /bin/sh
+        - -ec
+      args:
+        - |
+          {{- if .Values.ingester.enabled }}
+          {{- range $ordinal := until (int .Values.ingester.replicas) }}
+          nc -z -w 10 \
+            {{ include "influxdb3-enterprise.ingesterPodName" (dict "root" $ "ordinal" $ordinal) }} \
+            {{ include "influxdb3-enterprise.ingesterInternodePort" $ }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.querier.enabled }}
+          {{- range $ordinal := until (int .Values.querier.replicas) }}
+          nc -z -w 10 \
+            {{ include "influxdb3-enterprise.querierPodName" (dict "root" $ "ordinal" $ordinal) }} \
+            {{ include "influxdb3-enterprise.querierInternodePort" $ }}
+          {{- end }}
+          {{- end }}
+          page=$(wget -q -T 10{{ if .Values.security.tls.enabled }} --no-check-certificate{{ end }} -O - http{{ if .Values.security.tls.enabled }}s{{ end }}://{{ include "influxdb3-enterprise.fullname" . }}-webui:{{ dig "port" 8181 (.Values.webui.service | default dict) }}/)
+          printf '%s' "$page" | grep -Fq '<title>InfluxDB 3 Explorer</title>'
+      resources:
+        requests:
+          cpu: 10m
+          memory: 8Mi
+        limits:
+          cpu: 100m
+          memory: 32Mi
+{{- end }}
