@@ -749,7 +749,17 @@ serviceMonitor:
   interval: 30s
   additionalLabels:
     prometheus: kube-prometheus
+
+security:
+  auth:
+    disableAuthz: ["health", "metrics"]
 ```
+
+The ServiceMonitors send no authentication credentials. By default, `/metrics`
+requires authentication and these scrapes receive HTTP 401. This example allows
+unauthenticated metrics access on all components while retaining the health
+exemption needed by Kubernetes probes. Restrict metrics access through private
+networking or NetworkPolicies.
 
 **InfluxDB 3.11 removed the `db` label from several metrics**, so dashboards and
 alerts that group or filter by it break on upgrade and silently return no
