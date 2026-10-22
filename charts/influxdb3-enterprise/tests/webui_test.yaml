@@ -282,6 +282,56 @@ tests:
       - equal:
           path: spec.selector.matchLabels["app.kubernetes.io/component"]
           value: webui
+      - equal:
+          path: spec.endpoints[0].scheme
+          value: http
+      - notExists:
+          path: spec.endpoints[0].tlsConfig
+
+  - it: scrapes Web UI over HTTPS when server TLS is enabled
+    template: templates/servicemonitor.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      serviceMonitor.enabled: true
+      security.tls.enabled: true
+      security.tls.existingSecret: tls
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.endpoints[0].scheme
+          value: https
+      - notExists:
+          path: spec.endpoints[0].tlsConfig
+
+  - it: passes certificate trust settings to the Web UI HTTPS scraper
+    template: templates/servicemonitor.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      serviceMonitor.enabled: true
+      security.tls.enabled: true
+      security.tls.existingSecret: tls
+      serviceMonitor.tlsConfig:
+        ca:
+          secret:
+            name: influxdb-ca
+            key: ca.crt
+        serverName: influxdb.example.com
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-webui
+    asserts:
+      - equal:
+          path: spec.endpoints[0].tlsConfig
+          value:
+            ca:
+              secret:
+                name: influxdb-ca
+                key: ca.crt
+            serverName: influxdb.example.com
 
   - it: refuses an empty session secret key instead of quietly defaulting
     template: templates/webui-statefulset.yaml

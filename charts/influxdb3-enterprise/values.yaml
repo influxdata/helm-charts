@@ -1116,6 +1116,15 @@ serviceMonitor:
   interval: 30s
   # Scrape timeout
   scrapeTimeout: 10s
+  # Web UI scrape TLS configuration, used when security.tls.enabled is true.
+  # Uses the Prometheus Operator ServiceMonitor endpoint tlsConfig format.
+  tlsConfig: {}
+  # tlsConfig:
+  #   ca:
+  #     secret:
+  #       name: influxdb-ca
+  #       key: ca.crt
+  #   serverName: influxdb.example.com
   # Additional labels for ServiceMonitor (for Prometheus operator selector)
   additionalLabels: {}
   # prometheus: kube-prometheus

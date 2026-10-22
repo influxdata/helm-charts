@@ -11,6 +11,7 @@ tests:
       - templates/querier-statefulset.yaml
       - templates/compactor-statefulset.yaml
       - templates/processor-statefulset.yaml
+      - templates/webui-statefulset.yaml
     values: [values/numeric-annotations.yaml]
     asserts:
       - equal:
@@ -41,6 +42,7 @@ tests:
       - templates/querier-service.yaml
       - templates/compactor-service.yaml
       - templates/processor-service.yaml
+      - templates/webui-service.yaml
     values: [values/numeric-annotations.yaml]
     documentIndex: 0
     asserts:
@@ -54,6 +56,7 @@ tests:
       - templates/ingress-query.yaml
       - templates/ingress-flight.yaml
       - templates/ingress-processor.yaml
+      - templates/ingress-webui.yaml
     values: [values/numeric-annotations.yaml]
     asserts:
       - equal:
