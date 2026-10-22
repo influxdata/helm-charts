@@ -630,6 +630,11 @@ cookies follow the Web UI ingress or server TLS configuration automatically;
 `webui.cookieSecure` overrides detection; set it to `true` when HTTPS is provided
 by a proxy outside the chart.
 
+With `security.tls.enabled: true` and `ingress.className: nginx`, the chart adds
+`nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"` to the Web UI ingress
+unless explicitly set in `ingress.webui.annotations`. For other nginx class
+names, set that annotation manually.
+
 Without an ingress, a port-forward is enough to look at it:
 
 ```bash

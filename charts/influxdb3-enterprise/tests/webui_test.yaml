@@ -389,6 +389,7 @@ tests:
     set:
       webui.enabled: true
       webui.sessionSecret.existingSecret: ui-session
+      security.tls.enabled: false
     asserts:
       - equal:
           path: spec.rules[0].host
@@ -396,6 +397,61 @@ tests:
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.name
           value: t-influxdb3-enterprise-webui
+      - notExists:
+          path: metadata.annotations
+
+  - it: defaults nginx to HTTPS for a TLS-enabled Web UI backend
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.className: nginx
+      security.tls.enabled: true
+      security.tls.existingSecret: tls
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/backend-protocol"]
+          value: HTTPS
+
+  - it: preserves an explicit nginx backend protocol override
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.className: nginx
+      security.tls.enabled: true
+      security.tls.existingSecret: tls
+      ingress.webui.annotations:
+        nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/backend-protocol"]
+          value: HTTP
+
+  - it: does not add nginx annotations for a Traefik TLS backend
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.className: traefik
+      security.tls.enabled: true
+      security.tls.existingSecret: tls
+    asserts:
+      - notExists:
+          path: metadata.annotations
+
+  - it: does not enable backend HTTPS for ingress TLS alone
+    template: templates/ingress-webui.yaml
+    set:
+      webui.enabled: true
+      webui.sessionSecret.existingSecret: ui-session
+      ingress.className: nginx
+      security.tls.enabled: false
+      ingress.webui.tls:
+        - hosts:
+            - explorer.influxdb.example.com
+          secretName: ingress-tls
+    asserts:
       - notExists:
           path: metadata.annotations
 

@@ -1,6 +1,10 @@
 {{- if and .Values.ingress.enabled .Values.webui .Values.webui.enabled }}
 {{- $webuiIngress := .Values.ingress.webui | default dict }}
 {{- $webuiConfig := include "influxdb3-enterprise.webuiIngress" . | fromYaml }}
+{{- $annotations := deepCopy ($webuiIngress.annotations | default dict) }}
+{{- if and .Values.security.tls.enabled (eq .Values.ingress.className "nginx") (not (hasKey $annotations "nginx.ingress.kubernetes.io/backend-protocol")) }}
+{{- $_ := set $annotations "nginx.ingress.kubernetes.io/backend-protocol" "HTTPS" }}
+{{- end }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -9,7 +13,7 @@ metadata:
   labels:
     {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
     app.kubernetes.io/component: ingress-webui
-  {{- with $webuiIngress.annotations }}
+  {{- with $annotations }}
   annotations:
     {{- include "influxdb3-enterprise.annotations" . | nindent 4 }}
   {{- end }}

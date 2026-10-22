@@ -1010,6 +1010,8 @@ ingress:
     # TLS for this hostname; a different host does not inherit ingress.tls.
     # Secure cookies follow this TLS setting unless webui.cookieSecure is overridden.
     tls: []
+    # With server TLS and className nginx, backend-protocol defaults to HTTPS.
+    # An explicit annotation overrides it; other nginx class names need it set manually.
     # Optional ingress-nginx tuning:
     # annotations:
     #   nginx.ingress.kubernetes.io/proxy-body-size: "100m"
