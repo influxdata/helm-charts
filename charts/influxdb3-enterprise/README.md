@@ -688,7 +688,8 @@ security:
 ```
 
 There are no default admin credentials. With no users or operator token,
-Explorer offers initial-admin setup. If an operator token already exists,
+Explorer offers initial-admin setup when basic sign-in is enabled; OAuth-only
+deployments require CLI bootstrap. If an operator token already exists,
 including one provided by `security.auth.adminToken`, use it to create the first
 admin. See [bootstrap the initial admin](https://docs.influxdata.com/influxdb3/enterprise/admin/security/manage-users/#bootstrap-the-initial-admin).
 
