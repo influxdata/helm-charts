@@ -1,0 +1,25 @@
+{{- if and .Values.webui .Values.webui.enabled }}
+{{- $service := .Values.webui.service | default dict }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-webui
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webui
+  {{- with $service.annotations }}
+  annotations:
+    {{- include "influxdb3-enterprise.annotations" . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ dig "type" "ClusterIP" $service }}
+  ports:
+    - port: {{ dig "port" 8181 $service }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "influxdb3-enterprise.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: webui
+{{- end }}

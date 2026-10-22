@@ -74,6 +74,11 @@ jobs:
             --namespace=default \
             --from-file=admin-token.json=./charts/influxdb3-enterprise/ci/admin-token.json \
             --from-file=permission-tokens.json=./charts/influxdb3-enterprise/ci/permission-tokens.json
+          openssl rand -hex 32 > "$RUNNER_TEMP/webui-session-secret"
+          openssl genrsa -traditional -out "$RUNNER_TEMP/webui-private-key.pem" 2048
+          kubectl create secret generic influxdb3-webui --namespace=default --from-file=session-secret="$RUNNER_TEMP/webui-session-secret"
+          kubectl create secret generic influxdb3-user-auth --namespace=default --from-file=private-key.pem="$RUNNER_TEMP/webui-private-key.pem"
+          rm "$RUNNER_TEMP/webui-session-secret" "$RUNNER_TEMP/webui-private-key.pem"
         env:
           INFLUXDB3_ENTERPRISE_LICENSE_KEY: "${{ secrets.INFLUXDB3_ENTERPRISE_LICENSE_KEY }}"
         if: steps.list-changed.outputs.changed == 'true'

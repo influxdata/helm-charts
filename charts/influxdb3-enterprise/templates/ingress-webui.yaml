@@ -1,0 +1,47 @@
+{{- if and .Values.ingress.enabled .Values.webui .Values.webui.enabled }}
+{{- $webuiIngress := .Values.ingress.webui | default dict }}
+{{- $webuiConfig := include "influxdb3-enterprise.webuiIngress" . | fromYaml }}
+{{- $annotations := deepCopy ($webuiIngress.annotations | default dict) }}
+{{- if and .Values.security.tls.enabled (eq .Values.ingress.className "nginx") (not (hasKey $annotations "nginx.ingress.kubernetes.io/backend-protocol")) }}
+{{- $_ := set $annotations "nginx.ingress.kubernetes.io/backend-protocol" "HTTPS" }}
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "influxdb3-enterprise.fullname" . }}-webui
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "influxdb3-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingress-webui
+  {{- with $annotations }}
+  annotations:
+    {{- include "influxdb3-enterprise.annotations" . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if $webuiConfig.tls }}
+  tls:
+    {{- range $webuiConfig.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ $webuiConfig.host | quote }}
+      http:
+        paths:
+          # The UI is served with <base href="/">, so it needs the root of a host
+          # of its own; ingress.query already claims / on ingress.host.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "influxdb3-enterprise.fullname" . }}-webui
+                port:
+                  number: {{ dig "port" 8181 (.Values.webui.service | default dict) }}
+{{- end }}

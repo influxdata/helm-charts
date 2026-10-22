@@ -71,7 +71,7 @@ spec:
             - serve
             - --mode=ingest
             - --node-id=$(POD_NAME)
-            {{- if .Values.processingEngine.enabled }}
+            {{- if or .Values.processingEngine.enabled (and .Values.webui .Values.webui.enabled) }}
             - --internode-bind-addr=0.0.0.0:{{ include "influxdb3-enterprise.ingesterInternodePort" . }}
             - --conn-info=$(POD_NAME):{{ include "influxdb3-enterprise.ingesterInternodePort" . }}
             {{- end }}
@@ -150,7 +150,7 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
-            {{- if .Values.processingEngine.enabled }}
+            {{- if or .Values.processingEngine.enabled (and .Values.webui .Values.webui.enabled) }}
             - name: grpc-internode
               containerPort: {{ include "influxdb3-enterprise.ingesterInternodePort" . }}
               protocol: TCP

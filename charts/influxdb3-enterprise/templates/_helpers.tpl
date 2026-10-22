@@ -489,6 +489,16 @@ Component-specific entries override global entries with the same name.
 {{- $_ := set $componentNames $name true -}}
 {{- end }}
 {{- end }}
+{{- $overrides := dict -}}
+{{- range $env := concat $global $component -}}
+{{- with $env.name -}}{{- $_ := set $overrides . true -}}{{- end -}}
+{{- end -}}
+{{- $authEnv := list -}}
+{{- range $env := include "influxdb3-enterprise.userAuthEnv" (dict "root" .root "componentName" (.componentName | default "") "overrides" $overrides) | fromYamlArray -}}
+{{- if not (hasKey $overrides $env.name) -}}
+{{- $authEnv = append $authEnv $env -}}
+{{- end -}}
+{{- end -}}
 {{- $extraEnv := list -}}
 {{- range $env := $global }}
 {{- $name := $env.name | default "" -}}
@@ -496,7 +506,7 @@ Component-specific entries override global entries with the same name.
 {{- $extraEnv = append $extraEnv $env -}}
 {{- end }}
 {{- end }}
-{{- $extraEnv = concat $extraEnv $logsEnv $component -}}
+{{- $extraEnv = concat $authEnv $extraEnv $logsEnv $component -}}
 {{- if $extraEnv }}
 {{- toYaml $extraEnv }}
 {{- end }}
@@ -678,6 +688,23 @@ Ingester Pod name shared by the StatefulSet, per-pod Service, and test.
 */}}
 {{- define "influxdb3-enterprise.ingesterPodName" -}}
 {{- printf "%s-ingester-%d" (include "influxdb3-enterprise.fullname" .root) (int .ordinal) -}}
+{{- end }}
+
+{{/*
+Querier internode gRPC port used by Explorer. The fallback supports --reuse-values
+from releases that predate querier.internode.port.
+*/}}
+{{- define "influxdb3-enterprise.querierInternodePort" -}}
+{{- $querier := .Values.querier | default dict -}}
+{{- $internode := get $querier "internode" | default dict -}}
+{{- get $internode "port" | default 8183 -}}
+{{- end }}
+
+{{/*
+Querier Pod name shared by the StatefulSet and per-pod Service.
+*/}}
+{{- define "influxdb3-enterprise.querierPodName" -}}
+{{- printf "%s-querier-%d" (include "influxdb3-enterprise.fullname" .root) (int .ordinal) -}}
 {{- end }}
 
 {{/*
@@ -1139,4 +1166,137 @@ values that reach the pod and stop it starting.
 {{- end -}}
 {{/* gen0MaxFileSize is a ByteSize: the server takes a unit there but not a percentage. */}}
 {{- include "influxdb3-enterprise.validateMemorySizeKey" (dict "src" $pacha "name" "gen0MaxFileSize" "key" "engine.pachaTree.gen0MaxFileSize" "allowPercent" false) -}}
+{{- end }}
+
+{{/*
+Check the Web UI block. The session secret is what the server signs UI sessions with; it
+refuses to start in webui mode without one, and every Web UI pod in the cluster has to
+share the same value or a session breaks as soon as it lands on another pod.
+*/}}
+{{- define "influxdb3-enterprise.validateWebui" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- if $webui.enabled -}}
+{{- $secret := ($webui.sessionSecret | default dict).existingSecret | default "" -}}
+{{- if not $secret -}}
+{{- fail "webui.sessionSecret.existingSecret is required when webui.enabled is true: the server refuses to start in webui mode without a session secret, and every Web UI pod in the cluster has to share the same one." -}}
+{{- end -}}
+{{- $sessionSecret := $webui.sessionSecret | default dict -}}
+{{- if and (hasKey $sessionSecret "key") (not $sessionSecret.key) -}}
+{{- fail "webui.sessionSecret.key is empty; set the key that holds the session secret in webui.sessionSecret.existingSecret." -}}
+{{- end -}}
+{{- if .Values.ingress.enabled -}}
+{{- $webuiIngress := .Values.ingress.webui | default dict -}}
+{{- if and (empty .Values.ingress.host) (empty $webuiIngress.host) -}}
+{{- fail "ingress.webui.host is required when ingress.host is empty and the Web UI ingress is enabled." -}}
+{{- end -}}
+{{- end -}}
+{{- if and .Values.ingress.enabled .Values.querier.enabled -}}
+{{- $ingress := include "influxdb3-enterprise.webuiIngress" . | fromYaml -}}
+{{- if eq $ingress.host .Values.ingress.host -}}
+{{- fail "ingress.webui.host must differ from ingress.host when the WebUI and querier ingresses are enabled; both claim /." -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/* Shared Web UI ingress host and TLS selection for routing and cookies. */}}
+{{- define "influxdb3-enterprise.webuiIngress" -}}
+{{- $webuiIngress := .Values.ingress.webui | default dict -}}
+{{- $host := default (printf "explorer.%s" .Values.ingress.host) $webuiIngress.host -}}
+{{- $tls := $webuiIngress.tls -}}
+{{- if and (not $tls) (eq $host .Values.ingress.host) -}}
+{{- $tls = .Values.ingress.tls -}}
+{{- end -}}
+{{- toYaml (dict "host" $host "tls" ($tls | default list)) -}}
+{{- end }}
+
+{{/* Validate the dedicated authentication settings; extraEnv remains an override. */}}
+{{- define "influxdb3-enterprise.validateUserAuth" -}}
+{{- $userAuth := get (.Values.security | default dict) "userAuth" | default dict -}}
+{{- $type := dig "type" "none" $userAuth -}}
+{{- if not (has $type (list "none" "basic" "oauth" "basic,oauth" "oauth,basic")) -}}
+{{- fail "security.userAuth.type must be none, basic, oauth, basic,oauth, or oauth,basic." -}}
+{{- end -}}
+{{- if ne $type "none" -}}
+{{- if .Values.security.auth.disabled -}}
+{{- fail "security.auth.disabled must be false when security.userAuth.type enables sign-in." -}}
+{{- end -}}
+{{- $methods := splitList "," $type -}}
+{{- $jwt := get $userAuth "jwt" | default dict -}}
+{{- if or (has "basic" $methods) (get $jwt "keyId") (get $jwt "existingSecret") -}}
+{{- $_ := required "security.userAuth.jwt.keyId is required for JWT signing." (get $jwt "keyId") -}}
+{{- $_ := required "security.userAuth.jwt.existingSecret is required for JWT signing." (get $jwt "existingSecret") -}}
+{{- if and (hasKey $jwt "key") (not (get $jwt "key")) -}}
+{{- fail "security.userAuth.jwt.key must not be empty." -}}
+{{- end -}}
+{{- end -}}
+{{- if has "oauth" $methods -}}
+{{- $oauth := get $userAuth "oauth" | default dict -}}
+{{- $_ := required "security.userAuth.oauth.issuer is required for OAuth." (get $oauth "issuer") -}}
+{{- $_ := required "security.userAuth.oauth.audience is required for OAuth." (get $oauth "audience") -}}
+{{- if (.Values.webui | default dict).enabled -}}
+{{- $_ := required "security.userAuth.oauth.clientId is required for Explorer OAuth sign-in." (get $oauth "clientId") -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- if and (hasKey $userAuth "rbacAuthoringDisabled") (not (kindIs "invalid" (get $userAuth "rbacAuthoringDisabled"))) (not (kindIs "bool" (get $userAuth "rbacAuthoringDisabled"))) -}}
+{{- fail "security.userAuth.rbacAuthoringDisabled must be a boolean." -}}
+{{- end -}}
+{{- end }}
+
+{{/* Authentication belongs in revisioned pod env, alongside the image and Secret refs. */}}
+{{- define "influxdb3-enterprise.userAuthEnv" -}}
+{{- $userAuth := get (.root.Values.security | default dict) "userAuth" | default dict -}}
+{{- $type := get $userAuth "type" | default "none" -}}
+{{- if ne $type "none" }}
+- name: INFLUXDB3_USER_AUTH_TYPE
+  value: {{ $type | quote }}
+{{- $jwt := get $userAuth "jwt" | default dict -}}
+{{- if get $jwt "existingSecret" }}
+- name: INFLUXDB3_JWT_KEY_ID
+  value: {{ get $jwt "keyId" | quote }}
+- name: INFLUXDB3_JWT_PRIVATE_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ get $jwt "existingSecret" }}
+      key: {{ get $jwt "key" | default "private-key.pem" }}
+{{- end }}
+{{- if has "oauth" (splitList "," $type) -}}
+{{- $oauth := get $userAuth "oauth" | default dict -}}
+{{- range $mapping := list
+  (list "issuer" "INFLUXDB3_OAUTH_ISSUER")
+  (list "audience" "INFLUXDB3_OAUTH_AUDIENCE")
+  (list "clientId" "INFLUXDB3_OAUTH_CLIENT_ID")
+  (list "scopes" "INFLUXDB3_OAUTH_SCOPES") }}
+{{- with get $oauth (index $mapping 0) }}
+- name: {{ index $mapping 1 }}
+  value: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{- if and (eq (.componentName | default "") "webui") (not (hasKey .overrides "INFLUXDB3_WEBUI_PUBLIC_URI")) }}
+- name: INFLUXDB3_WEBUI_PUBLIC_URI
+  value: {{ include "influxdb3-enterprise.webuiPublicUri" .root | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if kindIs "bool" (get $userAuth "rbacAuthoringDisabled") }}
+- name: INFLUXDB3_RBAC_AUTHORING_DISABLED
+  value: {{ get $userAuth "rbacAuthoringDisabled" | quote }}
+{{- end }}
+{{- end }}
+
+{{/* OAuth callback base URL: explicit URI first, then the browser-facing ingress. */}}
+{{- define "influxdb3-enterprise.webuiPublicUri" -}}
+{{- $webui := .Values.webui | default dict -}}
+{{- if $webui.publicUri -}}
+{{- if not (or (hasPrefix "http://" $webui.publicUri) (hasPrefix "https://" $webui.publicUri)) -}}
+{{- fail "webui.publicUri must be an absolute HTTP or HTTPS URL." -}}
+{{- end -}}
+{{- trimSuffix "/" $webui.publicUri -}}
+{{- else if .Values.ingress.enabled -}}
+{{- $ingress := include "influxdb3-enterprise.webuiIngress" . | fromYaml -}}
+{{- printf "%s://%s" (ternary "https" "http" (not (empty $ingress.tls))) $ingress.host -}}
+{{- else -}}
+{{- fail "webui.publicUri is required for Explorer OAuth sign-in when ingress.enabled is false." -}}
+{{- end -}}
 {{- end }}

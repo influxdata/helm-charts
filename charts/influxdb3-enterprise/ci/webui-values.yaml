@@ -1,0 +1,73 @@
+license:
+  type: commercial
+  existingSecret: influxdb3-license
+
+objectStorage:
+  type: file
+  file:
+    persistence:
+      accessMode: ReadWriteOnce
+      size: 5Gi
+
+ingress:
+  enabled: false
+
+networkPolicy:
+  enabled: true
+
+# Four nodes at two licensed cores each fit the 8-core CI license.
+ingester:
+  replicas: 1
+  numCores: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  persistence:
+    enabled: false
+
+querier:
+  replicas: 1
+  numCores: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+compactor:
+  replicas: 1
+  numCores: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+processingEngine:
+  enabled: false
+
+webui:
+  enabled: true
+  replicas: 1
+  numCores: 2
+  sessionSecret:
+    existingSecret: influxdb3-webui
+
+security:
+  userAuth:
+    type: basic
+    jwt:
+      keyId: ci-webui
+      existingSecret: influxdb3-user-auth
+
+shutdown:
+  timeout: "20s"
+  terminationGracePeriodSeconds: 60

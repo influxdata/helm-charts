@@ -333,7 +333,7 @@ ingester:
     port: 8181
     annotations: {}
 
-  # Internode gRPC communication with Processing Engine nodes
+  # Internode gRPC communication with Processing Engine and Explorer nodes
   internode:
     port: 8183
 
@@ -433,6 +433,10 @@ querier:
     type: ClusterIP
     port: 8181
     annotations: {}
+
+  # Internode gRPC communication with Explorer nodes
+  internode:
+    port: 8183
 
   # Pod disruption budget for high availability
   # Ensures minimum number of querier pods remain available during voluntary disruptions
@@ -666,6 +670,90 @@ processingEngine:
     rollingUpdate:
       partition: 0                  # Start updating from pod 0
 
+# Embedded Web UI nodes - InfluxDB 3 Explorer served by the server itself (optional)
+# Runs as its own node in --mode=webui. With user authentication enabled, the default
+# cluster connection routes reads and writes over internode gRPC. Use an ingress or
+# port-forward for browser access.
+webui:
+  enabled: false
+  replicas: 1
+
+  # Secret holding the session signing key. Required when enabled, and the same value
+  # has to be used by every Web UI pod in the cluster.
+  #   kubectl create secret generic influxdb3-webui --from-literal=session-secret="$(openssl rand -hex 32)"
+  sessionSecret:
+    existingSecret: ""
+    key: "session-secret"
+
+  # Browser-visible URL for OAuth sign-in. Empty derives from the Web UI ingress.
+  # Required for OAuth when ingress.enabled is false.
+  publicUri: ""
+
+  # Automatically follows Web UI ingress, server TLS, or an HTTPS publicUri when unset.
+  # Uncomment to explicitly override detection, for example for an external HTTPS proxy.
+  # cookieSecure: true
+
+  service:
+    type: ClusterIP
+    port: 8181
+    annotations: {}
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      # Must not be below numCores, or the runtimes oversubscribe and the node
+      # still bills the cores it claims.
+      cpu: "2000m"
+      memory: "2Gi"
+
+  # Licensed cores this node claims (--num-cores). Set here, unlike the other
+  # components, because a node left unset claims every core the machine reports
+  # and the UI needs none of them. 2 is the server's minimum.
+  numCores: 2
+  # numIOThreads: 2               # Global IO threads (--num-io-threads)
+
+  # Extra environment variables for Web UI pods only. INFLUXDB3_WEBUI_OPENAI_BASE_URL,
+  # which points the UI's ask/chat at an OpenAI-compatible endpoint, is set here.
+  extraEnv: []
+
+  nodeSelector: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: webui
+            topologyKey: kubernetes.io/hostname
+  tolerations: []
+  podAnnotations: {}
+  podLabels: {}
+
+  # InfluxDB3 runs as uid=1500(influxdb3) gid=1500(influxdb3)
+  podSecurityContext:
+    fsGroup: 1500              # Ensures volumes are owned by influxdb3 group
+    runAsNonRoot: true         # Security best practice
+    runAsUser: 1500            # Run as influxdb3 user
+    runAsGroup: 1500           # Run as influxdb3 group
+
+  # Container-level security context (optional override)
+  securityContext: {}
+
+  # Pod disruption budget for high availability
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1
+
+  priorityClassName: ""
+
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0                  # Start updating from pod 0
+
 # ============================================================================
 # Advanced Configuration (Shared across all components)
 # ============================================================================
@@ -708,6 +796,23 @@ security:
     permissionTokens:
       existingSecret: ""
       file: ""
+
+  # User authentication for every node (InfluxDB 3.12+). API tokens remain available.
+  userAuth:
+    # none, basic, oauth, or "basic,oauth"
+    type: none
+    jwt:
+      keyId: ""
+      # Existing Secret containing a PKCS#1 RSA private key.
+      existingSecret: ""
+      key: "private-key.pem"
+    oauth:
+      issuer: ""
+      audience: ""
+      clientId: ""
+      # scopes: "openid,offline_access"
+    # Set false to enable creation/modification of custom roles (server default: true).
+    # rbacAuthoringDisabled: false
 
 # HTTP server configuration
 http:
@@ -896,6 +1001,21 @@ ingress:
   # Ingress for HTTP-triggered plugins (created only if processingEngine.enabled)
   processor:
     annotations: {}
+  # Ingress for the embedded Web UI (created only if webui.enabled)
+  # Routes: / -> Web UI. The UI is served with <base href="/">, so it needs the
+  # root of its own host; ingress.query already claims / on ingress.host.
+  webui:
+    # Optional host override. If empty, uses explorer.<ingress.host>.
+    host: ""
+    # TLS for this hostname; a different host does not inherit ingress.tls.
+    # Secure cookies follow this TLS setting unless webui.cookieSecure is overridden.
+    tls: []
+    # With server TLS and className nginx, backend-protocol defaults to HTTPS.
+    # An explicit annotation overrides it; other nginx class names need it set manually.
+    # Optional ingress-nginx tuning:
+    # annotations:
+    #   nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    #   nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 
 # ============================================================================
 # Network Policies (optional, disabled by default)
@@ -998,6 +1118,15 @@ serviceMonitor:
   interval: 30s
   # Scrape timeout
   scrapeTimeout: 10s
+  # Web UI scrape TLS configuration, used when security.tls.enabled is true.
+  # Uses the Prometheus Operator ServiceMonitor endpoint tlsConfig format.
+  tlsConfig: {}
+  # tlsConfig:
+  #   ca:
+  #     secret:
+  #       name: influxdb-ca
+  #       key: ca.crt
+  #   serverName: influxdb.example.com
   # Additional labels for ServiceMonitor (for Prometheus operator selector)
   additionalLabels: {}
   # prometheus: kube-prometheus

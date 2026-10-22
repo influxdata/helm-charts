@@ -28,6 +28,16 @@ compactor:
   service:
     annotations:
       example.com/port: 8181
+webui:
+  enabled: true
+  sessionSecret:
+    existingSecret: ui-session
+  podAnnotations:
+    prometheus.io/port: 8181
+    prometheus.io/scrape: true
+  service:
+    annotations:
+      example.com/port: 8181
 ingress:
   write:
     annotations:
@@ -39,6 +49,9 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: 600
   processor:
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: 600
+  webui:
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: 600
 serviceAccount:
