@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/component: webui
   {{- with $service.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- include "influxdb3-enterprise.annotations" . | nindent 4 }}
   {{- end }}
 spec:
   type: {{ dig "type" "ClusterIP" $service }}
