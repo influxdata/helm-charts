@@ -1,0 +1,69 @@
+suite: annotation values
+release:
+  name: t
+  namespace: default
+tests:
+  # Annotation values must be strings. toYaml keeps a number or a boolean from a
+  # values file unquoted, and the API server rejects the object after it renders.
+  - it: writes pod annotation values as strings
+    templates:
+      - templates/ingester-statefulset.yaml
+      - templates/querier-statefulset.yaml
+      - templates/compactor-statefulset.yaml
+      - templates/processor-statefulset.yaml
+    values: [values/numeric-annotations.yaml]
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
+          value: "8181"
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+
+  - it: writes large numbers in full
+    template: templates/ingester-statefulset.yaml
+    values: [values/numeric-annotations.yaml]
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["example.com/large"]
+          value: "1000000"
+
+  - it: keeps the chart's own pod annotations
+    template: templates/ingester-statefulset.yaml
+    values: [values/numeric-annotations.yaml]
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+
+  - it: writes service annotation values as strings
+    templates:
+      - templates/ingester-service.yaml
+      - templates/querier-service.yaml
+      - templates/compactor-service.yaml
+      - templates/processor-service.yaml
+    values: [values/numeric-annotations.yaml]
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/port"]
+          value: "8181"
+
+  - it: writes ingress annotation values as strings
+    templates:
+      - templates/ingress-write.yaml
+      - templates/ingress-query.yaml
+      - templates/ingress-flight.yaml
+      - templates/ingress-processor.yaml
+    values: [values/numeric-annotations.yaml]
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-read-timeout"]
+          value: "600"
+
+  - it: writes service account annotation values as strings
+    template: templates/serviceaccount.yaml
+    values: [values/numeric-annotations.yaml]
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/flag"]
+          value: "false"
