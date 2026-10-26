@@ -15,6 +15,9 @@ Components deployed:
 {{- if .Values.processingEngine.enabled }}
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)
 {{- end }}
+{{- if (.Values.webui | default dict).enabled }}
+  ✓ Web UI: {{ dig "replicas" 1 .Values.webui }} replica(s)
+{{- end }}
 
 {{- $security := .Values.security | default dict }}
 {{- $auth := get $security "auth" | default dict }}
@@ -54,9 +57,13 @@ Preconfigured admin token:
   {{- $totalMemoryGi = add $totalMemoryGi (mul .Values.processingEngine.replicas $mem) }}
 {{- end }}
 
-Resource requests (total):
+Backend resource requests (total):
   CPU:    {{ divf $totalCpuMillis 1000 }} cores ({{ $totalCpuMillis }}m)
   Memory: {{ $totalMemoryGi }}Gi
+{{- if (.Values.webui | default dict).enabled }}
+{{- $requests := get (.Values.webui.resources | default dict) "requests" | default dict }}
+  Web UI (additional): {{ dig "replicas" 1 .Values.webui }} x CPU {{ get $requests "cpu" | default "unspecified" }}, memory {{ get $requests "memory" | default "unspecified" }} per pod
+{{- end }}
 
 To verify cluster capacity:
   kubectl top nodes
@@ -73,6 +80,37 @@ Access endpoints:
 {{- else }}
   Write endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-ingester 8181:8181 -n {{ .Release.Namespace }}
   Query endpoint: kubectl port-forward svc/{{ include "influxdb3-enterprise.fullname" . }}-querier 8181:8181 -n {{ .Release.Namespace }}
+{{- end }}
+
+{{- if (.Values.webui | default dict).enabled }}
+{{- $userAuth := get $security "userAuth" | default dict }}
+
+Explorer:
+{{- if .Values.ingress.enabled }}
+{{- $webuiIngress := include "influxdb3-enterprise.webuiIngress" . | fromYaml }}
+  URL: {{ include "influxdb3-enterprise.webuiPublicUri" . }}
+{{- if not $webuiIngress.tls }}
+  Web UI ingress has no TLS configuration; set ingress.webui.tls or terminate HTTPS at your proxy.
+{{- end }}
+{{- else }}
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "influxdb3-enterprise.fullname" . }}-webui 8181:{{ dig "port" 8181 (.Values.webui.service | default dict) }}
+  URL: http{{ if .Values.security.tls.enabled }}s{{ end }}://localhost:8181
+{{- end }}
+{{- if .Values.security.auth.disabled }}
+  WARNING: Authentication is disabled. Protect remote Explorer access with an authenticating proxy and TLS.
+{{- else if eq (get $userAuth "type" | default "none") "none" }}
+  WARNING: Anyone who can reach Explorer can use its configured connection with that token's permissions.
+  Protect remote access with an authenticating proxy and TLS, or enable basic/OAuth sign-in.
+{{- if and .Values.ingress.enabled .Values.ingress.host .Values.ingester.enabled .Values.querier.enabled }}
+  Token-only setup: enter the API ingress endpoint listed above and an API token as the connection. Use the ingress controller's actual external port.
+  The endpoint must resolve and be reachable from the Web UI pod; with NetworkPolicies enabled, allow egress to its address and port.
+{{- else }}
+  Token-only setup needs one API endpoint routing reads to queriers and writes to ingesters, or basic/OAuth sign-in for automatic routing.
+{{- end }}
+{{- else }}
+  User sign-in is enabled. For first-admin setup, see:
+  https://docs.influxdata.com/influxdb3/enterprise/admin/security/manage-users/#bootstrap-the-initial-admin
+{{- end }}
 {{- end }}
 
 Getting started:

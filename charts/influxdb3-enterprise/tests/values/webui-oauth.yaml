@@ -1,0 +1,11 @@
+webui:
+  enabled: true
+  sessionSecret:
+    existingSecret: ui-session
+security:
+  userAuth:
+    type: oauth
+    oauth:
+      issuer: https://idp.example.com/
+      audience: influxdb3
+      clientId: explorer
