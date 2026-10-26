@@ -27,7 +27,7 @@ spec:
 {{ toYaml . | indent 8 }}
 {{- end }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include "telegraf.configMapOrSecretContentHash" (dict "ctx" . "name" "/configmap.yaml") }}
         {{- if .Values.podAnnotations }}
 {{ tpl (toYaml .Values.podAnnotations) . | indent 8 }}
         {{- end }}
