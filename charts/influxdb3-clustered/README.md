@@ -23,6 +23,21 @@ helm upgrade --install my-release influxdata/influxdb3-clustered -f values.yml
 
 InfluxDB Clustered is a complex distributed database, composed of numerous interconnected resources. These resources are managed using the [Kubit operator](https://github.com/kubecfg/kubit/). This helm chart will install that operator and the InfluxDB Clustered AppInstance resource, which encapsulates all of the resources and configuration for the database. Helm cannot be used to bypass the Kubit operator. If you cannot install the operator, then please consult the documentation for alternatives.
 
+## Ingress
+
+Starting with release `20261030-2076753` (chart version `0.1.29`), the default ingress is an [Istio](https://istio.io/) `Gateway` with its `VirtualService` resources, instead of Kubernetes `Ingress` resources for [ingress-nginx](https://github.com/kubernetes/ingress-nginx). Istio must already be installed in the cluster.
+
+If you are upgrading and want to keep using ingress-nginx, set `ingress.template` in your values file before upgrading, otherwise your existing `Ingress` resources will be replaced by the Istio `Gateway`:
+
+```yaml
+ingress:
+  template:
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+```
+
+See the comments on `ingress` in [`values.yaml`](./values.yaml) for the remaining options.
+
 ## Adopting existing resources into Helm
 
 To allow Helm to take over managing an InfluxDB Clustered AppInstance resource, you must set some helm specific metadata on it, first. Otherwise, Helm will refuse to perform the installation or upgrade. This is a safety feature built into Helm, and is by design.
