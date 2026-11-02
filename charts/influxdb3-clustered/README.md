@@ -7,6 +7,10 @@ helm repo add influxdata https://helm.influxdata.com/
 helm upgrade --install influxdb influxdata/influxdb3-clustered -f values.yml --namespace influxdb
 ```
 
+### Upgrading to 20261030-2076753 Notice
+
+This release contains a breaking change regarding the ingress controller. See the [Ingress Section](#ingress) for more information.
+
 ## Introduction
 
 [InfluxDB](https://github.com/influxdata/influxdb) is an open source time series database written in Rust, using Apache Arrow, Apache Parquet, and Apache DataFusion as its foundational building blocks. [InfluxDB Clustered](https://www.influxdata.com/products/influxdb-clustered/) is the evolution of InfluxDB Enterprise, making it the solution for enterprises that need control over their data and underlying infrastructure.
