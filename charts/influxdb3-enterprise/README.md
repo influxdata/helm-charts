@@ -1526,9 +1526,66 @@ or supply equivalent peer ingress rules. Use `compactor.dispatchTarget` to set
 placement rather than overriding its environment variable in `extraEnv`.
 Custom image tags cannot be version-checked; verify they run 3.12+ yourself.
 
-The chart does not configure internode TLS or JWT authentication. Do not assume
-`security.tls.enabled` secures the internode listener. NetworkPolicy is disabled
-by default; restrict peer access before enabling distributed compaction.
+See [Internode security](#internode-security) for JWT and mutual TLS configuration.
+
+### Internode security
+
+The chart leaves internode TLS and JWT authentication unset by default;
+`security.tls.enabled` configures HTTP TLS only. NetworkPolicy is disabled
+by default; restrict access to internode listeners.
+
+Internode security also applies to [other cluster roles](https://docs.influxdata.com/influxdb3/enterprise/admin/processing-engine/#secure-the-process-node).
+The overlays below configure authentication for **compactor peers only**;
+other components need their own `extraEnv` settings. Merge entries with existing
+`extraEnv`, `extraVolumes`, and `extraVolumeMounts` lists. For option details,
+run `influxdb3 serve --help-all`.
+
+**JWT:** Secret `internode-jwt` needs one shared [JWT](https://www.rfc-editor.org/rfc/rfc7519.html#section-7.1)
+in key `token`; per-pod JWT files are not required.
+
+```yaml
+compactor:
+  replicas: 2
+  dispatchTarget: all
+  extraEnv:
+    - name: INFLUXDB3_INTERNODE_JWT_PRIMARY
+      valueFrom:
+        secretKeyRef:
+          name: internode-jwt
+          key: token
+```
+
+**Mutual TLS:** This replaces JWT authentication. Secret `internode-mtls`
+needs `ca.crt` and a
+[certificate/key pair](https://docs.openssl.org/3.0/man1/openssl-req/) for each pod,
+keyed `<fullname>-compactor-N.crt` and `<fullname>-compactor-N.key`.
+Certificates must support client and server authentication, with SANs matching
+the advertised pod names. Add entries for new ordinals before increasing
+`compactor.replicas`.
+
+The global volume settings below mount the entire Secret, including all
+compactor private keys, into compactors, ingesters, queriers and Web UI pods.
+
+```yaml
+compactor:
+  replicas: 2
+  dispatchTarget: all
+  extraEnv:
+    - name: INFLUXDB3_INTERNODE_TLS_CERT
+      value: "/etc/internode/$(POD_NAME).crt"
+    - name: INFLUXDB3_INTERNODE_TLS_KEY
+      value: "/etc/internode/$(POD_NAME).key"
+    - name: INFLUXDB3_INTERNODE_TLS_CA
+      value: "/etc/internode/ca.crt"
+extraVolumes:
+  - name: internode-tls
+    secret:
+      secretName: internode-mtls
+extraVolumeMounts:
+  - name: internode-tls
+    mountPath: /etc/internode
+    readOnly: true
+```
 
 ### Ingester internode Services
 
