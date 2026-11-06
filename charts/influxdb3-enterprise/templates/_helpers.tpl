@@ -708,6 +708,22 @@ Querier Pod name shared by the StatefulSet and per-pod Service.
 {{- end }}
 
 {{/*
+Compactor internode gRPC port. The fallback supports --reuse-values from
+releases that predate distributed compaction support.
+*/}}
+{{- define "influxdb3-enterprise.compactorInternodePort" -}}
+{{- $internode := get .Values.compactor "internode" | default dict -}}
+{{- get $internode "port" | default 8183 -}}
+{{- end }}
+
+{{/*
+Compactor Pod name shared by the StatefulSet and per-pod Service.
+*/}}
+{{- define "influxdb3-enterprise.compactorPodName" -}}
+{{- printf "%s-compactor-%d" (include "influxdb3-enterprise.fullname" .root) (int .ordinal) -}}
+{{- end }}
+
+{{/*
 Shared volume mounts (license/TLS/GCS and user extras)
 */}}
 {{- define "influxdb3-enterprise.sharedVolumeMounts" -}}

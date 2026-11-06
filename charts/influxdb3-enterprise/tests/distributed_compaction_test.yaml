@@ -1,0 +1,393 @@
+suite: distributed compaction
+release:
+  name: t
+  namespace: default
+tests:
+  - it: keeps the default single compactor without internode networking
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == "INFLUXDB3_COMPACTOR_DISPATCH_TARGET")]
+        template: templates/compactor-statefulset.yaml
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: templates/compactor-statefulset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - serve
+            - --mode=compact
+            - --node-id=$(POD_NAME)
+        template: templates/compactor-statefulset.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/compactor-service.yaml
+
+  - it: leaves local dispatch without internode networking even with two compactors
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: local
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_COMPACTOR_DISPATCH_TARGET
+            value: local
+        template: templates/compactor-statefulset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - serve
+            - --mode=compact
+            - --node-id=$(POD_NAME)
+        template: templates/compactor-statefulset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].ports
+          value:
+            - name: http
+              containerPort: 8181
+              protocol: TCP
+        template: templates/compactor-statefulset.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/compactor-service.yaml
+
+  - it: opens no internode policy ports for local dispatch with two compactors
+    template: templates/networkpolicy.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: local
+      networkPolicy.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-compactor
+    asserts:
+      - notExists:
+          path: spec.ingress[*].ports[?(@.port == 8183)]
+      - notExists:
+          path: spec.egress[*].ports[?(@.port == 8183)]
+
+  - it: enables all compactors with the configured internode port
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+      compactor.internode.port: 9193
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --internode-bind-addr=0.0.0.0:9193
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --conn-info=$(POD_NAME):9193
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_COMPACTOR_DISPATCH_TARGET
+            value: all
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: grpc-internode
+            containerPort: 9193
+            protocol: TCP
+
+  - it: enables remote dispatch on two compactors
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: remote
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_COMPACTOR_DISPATCH_TARGET
+            value: remote
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --conn-info=$(POD_NAME):8183
+
+  - it: routes advertised names to individual pods with a fullname override for remote dispatch
+    template: templates/compactor-service.yaml
+    set:
+      fullnameOverride: test-db
+      compactor.replicas: 2
+      compactor.dispatchTarget: remote
+      compactor.internode.port: 9193
+    asserts:
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: metadata.name
+          value: test-db-compactor-0
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: test-db-compactor-1
+        documentIndex: 2
+      - equal:
+          path: spec.selector["statefulset.kubernetes.io/pod-name"]
+          value: test-db-compactor-0
+        documentIndex: 1
+      - equal:
+          path: spec.selector["statefulset.kubernetes.io/pod-name"]
+          value: test-db-compactor-1
+        documentIndex: 2
+      - equal:
+          path: spec.ports[0]
+          value:
+            port: 9193
+            targetPort: grpc-internode
+            protocol: TCP
+            name: grpc-internode
+        documentIndex: 2
+
+  - it: permits compactor peer ingress and egress within the release for remote dispatch
+    template: templates/networkpolicy.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: remote
+      compactor.internode.port: 9193
+      networkPolicy.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-compactor
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: compactor
+            ports:
+              - protocol: TCP
+                port: 9193
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: compactor
+            ports:
+              - protocol: TCP
+                port: 9193
+
+  - it: omits policies when NetworkPolicy is disabled
+    template: templates/networkpolicy.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+      networkPolicy.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: omits compactor workloads and services when disabled
+    set:
+      compactor.enabled: false
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/compactor-statefulset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/compactor-service.yaml
+
+  - it: rejects remote dispatch without a worker
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.dispatchTarget: remote
+    asserts:
+      - failedTemplate:
+          errorMessage: compactor.dispatchTarget=remote requires at least two compactor replicas.
+
+  - it: rejects unknown dispatch targets
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.dispatchTarget: invalid
+    asserts:
+      - failedTemplate:
+          errorMessage: compactor.dispatchTarget must be local, all, or remote.
+
+  - it: rejects an explicit null dispatch target
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.dispatchTarget: null
+    asserts:
+      - failedTemplate:
+          errorMessage: compactor.dispatchTarget must be local, all, or remote.
+
+  - it: rejects an empty dispatch target
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.dispatchTarget: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: compactor.dispatchTarget must be local, all, or remote.
+
+  - it: still rejects multiple compactors on pre-3.12 with local dispatch
+    template: templates/compactor-statefulset.yaml
+    set:
+      image.tag: 3.11.8-enterprise
+      compactor.replicas: 2
+      compactor.dispatchTarget: local
+    asserts:
+      - failedTemplate:
+          errorMessage: Multiple compactors and distributed dispatch require InfluxDB 3 Enterprise 3.12 or later.
+
+  - it: allows a legacy single compactor
+    template: templates/compactor-statefulset.yaml
+    set:
+      image.tag: 3.11.8-enterprise
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: uses the default listener port when reused values lack internode configuration
+    template: templates/compactor-statefulset.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+      compactor.internode: null
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --internode-bind-addr=0.0.0.0:8183
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --conn-info=$(POD_NAME):8183
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: grpc-internode
+            containerPort: 8183
+            protocol: TCP
+
+  - it: uses the default service port when reused values lack internode configuration
+    template: templates/compactor-service.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+      compactor.internode: null
+    asserts:
+      - equal:
+          path: spec.ports[0]
+          value:
+            port: 8183
+            targetPort: grpc-internode
+            protocol: TCP
+            name: grpc-internode
+        documentIndex: 2
+
+  - it: uses the default policy port when reused values lack internode configuration
+    template: templates/networkpolicy.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+      compactor.internode: null
+      networkPolicy.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-compactor
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: compactor
+            ports:
+              - protocol: TCP
+                port: 8183
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: compactor
+            ports:
+              - protocol: TCP
+                port: 8183
+
+  - it: omits peer ingress but retains peer egress when component ingress is disabled
+    template: templates/networkpolicy.yaml
+    set:
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+      compactor.internode.port: 9193
+      networkPolicy.enabled: true
+      networkPolicy.ingress.fromComponents: false
+    documentSelector:
+      path: metadata.name
+      value: t-influxdb3-enterprise-compactor
+    asserts:
+      - notExists:
+          path: spec.ingress[*].ports[?(@.port == 9193)]
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: influxdb3-enterprise
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/component: compactor
+            ports:
+              - protocol: TCP
+                port: 9193
+
+  - it: accepts an advertised pod name exactly 63 characters long
+    set:
+      # 51 characters plus the 12-character "-compactor-1" suffix.
+      fullnameOverride: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+        template: templates/compactor-statefulset.yaml
+      - equal:
+          path: metadata.name
+          value: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-compactor-1
+        template: templates/compactor-service.yaml
+        documentIndex: 2
+
+  - it: rejects an advertised pod name longer than 63 characters
+    template: templates/compactor-statefulset.yaml
+    set:
+      # 52 characters plus the 12-character "-compactor-1" suffix.
+      fullnameOverride: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      compactor.replicas: 2
+      compactor.dispatchTarget: all
+    asserts:
+      - failedTemplate:
+          errorMessage: "Compactor Pod name \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-compactor-1\" exceeds Kubernetes' 63-character hostname limit; use a shorter release name or fullnameOverride."
+
+  - it: rejects distributed dispatch on a pre-3.12 image even with one compactor
+    template: templates/compactor-statefulset.yaml
+    set:
+      image.tag: 3.11.8-enterprise
+      compactor.replicas: 1
+      compactor.dispatchTarget: all
+    asserts:
+      - failedTemplate:
+          errorMessage: Multiple compactors and distributed dispatch require InfluxDB 3 Enterprise 3.12 or later.

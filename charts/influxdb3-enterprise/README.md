@@ -207,7 +207,7 @@ The chart deploys four main components:
 |-----------|---------|------------------|----------|
 | **Ingester** | Handles data writes | 2 | Horizontally |
 | **Querier** | Processes queries | 2 | Horizontally |
-| **Compactor** | Optimizes storage | 1 | No (single node only) |
+| **Compactor** | Optimizes storage | 1 | See [Distributed compaction](#distributed-compaction) |
 | **Processor** | Processing Engine | 0 (disabled) | Horizontally |
 
 ### Key Configuration Sections
@@ -1476,7 +1476,9 @@ ingester:
 | `ingester.replicas` | Number of ingester replicas | `2` |
 | `ingester.internode.port` | Internode gRPC port used when the Processing Engine is enabled | `8183` |
 | `querier.replicas` | Number of querier replicas | `2` |
-| `compactor.replicas` | Number of compactor replicas | `1` (fixed) |
+| `compactor.replicas` | Number of compactor replicas; see [Distributed compaction](#distributed-compaction) for requirements | `1` |
+| `compactor.dispatchTarget` | Compaction placement: `local`, `all`, or `remote` (requires 2+ replicas) | not set (server default: `local`) |
+| `compactor.internode.port` | Internode gRPC port for compactor peers | `8183` |
 | `processingEngine.enabled` | Enable Processing Engine | `false` |
 | `webui.enabled` | Run the embedded Web UI as its own node | `false` |
 | `webui.replicas` | Number of Web UI replicas | `1` |
@@ -1502,11 +1504,31 @@ ingester:
 | `*.podDisruptionBudget.enabled` | Enable PDB per component | `false` |
 | `*.podDisruptionBudget.maxUnavailable` | Max unavailable when PDB enabled | component-specific |
 
-InfluxDB 3.12 distributed compaction is a beta feature and is not yet supported
-by this chart. The chart runs one compactor and does not configure
-compactor-to-compactor networking. Do not set
-`INFLUXDB3_COMPACTOR_DISPATCH_TARGET=remote`; without another compact node,
-compaction waits indefinitely.
+### Distributed compaction
+
+**Distributed compaction is a beta feature.** It requires InfluxDB 3 Enterprise
+3.12+ and the upgraded storage engine. Use
+[values-distributed-compaction.yaml](examples/values-distributed-compaction.yaml)
+as an overlay on your deployment values to run two compactors with
+`compactor.dispatchTarget: all`. See the official
+[distributed compaction documentation](https://docs.influxdata.com/influxdb3/enterprise/admin/distributed-compaction/)
+for sizing and monitoring. See [Upgrading](#upgrading) before enabling
+distributed compaction.
+Parquet clusters must keep exactly one compactor; multiple compactors can corrupt
+data. Helm values cannot establish whether the storage-engine migration has
+completed, so verify the live cluster before increasing replicas.
+
+The chart configures per-pod internode Services and compactor peer NetworkPolicy
+rules only when `compactor.dispatchTarget` is `all` or `remote`. Change
+`compactor.replicas` through Helm so the per-pod Services scale with the pods.
+With `networkPolicy.enabled=true`, keep `networkPolicy.ingress.fromComponents=true`
+or supply equivalent peer ingress rules. Use `compactor.dispatchTarget` to set
+placement rather than overriding its environment variable in `extraEnv`.
+Custom image tags cannot be version-checked; verify they run 3.12+ yourself.
+
+The chart does not configure internode TLS or JWT authentication. Do not assume
+`security.tls.enabled` secures the internode listener. NetworkPolicy is disabled
+by default; restrict peer access before enabling distributed compaction.
 
 ### Ingester internode Services
 
