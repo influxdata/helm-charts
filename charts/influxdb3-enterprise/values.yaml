@@ -455,14 +455,19 @@ querier:
     rollingUpdate:
       partition: 0                  # Start updating from pod 0
 
-# Compactor node - Background data optimization (single node only)
+# Compactor nodes - Background data optimization
 compactor:
   enabled: true
-  # IMPORTANT: Must be set to 1
-  # InfluxDB3 Enterprise supports only ONE compactor per cluster
-  # Multiple compactors will cause data corruption and conflicts
-  # DO NOT change this value unless explicitly advised by InfluxData
+  # Distributed compaction (beta) requires 3.12+ and the upgraded storage engine.
+  # Parquet clusters must use one compactor; multiple compactors can corrupt data.
   replicas: 1
+  # local: lease holder only; all: every compactor; remote: workers only (2+ replicas).
+  # Unset by default to use the binary's local dispatch.
+  # dispatchTarget: local
+
+  # Internode gRPC communication between compactors
+  internode:
+    port: 8183
 
   # Resource allocation (CPU-intensive)
   resources:
@@ -544,7 +549,7 @@ compactor:
     annotations: {}
 
   # Pod disruption budget for high availability
-  # Protect the single compactor from voluntary disruptions (node drains/maintenance)
+  # Protect compactors from voluntary disruptions (node drains/maintenance)
   podDisruptionBudget:
     enabled: false
     maxUnavailable: 0
