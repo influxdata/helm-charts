@@ -1,6 +1,24 @@
 {{- if .Values.compactor.enabled }}
-{{- if gt (int .Values.compactor.replicas) 1 }}
-{{- fail "ERROR: compactor.replicas must be 1. InfluxDB3 Enterprise does not support multiple compactor replicas. Multiple compactors will cause data corruption." }}
+{{- $dispatchTarget := get .Values.compactor "dispatchTarget" }}
+{{- if and (hasKey .Values.compactor "dispatchTarget") (not (has $dispatchTarget (list "local" "all" "remote"))) }}
+{{- fail "compactor.dispatchTarget must be local, all, or remote." }}
+{{- end }}
+{{- $replicas := int .Values.compactor.replicas }}
+{{- if and (eq $dispatchTarget "remote") (lt $replicas 2) }}
+{{- fail "compactor.dispatchTarget=remote requires at least two compactor replicas." }}
+{{- end }}
+{{- $internodeEnabled := has $dispatchTarget (list "all" "remote") }}
+{{- if or (gt $replicas 1) $internodeEnabled }}
+{{- $version := include "influxdb3-enterprise.targetProductVersion" . }}
+{{- if and $version (semverCompare "<3.12.0" $version) }}
+{{- fail "Multiple compactors and distributed dispatch require InfluxDB 3 Enterprise 3.12 or later." }}
+{{- end }}
+{{- end }}
+{{- if and $internodeEnabled (gt $replicas 0) }}
+{{- $lastPodName := include "influxdb3-enterprise.compactorPodName" (dict "root" . "ordinal" (sub $replicas 1)) }}
+{{- if gt (len $lastPodName) 63 }}
+{{- fail (printf "Compactor Pod name %q exceeds Kubernetes' 63-character hostname limit; use a shorter release name or fullnameOverride." $lastPodName) }}
+{{- end }}
 {{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -12,8 +30,6 @@ metadata:
     app.kubernetes.io/component: compactor
 spec:
   serviceName: {{ include "influxdb3-enterprise.fullname" . }}-compactor
-  # NOTE: InfluxDB3 Enterprise supports only 1 compactor per cluster
-  # Multiple compactors may cause conflicts in compaction operations
   replicas: {{ .Values.compactor.replicas }}
   {{- if .Values.compactor.updateStrategy }}
   updateStrategy:
@@ -68,11 +84,19 @@ spec:
             - serve
             - --mode=compact
             - --node-id=$(POD_NAME)
+            {{- if $internodeEnabled }}
+            - --internode-bind-addr=0.0.0.0:{{ include "influxdb3-enterprise.compactorInternodePort" . }}
+            - --conn-info=$(POD_NAME):{{ include "influxdb3-enterprise.compactorInternodePort" . }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-enterprise.configMapName" . }}
           env:
             {{- include "influxdb3-enterprise.podNameEnv" . | nindent 12 }}
+            {{- if hasKey .Values.compactor "dispatchTarget" }}
+            - name: INFLUXDB3_COMPACTOR_DISPATCH_TARGET
+              value: {{ $dispatchTarget | quote }}
+            {{- end }}
             {{- include "influxdb3-enterprise.licenseEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.objectStoreSecretEnv" . | nindent 12 }}
             {{- include "influxdb3-enterprise.adminTokenEnv" . | nindent 12 }}
@@ -147,6 +171,11 @@ spec:
             - name: http
               containerPort: 8181
               protocol: TCP
+            {{- if $internodeEnabled }}
+            - name: grpc-internode
+              containerPort: {{ include "influxdb3-enterprise.compactorInternodePort" . }}
+              protocol: TCP
+            {{- end }}
           {{- include "influxdb3-enterprise.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.compactor.resources | nindent 12 }}
