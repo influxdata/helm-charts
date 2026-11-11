@@ -553,6 +553,74 @@ networkPolicy:
 
 **Note**: Requires CNI plugin supporting NetworkPolicy.
 
+#### Extra Objects
+
+Use `extraObjects` (default: `[]`) to include additional Kubernetes resources,
+such as ConfigMaps, Secrets, or custom network policies, in the Helm release.
+Entries may be YAML objects or YAML strings. Helm template expressions are
+evaluated in both forms, so manifests can reference `.Release.Name`,
+`.Release.Namespace`, `.Values`, and chart helpers.
+
+For example, this Calico policy allows inter-component ingress and HTTP access
+from the `clients` namespace:
+
+```yaml
+networkPolicy:
+  enabled: false
+
+extraObjects:
+  - apiVersion: projectcalico.org/v3
+    kind: NetworkPolicy
+    metadata:
+      name: "{{ .Release.Name }}-client-access"
+      namespace: "{{ .Release.Namespace }}"
+    spec:
+      selector: "app.kubernetes.io/instance == '{{ .Release.Name }}'"
+      types: [Ingress]
+      ingress:
+        - action: Allow
+          source:
+            selector: "app.kubernetes.io/instance == '{{ .Release.Name }}'"
+        - action: Allow
+          protocol: TCP
+          source:
+            namespaceSelector: "kubernetes.io/metadata.name == 'clients'"
+          destination:
+            ports: [8181]
+```
+
+To load a manifest from a file, use Helm's `--set-file`. For example, use the
+[sample Calico policy](examples/calico-networkpolicy.yaml):
+
+```bash
+helm upgrade --install influxdb3-enterprise . --namespace influxdb3 -f my-values.yaml --set-file 'extraObjects[0]=examples/calico-networkpolicy.yaml'
+```
+
+The inline and file examples are alternatives. `extraObjects[0]` replaces the
+first entry from values files; it does not append. To keep existing entries, use
+the next unused index.
+
+The expressions above also work in a manifest loaded through `--set-file`.
+Helm fills in the release name, namespace, and referenced values at deployment.
+
+For the Calico example, adapt the policy rules to your deployment. The Calico API
+must already be available in the cluster. `extraObjects` is independent of
+`networkPolicy.enabled`; disable the built-in policies when your custom policies
+replace them.
+
+Helm manages these objects as part of the release, including removal on uninstall
+unless explicitly retained.
+
+If a resource already exists outside the release, the rendered `extraObjects`
+entry must match its API group, kind, name, and namespace (for namespaced resources).
+Changing the name creates a separate resource instead of adopting the original.
+With Helm 3.17 or later, add `--take-ownership` to the upgrade command to adopt it
+in place without deleting it.
+Alternatively, first set the existing resource's `app.kubernetes.io/managed-by: Helm`
+label and its `meta.helm.sh/release-name` and `meta.helm.sh/release-namespace`
+annotations to match the release, then upgrade normally. The manifest itself
+can remain unchanged.
+
 #### Pod Disruption Budgets
 
 Each component has an optional PDB controlled by `podDisruptionBudget.enabled` and `maxUnavailable` in `values.yaml`. Defaults are disabled; enable per component or via the command line (e.g., `--set ingester.podDisruptionBudget.enabled=true`).
@@ -1207,13 +1275,15 @@ kubectl delete namespace influxdb3
 
 ## Examples
 
-See the `examples/` directory for complete configuration examples:
+See the `examples/` directory for deployment values and custom resource examples:
 
 - **values-dev.yaml**: Development setup with local filesystem
 - **values-production.yaml**: Production setup with full HA using AWS S3 storage
 - **values-minio.yaml**: Using MinIO AIStor storage
 - **values-google.yaml**: Using Google Cloud Storage
 - **values-azure.yaml**: Using Microsoft Azure blob storage
+- **[calico-networkpolicy.yaml](examples/calico-networkpolicy.yaml)**: Calico policy
+  manifest loaded through `extraObjects` using `--set-file`.
 
 ### Example: Production Deployment
 
