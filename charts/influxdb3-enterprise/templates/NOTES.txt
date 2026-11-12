@@ -10,7 +10,7 @@ Components deployed:
   ✓ Queriers: {{ .Values.querier.replicas }} replica(s)
 {{- end }}
 {{- if .Values.compactor.enabled }}
-  ✓ Compactor: 1 replica
+  ✓ Compactors: {{ .Values.compactor.replicas }} replica(s)
 {{- end }}
 {{- if .Values.processingEngine.enabled }}
   ✓ Processing Engine: {{ .Values.processingEngine.replicas }} replica(s)

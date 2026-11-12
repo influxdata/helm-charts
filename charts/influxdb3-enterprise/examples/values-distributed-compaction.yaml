@@ -1,0 +1,6 @@
+# Overlay on existing deployment values after completing any upgrades.
+# Requires InfluxDB 3 Enterprise 3.12+ and the upgraded storage engine (beta).
+# https://docs.influxdata.com/influxdb3/enterprise/admin/distributed-compaction/
+compactor:
+  replicas: 2
+  dispatchTarget: all

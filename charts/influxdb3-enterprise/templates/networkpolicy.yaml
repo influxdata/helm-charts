@@ -271,8 +271,9 @@ spec:
 
 {{- end }}
 {{- if and .Values.networkPolicy.enabled .Values.compactor.enabled }}
+{{- $internodeEnabled := has (get .Values.compactor "dispatchTarget") (list "all" "remote") }}
 ---
-# NetworkPolicy for Compactor node
+# NetworkPolicy for Compactor nodes
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -289,6 +290,17 @@ spec:
   policyTypes:
     {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
   ingress:
+    {{- if and $internodeEnabled .Values.networkPolicy.ingress.fromComponents }}
+    # Allow distributed compaction between compactors in this release
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: compactor
+      ports:
+        - protocol: TCP
+          port: {{ include "influxdb3-enterprise.compactorInternodePort" . }}
+    {{- end }}
     # Allow traffic from other components (for metrics, health checks)
     {{- if .Values.networkPolicy.ingress.fromComponents }}
     - from:
@@ -314,6 +326,16 @@ spec:
           port: 8181
     {{- end }}
   egress:
+    {{- if $internodeEnabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "influxdb3-enterprise.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: compactor
+      ports:
+        - protocol: TCP
+          port: {{ include "influxdb3-enterprise.compactorInternodePort" . }}
+    {{- end }}
     # Allow DNS resolution
     {{- if .Values.networkPolicy.egress.toDns }}
     - to:
