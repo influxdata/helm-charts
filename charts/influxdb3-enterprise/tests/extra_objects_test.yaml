@@ -1,0 +1,130 @@
+suite: extra objects
+templates:
+  - templates/extra-objects.yaml
+release:
+  name: t
+  namespace: default
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: preserves mixed object and string entries as separate resources
+    set:
+      extraObjects:
+        - apiVersion: projectcalico.org/v3
+          kind: NetworkPolicy
+          metadata:
+            name: customer-policy
+            annotations:
+              example.com/owner: customer
+          spec:
+            selector: app == 'influxdb'
+            order: 50
+            ingress:
+              - action: Allow
+        - |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: customer-config
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: apiVersion
+          value: projectcalico.org/v3
+        documentIndex: 0
+      - equal:
+          path: metadata
+          value:
+            name: customer-policy
+            annotations:
+              example.com/owner: customer
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            selector: app == 'influxdb'
+            order: 50
+            ingress:
+              - action: Allow
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: customer-config
+        documentIndex: 1
+
+  - it: renders a supplied YAML string as a resource
+    set:
+      extraObjects:
+        - |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: customer-config
+          data:
+            flag: "false"
+    asserts:
+      - equal:
+          path: kind
+          value: ConfigMap
+      - equal:
+          path: metadata.name
+          value: customer-config
+      - equal:
+          path: data
+          value:
+            flag: "false"
+
+  - it: evaluates release context, values, and helpers in object entries
+    set:
+      cluster.id: unit-cluster
+      fullnameOverride: unit-fullname
+      extraObjects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: '{{ .Release.Name }}-object'
+            namespace: '{{ .Release.Namespace }}'
+          data:
+            cluster: '{{ .Values.cluster.id }}'
+            fullname: '{{ include "influxdb3-enterprise.fullname" . }}'
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            name: t-object
+            namespace: default
+      - equal:
+          path: data
+          value:
+            cluster: unit-cluster
+            fullname: unit-fullname
+
+  - it: evaluates release context, values, and helpers in string entries
+    set:
+      cluster.id: unit-cluster
+      fullnameOverride: unit-fullname
+      extraObjects:
+        - |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: '{{ .Release.Name }}-string'
+            namespace: '{{ .Release.Namespace }}'
+          data:
+            cluster: '{{ .Values.cluster.id }}'
+            fullname: '{{ include "influxdb3-enterprise.fullname" . }}'
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            name: t-string
+            namespace: default
+      - equal:
+          path: data
+          value:
+            cluster: unit-cluster
+            fullname: unit-fullname

@@ -1,0 +1,22 @@
+# Allow inter-component ingress and HTTP access from the clients namespace.
+# Raw manifest: load with --set-file, not -f.
+# Run from the chart directory with your deployment values:
+# helm upgrade --install influxdb3-enterprise . --namespace influxdb3 -f my-values.yaml --set-file 'extraObjects[0]=examples/calico-networkpolicy.yaml'
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: "{{ .Release.Name }}-client-access"
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  selector: "app.kubernetes.io/instance == '{{ .Release.Name }}'"
+  types: [Ingress]
+  ingress:
+    - action: Allow
+      source:
+        selector: "app.kubernetes.io/instance == '{{ .Release.Name }}'"
+    - action: Allow
+      protocol: TCP
+      source:
+        namespaceSelector: "kubernetes.io/metadata.name == 'clients'"
+      destination:
+        ports: [8181]
