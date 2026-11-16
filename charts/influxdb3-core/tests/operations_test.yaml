@@ -1,0 +1,71 @@
+suite: Core operational settings
+release:
+  name: t
+  namespace: default
+tests:
+  - it: keeps the enlarged startup window
+    template: templates/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 184
+  - it: omits token mounts by default
+    template: templates/statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: admin-token
+          any: true
+  - it: restricts mounted admin token mode
+    template: templates/statefulset.yaml
+    set:
+      security.auth.adminToken.existingSecret: bootstrap
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: admin-token
+            secret:
+              secretName: bootstrap
+              defaultMode: 384
+              items:
+                - key: admin-token.json
+                  path: admin-token.json
+  - it: reuses an existing plugins claim
+    template: templates/statefulset.yaml
+    set:
+      processingEngine.persistence.enabled: true
+      processingEngine.persistence.existingClaim: plugins-existing
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: plugins
+            persistentVolumeClaim:
+              claimName: plugins-existing
+      - notExists:
+          path: spec.volumeClaimTemplates
+  - it: ignores an existing plugins claim when persistence is disabled
+    template: templates/statefulset.yaml
+    set:
+      processingEngine.persistence.enabled: false
+      processingEngine.persistence.existingClaim: plugins-existing
+    asserts:
+      - notExists:
+          path: spec.volumeClaimTemplates
+      - notExists:
+          path: spec.template.spec.volumes
+  - it: keeps the data claim when reusing a plugins claim
+    template: templates/statefulset.yaml
+    set:
+      objectStorage.type: file
+      processingEngine.persistence.enabled: true
+      processingEngine.persistence.existingClaim: plugins-existing
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: data
+      - lengthEqual:
+          path: spec.volumeClaimTemplates
+          count: 1

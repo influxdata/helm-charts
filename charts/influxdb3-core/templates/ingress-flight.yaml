@@ -9,7 +9,7 @@ metadata:
     {{- include "influxdb3-core.labels" . | nindent 4 }}
   {{- with .Values.ingress.flight.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- include "influxdb3-core.annotations" . | nindent 4 }}
   {{- end }}
 spec:
   {{- if .Values.ingress.className }}
