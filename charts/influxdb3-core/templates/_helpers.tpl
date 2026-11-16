@@ -349,7 +349,7 @@ Probe configuration
 {{- if and (hasKey $shutdown "timeout") (not (kindIs "invalid" (get $shutdown "timeout"))) -}}
 {{- $raw := get $shutdown "timeout" | toString | trim -}}
 {{/* humantime 2.3.0's units, longest spelling first so regexFindAll does not stop at m in ms. */}}
-{{- $unit := "nanos|nsec|ns|usec|us|µs|millis|msec|ms|seconds|second|secs|sec|s|minutes|minute|mins|min|m|hours|hour|hrs|hr|h|days|day|d|weeks|week|wks|wk|w|months|month|M|years|year|yrs|yr|y" -}}
+{{- $unit := "nanos|nsec|ns|usec|us|µs|millis|msec|ms|seconds|second|secs|sec|s|minutes|minute|mins|min|months|month|m|hours|hour|hrs|hr|h|days|day|d|weeks|week|wks|wk|w|M|years|year|yrs|yr|y" -}}
 {{- if eq $raw "0" -}}
 {{/* humantime's bare zero: no drain */}}
 {{- else if regexMatch (printf "^([0-9]{1,18} *(%s) *)+$" $unit) $raw -}}
