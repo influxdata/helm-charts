@@ -1427,21 +1427,12 @@ ingester:
 checks the component blocks at render time: `logFormat` takes `full`, `pretty`,
 `json` or `logfmt` and `logDestination` takes `stdout` or `stderr`, both in any
 case, and every value has to be a string, so quote `"off"` - YAML reads a bare
-`off` as `false`. `queryLogSize` stays a top-level key. The top-level `logs`
-block itself is not checked, since it has shipped since 0.10.0 and a check on it
-would refuse an upgrade that renders today.
-
-A component `logFilter` containing whitespace is refused, because the server
-never reads it as written. A directive is `target=level` with no room for a
-space, so `info, sqlx=warn` panics the server and `"info "` turns into a target
-name that matches no module, after which the pod logs nothing at all. Spaces
-inside a `[span]` are still allowed.
+`off` as `false`. `queryLogSize` stays a top-level key.
 
 Five layers set these variables, each beating the one before it: the image's own
 `INFLUXDB3_LOG_FILTER=info`, the top-level `logs` block, the global `extraEnv`,
-the component's `logs` block, and the component's `extraEnv`. So an existing
-`INFLUXDB3_LOG_FILTER` in `extraEnv` keeps winning and needs no change, but a
-global `extraEnv` entry silently overrides the top-level `logs` block. The
+the component's `logs` block, and the component's `extraEnv`. A global
+`extraEnv` entry silently overrides the top-level `logs` block. The
 legacy `LOG_FILTER` does not work on the official images from 3.10 on: they set
 `INFLUXDB3_LOG_FILTER=info` in the image itself, and the server keeps the
 `INFLUXDB3_` name when both are present.
