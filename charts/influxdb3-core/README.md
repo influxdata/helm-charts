@@ -111,6 +111,11 @@ Alternatively, set `security.auth.adminToken.file` when another mechanism
 mounts the token file. The chart intentionally does not accept a raw admin
 token value.
 
+The Secret volume requests mode `0600`. With the default `fsGroup: 1500`,
+Kubernetes mounts the root-owned token file as `0640` so the non-root process
+can read it. This removes world-read access; the server's strict `0600`
+permission warning remains.
+
 ## TLS
 
 Use an existing TLS Secret:
@@ -173,6 +178,9 @@ The chart rejects an authenticated ServiceMonitor configuration that leaves
 When backend TLS is enabled, the ServiceMonitor uses HTTPS. Configure
 `serviceMonitor.tlsConfig` if Prometheus needs custom TLS settings.
 
+Review the [upgrade metrics guidance](UPGRADING-3.10-TO-3.12.md#review-the-behavior-changes).
+The upgrade changes metric labels and splits HTTP and gRPC request counters.
+
 ## Processing Engine
 
 The InfluxDB 3 Core image enables the Processing Engine with
@@ -195,6 +203,19 @@ By default, plugin files and installed packages are ephemeral unless
 Optional settings include `processingEngine.pluginRepo`,
 `processingEngine.virtualEnvLocation`, and `processingEngine.packageManager`.
 
+InfluxDB 3.11+ also supports:
+
+- `processingEngine.disablePackageManagement`: prevents Python environment
+  changes and package installation, taking precedence over `packageManager`.
+- `processingEngine.asyncTriggerConcurrencyLimit`: limits concurrent async
+  trigger invocations; leaving it unset keeps the server's unlimited default.
+
+To reuse a plugins PVC, set `processingEngine.persistence.enabled=true` and
+`processingEngine.persistence.existingClaim` to its name. The PVC must exist in
+the release namespace; `storageClass`, `size`, and `accessMode` are then ignored.
+The chart does not copy existing plugin data. Changing an existing StatefulSet's
+claim templates may require recreating the StatefulSet while retaining its PVCs.
+
 Install Python package dependencies after the pod is running:
 
 ```sh
@@ -214,10 +235,44 @@ The chart does not install packages automatically.
 
 ## Configuration
 
+`nodeId` defaults to `$(POD_NAME)`. When reusing data from an existing Core
+deployment, set it to that deployment's original node ID:
+
+```yaml
+nodeId: "existing-node"
+```
+
+The node ID determines which stored data the server loads. Keep it unchanged
+when reusing that data.
+
 Values under `wal`, `logs`, `telemetry`, `datafusion`, `memory`, `caching`, and
 `dataLifecycle` map to the documented InfluxDB 3 Core environment variables.
 Use `extraEnv`, `extraVolumes`, and `extraVolumeMounts` for options not exposed
 directly by the chart.
+
+The newer `memory.execMemPoolSize`, `memory.forceSnapshotMemSize`, and
+`caching.fileCacheSize` settings require units such as `1gb` or a whole percentage
+such as `20%`. Kubernetes units such as `Gi` are not server size units. The
+existing aliases `execMemPoolBytes`, `forceSnapshotMemThreshold`, and
+`parquetMemCacheSize` remain supported with their original parsing, where bare
+numbers mean MB. If both Helm keys are set, the newer key takes precedence.
+
+Shared configuration emits compatible old and new environment variable names
+where necessary for 3.10.5 and 3.12.2. Legacy bare sizes stay under the legacy name
+so they are not reinterpreted by the new parser. `image.tag` overrides remain
+effective, including when carried over with `--reuse-values`.
+
+`objectStorage.cacheEndpoint` is ignored in 3.11+. The
+`dataLifecycle.hardDeleteDefaultDuration` option has never affected server
+behavior; newer binaries warn when it is set. Both keys remain accepted for
+existing values files, but remove them from new configurations.
+
+Use `shutdown.timeout` for the connection-drain timeout and
+`shutdown.terminationGracePeriodSeconds` for Kubernetes' termination grace
+period. Leave time beyond the drain for background work and WAL shutdown; for
+example, use `60s` and `90`, respectively. Unset values keep the server and
+Kubernetes defaults. The chart rejects an explicitly configured grace period
+that cannot outlast the configured drain.
 
 StatefulSet updates use `RollingUpdate` by default. Set
 `updateStrategy.type=OnDelete` when pod replacement must be controlled
@@ -225,12 +280,57 @@ manually. Core remains a single-replica deployment with either strategy.
 
 ## Upgrading
 
+Chart 0.2.0 targets InfluxDB 3 Core 3.12.2. Before upgrading from chart 0.1.1
+(Core 3.10.5), follow [UPGRADING-3.10-TO-3.12.md](UPGRADING-3.10-TO-3.12.md).
+This direct upgrade includes the 3.11 configuration changes and the one-way
+3.12 catalog change. Back up `{prefix}/catalog/` before the first 3.12 start.
+
 ```sh
 helm repo update
-helm upgrade core influxdata/influxdb3-core -f my-values.yaml
+helm upgrade core influxdata/influxdb3-core -f my-values.yaml --set-string acknowledgeUpgrade=3.12
 ```
 
-The single Core pod is unavailable while it restarts.
+The single Core pod is unavailable while it restarts. The acknowledgement is
+required once per existing release crossing the 3.12 boundary. Fresh installs
+do not require it. The marker records chart configuration history, not backup
+or catalog-migration completion.
+
+
+## Extra Objects
+
+Use `extraObjects` (default `[]`) to include additional Kubernetes resources,
+such as ConfigMaps, in this Helm release. Entries can be YAML objects or
+strings. Both support Helm expressions including
+`.Release.Name`, `.Release.Namespace`, `.Values`, and chart helpers.
+
+```yaml
+extraObjects:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: "{{ .Release.Name }}-custom"
+      namespace: "{{ .Release.Namespace }}"
+    data:
+      release: "{{ .Release.Name }}"
+```
+
+To load an external manifest, use `--set-file`:
+
+```sh
+helm upgrade --install core . -f my-values.yaml --set-file 'extraObjects[0]=extra-manifest.yaml'
+```
+
+The inline and file examples are alternatives. `extraObjects[0]` replaces the
+first entry from values files; it does not append. Use the next unused index
+to keep existing entries. Required custom resource APIs and their controllers
+must already be available in the cluster.
+
+Helm manages these resources with the release, including deletion on uninstall
+unless explicitly retained. To adopt an existing resource, keep its API group,
+kind, name, and namespace (for namespaced resources) unchanged in the rendered
+manifest. With Helm 3.17+, use `--take-ownership`; alternatively set
+`app.kubernetes.io/managed-by: Helm` and the `meta.helm.sh/release-name` and
+`meta.helm.sh/release-namespace` annotations to match the release before upgrading.
 
 ## Uninstallation
 
@@ -252,6 +352,9 @@ Remote object-store data is not deleted by uninstalling the chart.
 | Parameter | Description | Default |
 | --- | --- | --- |
 | `image.tag` | Image tag override | `""` (`<appVersion>-core`) |
+| `nodeId` | InfluxDB node ID; preserve it when reusing existing data | `$(POD_NAME)` |
+| `acknowledgeUpgrade` | One-time acknowledgement of the 3.12 upgrade boundary | `""` |
+| `extraObjects` | Additional templated Kubernetes objects or YAML strings | `[]` |
 | `objectStorage.type` | `file`, `memory`, `memory-throttled`, `s3`, `google`, or `azure` | `s3` |
 | `objectStorage.file.persistence.size` | Local file-store PVC size | `100Gi` |
 | `security.auth.disabled` | Start without authentication | `false` |
@@ -259,6 +362,11 @@ Remote object-store data is not deleted by uninstalling the chart.
 | `security.tls.enabled` | Enable backend TLS | `false` |
 | `processingEngine.persistence.enabled` | Create a plugin PVC | `false` |
 | `processingEngine.persistence.size` | Plugin PVC size | `5Gi` |
+| `processingEngine.persistence.existingClaim` | Existing plugins PVC in the release namespace | `""` |
+| `processingEngine.disablePackageManagement` | Prevent Python environment changes and package installation (3.11+) | unset |
+| `processingEngine.asyncTriggerConcurrencyLimit` | Concurrent async trigger invocations (3.11+) | unset |
+| `shutdown.timeout` | Connection-drain timeout | server default |
+| `shutdown.terminationGracePeriodSeconds` | Pod termination grace period | Kubernetes default |
 | `ingress.enabled` | Create HTTP and Flight ingresses | `false` |
 | `serviceMonitor.enabled` | Create a Prometheus Operator ServiceMonitor | `false` |
 | `serviceMonitor.tlsConfig` | Prometheus Operator TLS settings for metrics scraping | `{}` |

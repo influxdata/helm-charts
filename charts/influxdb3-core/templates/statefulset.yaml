@@ -2,6 +2,11 @@
 {{- $processingEngine := .Values.processingEngine | default dict }}
 {{- $pluginPersistence := get $processingEngine "persistence" | default dict }}
 {{- $pluginPersistenceEnabled := get $pluginPersistence "enabled" | default false }}
+{{- $existingPluginsClaim := get $pluginPersistence "existingClaim" }}
+{{- $nodeId := .Values.nodeId }}
+{{- if not (kindIs "invalid" $nodeId) }}
+{{- $nodeId = include "influxdb3-core.plainInteger" $nodeId }}
+{{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -26,7 +31,7 @@ spec:
         checksum/object-storage-secret: {{ include (print $.Template.BasePath "/secret-object-storage.yaml") . | sha256sum }}
         checksum/tls-secret: {{ include (print $.Template.BasePath "/secret-tls.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
+        {{- include "influxdb3-core.annotations" . | nindent 8 }}
         {{- end }}
       labels:
         {{- include "influxdb3-core.selectorLabels" . | nindent 8 }}
@@ -45,6 +50,10 @@ spec:
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
+      {{- $grace := include "influxdb3-core.terminationGracePeriodValue" . }}
+      {{- if $grace }}
+      terminationGracePeriodSeconds: {{ $grace }}
+      {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -57,7 +66,7 @@ spec:
           {{- end }}
           args:
             - serve
-            - --node-id=$(POD_NAME)
+            - {{ printf "--node-id=%s" ($nodeId | default "$(POD_NAME)") | quote }}
           envFrom:
             - configMapRef:
                 name: {{ include "influxdb3-core.fullname" . }}-config
@@ -66,7 +75,7 @@ spec:
             {{- include "influxdb3-core.objectStorageEnv" . | nindent 12 }}
             {{- with .Values.numIOThreads }}
             - name: INFLUXDB3_NUM_IO_THREADS
-              value: {{ . | quote }}
+              value: {{ include "influxdb3-core.quote" . }}
             {{- end }}
             {{- if .Values.security.auth.adminToken.existingSecret }}
             - name: INFLUXDB3_ADMIN_TOKEN_FILE
@@ -77,22 +86,34 @@ spec:
             {{- end }}
             {{- with get $processingEngine "pluginDir" }}
             - name: INFLUXDB3_PLUGIN_DIR
-              value: {{ . | quote }}
+              value: {{ include "influxdb3-core.quote" . }}
             {{- end }}
             {{- with get $processingEngine "pluginRepo" }}
             - name: INFLUXDB3_PLUGIN_REPO
-              value: {{ . | quote }}
+              value: {{ include "influxdb3-core.quote" . }}
             {{- end }}
             {{- with get $processingEngine "virtualEnvLocation" }}
             - name: VIRTUAL_ENV
-              value: {{ . | quote }}
+              value: {{ include "influxdb3-core.quote" . }}
             {{- end }}
             {{- with get $processingEngine "packageManager" }}
             - name: INFLUXDB3_PACKAGE_MANAGER
-              value: {{ . | quote }}
+              value: {{ include "influxdb3-core.quote" . }}
+            {{- end }}
+            {{- range $key, $env := dict "disablePackageManagement" "INFLUXDB3_DISABLE_PACKAGE_MANAGEMENT" "asyncTriggerConcurrencyLimit" "INFLUXDB3_ASYNC_TRIGGER_CONCURRENCY_LIMIT" }}
+            {{- if and (hasKey $processingEngine $key) (not (kindIs "invalid" (get $processingEngine $key))) }}
+            - name: {{ $env }}
+              value: {{ include "influxdb3-core.quote" (get $processingEngine $key) }}
+            {{- end }}
             {{- end }}
             {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
+            {{- $entries := deepCopy . }}
+            {{- range $entry := $entries }}
+            {{- if hasKey $entry "value" }}
+            {{- $_ := set $entry "value" (ternary "" (include "influxdb3-core.plainInteger" $entry.value) (kindIs "invalid" $entry.value)) }}
+            {{- end }}
+            {{- end }}
+            {{- toYaml $entries | nindent 12 }}
             {{- end }}
           ports:
             - name: http
@@ -152,8 +173,13 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or (eq .Values.objectStorage.type "google") (and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile) .Values.security.tls.enabled (get $tlsCa "existingSecret") .Values.security.auth.adminToken.existingSecret .Values.extraVolumes }}
+      {{- if or (eq .Values.objectStorage.type "google") (and (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.credentialsFile) .Values.security.tls.enabled (get $tlsCa "existingSecret") .Values.security.auth.adminToken.existingSecret (and $pluginPersistenceEnabled $existingPluginsClaim) .Values.extraVolumes }}
       volumes:
+        {{- if and $pluginPersistenceEnabled $existingPluginsClaim }}
+        - name: plugins
+          persistentVolumeClaim:
+            claimName: {{ $existingPluginsClaim | quote }}
+        {{- end }}
         {{- if eq .Values.objectStorage.type "google" }}
         - name: google-service-account
           secret:
@@ -184,6 +210,7 @@ spec:
         - name: admin-token
           secret:
             secretName: {{ .Values.security.auth.adminToken.existingSecret }}
+            defaultMode: 0600
             items:
               - key: admin-token.json
                 path: admin-token.json
@@ -192,7 +219,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-  {{- if or (eq .Values.objectStorage.type "file") $pluginPersistenceEnabled }}
+  {{- if or (eq .Values.objectStorage.type "file") (and $pluginPersistenceEnabled (not $existingPluginsClaim)) }}
   volumeClaimTemplates:
     {{- if eq .Values.objectStorage.type "file" }}
     - metadata:
@@ -207,7 +234,7 @@ spec:
           requests:
             storage: {{ .Values.objectStorage.file.persistence.size }}
     {{- end }}
-    {{- if $pluginPersistenceEnabled }}
+    {{- if and $pluginPersistenceEnabled (not $existingPluginsClaim) }}
     - metadata:
         name: plugins
       spec:

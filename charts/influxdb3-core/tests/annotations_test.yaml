@@ -1,0 +1,92 @@
+suite: Core annotation values
+release:
+  name: t
+  namespace: default
+tests:
+  - it: renders string annotations on statefulset.yaml
+    template: templates/statefulset.yaml
+    set:
+      podAnnotations:
+        example.com/number: 1000000
+        example.com/enabled: false
+        example.com/null: null
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["example.com/number"]
+          value: '1000000'
+      - equal:
+          path: spec.template.metadata.annotations["example.com/enabled"]
+          value: 'false'
+      - equal:
+          path: spec.template.metadata.annotations["example.com/null"]
+          value: ''
+  - it: renders string annotations on service.yaml
+    template: templates/service.yaml
+    set:
+      service.annotations:
+        example.com/number: 1000000
+        example.com/enabled: false
+        example.com/null: null
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/number"]
+          value: '1000000'
+      - equal:
+          path: metadata.annotations["example.com/enabled"]
+          value: 'false'
+      - equal:
+          path: metadata.annotations["example.com/null"]
+          value: ''
+  - it: renders string annotations on serviceaccount.yaml
+    template: templates/serviceaccount.yaml
+    set:
+      serviceAccount.annotations:
+        example.com/number: 1000000
+        example.com/enabled: false
+        example.com/null: null
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/number"]
+          value: '1000000'
+      - equal:
+          path: metadata.annotations["example.com/enabled"]
+          value: 'false'
+      - equal:
+          path: metadata.annotations["example.com/null"]
+          value: ''
+  - it: renders string annotations on ingress-http.yaml
+    template: templates/ingress-http.yaml
+    set:
+      ingress.http.annotations:
+        example.com/number: 1000000
+        example.com/enabled: false
+        example.com/null: null
+      ingress.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/number"]
+          value: '1000000'
+      - equal:
+          path: metadata.annotations["example.com/enabled"]
+          value: 'false'
+      - equal:
+          path: metadata.annotations["example.com/null"]
+          value: ''
+  - it: renders string annotations on ingress-flight.yaml
+    template: templates/ingress-flight.yaml
+    set:
+      ingress.flight.annotations:
+        example.com/number: 1000000
+        example.com/enabled: false
+        example.com/null: null
+      ingress.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/number"]
+          value: '1000000'
+      - equal:
+          path: metadata.annotations["example.com/enabled"]
+          value: 'false'
+      - equal:
+          path: metadata.annotations["example.com/null"]
+          value: ''
