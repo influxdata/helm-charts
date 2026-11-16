@@ -108,12 +108,18 @@ spec:
             {{- end }}
             {{- with .Values.extraEnv }}
             {{- $entries := deepCopy . }}
+            {{- $names := dict }}
             {{- range $entry := $entries }}
+            {{- $_ := set $names $entry.name true }}
             {{- if hasKey $entry "value" }}
             {{- $_ := set $entry "value" (ternary "" (include "influxdb3-core.plainInteger" $entry.value) (kindIs "invalid" $entry.value)) }}
             {{- end }}
             {{- end }}
             {{- toYaml $entries | nindent 12 }}
+            {{- if and (eq $.Values.objectStorage.type "file") (hasKey $names "INFLUXDB3_DB_DIR") (not (hasKey $names "INFLUXDB3_DATA_DIR")) }}
+            - name: INFLUXDB3_DATA_DIR
+              value: "$(INFLUXDB3_DB_DIR)"
+            {{- end }}
             {{- end }}
           ports:
             - name: http
