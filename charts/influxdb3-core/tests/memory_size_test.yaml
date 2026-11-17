@@ -1,0 +1,197 @@
+suite: Core explicit memory sizes
+release:
+  name: t
+  namespace: default
+tests:
+  - it: rejects memory.execMemPoolSize '1Gi'
+    set:
+      memory.execMemPoolSize: 1Gi
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.execMemPoolSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "1Gi". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects memory.execMemPoolSize 4096
+    set:
+      memory.execMemPoolSize: 4096
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.execMemPoolSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "4096". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects memory.execMemPoolSize False
+    set:
+      memory.execMemPoolSize: false
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.execMemPoolSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "false". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects memory.execMemPoolSize ''
+    set:
+      memory.execMemPoolSize: ''
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.execMemPoolSize is set to an empty value. Remove the key to use the server default, or give it a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based).
+  - it: rejects memory.execMemPoolSize '101%'
+    set:
+      memory.execMemPoolSize: 101%
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.execMemPoolSize must be between 0 and 100 percent, got "101%".
+  - it: rejects memory.execMemPoolSize '1.5%'
+    set:
+      memory.execMemPoolSize: 1.5%
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.execMemPoolSize must be a whole percentage such as "20%", got "1.5%".
+  - it: accepts memory.execMemPoolSize 1gb
+    template: templates/configmap.yaml
+    set:
+      memory.execMemPoolSize: 1gb
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts memory.execMemPoolSize 20%
+    template: templates/configmap.yaml
+    set:
+      memory.execMemPoolSize: 20%
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts memory.execMemPoolSize 0%
+    template: templates/configmap.yaml
+    set:
+      memory.execMemPoolSize: 0%
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts memory.execMemPoolSize +020%
+    template: templates/configmap.yaml
+    set:
+      memory.execMemPoolSize: +020%
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: rejects memory.forceSnapshotMemSize '1Gi'
+    set:
+      memory.forceSnapshotMemSize: 1Gi
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.forceSnapshotMemSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "1Gi". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects memory.forceSnapshotMemSize 4096
+    set:
+      memory.forceSnapshotMemSize: 4096
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.forceSnapshotMemSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "4096". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects memory.forceSnapshotMemSize False
+    set:
+      memory.forceSnapshotMemSize: false
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.forceSnapshotMemSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "false". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects memory.forceSnapshotMemSize ''
+    set:
+      memory.forceSnapshotMemSize: ''
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.forceSnapshotMemSize is set to an empty value. Remove the key to use the server default, or give it a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based).
+  - it: rejects memory.forceSnapshotMemSize '101%'
+    set:
+      memory.forceSnapshotMemSize: 101%
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.forceSnapshotMemSize must be between 0 and 100 percent, got "101%".
+  - it: rejects memory.forceSnapshotMemSize '1.5%'
+    set:
+      memory.forceSnapshotMemSize: 1.5%
+    asserts:
+      - failedTemplate:
+          errorMessage: memory.forceSnapshotMemSize must be a whole percentage such as "20%", got "1.5%".
+  - it: accepts memory.forceSnapshotMemSize 1gb
+    template: templates/configmap.yaml
+    set:
+      memory.forceSnapshotMemSize: 1gb
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts memory.forceSnapshotMemSize 20%
+    template: templates/configmap.yaml
+    set:
+      memory.forceSnapshotMemSize: 20%
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts memory.forceSnapshotMemSize 0%
+    template: templates/configmap.yaml
+    set:
+      memory.forceSnapshotMemSize: 0%
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts memory.forceSnapshotMemSize +020%
+    template: templates/configmap.yaml
+    set:
+      memory.forceSnapshotMemSize: +020%
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: rejects caching.fileCacheSize '1Gi'
+    set:
+      caching.fileCacheSize: 1Gi
+    asserts:
+      - failedTemplate:
+          errorMessage: caching.fileCacheSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "1Gi". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects caching.fileCacheSize 4096
+    set:
+      caching.fileCacheSize: 4096
+    asserts:
+      - failedTemplate:
+          errorMessage: caching.fileCacheSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "4096". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects caching.fileCacheSize False
+    set:
+      caching.fileCacheSize: false
+    asserts:
+      - failedTemplate:
+          errorMessage: caching.fileCacheSize must carry a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based) or be a percentage, got "false". Bare numbers and Kubernetes suffixes such as Gi are rejected by InfluxDB and the pod will not start.
+  - it: rejects caching.fileCacheSize ''
+    set:
+      caching.fileCacheSize: ''
+    asserts:
+      - failedTemplate:
+          errorMessage: caching.fileCacheSize is set to an empty value. Remove the key to use the server default, or give it a unit suffix the server accepts (b, kb, mb, gb, tb - all 1024-based).
+  - it: rejects caching.fileCacheSize '101%'
+    set:
+      caching.fileCacheSize: 101%
+    asserts:
+      - failedTemplate:
+          errorMessage: caching.fileCacheSize must be between 0 and 100 percent, got "101%".
+  - it: rejects caching.fileCacheSize '1.5%'
+    set:
+      caching.fileCacheSize: 1.5%
+    asserts:
+      - failedTemplate:
+          errorMessage: caching.fileCacheSize must be a whole percentage such as "20%", got "1.5%".
+  - it: accepts caching.fileCacheSize 1gb
+    template: templates/configmap.yaml
+    set:
+      caching.fileCacheSize: 1gb
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts caching.fileCacheSize 20%
+    template: templates/configmap.yaml
+    set:
+      caching.fileCacheSize: 20%
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts caching.fileCacheSize 0%
+    template: templates/configmap.yaml
+    set:
+      caching.fileCacheSize: 0%
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: accepts caching.fileCacheSize +020%
+    template: templates/configmap.yaml
+    set:
+      caching.fileCacheSize: +020%
+    asserts:
+      - hasDocuments:
+          count: 1
