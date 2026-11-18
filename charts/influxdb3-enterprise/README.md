@@ -617,7 +617,7 @@ replace them.
 Helm manages these objects as part of the release, including removal on uninstall
 unless explicitly retained.
 
-If a resource already exists outside the release, the rendered `extraObjects`
+For an existing resource not managed by Helm, the rendered `extraObjects`
 entry must match its API group, kind, name, and namespace (for namespaced resources).
 Changing the name creates a separate resource instead of adopting the original.
 With Helm 3.17 or later, add `--take-ownership` to the upgrade command to adopt it
@@ -626,6 +626,13 @@ Alternatively, first set the existing resource's `app.kubernetes.io/managed-by: 
 label and its `meta.helm.sh/release-name` and `meta.helm.sh/release-namespace`
 annotations to match the release, then upgrade normally. The manifest itself
 can remain unchanged.
+
+Transfers from another Helm release require a separate migration procedure.
+Changing ownership does not remove the resource from the original release's
+stored manifest. Both uninstalling that release and dropping the resource
+from its chart during an upgrade can delete it. Protect the resource before
+either operation; for `helm.sh/resource-policy: keep`, the annotation must be
+present on the live resource and recorded in the original release's manifest.
 
 #### Pod Disruption Budgets
 
