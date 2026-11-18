@@ -561,6 +561,12 @@ Entries may be YAML objects or YAML strings. Helm template expressions are
 evaluated in both forms, so manifests can reference `.Release.Name`,
 `.Release.Namespace`, `.Values`, and chart helpers.
 
+Object entries are serialized to YAML before templating. Substituted values can
+cause YAML parse errors or silently change the resulting value if interpreted
+as YAML syntax. For such values, use a YAML string entry or `--set-file` and
+quote the entire resulting field value, for example:
+`text: {{ printf "prefix-%s" .Values.customText | quote }}`.
+
 For example, this Calico policy allows inter-component ingress and HTTP access
 from the `clients` namespace:
 
