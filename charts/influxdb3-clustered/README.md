@@ -7,6 +7,10 @@ helm repo add influxdata https://helm.influxdata.com/
 helm upgrade --install influxdb influxdata/influxdb3-clustered -f values.yml --namespace influxdb
 ```
 
+### Upgrading to 20261030-2076753 Notice
+
+This release contains a breaking change regarding the ingress controller. See the [Ingress Section](#ingress) for more information.
+
 ## Introduction
 
 [InfluxDB](https://github.com/influxdata/influxdb) is an open source time series database written in Rust, using Apache Arrow, Apache Parquet, and Apache DataFusion as its foundational building blocks. [InfluxDB Clustered](https://www.influxdata.com/products/influxdb-clustered/) is the evolution of InfluxDB Enterprise, making it the solution for enterprises that need control over their data and underlying infrastructure.
@@ -22,6 +26,21 @@ helm upgrade --install my-release influxdata/influxdb3-clustered -f values.yml
 ```
 
 InfluxDB Clustered is a complex distributed database, composed of numerous interconnected resources. These resources are managed using the [Kubit operator](https://github.com/kubecfg/kubit/). This helm chart will install that operator and the InfluxDB Clustered AppInstance resource, which encapsulates all of the resources and configuration for the database. Helm cannot be used to bypass the Kubit operator. If you cannot install the operator, then please consult the documentation for alternatives.
+
+## Ingress
+
+Starting with release `20261030-2076753` (chart version `0.1.29`), the default ingress is an [Istio](https://istio.io/) `Gateway` with its `VirtualService` resources, instead of Kubernetes `Ingress` resources for [ingress-nginx](https://github.com/kubernetes/ingress-nginx). Istio must already be installed in the cluster.
+
+If you are upgrading and want to keep using ingress-nginx, set `ingress.template` in your values file before upgrading, otherwise your existing `Ingress` resources will be replaced by the Istio `Gateway`:
+
+```yaml
+ingress:
+  template:
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+```
+
+See the comments on `ingress` in [`values.yaml`](./values.yaml) for the remaining options.
 
 ## Adopting existing resources into Helm
 
