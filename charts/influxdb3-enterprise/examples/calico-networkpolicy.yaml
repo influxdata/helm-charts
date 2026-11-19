@@ -1,4 +1,6 @@
-# Allow inter-component ingress and HTTP access from the clients namespace.
+# Allow inter-component ingress, client HTTP access, and default egress.
+# Egress defaults cover ingesters, queriers, and local-dispatch compactors.
+# Adapt DNS/storage settings and rules for optional components to your deployment.
 # Raw manifest: load with --set-file, not -f.
 # Run from the chart directory with your deployment values:
 # helm upgrade --install influxdb3-enterprise . --namespace influxdb3 -f my-values.yaml --set-file 'extraObjects[0]=examples/calico-networkpolicy.yaml'
@@ -9,7 +11,7 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
 spec:
   selector: "app.kubernetes.io/instance == '{{ .Release.Name }}'"
-  types: [Ingress]
+  types: [Ingress, Egress]
   ingress:
     - action: Allow
       source:
@@ -19,4 +21,45 @@ spec:
       source:
         namespaceSelector: "kubernetes.io/metadata.name == 'clients'"
       destination:
+        ports: [8181]
+  egress:
+    # DNS defaults: networkPolicy.egress.dns.*
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: "kubernetes.io/metadata.name == 'kube-system'"
+        selector: "k8s-app == 'kube-dns'"
+        ports: [53]
+    - action: Allow
+      protocol: TCP
+      destination:
+        namespaceSelector: "kubernetes.io/metadata.name == 'kube-system'"
+        selector: "k8s-app == 'kube-dns'"
+        ports: [53]
+    # Default object-store access; adapt ports and destinations.
+    - action: Allow
+      protocol: TCP
+      destination:
+        ports: [443, 80, 9000]
+    # Match the default component-specific HTTP egress.
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: "app.kubernetes.io/component == 'ingester'"
+      destination:
+        selector: "app.kubernetes.io/instance == '{{ .Release.Name }}' && app.kubernetes.io/component in {'ingester', 'querier'}"
+        ports: [8181]
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: "app.kubernetes.io/component == 'querier'"
+      destination:
+        selector: "app.kubernetes.io/instance == '{{ .Release.Name }}'"
+        ports: [8181]
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: "app.kubernetes.io/component == 'compactor'"
+      destination:
+        selector: "app.kubernetes.io/instance == '{{ .Release.Name }}' && app.kubernetes.io/component == 'querier'"
         ports: [8181]
