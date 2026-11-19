@@ -555,84 +555,35 @@ networkPolicy:
 
 #### Extra Objects
 
-Use `extraObjects` (default: `[]`) to include additional Kubernetes resources,
-such as ConfigMaps, Secrets, or custom network policies, in the Helm release.
-Entries may be YAML objects or YAML strings. Helm template expressions are
-evaluated in both forms, so manifests can reference `.Release.Name`,
-`.Release.Namespace`, `.Values`, and chart helpers.
-
-Object entries are serialized to YAML before templating. Substituted values can
-cause YAML parse errors or silently change the resulting value if interpreted
-as YAML syntax. For such values, use a YAML string entry or `--set-file` and
-quote the entire resulting field value, for example:
-`text: {{ printf "prefix-%s" .Values.customText | quote }}`.
-
-For example, this Calico policy allows inter-component ingress and HTTP access
-from the `clients` namespace:
+Use `extraObjects` (default `[]`) to add Kubernetes resources to the release.
+Entries can be YAML objects or strings; both support Helm templating.
 
 ```yaml
-networkPolicy:
-  enabled: false
-
 extraObjects:
-  - apiVersion: projectcalico.org/v3
-    kind: NetworkPolicy
+  - apiVersion: v1
+    kind: ConfigMap
     metadata:
-      name: "{{ .Release.Name }}-client-access"
+      name: "{{ .Release.Name }}-custom"
       namespace: "{{ .Release.Namespace }}"
-    spec:
-      selector: "app.kubernetes.io/instance == '{{ .Release.Name }}'"
-      types: [Ingress]
-      ingress:
-        - action: Allow
-          source:
-            selector: "app.kubernetes.io/instance == '{{ .Release.Name }}'"
-        - action: Allow
-          protocol: TCP
-          source:
-            namespaceSelector: "kubernetes.io/metadata.name == 'clients'"
-          destination:
-            ports: [8181]
+    data:
+      release: "{{ .Release.Name }}"
 ```
 
-To load a manifest from a file, use Helm's `--set-file`. For example, use the
-[sample Calico policy](examples/calico-networkpolicy.yaml):
+Load a file with `--set-file`, for example the
+[Calico policy](examples/calico-networkpolicy.yaml):
 
 ```bash
 helm upgrade --install influxdb3-enterprise . --namespace influxdb3 -f my-values.yaml --set-file 'extraObjects[0]=examples/calico-networkpolicy.yaml'
 ```
 
-The inline and file examples are alternatives. `extraObjects[0]` replaces the
-first entry from values files; it does not append. To keep existing entries, use
-the next unused index.
-
-The expressions above also work in a manifest loaded through `--set-file`.
-Helm fills in the release name, namespace, and referenced values at deployment.
-
-For the Calico example, adapt the policy rules to your deployment. The Calico API
-must already be available in the cluster. `extraObjects` is independent of
-`networkPolicy.enabled`; disable the built-in policies when your custom policies
-replace them.
-
-Helm manages these objects as part of the release, including removal on uninstall
-unless explicitly retained.
-
-For an existing resource not managed by Helm, the rendered `extraObjects`
-entry must match its API group, kind, name, and namespace (for namespaced resources).
-Changing the name creates a separate resource instead of adopting the original.
-With Helm 3.17 or later, add `--take-ownership` to the upgrade command to adopt it
-in place without deleting it.
-Alternatively, first set the existing resource's `app.kubernetes.io/managed-by: Helm`
-label and its `meta.helm.sh/release-name` and `meta.helm.sh/release-namespace`
-annotations to match the release, then upgrade normally. The manifest itself
-can remain unchanged.
-
-Transfers from another Helm release require a separate migration procedure.
-Changing ownership does not remove the resource from the original release's
-stored manifest. Both uninstalling that release and dropping the resource
-from its chart during an upgrade can delete it. Protect the resource before
-either operation; for `helm.sh/resource-policy: keep`, the annotation must be
-present on the live resource and recorded in the original release's manifest.
+- `--set-file` replaces the selected entry; use an unused index to preserve existing entries.
+- Object-form substitutions can break YAML or silently change values. For arbitrary
+  text, use string entries/files and apply `quote` to the complete field value.
+- `extraObjects` does not disable built-in network policies. Adapt the Calico
+  example and disable `networkPolicy.enabled` only when replacing those policies.
+- To adopt a resource not managed by Helm, keep its API group/kind/name/namespace
+  and use `--take-ownership` (Helm 3.17+). Cross-release transfers need a separate
+  migration: the original release can still delete resources on upgrade/uninstall.
 
 #### Pod Disruption Budgets
 
