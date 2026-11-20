@@ -576,7 +576,11 @@ Load a file with `--set-file`, for example the
 helm upgrade --install influxdb3-enterprise . --namespace influxdb3 -f my-values.yaml --set-file 'extraObjects[0]=examples/calico-networkpolicy.yaml'
 ```
 
-- `--set-file` replaces the selected entry; use an unused index to preserve existing entries.
+- `--set-file` updates the indexed entry in the values assembled for that
+  command, but Helm does not merge that resulting list with `extraObjects`
+  stored by the previous release. When adding an entry, include all existing
+  entries in the values files passed to the same upgrade, then use an unused
+  index. Do not rely on `--reuse-values` to preserve omitted entries.
 - Object-form substitutions can break YAML or silently change values. For arbitrary
   text, use string entries/files and apply `quote` to the complete field value.
 - `extraObjects` does not disable built-in network policies. Adapt the Calico
