@@ -553,6 +553,42 @@ networkPolicy:
 
 **Note**: Requires CNI plugin supporting NetworkPolicy.
 
+#### Extra Objects
+
+Use `extraObjects` (default `[]`) to add Kubernetes resources to the release.
+Entries can be YAML objects or strings; both support Helm templating.
+
+```yaml
+extraObjects:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: "{{ .Release.Name }}-custom"
+      namespace: "{{ .Release.Namespace }}"
+    data:
+      release: "{{ .Release.Name }}"
+```
+
+Load a file with `--set-file`, for example the
+[Calico policy](examples/calico-networkpolicy.yaml):
+
+```bash
+helm upgrade --install influxdb3-enterprise . --namespace influxdb3 -f my-values.yaml --set-file 'extraObjects[0]=examples/calico-networkpolicy.yaml'
+```
+
+- `--set-file` updates the indexed entry in the values assembled for that
+  command, but Helm does not merge that resulting list with `extraObjects`
+  stored by the previous release. When adding an entry, include all existing
+  entries in the values files passed to the same upgrade, then use an unused
+  index. Do not rely on `--reuse-values` to preserve omitted entries.
+- Object-form substitutions can break YAML or silently change values. For arbitrary
+  text, use string entries/files and apply `quote` to the complete field value.
+- `extraObjects` does not disable built-in network policies. Adapt the Calico
+  example and disable `networkPolicy.enabled` only when replacing those policies.
+- To adopt a resource not managed by Helm, keep its API group/kind/name/namespace
+  and use `--take-ownership` (Helm 3.17+). Cross-release transfers need a separate
+  migration: the original release can still delete resources on upgrade/uninstall.
+
 #### Pod Disruption Budgets
 
 Each component has an optional PDB controlled by `podDisruptionBudget.enabled` and `maxUnavailable` in `values.yaml`. Defaults are disabled; enable per component or via the command line (e.g., `--set ingester.podDisruptionBudget.enabled=true`).
@@ -1207,13 +1243,15 @@ kubectl delete namespace influxdb3
 
 ## Examples
 
-See the `examples/` directory for complete configuration examples:
+See the `examples/` directory for deployment values and custom resource examples:
 
 - **values-dev.yaml**: Development setup with local filesystem
 - **values-production.yaml**: Production setup with full HA using AWS S3 storage
 - **values-minio.yaml**: Using MinIO AIStor storage
 - **values-google.yaml**: Using Google Cloud Storage
 - **values-azure.yaml**: Using Microsoft Azure blob storage
+- **[calico-networkpolicy.yaml](examples/calico-networkpolicy.yaml)**: Calico policy
+  manifest loaded through `extraObjects` using `--set-file`.
 
 ### Example: Production Deployment
 
@@ -1357,21 +1395,12 @@ ingester:
 checks the component blocks at render time: `logFormat` takes `full`, `pretty`,
 `json` or `logfmt` and `logDestination` takes `stdout` or `stderr`, both in any
 case, and every value has to be a string, so quote `"off"` - YAML reads a bare
-`off` as `false`. `queryLogSize` stays a top-level key. The top-level `logs`
-block itself is not checked, since it has shipped since 0.10.0 and a check on it
-would refuse an upgrade that renders today.
-
-A component `logFilter` containing whitespace is refused, because the server
-never reads it as written. A directive is `target=level` with no room for a
-space, so `info, sqlx=warn` panics the server and `"info "` turns into a target
-name that matches no module, after which the pod logs nothing at all. Spaces
-inside a `[span]` are still allowed.
+`off` as `false`. `queryLogSize` stays a top-level key.
 
 Five layers set these variables, each beating the one before it: the image's own
 `INFLUXDB3_LOG_FILTER=info`, the top-level `logs` block, the global `extraEnv`,
-the component's `logs` block, and the component's `extraEnv`. So an existing
-`INFLUXDB3_LOG_FILTER` in `extraEnv` keeps winning and needs no change, but a
-global `extraEnv` entry silently overrides the top-level `logs` block. The
+the component's `logs` block, and the component's `extraEnv`. A global
+`extraEnv` entry silently overrides the top-level `logs` block. The
 legacy `LOG_FILTER` does not work on the official images from 3.10 on: they set
 `INFLUXDB3_LOG_FILTER=info` in the image itself, and the server keeps the
 `INFLUXDB3_` name when both are present.

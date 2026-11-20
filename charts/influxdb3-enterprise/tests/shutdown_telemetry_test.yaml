@@ -261,6 +261,20 @@ tests:
     asserts:
       - failedTemplate: {}
 
+  - it: reads singular spelled-out month as months
+    set:
+      shutdown.timeout: "1month"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - failedTemplate: {}
+
+  - it: reads plural spelled-out months as months
+    set:
+      shutdown.timeout: "1months"
+      shutdown.terminationGracePeriodSeconds: 90
+    asserts:
+      - failedTemplate: {}
+
   - it: reads days
     set:
       shutdown.timeout: "1d"
