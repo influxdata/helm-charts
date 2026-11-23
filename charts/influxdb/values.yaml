@@ -34,6 +34,9 @@ securityContext: {}
   # runAsUser: 999
   # runAsGroup: 999
 
+containerSecurityContext: {}
+  # readOnlyRootFilesystem: true
+
 startupProbe:
   enabled: false
   # path: "/ping"
