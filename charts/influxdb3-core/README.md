@@ -320,17 +320,24 @@ To load an external manifest, use `--set-file`:
 helm upgrade --install core . -f my-values.yaml --set-file 'extraObjects[0]=extra-manifest.yaml'
 ```
 
-The inline and file examples are alternatives. `extraObjects[0]` replaces the
-first entry from values files; it does not append. Use the next unused index
-to keep existing entries. Required custom resource APIs and their controllers
-must already be available in the cluster.
+- `--set-file` updates the indexed entry in the values assembled for that
+  command, but Helm does not merge that resulting list with `extraObjects`
+  stored by the previous release. When adding an entry, include all existing
+  entries in the values files passed to the same upgrade, then use an unused
+  index. Do not rely on `--reuse-values` to preserve omitted entries.
+- Object-form substitutions can break YAML or silently change values. For
+  arbitrary text, use string entries or files and apply `quote` to the complete
+  field value.
 
+Required custom resource APIs and their controllers must already be available.
 Helm manages these resources with the release, including deletion on uninstall
-unless explicitly retained. To adopt an existing resource, keep its API group,
-kind, name, and namespace (for namespaced resources) unchanged in the rendered
-manifest. With Helm 3.17+, use `--take-ownership`; alternatively set
+unless explicitly retained. To adopt a resource not managed by Helm, keep its
+API group, kind, name, and namespace unchanged in the rendered manifest. With
+Helm 3.17+, use `--take-ownership`. On earlier Helm versions, set
 `app.kubernetes.io/managed-by: Helm` and the `meta.helm.sh/release-name` and
-`meta.helm.sh/release-namespace` annotations to match the release before upgrading.
+`meta.helm.sh/release-namespace` annotations to match the release before
+upgrading. Cross-release transfers require a separate migration because the
+original release can still delete the resource during upgrade or uninstall.
 
 ## Uninstallation
 
