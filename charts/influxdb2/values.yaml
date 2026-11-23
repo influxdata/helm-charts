@@ -186,6 +186,11 @@ ingress:
     # kubernetes.io/tls-acme: "true"
   path: /
 
+gateway:
+  enabled: false
+  url: influxdb.foobar.com
+  annotations: {}
+
 ## Pod disruption budget configuration
 ##
 pdb:
