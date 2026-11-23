@@ -1,6 +1,6 @@
-# Upgrade InfluxDB 3 Core from 3.10.5 to 3.12.2
+# Upgrade InfluxDB 3 Core from 3.10.5 to 3.12.3
 
-Chart 0.1.1 runs Core 3.10.5 by default; chart 0.2.0 runs Core 3.12.2.
+Chart 0.1.1 runs Core 3.10.5 by default; chart 0.2.0 runs Core 3.12.3.
 This guide covers the direct upgrade and the intervening 3.11 configuration
 changes. Core remains a single-node deployment.
 
@@ -20,7 +20,7 @@ same data.
 
 Core 3.12.0 failed to load some catalogs originally written by Core before 3.10.
 The duplicate automatic field-family issue was fixed in 3.12.1 and is included in
-the 3.12.2 target. Do not edit the catalog manually.
+the 3.12.3 target. Do not edit the catalog manually.
 
 ## Review the 3.11 configuration changes
 
@@ -36,7 +36,7 @@ an older pod revision reading the updated ConfigMap.
   `parquetMemCacheSize` retain their original parser: a bare number means MB.
   A new key takes precedence if both Helm keys are supplied.
 - `http.maxRequestSize` keeps bare numbers as bytes; a unit such as `10mb` is
-  accepted by 3.12.2. Keep a bare byte count if an older image still needs the
+  accepted by 3.12.3. Keep a bare byte count if an older image still needs the
   same shared configuration.
 - `objectStorage.cacheEndpoint` never configured a functional cache. Since 3.11
   its environment variable is ignored and the old command flag is rejected.
@@ -87,7 +87,7 @@ against live release metadata. Client-side upgrade previews need the explicit
 acknowledgement when they cannot read the marker. Template-only GitOps renderers
 must enforce this operational step outside Helm.
 
-Verify that the Core pod starts, its actual image is 3.12.2, and existing data,
+Verify that the Core pod starts, its actual image is 3.12.3, and existing data,
 writes, queries, authentication, and any configured plugins still work.
 
 ## Roll back to the previous chart and Core 3.10.5

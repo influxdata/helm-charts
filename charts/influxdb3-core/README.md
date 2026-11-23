@@ -258,7 +258,7 @@ existing aliases `execMemPoolBytes`, `forceSnapshotMemThreshold`, and
 numbers mean MB. If both Helm keys are set, the newer key takes precedence.
 
 Shared configuration emits compatible old and new environment variable names
-where necessary for 3.10.5 and 3.12.2. Legacy bare sizes stay under the legacy name
+where necessary for 3.10.5 and 3.12.3. Legacy bare sizes stay under the legacy name
 so they are not reinterpreted by the new parser. `image.tag` overrides remain
 effective, including when carried over with `--reuse-values`.
 
@@ -280,7 +280,7 @@ manually. Core remains a single-replica deployment with either strategy.
 
 ## Upgrading
 
-Chart 0.2.0 targets InfluxDB 3 Core 3.12.2. Before upgrading from chart 0.1.1
+Chart 0.2.0 targets InfluxDB 3 Core 3.12.3. Before upgrading from chart 0.1.1
 (Core 3.10.5), follow [UPGRADING-3.10-TO-3.12.md](UPGRADING-3.10-TO-3.12.md).
 This direct upgrade includes the 3.11 configuration changes and the one-way
 3.12 catalog change. Back up `{prefix}/catalog/` before the first 3.12 start.

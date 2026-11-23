@@ -13,7 +13,7 @@ tests:
   - it: records 3.12 on a fresh install
     template: templates/configmap.yaml
     chart:
-      appVersion: 3.12.2
+      appVersion: 3.12.3
     asserts:
       - equal:
           path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
@@ -22,7 +22,7 @@ tests:
     release:
       upgrade: true
     chart:
-      appVersion: 3.12.2
+      appVersion: 3.12.3
     asserts:
       - failedTemplate:
           errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-core-config". Back up the Core catalog and follow UPGRADING-3.10-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
@@ -33,7 +33,7 @@ tests:
     release:
       upgrade: true
     chart:
-      appVersion: 3.12.2
+      appVersion: 3.12.3
     asserts:
       - equal:
           path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
@@ -43,7 +43,7 @@ tests:
     release:
       upgrade: true
     chart:
-      appVersion: 3.12.2
+      appVersion: 3.12.3
     kubernetesProvider:
       objects:
         - apiVersion: v1
@@ -63,7 +63,7 @@ tests:
     release:
       upgrade: true
     chart:
-      appVersion: 3.12.2
+      appVersion: 3.12.3
     asserts:
       - notExists:
           path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
@@ -72,7 +72,7 @@ tests:
     set:
       image.tag: custom-build
     chart:
-      appVersion: 3.12.2
+      appVersion: 3.12.3
     asserts:
       - notExists:
           path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
@@ -82,7 +82,7 @@ tests:
     release:
       upgrade: true
     chart:
-      appVersion: 3.12.2
+      appVersion: 3.12.3
     asserts:
       - failedTemplate:
           errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-core-config". Back up the Core catalog and follow UPGRADING-3.10-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
@@ -90,7 +90,7 @@ tests:
     set:
       acknowledgeUpgrade: 3.12
     chart:
-      appVersion: 3.12.2
+      appVersion: 3.12.3
     asserts:
       - failedTemplate:
           errorMessage: acknowledgeUpgrade must be a quoted string such as "3.12".
