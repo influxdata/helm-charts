@@ -72,13 +72,14 @@ The following table lists configurable parameters, their descriptions, and their
 | podAnnotations | Annotations for pod | {}                                                                   |
 | podLabels | Labels for pod | {}                                                                   |
 | ingress.enabled | Boolean flag to enable or disable ingress | false                                                                |
+| ingress.className | Name of the IngressClass | nginx                                                                |
 | ingress.tls | Boolean to enable or disable tls for ingress. If enabled provide a secret in `ingress.secretName` containing TLS private key and certificate. | false                                                                |
 | ingress.secretName | Kubernetes secret containing TLS private key and certificate. It is `only` required if `ingress.tls` is enabled. | nil                                                                  |
 | ingress.hostname | Hostname for the ingress | `""`                                                  |
 | ingress.annotations | ingress annotations | nil                                                                  |
 | schedulerName | Use an [alternate scheduler](https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/), e.g. "stork". | nil                                                                  |
 | nodeSelector | Node labels for pod assignment | {}                                                                   |
-| affinity | [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for pod assignment | {                                                                    |
+| affinity | [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for pod assignment | {}                                                   |
 | tolerations | [Tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) for pod assignment | []                                                                   |
 | securityContext | [securityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for pod | {}                                                                   |
 | env | environment variables for influxdb container | {}                                                                   |
