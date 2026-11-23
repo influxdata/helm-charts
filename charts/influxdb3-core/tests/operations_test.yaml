@@ -17,21 +17,16 @@ tests:
           content:
             name: admin-token
           any: true
-  - it: restricts mounted admin token mode
+  - it: uses the Kubernetes default mode for the mounted admin token
     template: templates/statefulset.yaml
     set:
       security.auth.adminToken.existingSecret: bootstrap
     asserts:
-      - contains:
-          path: spec.template.spec.volumes
-          content:
-            name: admin-token
-            secret:
-              secretName: bootstrap
-              defaultMode: 384
-              items:
-                - key: admin-token.json
-                  path: admin-token.json
+      - equal:
+          path: spec.template.spec.volumes[0].secret.secretName
+          value: bootstrap
+      - notExists:
+          path: spec.template.spec.volumes[0].secret.defaultMode
   - it: reuses an existing plugins claim
     template: templates/statefulset.yaml
     set:

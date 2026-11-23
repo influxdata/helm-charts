@@ -216,7 +216,6 @@ spec:
         - name: admin-token
           secret:
             secretName: {{ .Values.security.auth.adminToken.existingSecret }}
-            defaultMode: 0600
             items:
               - key: admin-token.json
                 path: admin-token.json
