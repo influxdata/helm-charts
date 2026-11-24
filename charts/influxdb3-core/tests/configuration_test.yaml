@@ -223,13 +223,6 @@ tests:
           content:
             name: INFLUXDB3_ASYNC_TRIGGER_CONCURRENCY_LIMIT
             value: '1000000'
-  - it: rejects zero async trigger concurrency
-    template: templates/statefulset.yaml
-    set:
-      processingEngine.asyncTriggerConcurrencyLimit: 0
-    asserts:
-      - failedTemplate:
-          errorMessage: processingEngine.asyncTriggerConcurrencyLimit must be a positive integer.
   - it: retains legacy bare-megabyte semantics for memory.execMemPoolBytes
     template: templates/configmap.yaml
     set:

@@ -401,12 +401,14 @@ probes:
 
   # Startup probe settings
   # Protects container during initialization. Once successful, never runs again.
-  # Allow about 15 minutes for catalog loading and WAL replay.
+  # 10s initial + (184 - 1) × 5s = 925s before the startup probe triggers
+  # termination; the restart itself follows terminationGracePeriodSeconds.
+  # Nodes replay from object storage on boot, so startup scales with data size.
   startup:
     initialDelaySeconds: 10
     periodSeconds: 5                  # Check every 5 seconds
     timeoutSeconds: 5
-    failureThreshold: 184             # 10s + (184 × 5s) = 15m30s
+    failureThreshold: 184
 
   # Liveness probe settings
   # Only starts checking AFTER startup probe succeeds

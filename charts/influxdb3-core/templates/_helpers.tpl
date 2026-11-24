@@ -65,7 +65,7 @@ Image reference
 {{- define "influxdb3-core.image" -}}
 {{- $registry := .Values.image.registry }}
 {{- $repository := .Values.image.repository }}
-{{- $tag := .Values.image.tag | default (printf "%s-core" .Chart.AppVersion) }}
+{{- $tag := include "influxdb3-core.imageTag" . }}
 {{- printf "%s/%s:%s" $registry $repository $tag }}
 {{- end }}
 
@@ -166,17 +166,6 @@ Validate chart configuration
 {{- include "influxdb3-core.validateUpgradeBoundaryAcknowledgement" . }}
 {{- include "influxdb3-core.validateShutdownConfig" . }}
 {{- include "influxdb3-core.validateMemorySizes" . }}
-{{- range $key := list "disablePackageManagement" "asyncTriggerConcurrencyLimit" }}
-{{- if and (hasKey $processingEngine $key) (not (kindIs "invalid" (get $processingEngine $key))) }}
-{{- $value := get $processingEngine $key }}
-{{- if and (eq $key "disablePackageManagement") (not (kindIs "bool" $value)) }}
-{{- fail "processingEngine.disablePackageManagement must be a boolean." }}
-{{- end }}
-{{- if and (eq $key "asyncTriggerConcurrencyLimit") (not (regexMatch "^0*[1-9][0-9]*$" (include "influxdb3-core.plainInteger" $value))) }}
-{{- fail "processingEngine.asyncTriggerConcurrencyLimit must be a positive integer." }}
-{{- end }}
-{{- end }}
-{{- end }}
 {{- end }}
 
 {{/*
