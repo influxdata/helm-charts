@@ -1,0 +1,237 @@
+# Calico policy example for this chart, rendered through extraObjects.
+# Optional processor, Web UI, distributed-compaction and Prometheus rules
+# are commented out. Uncomment the required ingress and egress blocks.
+# Adapt labels, ports and allowed sources/destinations to your deployment.
+# Raw manifest: load with --set-file, not -f.
+# Run from the chart directory with your deployment values:
+# helm upgrade --install influxdb3-enterprise . --namespace influxdb3 -f my-values.yaml --set-file 'extraObjects[0]=examples/calico-networkpolicy.yaml'
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: "{{ .Release.Name }}-network-policy"
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  # Optional components are selected too; enable their rules below when used.
+  selector: >-
+    app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    app.kubernetes.io/component in {'ingester', 'querier', 'compactor', 'processor', 'webui'}
+  types: [Ingress, Egress]
+  ingress:
+    # Ingress controller -> ingesters and queriers.
+    - action: Allow
+      protocol: TCP
+      source:
+        namespaceSelector: "kubernetes.io/metadata.name == 'ingress-nginx'"
+        selector: "app.kubernetes.io/name == 'ingress-nginx'"
+      destination:
+        selector: "app.kubernetes.io/component in {'ingester', 'querier'}"
+        ports: [8181]
+    # Ingester HTTP sources.
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: >-
+          app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+          app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+          app.kubernetes.io/component in {'compactor', 'ingester'}
+      destination:
+        selector: "app.kubernetes.io/component == 'ingester'"
+        ports: [8181]
+    # Querier and compactor HTTP sources.
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: >-
+          app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+          app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+          app.kubernetes.io/component == 'querier'
+      destination:
+        selector: "app.kubernetes.io/component in {'querier', 'compactor'}"
+        ports: [8181]
+    # Optional processing engine: ingress controller, self HTTP and ingester internode access.
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     namespaceSelector: "kubernetes.io/metadata.name == 'ingress-nginx'"
+    #     selector: "app.kubernetes.io/name == 'ingress-nginx'"
+    #   destination:
+    #     selector: "app.kubernetes.io/component == 'processor'"
+    #     ports: [8181]
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component == 'processor'
+    #   destination:
+    #     selector: "app.kubernetes.io/component == 'processor'"
+    #     ports: [8181]
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component == 'processor'
+    #   destination:
+    #     selector: "app.kubernetes.io/component == 'ingester'"
+    #     ports: [8183]
+    # Optional Web UI: ingress controller, self HTTP and backend HTTP/internode access.
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     namespaceSelector: "kubernetes.io/metadata.name == 'ingress-nginx'"
+    #     selector: "app.kubernetes.io/name == 'ingress-nginx'"
+    #   destination:
+    #     selector: "app.kubernetes.io/component == 'webui'"
+    #     ports: [8181]
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component == 'webui'
+    #   destination:
+    #     selector: "app.kubernetes.io/component == 'webui'"
+    #     ports: [8181]
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component == 'webui'
+    #   destination:
+    #     selector: "app.kubernetes.io/component in {'ingester', 'querier'}"
+    #     ports: [8181, 8183]
+    # Optional distributed compaction: compactor internode access.
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component == 'compactor'
+    #   destination:
+    #     selector: "app.kubernetes.io/component == 'compactor'"
+    #     ports: [8183]
+    # Optional Prometheus scraping.
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     namespaceSelector: "kubernetes.io/metadata.name == 'monitoring'"
+    #     selector: "app.kubernetes.io/name == 'prometheus'"
+    #   destination:
+    #     ports: [8181]
+  egress:
+    # DNS.
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: "kubernetes.io/metadata.name == 'kube-system'"
+        selector: "k8s-app == 'kube-dns'"
+        ports: [53]
+    - action: Allow
+      protocol: TCP
+      destination:
+        namespaceSelector: "kubernetes.io/metadata.name == 'kube-system'"
+        selector: "k8s-app == 'kube-dns'"
+        ports: [53]
+    # Default object-store access; adapt ports and destinations.
+    - action: Allow
+      protocol: TCP
+      destination:
+        ports: [443, 80, 9000]
+    # Ingester HTTP destinations.
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: "app.kubernetes.io/component == 'ingester'"
+      destination:
+        selector: >-
+          app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+          app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+          app.kubernetes.io/component in {'ingester', 'querier'}
+        ports: [8181]
+    # Querier HTTP destinations.
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: "app.kubernetes.io/component == 'querier'"
+      destination:
+        selector: >-
+          app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+          app.kubernetes.io/instance == '{{ .Release.Name }}'
+        ports: [8181]
+    # Compactor HTTP destinations.
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: "app.kubernetes.io/component == 'compactor'"
+      destination:
+        selector: >-
+          app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+          app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+          app.kubernetes.io/component == 'querier'
+        ports: [8181]
+    # Optional processing engine: processor HTTP, ingester internode and plugin endpoints.
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: "app.kubernetes.io/component == 'processor'"
+    #   destination:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component == 'processor'
+    #     ports: [8181]
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: "app.kubernetes.io/component == 'processor'"
+    #   destination:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component == 'ingester'
+    #     ports: [8183]
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: "app.kubernetes.io/component == 'processor'"
+    #   destination:
+    #     ports: [443, 80]
+    # Optional Web UI: HTTP to chart pods and internode access to backends.
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: "app.kubernetes.io/component == 'webui'"
+    #   destination:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}'
+    #     ports: [8181]
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: "app.kubernetes.io/component == 'webui'"
+    #   destination:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component in {'ingester', 'querier'}
+    #     ports: [8183]
+    # Optional distributed compaction: compactor internode access.
+    # - action: Allow
+    #   protocol: TCP
+    #   source:
+    #     selector: "app.kubernetes.io/component == 'compactor'"
+    #   destination:
+    #     selector: >-
+    #       app.kubernetes.io/name == '{{ include "influxdb3-enterprise.name" . }}' &&
+    #       app.kubernetes.io/instance == '{{ .Release.Name }}' &&
+    #       app.kubernetes.io/component == 'compactor'
+    #     ports: [8183]

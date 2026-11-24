@@ -17,6 +17,11 @@ image:
 imagePullSecrets: []
 # - name: registry-secret
 
+# Additional Kubernetes resources managed with this release, such as custom network policies.
+# Entries may be YAML objects or strings and support Helm template expressions.
+# Required APIs must already be installed.
+extraObjects: []
+
 # ============================================================================
 # Global Cluster Configuration
 # ============================================================================
