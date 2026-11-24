@@ -111,10 +111,6 @@ Alternatively, set `security.auth.adminToken.file` when another mechanism
 mounts the token file. The chart intentionally does not accept a raw admin
 token value.
 
-The Secret volume uses Kubernetes' default file mode, `0644`. The non-root
-process can read the token, but the default `fsGroup: 1500` does not remove
-world-read access. The server's strict `0600` permission warning remains.
-
 ## TLS
 
 Use an existing TLS Secret:
