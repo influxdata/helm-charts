@@ -23,7 +23,11 @@ tests:
             order: 50
             ingress:
               - action: Allow
-        - "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: customer-config\n"
+        - |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: customer-config
     asserts:
       - hasDocuments:
           count: 2
@@ -53,7 +57,13 @@ tests:
   - it: renders a supplied YAML string as a resource
     set:
       extraObjects:
-        - "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: customer-config\ndata:\n  flag: \"false\"\n"
+        - |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: customer-config
+          data:
+            flag: "false"
     asserts:
       - equal:
           path: kind
@@ -64,7 +74,7 @@ tests:
       - equal:
           path: data
           value:
-            flag: 'false'
+            flag: "false"
   - it: evaluates release context, values, and helpers in object entries
     set:
       objectStorage.bucket: unit-bucket
@@ -94,7 +104,15 @@ tests:
       objectStorage.bucket: unit-bucket
       fullnameOverride: unit-fullname
       extraObjects:
-        - "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: '{{ .Release.Name }}-string'\n  namespace: '{{ .Release.Namespace }}'\ndata:\n  bucket: '{{ .Values.objectStorage.bucket }}'\n  fullname: '{{ include \"influxdb3-core.fullname\" . }}'\n"
+        - |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: '{{ .Release.Name }}-string'
+            namespace: '{{ .Release.Namespace }}'
+          data:
+            bucket: '{{ .Values.objectStorage.bucket }}'
+            fullname: '{{ include "influxdb3-core.fullname" . }}'
     asserts:
       - equal:
           path: metadata

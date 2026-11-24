@@ -295,13 +295,10 @@ required once per existing release crossing the 3.12 boundary. Fresh installs
 do not require it. The marker records chart configuration history, not backup
 or catalog-migration completion.
 
-
 ## Extra Objects
 
-Use `extraObjects` (default `[]`) to include additional Kubernetes resources,
-such as ConfigMaps, in this Helm release. Entries can be YAML objects or
-strings. Both support Helm expressions including
-`.Release.Name`, `.Release.Namespace`, `.Values`, and chart helpers.
+Use `extraObjects` (default `[]`) to add Kubernetes resources to the release.
+Entries can be YAML objects or strings; both support Helm templating.
 
 ```yaml
 extraObjects:
@@ -314,7 +311,7 @@ extraObjects:
       release: "{{ .Release.Name }}"
 ```
 
-To load an external manifest, use `--set-file`:
+Load a file with `--set-file`:
 
 ```sh
 helm upgrade --install core . -f my-values.yaml --set-file 'extraObjects[0]=extra-manifest.yaml'
@@ -326,18 +323,11 @@ helm upgrade --install core . -f my-values.yaml --set-file 'extraObjects[0]=extr
   entries in the values files passed to the same upgrade, then use an unused
   index. Do not rely on `--reuse-values` to preserve omitted entries.
 - Object-form substitutions can break YAML or silently change values. For
-  arbitrary text, use string entries or files and apply `quote` to the complete
+  arbitrary text, use string entries/files and apply `quote` to the complete
   field value.
-
-Required custom resource APIs and their controllers must already be available.
-Helm manages these resources with the release, including deletion on uninstall
-unless explicitly retained. To adopt a resource not managed by Helm, keep its
-API group, kind, name, and namespace unchanged in the rendered manifest. With
-Helm 3.17+, use `--take-ownership`. On earlier Helm versions, set
-`app.kubernetes.io/managed-by: Helm` and the `meta.helm.sh/release-name` and
-`meta.helm.sh/release-namespace` annotations to match the release before
-upgrading. Cross-release transfers require a separate migration because the
-original release can still delete the resource during upgrade or uninstall.
+- To adopt a resource not managed by Helm, keep its API group/kind/name/namespace
+  and use `--take-ownership` (Helm 3.17+). Cross-release transfers need a separate
+  migration: the original release can still delete resources on upgrade/uninstall.
 
 ## Uninstallation
 
@@ -361,7 +351,6 @@ Remote object-store data is not deleted by uninstalling the chart.
 | `image.tag` | Image tag override | `""` (`<appVersion>-core`) |
 | `nodeId` | InfluxDB node ID; preserve it when reusing existing data | `$(POD_NAME)` |
 | `acknowledgeUpgrade` | One-time acknowledgement of the 3.12 upgrade boundary | `""` |
-| `extraObjects` | Additional templated Kubernetes objects or YAML strings | `[]` |
 | `objectStorage.type` | `file`, `memory`, `memory-throttled`, `s3`, `google`, or `azure` | `s3` |
 | `objectStorage.file.persistence.size` | Local file-store PVC size | `100Gi` |
 | `security.auth.disabled` | Start without authentication | `false` |
