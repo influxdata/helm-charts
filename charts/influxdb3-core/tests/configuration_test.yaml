@@ -1,0 +1,346 @@
+suite: Core configuration compatibility
+release:
+  name: t
+  namespace: default
+tests:
+  - it: defaults the node ID to the pod name
+    template: templates/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args[1]
+          value: --node-id=$(POD_NAME)
+  - it: uses an explicit node ID
+    template: templates/statefulset.yaml
+    set:
+      nodeId: existing-node
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args[1]
+          value: --node-id=existing-node
+  - it: preserves a numeric node ID
+    template: templates/statefulset.yaml
+    set:
+      nodeId: 1
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args[1]
+          value: --node-id=1
+  - it: preserves zero as a node ID
+    template: templates/statefulset.yaml
+    set:
+      nodeId: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args[1]
+          value: --node-id=0
+  - it: keeps the default node ID when the value is absent
+    template: templates/statefulset.yaml
+    set:
+      nodeId: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args[1]
+          value: --node-id=$(POD_NAME)
+  - it: preserves explicit telemetry false
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: false
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_DISABLE_TELEMETRY_UPLOAD
+          value: 'false'
+      - equal:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+          value: 'false'
+  - it: preserves explicit cache toggle false
+    template: templates/configmap.yaml
+    set:
+      caching.disableParquetMemCache: false
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_DISABLE_FILE_CACHE
+          value: 'false'
+      - equal:
+          path: data.INFLUXDB3_DISABLE_PARQUET_MEM_CACHE
+          value: 'false'
+  - it: preserves package management toggle false
+    template: templates/statefulset.yaml
+    set:
+      processingEngine.disablePackageManagement: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_DISABLE_PACKAGE_MANAGEMENT
+            value: 'false'
+  - it: preserves explicit telemetry true
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: true
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_DISABLE_TELEMETRY_UPLOAD
+          value: 'true'
+      - equal:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+          value: 'true'
+  - it: preserves explicit cache toggle true
+    template: templates/configmap.yaml
+    set:
+      caching.disableParquetMemCache: true
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_DISABLE_FILE_CACHE
+          value: 'true'
+      - equal:
+          path: data.INFLUXDB3_DISABLE_PARQUET_MEM_CACHE
+          value: 'true'
+  - it: preserves package management toggle true
+    template: templates/statefulset.yaml
+    set:
+      processingEngine.disablePackageManagement: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_DISABLE_PACKAGE_MANAGEMENT
+            value: 'true'
+  - it: omits cleared optional settings
+    template: templates/configmap.yaml
+    set:
+      telemetry.disableUpload: null
+      logs.queryLogSize: null
+      caching.disableParquetMemCache: null
+      memory.execMemPoolSize: null
+    asserts:
+      - notExists:
+          path: data.INFLUXDB3_DISABLE_TELEMETRY_UPLOAD
+      - notExists:
+          path: data.INFLUXDB3_TELEMETRY_DISABLE_UPLOAD
+      - notExists:
+          path: data.INFLUXDB3_QUERY_LOG_MAX_ENTRIES
+      - notExists:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+      - notExists:
+          path: data.INFLUXDB3_EXEC_MEM_POOL_SIZE
+      - notExists:
+          path: data.INFLUXDB3_DISABLE_FILE_CACHE
+  - it: keeps both spellings for logs.queryLogSize
+    template: templates/configmap.yaml
+    set:
+      logs.queryLogSize: 1000000
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_MAX_ENTRIES
+          value: '1000000'
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+          value: '1000000'
+  - it: keeps both spellings for wal.snapshotSize
+    template: templates/configmap.yaml
+    set:
+      wal.snapshotSize: 1000000
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_WAL_FILES_PER_SNAPSHOT
+          value: '1000000'
+      - equal:
+          path: data.INFLUXDB3_WAL_SNAPSHOT_SIZE
+          value: '1000000'
+  - it: keeps both spellings for wal.maxWriteBufferSize
+    template: templates/configmap.yaml
+    set:
+      wal.maxWriteBufferSize: 0
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_WAL_MAX_BUFFERED_WRITES
+          value: '0'
+      - equal:
+          path: data.INFLUXDB3_WAL_MAX_WRITE_BUFFER_SIZE
+          value: '0'
+  - it: keeps both spellings for wal.snapshotFilesToKeep
+    template: templates/configmap.yaml
+    set:
+      wal.snapshotFilesToKeep: 1000000
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_SNAPSHOTTED_WAL_FILES_TO_KEEP
+          value: '1000000'
+      - equal:
+          path: data.INFLUXDB3_NUM_WAL_FILES_TO_KEEP
+          value: '1000000'
+  - it: uses the canonical datafusion.numThreads environment variable
+    template: templates/configmap.yaml
+    set:
+      datafusion.numThreads: 10
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_NUM_DATAFUSION_THREADS
+          value: '10'
+      - notExists:
+          path: data.INFLUXDB3_DATAFUSION_NUM_THREADS
+  - it: keeps both spellings for objectStorage.file.dataDir
+    template: templates/configmap.yaml
+    set:
+      objectStorage.file.dataDir: /var/lib/custom
+      objectStorage.type: file
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_DATA_DIR
+          value: /var/lib/custom
+      - equal:
+          path: data.INFLUXDB3_DB_DIR
+          value: /var/lib/custom
+  - it: keeps both spellings for security.auth.disabled
+    template: templates/configmap.yaml
+    set:
+      security.auth.disabled: true
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_WITHOUT_AUTH
+          value: 'true'
+      - equal:
+          path: data.INFLUXDB3_START_WITHOUT_AUTH
+          value: 'true'
+  - it: preserves a zero query log limit
+    template: templates/configmap.yaml
+    set:
+      logs.queryLogSize: 0
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_MAX_ENTRIES
+          value: '0'
+      - equal:
+          path: data.INFLUXDB3_QUERY_LOG_SIZE
+          value: '0'
+  - it: renders async concurrency as plain decimal
+    template: templates/statefulset.yaml
+    set:
+      processingEngine.asyncTriggerConcurrencyLimit: 1000000
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INFLUXDB3_ASYNC_TRIGGER_CONCURRENCY_LIMIT
+            value: '1000000'
+  - it: retains legacy bare-megabyte semantics for memory.execMemPoolBytes
+    template: templates/configmap.yaml
+    set:
+      memory.execMemPoolBytes: 4096
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_EXEC_MEM_POOL_BYTES
+          value: '4096'
+      - notExists:
+          path: data.INFLUXDB3_EXEC_MEM_POOL_SIZE
+  - it: retains legacy bare-megabyte semantics for memory.forceSnapshotMemThreshold
+    template: templates/configmap.yaml
+    set:
+      memory.forceSnapshotMemThreshold: 4096
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
+          value: '4096'
+      - notExists:
+          path: data.INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+  - it: retains legacy bare-megabyte semantics for caching.parquetMemCacheSize
+    template: templates/configmap.yaml
+    set:
+      caching.parquetMemCacheSize: 4096
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_PARQUET_MEM_CACHE_SIZE
+          value: '4096'
+      - notExists:
+          path: data.INFLUXDB3_FILE_CACHE_SIZE
+  - it: keeps percentage compatibility for memory.execMemPoolSize
+    template: templates/configmap.yaml
+    set:
+      memory.execMemPoolSize: 20%
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_EXEC_MEM_POOL_SIZE
+          value: 20%
+      - equal:
+          path: data.INFLUXDB3_EXEC_MEM_POOL_BYTES
+          value: 20%
+  - it: keeps percentage compatibility for memory.forceSnapshotMemSize
+    template: templates/configmap.yaml
+    set:
+      memory.forceSnapshotMemSize: 20%
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+          value: 20%
+      - equal:
+          path: data.INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
+          value: 20%
+  - it: keeps percentage compatibility for caching.fileCacheSize
+    template: templates/configmap.yaml
+    set:
+      caching.fileCacheSize: 20%
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_FILE_CACHE_SIZE
+          value: 20%
+      - equal:
+          path: data.INFLUXDB3_PARQUET_MEM_CACHE_SIZE
+          value: 20%
+  - it: prefers new memory and cache keys while keeping old binaries configured
+    template: templates/configmap.yaml
+    set:
+      memory.execMemPoolSize: 10%
+      memory.execMemPoolBytes: 128
+      memory.forceSnapshotMemSize: 256mb
+      memory.forceSnapshotMemThreshold: 128
+      caching.fileCacheSize: 25%
+      caching.parquetMemCacheSize: 128
+    asserts:
+      - equal:
+          path: data.INFLUXDB3_EXEC_MEM_POOL_SIZE
+          value: 10%
+      - equal:
+          path: data.INFLUXDB3_EXEC_MEM_POOL_BYTES
+          value: 10%
+      - equal:
+          path: data.INFLUXDB3_FORCE_SNAPSHOT_MEM_SIZE
+          value: 256mb
+      - equal:
+          path: data.INFLUXDB3_FORCE_SNAPSHOT_MEM_THRESHOLD
+          value: 256mb
+      - equal:
+          path: data.INFLUXDB3_FILE_CACHE_SIZE
+          value: 25%
+      - equal:
+          path: data.INFLUXDB3_PARQUET_MEM_CACHE_SIZE
+          value: 25%
+  - it: keeps numeric extraEnv values as strings and preserves valueFrom
+    template: templates/statefulset.yaml
+    set:
+      extraEnv:
+        - name: COUNT
+          value: 1000000
+        - name: TOGGLE
+          value: false
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: COUNT
+            value: '1000000'
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TOGGLE
+            value: 'false'
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace

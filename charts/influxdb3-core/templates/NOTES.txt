@@ -23,7 +23,9 @@ Deployment:
 {{- end }}
 {{- end }}
   Plugin directory: {{ .Values.processingEngine.pluginDir }}
-{{- if .Values.processingEngine.persistence.enabled }}
+{{- if and .Values.processingEngine.persistence.enabled .Values.processingEngine.persistence.existingClaim }}
+  Plugin volume: existing PVC {{ .Values.processingEngine.persistence.existingClaim }}
+{{- else if .Values.processingEngine.persistence.enabled }}
   Plugin volume: {{ .Values.processingEngine.persistence.size }} ({{ .Values.processingEngine.persistence.accessMode }})
   Plugin storage class: {{ default "cluster default" .Values.processingEngine.persistence.storageClass }}
 {{- else }}
@@ -85,3 +87,9 @@ Getting started:
   influxdb3 query --database mydb "SELECT * FROM home"
 
 Documentation: https://docs.influxdata.com/influxdb3/core/
+
+Upgrade:
+  InfluxDB 3.12 commits a one-way catalog change on first startup.
+  Before upgrading an existing release, follow:
+  https://github.com/influxdata/helm-charts/blob/master/charts/influxdb3-core/UPGRADING-3.10-TO-3.12.md
+  Rollback requires the pre-upgrade catalog backup and previous chart/image.

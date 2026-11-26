@@ -1,0 +1,96 @@
+suite: Core 3.12 upgrade acknowledgement
+release:
+  name: t
+  namespace: default
+kubernetesProvider:
+  scheme:
+    v1/ConfigMap:
+      gvr:
+        version: v1
+        resource: configmaps
+      namespaced: true
+tests:
+  - it: records 3.12 on a fresh install
+    template: templates/configmap.yaml
+    chart:
+      appVersion: 3.12.3
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: '3.12'
+  - it: requires acknowledgement for a direct upgrade
+    release:
+      upgrade: true
+    chart:
+      appVersion: 3.12.3
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-core-config". Back up the Core catalog and follow UPGRADING-3.10-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+  - it: accepts an acknowledged direct upgrade
+    template: templates/configmap.yaml
+    set:
+      acknowledgeUpgrade: '3.12'
+    release:
+      upgrade: true
+    chart:
+      appVersion: 3.12.3
+    asserts:
+      - equal:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+          value: '3.12'
+  - it: does not require repeated acknowledgement
+    template: templates/configmap.yaml
+    release:
+      upgrade: true
+    chart:
+      appVersion: 3.12.3
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: t-influxdb3-core-config
+            namespace: default
+            annotations:
+              influxdata.com/upgrade-boundary-applied: '3.12'
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: honours a retained 3.10.5 image
+    template: templates/configmap.yaml
+    set:
+      image.tag: 3.10.5-core
+    release:
+      upgrade: true
+    chart:
+      appVersion: 3.12.3
+    asserts:
+      - notExists:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+  - it: does not invent upgrade history for custom tags
+    template: templates/configmap.yaml
+    set:
+      image.tag: custom-build
+    chart:
+      appVersion: 3.12.3
+    asserts:
+      - notExists:
+          path: metadata.annotations["influxdata.com/upgrade-boundary-applied"]
+  - it: requires explicit acknowledgement for an unknown upgrade target
+    set:
+      image.tag: custom-build
+    release:
+      upgrade: true
+    chart:
+      appVersion: 3.12.3
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Could not verify influxdata.com/upgrade-boundary-applied>=3.12 on ConfigMap "t-influxdb3-core-config". Back up the Core catalog and follow UPGRADING-3.10-TO-3.12.md, then set acknowledgeUpgrade: "3.12" for the one-time upgrade or client-side preview.'
+  - it: rejects a numeric acknowledgement
+    set:
+      acknowledgeUpgrade: 3.12
+    chart:
+      appVersion: 3.12.3
+    asserts:
+      - failedTemplate:
+          errorMessage: acknowledgeUpgrade must be a quoted string such as "3.12".
